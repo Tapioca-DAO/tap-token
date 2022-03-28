@@ -24,7 +24,7 @@ const config: HardhatUserConfig = {
         },
     },
     vyper: {
-        version: '0.2.7',
+        compilers: [{ version: '0.2.7' }, { version: '0.2.8' }],
     },
     namedAccounts: {
         deployer: 0,
