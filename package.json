@@ -8,6 +8,7 @@
     "@boringcrypto/boring-solidity": "boringcrypto/BoringSolidity#21beaec5c9383c6e9312e4464ad5755fda69e09b",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^3.0.1",
+    "@nomiclabs/hardhat-vyper": "^3.0.0",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^4.5.0",
     "@typechain/ethers-v5": "^7.1.2",

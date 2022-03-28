@@ -640,6 +640,17 @@
     node-fetch "^2.6.0"
     semver "^6.3.0"
 
+"@nomiclabs/hardhat-vyper@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-vyper/-/hardhat-vyper-3.0.0.tgz#36a9add9e2e465a26e53acd564f538215705c646"
+  integrity sha512-IxKPX5t2DKtqlwchKIfgAbaySwKrtzc4SgoGEVlbaLptwFBVAMY9yii9IFWX0MNTTsqbMmavCe5CcUsK/2lSKw==
+  dependencies:
+    debug "^4.1.1"
+    fs-extra "^7.0.1"
+    io-ts "1.10.4"
+    lodash "^4.17.11"
+    semver "^6.3.0"
+
 "@nomiclabs/hardhat-waffle@^2.0.1":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-waffle/-/hardhat-waffle-2.0.2.tgz#6030aa6fd9ea05327bf79d1107356af906d8b1e4"

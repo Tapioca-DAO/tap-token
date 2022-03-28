@@ -1,6 +1,7 @@
 import * as dotenv from 'dotenv';
 
 import { HardhatUserConfig } from 'hardhat/config';
+import '@nomiclabs/hardhat-vyper';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import '@nomiclabs/hardhat-etherscan';
@@ -21,6 +22,9 @@ const config: HardhatUserConfig = {
                 runs: 100,
             },
         },
+    },
+    vyper: {
+        version: '0.2.7',
     },
     namedAccounts: {
         deployer: 0,
