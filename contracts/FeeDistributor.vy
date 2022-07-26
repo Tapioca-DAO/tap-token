@@ -372,18 +372,16 @@ def claim_many(_receivers: address[20]) -> bool:
 
 
 @external
-def burn(_coin: address) -> bool:
+def burn(amount: uint256) -> bool:
     """
     @notice Receive 3CRV into the contract and trigger a token checkpoint
-    @param _coin Address of the coin being received (must be 3CRV)
+    @param amount Amount of tokens to receive
     @return bool success
     """
-    assert _coin == self.token
     assert not self.is_killed
 
-    amount: uint256 = ERC20(_coin).balanceOf(msg.sender)
     if amount != 0:
-        ERC20(_coin).transferFrom(msg.sender, self, amount)
+        ERC20(self.token).transferFrom(msg.sender, self, amount)
         if self.can_checkpoint_token and (block.timestamp > self.last_token_time + TOKEN_CHECKPOINT_DEADLINE):
             self._checkpoint_token()
 
