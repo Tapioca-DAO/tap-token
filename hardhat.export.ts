@@ -8,8 +8,9 @@ import '@nomiclabs/hardhat-etherscan';
 import 'hardhat-deploy';
 import '@nomiclabs/hardhat-ethers';
 import 'hardhat-contract-sizer';
+import '@primitivefi/hardhat-dodoc';
+import 'solidity-coverage';
 // import 'hardhat-gas-reporter';
-// import 'solidity-coverage';
 
 dotenv.config();
 
@@ -24,23 +25,19 @@ const config: HardhatUserConfig = {
         },
     },
     vyper: {
-        compilers: [{ version: '0.2.7' }, { version: '0.2.8' }],
+        compilers: [{ version: '0.2.8' }],
     },
     namedAccounts: {
         deployer: 0,
+        minter: 1,
     },
     defaultNetwork: 'hardhat',
     networks: {
         hardhat: {
-            accounts:
-                process.env.PRIVATE_KEY !== undefined
-                    ? [
-                          {
-                              privateKey: process.env.PRIVATE_KEY,
-                              balance: '1000000000000000000000000',
-                          },
-                      ]
-                    : [],
+            allowUnlimitedContractSize: true,
+            accounts: {
+                count: 5,
+            },
         },
         testnet: {
             gasMultiplier: 2,
@@ -59,11 +56,21 @@ const config: HardhatUserConfig = {
     },
     etherscan: {
         apiKey: {
-            rinkeby: process.env.RINKEBY_KEY,
+            rinkeby: process.env.RINKEBY_KEY ?? '',
         },
     },
     mocha: {
         timeout: 4000000,
+    },
+    dodoc: {
+        runOnCompile: false,
+        freshOutput: true,
+        exclude: [
+            //doesn't work with Vyper contracts
+            'VeTapOFT',
+            'FeeDistributor',
+            'GaugeController',
+        ],
     },
 };
 
