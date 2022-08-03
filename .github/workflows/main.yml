@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+    branches:
+      - '*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Compile
+        env:
+          NODE_URL: ${{ secrets.NODE_URL }}
+        run: |
+          npm install --no-lockfile --force
+  # coverage:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Coverage
+  #       env:
+  #         NODE_URL: ${{ secrets.NODE_URL }}
+  #       run: |
+  #         npm install --no-lockfile --force
+  #         yarn coverage
+  #     - name: Coveralls
+  #       uses: coverallsapp/github-action@master
+  #       with:
+  #         github-token: ${{ secrets.GITHUB_TOKEN }}
+  #TODO: uncomment when we have coveralls
