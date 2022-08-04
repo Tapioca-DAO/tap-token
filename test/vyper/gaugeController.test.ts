@@ -1,7 +1,7 @@
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ERC20Mock, LZEndpointMock, GaugeController, TapOFT, VeTapOFT } from '../../typechain';
+import { ERC20Mock, LZEndpointMock, GaugeController, TapOFT, VeTap } from '../../typechain';
 
 import { deployLZEndpointMock, deployTapiocaOFT, deployveTapiocaNFT, BN, time_travel, deployGaugeController } from '../test.utils';
 
@@ -13,7 +13,7 @@ describe('gaugeController', () => {
     let LZEndpointMock: LZEndpointMock;
     let erc20Mock: ERC20Mock;
     let tapiocaOFT: TapOFT;
-    let veTapiocaOFT: VeTapOFT;
+    let veTapioca: VeTap;
     let gaugeController: GaugeController;
     const DAY: number = 86400;
 
@@ -26,8 +26,8 @@ describe('gaugeController', () => {
         LZEndpointMock = (await deployLZEndpointMock(0)) as LZEndpointMock;
         erc20Mock = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
-        veTapiocaOFT = (await deployveTapiocaNFT(tapiocaOFT.address, 'veTapioca Token', 'veTAP', '1')) as VeTapOFT;
-        gaugeController = (await deployGaugeController(tapiocaOFT.address, veTapiocaOFT.address)) as GaugeController;
+        veTapioca = (await deployveTapiocaNFT(tapiocaOFT.address, 'veTapioca Token', 'veTAP', '1')) as VeTap;
+        gaugeController = (await deployGaugeController(tapiocaOFT.address, veTapioca.address)) as GaugeController;
     });
 
     it('should do nothing', async () => {
@@ -42,7 +42,7 @@ describe('gaugeController', () => {
         expect(savedToken.toLowerCase()).to.eq(tapiocaOFT.address.toLowerCase());
 
         const savedEscrow = await gaugeController.voting_escrow();
-        expect(savedEscrow.toLowerCase()).to.eq(veTapiocaOFT.address.toLowerCase());
+        expect(savedEscrow.toLowerCase()).to.eq(veTapioca.address.toLowerCase());
 
         const timeTotal = await gaugeController.time_total();
         expect(timeTotal.gt(0)).to.be.true;
@@ -224,8 +224,8 @@ describe('gaugeController', () => {
         await expect(gaugeController.vote_for_gauge_weights(newGauge, badVotingPower)).to.be.reverted;
         await expect(gaugeController.vote_for_gauge_weights(invalidSigner.address, votingPower)).to.be.reverted;
 
-        await tapiocaOFT.approve(veTapiocaOFT.address, amountToLock);
-        await veTapiocaOFT.create_lock(amountToLock, latestBlock.timestamp + unlockTime);
+        await tapiocaOFT.approve(veTapioca.address, amountToLock);
+        await veTapioca.create_lock(amountToLock, latestBlock.timestamp + unlockTime);
 
         const initialSumWeight = await gaugeController.get_weights_sum_per_type(0);
         expect(initialSumWeight.eq(0)).to.be.true;

@@ -22,7 +22,7 @@ struct VotedSlope:
     end: uint256
 
 
-interface veTapOFT:
+interface veTap:
     def get_last_user_slope(addr: address) -> int128: view
     def locked__end(addr: address) -> uint256: view
 
@@ -113,7 +113,7 @@ def __init__(_token: address, _voting_escrow: address):
     """
     @notice Contract constructor
     @param _token `ERC20CRV` contract address
-    @param _voting_escrow `veTapOFT` contract address
+    @param _voting_escrow `veTap` contract address
     """
     assert _token != ZERO_ADDRESS,"TAP not valid"
     assert _voting_escrow != ZERO_ADDRESS,"veTAP not valid"
@@ -525,8 +525,8 @@ def vote_for_gauge_weights(_gauge_addr: address, _user_weight: uint256):
     @param _user_weight Weight for a gauge in bps (units of 0.01%). Minimal is 0.01%. Ignored if 0
     """
     escrow: address = self.voting_escrow
-    slope: uint256 = convert(veTapOFT(escrow).get_last_user_slope(msg.sender), uint256)
-    lock_end: uint256 = veTapOFT(escrow).locked__end(msg.sender)
+    slope: uint256 = convert(veTap(escrow).get_last_user_slope(msg.sender), uint256)
+    lock_end: uint256 = veTap(escrow).locked__end(msg.sender)
     _n_gauges: int128 = self.n_gauges
     next_time: uint256 = (block.timestamp + WEEK) / WEEK * WEEK
     assert lock_end > next_time,"lock end not valid"

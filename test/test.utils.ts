@@ -67,7 +67,7 @@ export async function deployTapiocaOFT(lzEndpoint: string, to: string) {
 
 export async function deployveTapiocaNFT(tapiocaOFT: string, veTapiocaName: string, veTapiocaSymbol: string, veTapiocaVersion: string) {
     const veTapiocaOFTContract = await (
-        await ethers.getContractFactory('VeTapOFT')
+        await ethers.getContractFactory('VeTap')
     ).deploy(tapiocaOFT, veTapiocaName, veTapiocaSymbol, veTapiocaVersion);
     await veTapiocaOFTContract.deployed();
     return veTapiocaOFTContract;
@@ -77,4 +77,30 @@ export async function deployGaugeController(tapToken: string, veTapToken: string
     const gaugeControllerContract = await (await ethers.getContractFactory('GaugeController')).deploy(tapToken, veTapToken);
     await gaugeControllerContract.deployed();
     return gaugeControllerContract;
+}
+
+export async function deployFeeDistributor(
+    veTapToken: string,
+    startTime: number,
+    tapToken: string,
+    admin: string,
+    emergencyReturn: string,
+) {
+    const feeDistributorContract = await (
+        await ethers.getContractFactory('FeeDistributor')
+    ).deploy(veTapToken, startTime, tapToken, admin, emergencyReturn);
+    await feeDistributorContract.deployed();
+    return feeDistributorContract;
+}
+
+export async function deployMinter(tapToken: string, gaugeController: string) {
+    const minterContract = await (await ethers.getContractFactory('Minter')).deploy(tapToken, gaugeController);
+    await minterContract.deployed();
+    return minterContract;
+}
+
+export async function deployLiquidityGauge(receipt: string, minter: string, admin: string) {
+    const liquidityGauge = await (await ethers.getContractFactory('LiquidityGauge')).deploy(receipt, minter, admin);
+    await liquidityGauge.deployed();
+    return liquidityGauge;
 }
