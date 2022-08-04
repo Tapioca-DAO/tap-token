@@ -118,3 +118,5 @@ describe('tapOFT', () => {
         await expect(tapiocaOFT0.connect(signer).removeTAP(signer.address, amount)).to.emit(tapiocaOFT0, 'Burned');
     });
 });
+
+//TODO: more coverage
