@@ -67,9 +67,11 @@ const config: HardhatUserConfig = {
         freshOutput: true,
         exclude: [
             //doesn't work with Vyper contracts
-            'VeTapOFT',
+            'VeTap',
             'FeeDistributor',
             'GaugeController',
+            'LiquidityGauge',
+            'Minter',
         ],
     },
 };

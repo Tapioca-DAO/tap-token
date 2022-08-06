@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { LZEndpointMock, TapOFT } from '../../typechain';
 
-import { deployLZEndpointMock, deployTapiocaOFT, BN } from '../test.utils';
+import { deployLZEndpointMock, deployTapiocaOFT, BN, time_travel } from '../test.utils';
 
 describe('tapOFT', () => {
     let signer: SignerWithAddress;
@@ -117,85 +117,7 @@ describe('tapOFT', () => {
         await tapiocaOFT0.pauseSendTokens(false);
         await expect(tapiocaOFT0.connect(signer).removeTAP(signer.address, amount)).to.emit(tapiocaOFT0, 'Burned');
     });
-
-    // it('should wrap some tokens', async () => {
-    //     const amount = ethers.BigNumber.from('1000');
-
-    //     const erc20Mock0BalanceOfSignerBeforeMint = await erc20Mock0.balanceOf(signer.address);
-    //     await erc20Mock0.connect(signer).freeMint(amount);
-    //     const erc20Mock0BalanceOfSignerAfterMint = await erc20Mock0.balanceOf(signer.address);
-
-    //     expect(erc20Mock0BalanceOfSignerAfterMint.gt(erc20Mock0BalanceOfSignerBeforeMint)).to.be.true;
-    //     expect(erc20Mock0BalanceOfSignerAfterMint).to.eq(amount);
-
-    //     const oft0BalanceBeforeWrap = await tapiocaOFT0.balanceOf(signer.address);
-    //     expect(oft0BalanceBeforeWrap).to.eq(0);
-
-    //     await wrap(tapiocaOFT0, erc20Mock0, amount, signer, true); //revert
-    //     await wrap(tapiocaOFT0, erc20Mock0, amount, signer);
-
-    //     const oft0BalanceAfterWrap = await tapiocaOFT0.balanceOf(signer.address);
-    //     expect(oft0BalanceAfterWrap).to.eq(amount);
-    // });
-
-    // it('should not wrap when paused', async () => {
-    //     const amount = ethers.BigNumber.from('1000');
-    //     await erc20Mock0.connect(signer).freeMint(amount);
-    //     await erc20Mock0.connect(signer).freeMint(amount);
-    //     await wrap(tapiocaOFT0, erc20Mock0, amount, signer);
-
-    //     await tapiocaOFT0.pauseSendTokens(true);
-
-    //     await wrap(tapiocaOFT0, erc20Mock0, amount, signer, true); //revert
-
-    //     await tapiocaOFT0.pauseSendTokens(false);
-
-    //     await wrap(tapiocaOFT0, erc20Mock0, amount, signer);
-    // });
-
-    // it('should unwrap', async () => {
-    //     const amount = ethers.BigNumber.from('1000');
-    //     await erc20Mock0.connect(signer).freeMint(amount);
-    //     await wrap(tapiocaOFT0, erc20Mock0, amount, signer);
-
-    //     await unwrap(tapiocaOFT0, amount.mul(2), signer, true); //revert
-    //     await unwrap(tapiocaOFT0, amount, signer);
-    // });
-
-    // it('should not unwrap when paused', async () => {
-    //     const amount = ethers.BigNumber.from('1000');
-    //     await erc20Mock0.connect(signer).freeMint(amount);
-    //     await wrap(tapiocaOFT0, erc20Mock0, amount, signer);
-
-    //     await tapiocaOFT0.pauseSendTokens(true);
-
-    //     await unwrap(tapiocaOFT0, amount.mul(2), signer, true); //revert
-
-    //     await tapiocaOFT0.pauseSendTokens(false);
-
-    //     await unwrap(tapiocaOFT0, amount, signer);
-    // });
 });
 
-// async function wrap(
-//     tapiocaOftContract: TapOFT,
-//     erc20Contract: ERC20Mock,
-//     amount: BigNumber,
-//     signer: SignerWithAddress,
-//     shouldRevert?: boolean,
-// ) {
-//     if (shouldRevert) {
-//         await expect(tapiocaOftContract.connect(signer).wrap(signer.address, amount)).to.be.reverted;
-//     } else {
-//         await erc20Contract.approve(tapiocaOftContract.address, amount);
-//         await expect(tapiocaOftContract.connect(signer).wrap(signer.address, amount)).to.emit(tapiocaOftContract, 'Wrap');
-//     }
-// }
-
-// async function unwrap(tapiocaOftContract: TapOFT, amount: BigNumber, signer: SignerWithAddress, shouldRevert?: boolean) {
-//     if (shouldRevert) {
-//         await expect(tapiocaOftContract.connect(signer).unwrap(signer.address, amount)).to.be.reverted;
-//     } else {
-//         await expect(tapiocaOftContract.connect(signer).unwrap(signer.address, amount)).to.emit(tapiocaOftContract, 'Unwrap');
-//     }
-// }
+//TODO: more coverage
+//T
