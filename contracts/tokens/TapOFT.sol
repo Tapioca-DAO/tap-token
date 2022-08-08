@@ -28,8 +28,8 @@ contract TapOFT is PausableOFT {
     uint256 public constant INFLATION_DELAY = 86400;
     uint256 public constant RATE_REDUCTION_TIME = YEAR;
     uint256 public constant RATE_DENOMINATOR = 10**18;
-    uint256 public constant INITIAL_RATE = (1e18 * 10_000) / YEAR; //TODO: compute rate
-    uint256 public constant RATE_REDUCTION_COEFFICIENT = 1189207115002721024; //TODO: compute coefficient 2 ** (1/4) * 1e18
+    uint256 public constant INITIAL_RATE = (1e18 * 34_600_000) / YEAR;
+    uint256 public constant RATE_REDUCTION_COEFFICIENT = 1e15 * 2358;
 
     /// @notice returns the minter address
     address public minter;
@@ -96,8 +96,6 @@ contract TapOFT is PausableOFT {
         miningEpoch = -1;
         startEpochSupply = INITIAL_SUPPLY;
         startEpochTime = block.timestamp + INFLATION_DELAY - RATE_REDUCTION_TIME;
-
-        //todo: set trusted remote?
     }
 
     ///-- Onwer methods --
@@ -116,7 +114,7 @@ contract TapOFT is PausableOFT {
     }
 
     /// @notice  returns the current number of tokens in existence (claimed or unclaimed)
-    function availableSupply() external view returns (uint256) {
+    function availableSupply() public view returns (uint256) {
         return startEpochSupply + (block.timestamp - startEpochTime) * rate;
     }
 
@@ -201,10 +199,17 @@ contract TapOFT is PausableOFT {
     /// @param _amount TAP amount
     function createTAP(address _to, uint256 _amount) external whenNotPaused {
         require(msg.sender == minter || msg.sender == owner(), 'unauthorized');
+        require(_to != address(0), 'address not valid');
+
+        if (block.timestamp >= startEpochTime + RATE_REDUCTION_TIME) {
+            _updateMiningParameters();
+        }
+
+        uint256 _totalSupply = totalSupply() + _amount;
+        require(_totalSupply <= availableSupply(), 'exceeds allowable mint amount');
+
         _mint(_to, _amount);
         emit Minted(msg.sender, _to, _amount);
-
-        //TODO: check rate reduction over time based on Tapioca's emissions rate
     }
 
     /// @notice burns TAP

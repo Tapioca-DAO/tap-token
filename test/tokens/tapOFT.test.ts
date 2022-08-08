@@ -69,27 +69,35 @@ describe('tapOFT', () => {
     });
 
     it('should mint more', async () => {
-        const amount = BN(100000000).mul((1e18).toString());
-        const finalAmount = BN(300000000).mul((1e18).toString());
+        const amount = BN(1000).mul((1e18).toString());
+        const initialAmount = BN(100000000).mul((1e18).toString());
 
         await expect(tapiocaOFT0.connect(signer).setMinter(minter.address)).to.emit(tapiocaOFT0, 'MinterUpdated');
 
-        await expect(tapiocaOFT0.connect(normalUser).createTAP(signer.address, amount)).to.be.reverted;
+        await expect(tapiocaOFT0.connect(signer).createTAP(ethers.constants.AddressZero, amount)).to.be.reverted;
+        await expect(tapiocaOFT0.connect(normalUser).createTAP(signer.address, amount)).to.be.revertedWith('unauthorized');
+        await expect(tapiocaOFT0.connect(signer).createTAP(signer.address, amount)).to.be.revertedWith('exceeds allowable mint amount');
+
+        time_travel(50 * 86400);
+        await tapiocaOFT0.updateMiningParameters();
         await expect(tapiocaOFT0.connect(signer).createTAP(signer.address, amount)).to.emit(tapiocaOFT0, 'Minted');
+        time_travel(50 * 86400);
         await expect(tapiocaOFT0.connect(minter).createTAP(signer.address, amount)).to.emit(tapiocaOFT0, 'Minted');
 
         const signerBalance = await tapiocaOFT0.balanceOf(signer.address);
-        expect(signerBalance).to.eq(finalAmount);
+        expect(signerBalance.gt(initialAmount)).to.be.true;
 
         const totalSupply = await tapiocaOFT0.totalSupply();
-        expect(signerBalance).to.eq(totalSupply);
+        expect(totalSupply.eq(initialAmount.add(amount).add(amount))).to.be.true;
     });
 
     it('should not mint when paused', async () => {
-        const amount = BN(100000000).mul((1e18).toString());
+        const amount = BN(1000).mul((1e18).toString());
         await tapiocaOFT0.pauseSendTokens(true);
         await expect(tapiocaOFT0.connect(signer).createTAP(signer.address, amount)).to.be.reverted;
         await tapiocaOFT0.pauseSendTokens(false);
+        time_travel(50 * 86400);
+        await tapiocaOFT0.updateMiningParameters();
         await expect(tapiocaOFT0.connect(signer).createTAP(signer.address, amount)).to.emit(tapiocaOFT0, 'Minted');
     });
 
@@ -117,7 +125,70 @@ describe('tapOFT', () => {
         await tapiocaOFT0.pauseSendTokens(false);
         await expect(tapiocaOFT0.connect(signer).removeTAP(signer.address, amount)).to.emit(tapiocaOFT0, 'Burned');
     });
-});
 
-//TODO: more coverage
-//T
+    it('should return the available supply', async () => {
+        //for coverage
+        const initialSupply = await tapiocaOFT0.INITIAL_SUPPLY();
+        const available = await tapiocaOFT0.availableSupply();
+        expect(available.eq(initialSupply)).to.be.true;
+    });
+
+    it('should return mintable in a specific timeframe', async () => {
+        //for coverage
+        const start = await tapiocaOFT0.startEpochTime();
+        const end = start.add(10 * 86400);
+        const end2 = start.add(2 * 365 * 86400);
+        const end3 = start.add(200 * 365 * 86400);
+
+        await expect(tapiocaOFT0.mintableInTimeframe(end, start)).to.be.reverted;
+        await expect(tapiocaOFT0.mintableInTimeframe(start, end3)).to.be.reverted;
+        await tapiocaOFT0.mintableInTimeframe(start, end);
+        await tapiocaOFT0.mintableInTimeframe(start, end2);
+    });
+
+    it('should update mining params', async () => {
+        //for coverage
+        await expect(tapiocaOFT0.updateMiningParameters()).to.be.reverted;
+        time_travel(2 * 365 * 86400);
+        await tapiocaOFT0.updateMiningParameters();
+        time_travel(2 * 365 * 86400);
+        await tapiocaOFT0.updateMiningParameters();
+    });
+
+    it('should test start epoch write', async () => {
+        //for coverage
+        await tapiocaOFT0.startEpochTimeWrite();
+        time_travel(2 * 365 * 86400);
+        await tapiocaOFT0.startEpochTimeWrite();
+    });
+
+    it('should test emissions schedule for first year', async () => {
+        const initialSupply = BN(100000000).mul((1e18).toString());
+        const shouldMint = BN(34500000).mul((1e18).toString());
+        const shouldMintMax = BN(34600000).mul((1e18).toString());
+        time_travel(365 * 86400);
+        await tapiocaOFT0.updateMiningParameters();
+        const availableSupply = await tapiocaOFT0.availableSupply();
+        const minted = availableSupply.sub(initialSupply);
+        expect(minted.gt(shouldMint)).to.be.true;
+        expect(minted.lt(shouldMintMax)).to.be.true;
+    });
+
+    it('should test emissions schedule for full period when updating parmeters each year', async () => {
+        const initialSupply = BN(100000000).mul((1e18).toString());
+        const shouldMint = BN(58100000).mul((1e18).toString());
+        const shouldMintMax = BN(58200000).mul((1e18).toString());
+        time_travel(365 * 86400);
+        await tapiocaOFT0.updateMiningParameters();
+        time_travel(365 * 86400);
+        await tapiocaOFT0.updateMiningParameters();
+        time_travel(365 * 86400);
+        await tapiocaOFT0.updateMiningParameters();
+        time_travel(365 * 86400);
+        await tapiocaOFT0.updateMiningParameters();
+        const availableSupply = await tapiocaOFT0.availableSupply();
+        const minted = availableSupply.sub(initialSupply);
+        expect(minted.gt(shouldMint)).to.be.true;
+        expect(minted.lt(shouldMintMax)).to.be.true;
+    });
+});

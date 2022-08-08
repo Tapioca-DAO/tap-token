@@ -49,15 +49,6 @@ def __init__(_token: address, _controller: address):
     self.admin = msg.sender
 
 
-# TODO: remove
-@external 
-def mint_for_test(gauge_addr:address, _for:address) -> uint256:
-    LiquidityGauge(gauge_addr).user_checkpoint(_for)
-    total_mint: uint256 = LiquidityGauge(gauge_addr).integrate_fraction(_for)
-    to_mint: uint256 = total_mint - self.minted[_for][gauge_addr]
-
-    return total_mint
-
 # Internal methods
 @internal
 def _mint_for(gauge_addr: address, _for: address):
