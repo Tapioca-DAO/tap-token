@@ -9,8 +9,11 @@
         "test": "npx hardhat test",
         "coverage": "yarn clean && NODE_ENV=compile hardhat coverage",
         "contracts_size": "yarn compile && NODE_ENV=hardhat hardhat size-contracts",
-        "deploy": "npx hardhat deploy",
-        "deploy:mainnet": "npx hardhat deploy --network mainnet",
+        "verify_contract": "hardhat verify --network",
+        "@comment deploy": "Deploy scripts",
+        "deploy:TapOFT": "hardhat deploy --tags TapOFT --network",
+        "deploy:Governance": "hardhat deploy --tags Governance --network",
+        "deploy:LiquidityGauge": "hardhat deploy --tags LiquidityGauge --network",
         "generate-sdk": "npx hardhat exportSDK"
     },
     "devDependencies": {
