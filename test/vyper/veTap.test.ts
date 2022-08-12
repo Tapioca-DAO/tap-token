@@ -252,26 +252,6 @@ describe('veTapioca', () => {
         expect(signerVeTokenBalance.eq(0)).to.be.true;
     });
 
-    it('should be able to force withdraw with a penaly', async () => {
-        const amountToLock = BN(10000).mul((1e18).toString());
-        const finalPossibleAmount = BN(2500).mul((1e18).toString());
-        const latestBlock = await ethers.provider.getBlock('latest');
-        const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
-
-        await tapiocaOFT.connect(signer).transfer(signer2.address, amountToLock);
-        await tapiocaOFT.connect(signer2).approve(veTapioca.address, amountToLock);
-        await veTapioca.connect(signer2).create_lock(amountToLock, latestBlock.timestamp + UNLOCK_TIME);
-
-        const signer2VeTapBalance = await erc20.balanceOf(signer2.address);
-        expect(signer2VeTapBalance.gt(0)).to.be.true;
-
-        await expect(veTapioca.connect(signer3).force_withdraw()).to.be.reverted; //not a valid user
-        await veTapioca.connect(signer2).force_withdraw();
-
-        const signer2FinalTapBalance = await tapiocaOFT.balanceOf(signer2.address);
-        expect(signer2FinalTapBalance.eq(finalPossibleAmount)).to.be.true;
-    });
-
     it('should not be able to withdraw', async () => {
         const amountToLock = BN(10000).mul((1e18).toString());
         const finalPossibleAmount = BN(2500).mul((1e18).toString());
