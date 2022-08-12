@@ -669,38 +669,3 @@ def withdraw():
     log Withdraw(msg.sender, value, block.timestamp)
     log Supply(supply_before, supply_before - value)
 
-
-
-@external
-@nonreentrant('lock')
-def force_withdraw():
-    """
-    @notice Withdraw all tokens for `msg.sender`
-    @dev Will pay a penalty based on time.
-    With a 4 years lock on withdraw, you pay 75% penalty during the first year.
-    penalty decrease linearly to zero starting when time left is under 3 years.
-    """
-
-    _locked: LockedBalance = self.locked[msg.sender]
-    assert block.timestamp < _locked.end, "locked end not valid"
-
-    time_left: uint256 = _locked.end - block.timestamp
-    penalty_ratio: uint256 = min(MULTIPLIER * 3 / 4,  MULTIPLIER * time_left / MAXTIME)
-    value: uint256 = convert(_locked.amount, uint256)
-    old_locked: LockedBalance = _locked
-    _locked.end = 0
-    _locked.amount = 0
-    self.locked[msg.sender] = _locked
-    supply_before: uint256 = self.supply
-    self.supply = supply_before - value
-    # old_locked can have either expired <= timestamp or zero end
-    # _locked has only 0 end
-    # Both can have >= 0 amount
-    self._checkpoint(msg.sender, old_locked, _locked)
-
-    penalty: uint256 = value * penalty_ratio / MULTIPLIER
-    assert ERC20(self.token).transfer(msg.sender, value - penalty)
-
-    log Withdraw(msg.sender, value, block.timestamp)
-    log Supply(supply_before, supply_before - value)
-
