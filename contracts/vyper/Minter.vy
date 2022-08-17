@@ -13,6 +13,7 @@ interface LiquidityGauge:
 
 interface TapOFT:
     def extractTAP(_to: address, _value: uint256): nonpayable
+    def balanceOf(addr:address) -> uint256: view
 
 interface GaugeController:
     def gauge_types(addr: address) -> int128: view
@@ -49,20 +50,39 @@ def __init__(_token: address, _controller: address):
     self.admin = msg.sender
 
 
+@external
+@view
+def mint_test(gauge_addr:address, _for:address) -> uint256:
+    total_mint: uint256 = LiquidityGauge(gauge_addr).integrate_fraction(_for)
+    to_mint: uint256 = total_mint - self.minted[_for][gauge_addr]
+    return to_mint
+
+
 # Internal methods
 @internal
-def _mint_for(gauge_addr: address, _for: address):
+def _mint_for(gauge_addr: address, _for: address) -> uint256:
     assert GaugeController(self.controller).gauge_types(gauge_addr) >= 0,"gauge not valid" 
+    assert _for != ZERO_ADDRESS,"recipient not valid"
 
     LiquidityGauge(gauge_addr).user_checkpoint(_for)
     total_mint: uint256 = LiquidityGauge(gauge_addr).integrate_fraction(_for)
-    to_mint: uint256 = total_mint - self.minted[_for][gauge_addr]
+    to_mint: uint256 = 0
 
-    if to_mint != 0:
+    if(total_mint>=self.minted[_for][gauge_addr]):
+        to_mint = total_mint - self.minted[_for][gauge_addr]
+
+    available: uint256 = TapOFT(self.token).balanceOf(self.token)
+    assert available >= to_mint, "exceeds balance"
+    
+    
+    if to_mint > 0:
         TapOFT(self.token).extractTAP(_for, to_mint)
         self.minted[_for][gauge_addr] = total_mint
 
         log Minted(_for, gauge_addr, total_mint)
+        
+    return to_mint
+    
 
 
 # Owner methods
@@ -91,12 +111,12 @@ def apply_transfer_ownership():
 # Write methods
 @external
 @nonreentrant('lock')
-def mint(gauge_addr: address):
+def mint(gauge_addr: address) -> uint256:
     """
     @notice Mint everything which belongs to `msg.sender` and send to them
     @param gauge_addr `LiquidityGauge` address to get mintable amount from
     """
-    self._mint_for(gauge_addr, msg.sender)
+    return self._mint_for(gauge_addr, msg.sender)
 
 @external
 @nonreentrant('lock')
