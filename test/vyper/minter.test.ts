@@ -12,7 +12,6 @@ import {
     deployGaugeController,
     deployMinter,
 } from '../test.utils';
-import { BigNumber } from 'ethers';
 
 describe('minter', () => {
     let signer: SignerWithAddress;
@@ -98,8 +97,12 @@ describe('minter', () => {
 
         const shouldMint = await mockedLiquidityGauge.test();
 
-        time_travel(250 * DAY);
-        await tapiocaOFT.updateMiningParameters();
+        //250 days
+        for (var i = 0; i <= 35; i++) {
+            time_travel(7 * DAY);
+            await tapiocaOFT.connect(signer).emitForWeek(0);
+        }
+
         await minter.connect(signer2).mint(mockedLiquidityGauge.address);
 
         const signer2FinalTapBalance = await tapiocaOFT.balanceOf(signer2.address);
@@ -115,9 +118,12 @@ describe('minter', () => {
         const signer2TapBalance = await tapiocaOFT.balanceOf(signer2.address);
         expect(signer2TapBalance.eq(0)).to.be.true;
 
-        time_travel(250 * DAY);
+        //250 days
+        for (var i = 0; i <= 35; i++) {
+            time_travel(7 * DAY);
+            await tapiocaOFT.connect(signer).emitForWeek(0);
+        }
 
-        await tapiocaOFT.updateMiningParameters();
         await minter.connect(signer).mint_for(mockedLiquidityGauge.address, signer2.address);
         const signer2TapBalanceAfterFirstMint = await tapiocaOFT.balanceOf(signer2.address);
         expect(signer2TapBalanceAfterFirstMint.eq(0)).to.be.true; //should mint nothing as there is no approval for it yet
@@ -147,8 +153,11 @@ describe('minter', () => {
         const shouldMintFirstGauge = await mockedLiquidityGauge.test();
         const shouldMintSecondGauge = await anotherLiquidityGauge.test();
 
-        time_travel(550 * DAY);
-        await tapiocaOFT.updateMiningParameters();
+        //550 days
+        for (var i = 0; i <= 78; i++) {
+            time_travel(7 * DAY);
+            await tapiocaOFT.connect(signer).emitForWeek(0);
+        }
 
         await minter
             .connect(signer2)

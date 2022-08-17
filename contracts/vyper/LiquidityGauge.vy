@@ -11,8 +11,7 @@
 from vyper.interfaces import ERC20
 
 interface TapToken:
-    def futureEpochTimeWrite() -> uint256: nonpayable
-    def rate() -> uint256: view
+    def balanceOf(addr: address) -> uint256: view
 
 interface Controller:
     def period() -> int128: view
@@ -58,7 +57,7 @@ event ApplyOwnership:
     admin: address
 
 
-TOKENLESS_PRODUCTION: constant(uint256) = 40
+TOKENLESS_PRODUCTION: constant(uint256) = 100
 BOOST_WARMUP: constant(uint256) = 2 * 7 * 86400
 WEEK: constant(uint256) = 604800
 
@@ -131,8 +130,6 @@ def __init__(lp_addr: address, _minter: address, _admin: address):
     self.controller = controller_addr
     self.voting_escrow = Controller(controller_addr).voting_escrow()
     self.period_timestamp[0] = block.timestamp
-    self.inflation_rate = TapToken(TAP_addr).rate()
-    self.future_epoch_time = TapToken(TAP_addr).futureEpochTimeWrite() 
     self.admin = _admin
 
 # Internal methods
@@ -148,14 +145,11 @@ def _update_liquidity_limit(addr: address, l: uint256, L: uint256):
     """
     # To be called after totalSupply is updated
     _voting_escrow: address = self.voting_escrow
-    voting_balance: uint256 = ERC20(_voting_escrow).balanceOf(addr)
-    voting_total: uint256 = ERC20(_voting_escrow).totalSupply()
 
-    lim: uint256 = l * TOKENLESS_PRODUCTION / 100
-    if (voting_total > 0) and (block.timestamp > self.period_timestamp[0] + BOOST_WARMUP):
-        lim += L * voting_balance / voting_total * (100 - TOKENLESS_PRODUCTION) / 100
-
-    lim = min(l, lim)
+    lim: uint256 = 0
+    if(l>0) and (L>0):
+        lim = 10**18 * l/L
+ 
     old_bal: uint256 = self.working_balances[addr]
     self.working_balances[addr] = lim
     _working_supply: uint256 = self.working_supply + lim - old_bal
@@ -169,7 +163,6 @@ def _checkpoint(addr: address):
     @notice Checkpoint for a user
     @param addr User address
     """
-    _token: address = self.TAP_token
     _controller: address = self.controller
     _period: int128 = self.period
     _period_time: uint256 = self.period_timestamp[_period]
@@ -177,50 +170,21 @@ def _checkpoint(addr: address):
     rate: uint256 = self.inflation_rate
     new_rate: uint256 = rate
     prev_future_epoch: uint256 = self.future_epoch_time
-    if prev_future_epoch >= _period_time:
-        self.future_epoch_time = TapToken(_token).futureEpochTimeWrite()
-        new_rate = TapToken(_token).rate()
-        self.inflation_rate = new_rate
+   
     Controller(_controller).checkpoint_gauge(self)
 
     _working_balance: uint256 = self.working_balances[addr]
-    _working_supply: uint256 = self.working_supply
+
+    available: uint256 = TapToken(self.TAP_token).balanceOf(self.TAP_token)
 
     if self.is_killed:
-        rate = 0  # Stop distributing inflation as soon as killed
+        available = 0  # Stop distributing inflation as soon as killed
 
     # Update integral of 1/supply
     if block.timestamp > _period_time:
-        prev_week_time: uint256 = _period_time
-        week_time: uint256 = min((_period_time + WEEK) / WEEK * WEEK, block.timestamp)
+        w: uint256 = Controller(_controller).gauge_relative_weight(self, block.timestamp)
+        _integrate_inv_supply =  w * available / 10**18
 
-        for i in range(500):
-            dt: uint256 = week_time - prev_week_time
-            w: uint256 = Controller(_controller).gauge_relative_weight(self, prev_week_time / WEEK * WEEK)
-
-            if _working_supply > 0:
-                if prev_future_epoch >= prev_week_time and prev_future_epoch < week_time:
-                    # If we went across one or multiple epochs, apply the rate
-                    # of the first epoch until it ends, and then the rate of
-                    # the last epoch.
-                    # If more than one epoch is crossed - the gauge gets less,
-                    # but that'd meen it wasn't called for more than 1 year
-                    _integrate_inv_supply += rate * w * (prev_future_epoch - prev_week_time) / _working_supply
-                    rate = new_rate
-                    _integrate_inv_supply += rate * w * (week_time - prev_future_epoch) / _working_supply
-                else:
-                    _integrate_inv_supply += rate * w * dt / _working_supply
-                # On precisions of the calculation
-                # rate ~= 10e18
-                # last_weight > 0.01 * 1e18 = 1e16 (if pool weight is 1%)
-                # _working_supply ~= TVL * 1e18 ~= 1e26 ($100M for example)
-                # The largest loss is at dt = 1
-                # Loss is 1e-9 - acceptable
-
-            if week_time == block.timestamp:
-                break
-            prev_week_time = week_time
-            week_time = min(week_time + WEEK, block.timestamp)
 
     _period += 1
     self.period = _period
@@ -358,7 +322,7 @@ def withdraw(_value: uint256):
     @notice Withdraw `_value` LP tokens
     @param _value Number of tokens to withdraw
     """
-    self._checkpoint(msg.sender)
+    #self._checkpoint(msg.sender)
 
     _balance: uint256 = self.balanceOf[msg.sender] - _value
     _supply: uint256 = self.totalSupply - _value

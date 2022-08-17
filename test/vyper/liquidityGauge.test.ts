@@ -2,6 +2,7 @@ import hre, { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { ERC20Mock, LZEndpointMock, LiquidityGauge, TapOFT, VeTap, GaugeController, Minter } from '../../typechain';
+import writeJsonFile from 'write-json-file';
 
 import {
     deployLZEndpointMock,
@@ -13,7 +14,7 @@ import {
     deployMinter,
     deployLiquidityGauge,
 } from '../test.utils';
-import { BigNumber } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 
 describe('liquidityGauge', () => {
     let signer: SignerWithAddress;
@@ -75,12 +76,6 @@ describe('liquidityGauge', () => {
 
         const periodTimestamp = await liquidityGauge.period_timestamp(0);
         expect(periodTimestamp.gt(0)).to.be.true;
-
-        const inflationRate = await liquidityGauge.inflation_rate();
-        expect(inflationRate.eq(0)).to.be.true; //should be 0 before time pass
-
-        const futureEpochTime = await liquidityGauge.future_epoch_time();
-        expect(futureEpochTime.gt(0)).to.be.true; 
     });
 
     it('should transfer ownersip', async () => {
@@ -213,21 +208,34 @@ describe('liquidityGauge', () => {
             expect(balanceOfDepositor.eq(depositAmount), `liquidity balance ${i}`).to.be.true;
         }
 
-        //time travel 100 days
-        time_travel(100 * DAY);
-
-        for (var i = 0; i < 3; i++) {
-            const initialTapBalance = await tapiocaOFT.balanceOf(depositors[i].address);
-
-            await gaugeControllerInterface.gauge_relative_weight_write(gauges[i].address);
-            const gaugeRelativeWeight = await gaugeControllerInterface.gauge_relative_weight(gauges[i].address);
-            expect(gaugeRelativeWeight.gt(0), `relative weight ${i}`).to.be.true;
-
-            await minter.connect(depositors[i]).mint(gauges[i].address);
-
-            const finalTapBalance = await tapiocaOFT.balanceOf(depositors[i].address);
-            expect(finalTapBalance.gt(initialTapBalance), `tap balance ${i}`).to.be.true;
+        //100 days
+        for (var i = 0; i <= 14; i++) {
+            time_travel(7 * DAY);
+            await tapiocaOFT.connect(signer).emitForWeek(0);
         }
+
+        let totalAvailable = await tapiocaOFT.balanceOf(tapiocaOFT.address);
+        expect(totalAvailable.gte(0)).to.be.true;
+        const mintedForFirstUser = await minter.connect(depositors[0]).callStatic.mint(gauges[0].address);
+        expect(mintedForFirstUser.gte(0)).to.be.true;
+        expect(totalAvailable.gt(mintedForFirstUser)).to.be.true;
+        await minter.connect(depositors[0]).mint(gauges[0].address);
+
+        totalAvailable = await tapiocaOFT.balanceOf(tapiocaOFT.address);
+        const mintedForSecondUser = await minter.connect(depositors[1]).callStatic.mint(gauges[1].address);
+        expect(mintedForSecondUser.gte(0)).to.be.true;
+        expect(totalAvailable.gt(mintedForSecondUser)).to.be.true;
+        await minter.connect(depositors[1]).mint(gauges[1].address);
+
+        totalAvailable = await tapiocaOFT.balanceOf(tapiocaOFT.address);
+        expect(totalAvailable.gte(0)).to.be.true;
+        const mintedForThirdUser = await minter.connect(depositors[2]).callStatic.mint(gauges[2].address);
+        expect(mintedForThirdUser.gte(0)).to.be.true;
+        expect(totalAvailable.gte(mintedForThirdUser)).to.be.true;
+        await minter.connect(depositors[2]).mint(gauges[2].address);
+
+        totalAvailable = await tapiocaOFT.balanceOf(tapiocaOFT.address);
+        expect(totalAvailable.gte(0)).to.be.true;
 
         // withdraw from the third user
         const signerReceiptBalanceBeforeWithdraw = await erc20Mock3.balanceOf(signer3.address);
@@ -235,18 +243,19 @@ describe('liquidityGauge', () => {
 
         await liquidityGauge3.connect(signer3).withdraw(depositAmount);
 
+        const gaugeBalance = await liquidityGauge3.balanceOf(signer3.address);
+        expect(gaugeBalance.eq(0)).to.be.true;
+
         const signerReceiptBalanceAfterWithdraw = await erc20Mock3.balanceOf(signer3.address);
 
         expect(signerReceiptBalanceAfterWithdraw.eq(depositAmount)).to.be.true;
         expect(signerReceiptBalanceAfterWithdraw.gt(signerReceiptBalanceBeforeWithdraw)).to.be.true;
     });
 
-    it("should deposit and produce rewards when there are multiple gauges and types having the same initial weight but with different users' stake", async () => {
+    it('should test the new custom emissions model per week', async () => {
         //SETUP
         const initialWeight = BN(1).mul((1e18).toString());
         const depositAmount = BN(20000).mul((1e18).toString());
-        const depositAmount2 = BN(30000).mul((1e18).toString());
-        const depositAmount3 = BN(40000).mul((1e18).toString());
 
         const erc20Mock2 = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(BN(2000000).mul((1e18).toString()));
         const erc20Mock3 = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(BN(2000000).mul((1e18).toString()));
@@ -261,7 +270,6 @@ describe('liquidityGauge', () => {
         const tokens = [erc20Mock, erc20Mock2, erc20Mock3];
         const gauges = [liquidityGauge, liquidityGauge2, liquidityGauge3];
         const gaugesInterfaces = [liquidityGaugeInterface, liquidityGaugeInterface2, liquidityGaugeInterface3];
-        const amounts = [depositAmount, depositAmount2, depositAmount3];
 
         //Add 3 gauges and 3 types
         await gaugeController.add_type('Test', initialWeight);
@@ -274,51 +282,51 @@ describe('liquidityGauge', () => {
 
         // gettokens
         for (var i = 0; i < 3; i++) {
-            await tokens[i].connect(depositors[i]).freeMint(amounts[i]);
+            await tokens[i].connect(depositors[i]).freeMint(depositAmount);
             const balanceOfDepositor = await tokens[i].balanceOf(depositors[i].address);
-            expect(balanceOfDepositor.eq(amounts[i]), `token ${i}`).to.be.true;
+            expect(balanceOfDepositor.eq(depositAmount), `token ${i}`).to.be.true;
         }
 
         //stake receipt tokens
         for (var i = 0; i < 3; i++) {
-            await tokens[i].connect(depositors[i]).approve(gauges[i].address, amounts[i]);
-            await gaugesInterfaces[i].connect(depositors[i]).deposit(amounts[i], depositors[i].address);
+            await tokens[i].connect(depositors[i]).approve(gauges[i].address, depositAmount);
+            await gaugesInterfaces[i].connect(depositors[i]).deposit(depositAmount, depositors[i].address);
             const balanceOfDepositor = await gauges[i].balanceOf(depositors[i].address);
-            expect(balanceOfDepositor.eq(amounts[i]), `liquidity balance ${i}`).to.be.true;
+            expect(balanceOfDepositor.eq(depositAmount), `liquidity balance ${i}`).to.be.true;
         }
 
-        //time travel 100 days
-        time_travel(100 * DAY);
+        //with each week passing we need to:
+        //  - call emit on TAP
+        //  - call user_checkpoint on LiquidityGauge
+        //  - check each gauge's emissions
+        const liquidityGaugeEmissionsForUsers: any = {};
 
-        for (var i = 0; i < 3; i++) {
-            const initialTapBalance = await tapiocaOFT.balanceOf(depositors[i].address);
+        const noOfWeeks = 15;
+        for (var week = 0; week < noOfWeeks; week++) {
+            time_travel(7 * 86400);
+            const tapBalanceBefore = await tapiocaOFT.balanceOf(tapiocaOFT.address);
+            await tapiocaOFT.emitForWeek(0);
+            const tapBalanceAfter = await tapiocaOFT.balanceOf(tapiocaOFT.address);
+            expect(tapBalanceAfter.gt(tapBalanceBefore)).to.be.true;
 
-            await gaugeControllerInterface.gauge_relative_weight_write(gauges[i].address);
-            const gaugeRelativeWeight = await gaugeControllerInterface.gauge_relative_weight(gauges[i].address);
-            expect(gaugeRelativeWeight.gt(0), `relative weight ${i}`).to.be.true;
+            let totalClaimable: BigNumber = BN(0);
+            for (var i = 0; i < 3; i++) {
+                await gaugeControllerInterface.gauge_relative_weight_write(gauges[i].address);
+                const gaugeRelativeWeight = await gaugeControllerInterface.gauge_relative_weight(gauges[i].address);
+                expect(gaugeRelativeWeight.gt(0), `relative weight ${i}`).to.be.true;
 
-            await minter.connect(depositors[i]).mint(gauges[i].address);
+                await gauges[i].connect(depositors[i]).user_checkpoint(depositors[i].address);
 
-            const finalTapBalance = await tapiocaOFT.balanceOf(depositors[i].address);
-            expect(finalTapBalance.gt(initialTapBalance), `tap balance ${i}`).to.be.true;
-            if (i > 0) {
-                let finalTapBalanceOfPrevious = await tapiocaOFT.balanceOf(depositors[i - 1].address);
-                if (i == 1) {
-                    finalTapBalanceOfPrevious = finalTapBalanceOfPrevious.sub(BN(100000000).mul((1e18).toString()));
-                }
-                expect(finalTapBalance.gt(finalTapBalanceOfPrevious), `tap balance vs previous ${i}`).to.be.true;
+                const claimable = await gauges[i].connect(depositors[i]).callStatic.claimable_tokens(depositors[i].address);
+                totalClaimable = claimable.add(totalClaimable);
+                expect(claimable.gt(0)).to.be.true;
             }
+            liquidityGaugeEmissionsForUsers[`week ${week + 1}`] = {
+                'Claimable total': ethers.utils.formatEther(totalClaimable),
+                'Available total': ethers.utils.formatEther(tapBalanceAfter),
+            };
+            expect(totalClaimable.lte(tapBalanceAfter)).to.be.true;
         }
-
-        // withdraw from the third user
-        const signerReceiptBalanceBeforeWithdraw = await erc20Mock3.balanceOf(signer3.address);
-        expect(signerReceiptBalanceBeforeWithdraw.eq(0)).to.be.true;
-
-        await liquidityGauge3.connect(signer3).withdraw(amounts[2]);
-
-        const signerReceiptBalanceAfterWithdraw = await erc20Mock3.balanceOf(signer3.address);
-
-        expect(signerReceiptBalanceAfterWithdraw.eq(amounts[2])).to.be.true;
-        expect(signerReceiptBalanceAfterWithdraw.gt(signerReceiptBalanceBeforeWithdraw)).to.be.true;
+        await writeJsonFile('test/vyper/liquidityGaugeEmissionsForUsers.json', liquidityGaugeEmissionsForUsers);
     });
 });
