@@ -14,7 +14,6 @@ import {
     deployLiquidityGauge,
     deployFeeDistributor,
 } from '../../test.utils';
-import { BigNumber } from 'ethers';
 
 describe('governance - flow', () => {
     let signer: SignerWithAddress;
@@ -83,7 +82,11 @@ describe('governance - flow', () => {
         expect(gaugeWeightAfterFirstVote.gt(0)).to.be.true;
         expect(powerUsedAfterFirstVote.gt(0)).to.be.true;
 
-        time_travel(100 * DAY);
+        //100 days
+        for (var i = 0; i <= 14; i++) {
+            time_travel(7 * DAY);
+            await tapiocaOFT.connect(signer).emitForWeek(0);
+        }
 
         await gaugeController.connect(signer).vote_for_gauge_weights(liquidityGauge.address, votingPower);
 
@@ -154,7 +157,11 @@ describe('governance - flow', () => {
         await erc20Mock2.connect(signer2).approve(liquidityGauge2.address, amountToLock);
         await liquidityGaugeInterface2.connect(signer2).deposit(amountToLock, signer2.address);
 
-        time_travel(100 * DAY);
+        //100 days
+        for (var i = 0; i <= 14; i++) {
+            time_travel(7 * DAY);
+            await tapiocaOFT.connect(signer).emitForWeek(0);
+        }
 
         await gaugeControllerInterface.gauge_relative_weight_write(liquidityGauge.address);
         await gaugeControllerInterface.gauge_relative_weight_write(liquidityGauge2.address);

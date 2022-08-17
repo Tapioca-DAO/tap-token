@@ -15,7 +15,7 @@ import {
 } from '../test.utils';
 import { BigNumber } from 'ethers';
 
-describe('liquidityGauge', () => {
+describe.skip('liquidityGauge', () => {
     let signer: SignerWithAddress;
     let signer2: SignerWithAddress;
     let signer3: SignerWithAddress;
@@ -80,7 +80,7 @@ describe('liquidityGauge', () => {
         expect(inflationRate.eq(0)).to.be.true; //should be 0 before time pass
 
         const futureEpochTime = await liquidityGauge.future_epoch_time();
-        expect(futureEpochTime.gt(0)).to.be.true; 
+        expect(futureEpochTime.gt(0)).to.be.true;
     });
 
     it('should transfer ownersip', async () => {

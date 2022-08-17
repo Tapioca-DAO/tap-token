@@ -12,7 +12,7 @@ interface LiquidityGauge:
     def user_checkpoint(addr: address) -> bool: nonpayable
 
 interface TapOFT:
-    def createTAP(_to: address, _value: uint256): nonpayable
+    def extractTAP(_to: address, _value: uint256): nonpayable
 
 interface GaugeController:
     def gauge_types(addr: address) -> int128: view
@@ -59,7 +59,7 @@ def _mint_for(gauge_addr: address, _for: address):
     to_mint: uint256 = total_mint - self.minted[_for][gauge_addr]
 
     if to_mint != 0:
-        TapOFT(self.token).createTAP(_for, to_mint)
+        TapOFT(self.token).extractTAP(_for, to_mint)
         self.minted[_for][gauge_addr] = total_mint
 
         log Minted(_for, gauge_addr, total_mint)

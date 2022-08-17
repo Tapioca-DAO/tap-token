@@ -131,8 +131,9 @@ def __init__(lp_addr: address, _minter: address, _admin: address):
     self.controller = controller_addr
     self.voting_escrow = Controller(controller_addr).voting_escrow()
     self.period_timestamp[0] = block.timestamp
-    self.inflation_rate = TapToken(TAP_addr).rate()
-    self.future_epoch_time = TapToken(TAP_addr).futureEpochTimeWrite() 
+    # TODO: update based on the custom emissions
+    self.inflation_rate = 100 #TapToken(TAP_addr).rate()
+    self.future_epoch_time = block.timestamp + 86400# TapToken(TAP_addr).futureEpochTimeWrite() 
     self.admin = _admin
 
 # Internal methods
@@ -177,10 +178,11 @@ def _checkpoint(addr: address):
     rate: uint256 = self.inflation_rate
     new_rate: uint256 = rate
     prev_future_epoch: uint256 = self.future_epoch_time
-    if prev_future_epoch >= _period_time:
-        self.future_epoch_time = TapToken(_token).futureEpochTimeWrite()
-        new_rate = TapToken(_token).rate()
-        self.inflation_rate = new_rate
+    #TODO: update based on the new custom emissions
+    #if prev_future_epoch >= _period_time:
+        #self.future_epoch_time = TapToken(_token).futureEpochTimeWrite()
+        #new_rate = TapToken(_token).rate()
+        #self.inflation_rate = new_rate
     Controller(_controller).checkpoint_gauge(self)
 
     _working_balance: uint256 = self.working_balances[addr]

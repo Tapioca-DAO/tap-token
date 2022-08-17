@@ -8,7 +8,7 @@ import { LZEndpointMock, TapOFT } from '../../typechain';
 import { deployLZEndpointMock, deployTapiocaOFT, BN, time_travel } from '../test.utils';
 import { BigNumberish } from 'ethers';
 
-describe.only('tapOFT', () => {
+describe('tapOFT', () => {
     let signer: SignerWithAddress;
     let minter: SignerWithAddress;
     let normalUser: SignerWithAddress;
