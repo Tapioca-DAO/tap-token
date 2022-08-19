@@ -1,7 +1,6 @@
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import fs from 'fs';
 import writeJsonFile from 'write-json-file';
 import { LZEndpointMock, TapOFT } from '../../typechain';
 
@@ -201,62 +200,8 @@ describe('tapOFT', () => {
         await expect(tapiocaOFT0.connect(signer).removeTAP(signer.address, amount)).to.emit(tapiocaOFT0, 'Burned');
     });
 
-    // it('should return the available supply', async () => {
-    //     //for coverage
-    //     const initialSupply = await tapiocaOFT0.INITIAL_SUPPLY();
-    //     const available = await tapiocaOFT0.availableSupply();
-    //     expect(available.eq(initialSupply)).to.be.true;
-    // });
-
-    // it('should update mining params', async () => {
-    //     //for coverage
-    //     await expect(tapiocaOFT0.updateMiningParameters()).to.be.reverted;
-    //     time_travel(2 * 365 * 86400);
-    //     await tapiocaOFT0.updateMiningParameters();
-    //     time_travel(2 * 365 * 86400);
-    //     await tapiocaOFT0.updateMiningParameters();
-    // });
-
-    // it('should test start epoch write', async () => {
-    //     //for coverage
-    //     await tapiocaOFT0.startEpochTimeWrite();
-    //     time_travel(2 * 365 * 86400);
-    //     await tapiocaOFT0.startEpochTimeWrite();
-    // });
-
-    // it('should test emissions schedule for first year', async () => {
-    //     const initialSupply = BN(100000000).mul((1e18).toString());
-    //     const shouldMint = BN(34500000).mul((1e18).toString());
-    //     const shouldMintMax = BN(34600000).mul((1e18).toString());
-    //     time_travel(365 * 86400);
-    //     await tapiocaOFT0.updateMiningParameters();
-    //     const availableSupply = await tapiocaOFT0.availableSupply();
-    //     const minted = availableSupply.sub(initialSupply);
-    //     expect(minted.gt(shouldMint)).to.be.true;
-    //     expect(minted.lt(shouldMintMax)).to.be.true;
-    // });
-
-    // it('should test emissions schedule for full period when updating parmeters each year', async () => {
-    //     const initialSupply = BN(100000000).mul((1e18).toString());
-    //     const shouldMint = BN(58100000).mul((1e18).toString());
-    //     const shouldMintMax = BN(58200000).mul((1e18).toString());
-    //     time_travel(365 * 86400);
-    //     await tapiocaOFT0.updateMiningParameters();
-    //     time_travel(365 * 86400);
-    //     await tapiocaOFT0.updateMiningParameters();
-    //     time_travel(365 * 86400);
-    //     await tapiocaOFT0.updateMiningParameters();
-    //     time_travel(365 * 86400);
-    //     await tapiocaOFT0.updateMiningParameters();
-    //     const availableSupply = await tapiocaOFT0.availableSupply();
-    //     const minted = availableSupply.sub(initialSupply);
-    //     expect(minted.gt(shouldMint)).to.be.true;
-    //     expect(minted.lt(shouldMintMax)).to.be.true;
-    // });
-
     it('should test weekly emissions', async () => {
         const noOfWeeks = 200;
-        const initialSupply = BN(100000000).mul((1e18).toString());
         const supplyJsonContent: any = {};
         const emissionJsonContent: any = {};
         let sum: BigNumberish = 0;
