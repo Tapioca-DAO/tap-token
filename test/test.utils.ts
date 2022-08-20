@@ -50,6 +50,11 @@ export const LZ_ENDPOINTS: TLZ_Endpoint = {
         lzChainId: '10009',
     },
 };
+export async function deployTimedGauge(depositToken: string, rewardToken: string) {
+    const timedGaugeContract = await (await ethers.getContractFactory('TimedGauge')).deploy(depositToken, rewardToken);
+    await timedGaugeContract.deployed();
+    return timedGaugeContract;
+}
 
 export async function deployLZEndpointMock(chainId: number) {
     const lzEndpointContract = await (await ethers.getContractFactory('LZEndpointMock')).deploy(chainId);
