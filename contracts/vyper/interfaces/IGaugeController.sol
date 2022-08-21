@@ -12,4 +12,8 @@ interface IGaugeController {
     /// @notice updates gauge relative weight
     /// @param addr gauge address
     function gauge_relative_weight_write(address addr) external returns (uint256);
+
+    ///@notice returns the gauge type
+    ///@param addr the gauge address
+    function gauge_types(address addr) external view returns (int128);
 }

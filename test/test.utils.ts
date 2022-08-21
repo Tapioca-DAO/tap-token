@@ -50,9 +50,18 @@ export const LZ_ENDPOINTS: TLZ_Endpoint = {
         lzChainId: '10009',
     },
 };
-export async function deployTimedGauge(depositToken: string, rewardToken: string) {
-    const timedGaugeContract = await (await ethers.getContractFactory('TimedGauge')).deploy(depositToken, rewardToken);
+
+export async function deployGaugeFactory(gauge: string) {
+    const gaugeFactory = await (await ethers.getContractFactory('GaugeFactory')).deploy(gauge);
+    await gaugeFactory.deployed();
+
+    return gaugeFactory;
+}
+export async function deployTimedGauge(depositToken: string, rewardToken: string, owner: string, distributor: string) {
+    const timedGaugeContract = await (await ethers.getContractFactory('TimedGauge')).deploy();
     await timedGaugeContract.deployed();
+
+    await timedGaugeContract.init(depositToken, rewardToken, owner, distributor);
     return timedGaugeContract;
 }
 
@@ -98,10 +107,10 @@ export async function deployFeeDistributor(
     return feeDistributorContract;
 }
 
-export async function deployMinter(tapToken: string, gaugeController: string) {
-    const minterContract = await (await ethers.getContractFactory('Minter')).deploy(tapToken, gaugeController);
-    await minterContract.deployed();
-    return minterContract;
+export async function deployGaugeDistributor(tapToken: string, gaugeController: string) {
+    const gaugeDistributorContract = await (await ethers.getContractFactory('GaugeDistributor')).deploy(tapToken, gaugeController);
+    await gaugeDistributorContract.deployed();
+    return gaugeDistributorContract;
 }
 
 export async function deployLiquidityGauge(receipt: string, minter: string, admin: string) {

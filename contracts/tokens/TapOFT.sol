@@ -4,9 +4,12 @@ pragma solidity ^0.8.0;
 import './OFT20/PausableOFT.sol';
 import 'prb-math/contracts/PRBMathSD59x18.sol';
 
+//TODO: add mintedInWeek for the GaugeDistributor checks
+
 /// @title Tapioca OFT token
 /// @notice OFT compatible TAP token
 /// @dev Latest size: 15.875 KiB
+/// @dev Emissions calculator: https://www.desmos.com/calculator/1fa0zen2ut
 contract TapOFT is PausableOFT {
     using PRBMathSD59x18 for int256;
 
