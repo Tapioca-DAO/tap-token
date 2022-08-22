@@ -113,8 +113,3 @@ export async function deployGaugeDistributor(tapToken: string, gaugeController: 
     return gaugeDistributorContract;
 }
 
-export async function deployLiquidityGauge(receipt: string, minter: string, admin: string) {
-    const liquidityGauge = await (await ethers.getContractFactory('LiquidityGauge')).deploy(receipt, minter, admin);
-    await liquidityGauge.deployed();
-    return liquidityGauge;
-}

@@ -6,7 +6,6 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
-//TODO: add kill status and check in the GaugeDistributor
 contract TimedGauge is Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -48,6 +47,9 @@ contract TimedGauge is Pausable, ReentrancyGuard {
 
     /// @notice GaugeDistributor address
     address public gaugeDistributor;
+
+    /// @notice return the kill status
+    bool public isKilled;
 
     /// @notice total supply of the contract
     uint256 private _totalSupply;
@@ -116,6 +118,11 @@ contract TimedGauge is Pausable, ReentrancyGuard {
         _unpause();
     }
 
+    /// @notice kills the contract
+    function kill() external onlyOwner {
+        isKilled = true;
+    }
+
     /// @notice saves tokens from contract
     /// @param _token token's address
     /// @param _amount amount to be saved
@@ -136,8 +143,9 @@ contract TimedGauge is Pausable, ReentrancyGuard {
     /// @notice adds more rewards to the contract
     /// @param _amount new rewards amount
     function addRewards(uint256 _amount) external updateReward(address(0)) {
-        require(msg.sender==owner || msg.sender == gaugeDistributor,"unauthorized");
+        require(msg.sender == owner || msg.sender == gaugeDistributor, 'unauthorized');
         require(rewardsDuration > 0, 'reward duration not set');
+        require(!isKilled, 'contract killed');
         if (block.timestamp >= periodFinish) {
             rewardRate = _amount / rewardsDuration;
         } else {
@@ -238,6 +246,7 @@ contract TimedGauge is Pausable, ReentrancyGuard {
 
     ///-- Internal methods --
     function _claim() internal {
+        if(isKilled) return;
         uint256 _rewards = rewards[msg.sender];
         if (_rewards > 0) {
             rewards[msg.sender] = 0;

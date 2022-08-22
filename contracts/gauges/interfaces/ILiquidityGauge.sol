@@ -6,7 +6,8 @@ interface ILiquidityGauge {
     function init(
         address _token,
         address _reward,
-        address _owner
+        address _owner,
+        address _distributor
     ) external;
 
     function addRewards(uint256 _amount) external;

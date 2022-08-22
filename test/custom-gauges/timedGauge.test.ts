@@ -94,6 +94,14 @@ describe('TimedGauge', () => {
         expect(extracted.eq(amount)).to.be.true;
     });
 
+    it("should kill the contract", async () => {
+        await expect(gauge.connect(user2).kill()).to.be.reverted;
+        let killStatus = await gauge.isKilled();
+        expect(killStatus).to.be.false;
+        await gauge.connect(signer).kill();
+        killStatus = await gauge.isKilled();
+        expect(killStatus).to.be.true;
+    })
     it('should update reward duration', async () => {
         await expect(gauge.connect(user).updateRewardDuration(1000 * 365)).to.be.reverted;
 
@@ -109,11 +117,11 @@ describe('TimedGauge', () => {
         const amount = BN(1000000).mul((1e18).toString());
 
         await gauge.connect(signer).updateRewardDuration(0);
-        await expect(gauge.connect(signer).addRewards(0)).to.be.reverted;
+        await expect(gauge.connect(signer).addRewards(0)).to.be.revertedWith("reward duration not set");
+
         await gauge.connect(signer).updateRewardDuration(4 * 365 * 86400);
 
-        await expect(gauge.connect(user).addRewards(0)).to.be.reverted;
-        await expect(gauge.connect(user).addRewards(0)).to.be.reverted;
+        await expect(gauge.connect(user2).addRewards(0)).to.be.revertedWith("unauthorized");
 
         await tapToken.connect(signer).approve(gauge.address, amount);
 
@@ -121,7 +129,7 @@ describe('TimedGauge', () => {
         const lastUpdateTimeBefore = await gauge.lastUpdateTime();
         const periodFinishBefore = await gauge.periodFinish();
         time_travel(10 * 86400);
-        await expect(gauge.connect(user).addRewards(amount)).to.be.reverted;
+        await expect(gauge.connect(user2).addRewards(amount)).to.be.revertedWith("unauthorized");
         await expect(gauge.addRewards(amount)).to.emit(gauge, 'RewardAdded');
 
         const rewardRateAfter = await gauge.rewardRate();
@@ -131,6 +139,9 @@ describe('TimedGauge', () => {
         expect(rewardRateAfter.gt(0)).to.be.true;
         expect(lastUpdateTimeAfter.gt(lastUpdateTimeBefore)).to.be.true;
         expect(periodFinishAfter.gt(periodFinishBefore)).to.be.true;
+
+        await gauge.kill();
+        await expect(gauge.connect(signer).addRewards(amount)).to.be.revertedWith("contract killed");
     });
 
     it('should add rewards to the contract after period ended', async () => {
@@ -292,6 +303,9 @@ describe('TimedGauge', () => {
         await expect(gauge.connect(user).claimRewards()).to.emit(gauge, 'Claimed');
         const tapBalanceFinal = await tapToken.balanceOf(user.address);
         expect(tapBalanceFinal.gt(tapBalanceAfter2ndClaim)).to.be.true;
+
+        await gauge.kill();
+        await expect(gauge.connect(user).claimRewards()).not.to.emit(gauge, 'Claimed');
     });
 
     it('should exit the protocol', async () => {

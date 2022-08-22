@@ -423,7 +423,6 @@ def gauge_types(_addr: address) -> int128:
     @return Gauge type id
     """
     gauge_type: int128 = self.gauge_types_[_addr]
-    assert gauge_type != 0,"gauge type not valid"
 
     return gauge_type - 1
 

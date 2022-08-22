@@ -35,10 +35,11 @@ contract GaugeFactory {
     /// @dev the owner of the new gauge will be msg.sender
     /// @param _token deposit token address
     /// @param _reward reward token address
-    function createGauge(address _token, address _reward) public returns (address newGauge) {
+    /// @param _distributor the GaugeDistributor address
+    function createGauge(address _token, address _reward, address _distributor) public returns (address newGauge) {
         newGauge = Clones.clone(gaugeReference);
 
-        ILiquidityGauge(newGauge).init(_token, _reward, msg.sender);
+        ILiquidityGauge(newGauge).init(_token, _reward, msg.sender, _distributor);
         emit GaugeCreated(msg.sender, newGauge);
     }
 }

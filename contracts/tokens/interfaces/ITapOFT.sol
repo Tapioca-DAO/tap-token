@@ -7,4 +7,8 @@ interface ITapOFT {
     function approve(address to, uint256 value) external;
 
     function balanceOf(address user) external view returns (uint256);
+
+    function emissionsStartTime() external view returns (uint256);
+
+    function mintedInWeek(int256 week) external view returns (uint256);
 }

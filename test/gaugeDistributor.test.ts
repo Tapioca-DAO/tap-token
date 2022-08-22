@@ -55,6 +55,12 @@ describe('gaugeDistributor', () => {
         expect(savedController.toLowerCase()).to.eq(gaugeController.address.toLowerCase());
     });
 
+    it("should not create a contract without right params", async () => {
+        const factory = await ethers.getContractFactory("GaugeDistributor");
+        await expect(factory.deploy(ethers.constants.AddressZero, gaugeController.address)).to.be.reverted;
+        await expect(factory.deploy(tapiocaOFT.address, ethers.constants.AddressZero)).to.be.reverted;
+    });
+
     it('should not let the owner renounce ownership', async () => {
         await expect(gaugeDistributor.connect(signer).renounceOwnership()).to.be.revertedWith('unauthorized');
     });
@@ -68,6 +74,11 @@ describe('gaugeDistributor', () => {
         await gaugeController.add_gauge(mockedLiquidityGauge.address, 0, initialWeight);
 
         await tapiocaOFT.setMinter(gaugeDistributor.address);
+
+        const availableWhenGaugeDoesNotExist = await gaugeDistributor.availableRewards(signer.address, 0);
+        expect(availableWhenGaugeDoesNotExist.eq(0)).to.be.true;
+
+        let latestBlock = await ethers.provider.getBlock('latest');
         for (var i = 0; i <= noOfWeeks; i++) {
             time_travel(7 * DAY);
             await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
@@ -79,15 +90,92 @@ describe('gaugeDistributor', () => {
             const tapSupplyAfter = await tapiocaOFT.totalSupply();
             expect(tapSupplyAfter.gt(tapSupplyBefore), 'TAP supply').to.be.true;
 
-            const available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address);
+            latestBlock = await ethers.provider.getBlock('latest');
+            const available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, latestBlock.timestamp);
             expect(available.gt(0), 'available').to.be.true;
         }
-        const totalAvailable = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address);
-        expect(totalAvailable.gt(0), 'total available').to.be.true;
-
-        const totalMinted = await tapiocaOFT.balanceOf(tapiocaOFT.address);
-        expect(totalMinted.eq(totalAvailable)).to.be.true;
     });
+
+    it("shouldn't let anyone add rewards twice for the same week", async () => {
+        const initialWeight = BN(1).mul((1e18).toString());
+        const gaugeControllerInterface = await ethers.getContractAt('IGaugeController', gaugeController.address);
+
+        await gaugeController.add_type('Test', initialWeight);
+        await gaugeController.add_gauge(mockedLiquidityGauge.address, 0, initialWeight);
+        await tapiocaOFT.setMinter(gaugeDistributor.address);
+
+        time_travel(7 * DAY);
+        await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
+        const tapSupplyBefore = await tapiocaOFT.totalSupply();
+        await tapiocaOFT.connect(signer).emitForWeek(0);
+        const tapSupplyAfter = await tapiocaOFT.totalSupply();
+        expect(tapSupplyAfter.gt(tapSupplyBefore), 'TAP supply').to.be.true;
+
+        let latestBlock = await ethers.provider.getBlock('latest');
+
+        let available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, latestBlock.timestamp);
+        expect(available.gt(0), 'available before').to.be.true;
+
+        const tapBalanceBefore = await tapiocaOFT.balanceOf(tapiocaOFT.address);
+        await gaugeDistributor.pushRewards(mockedLiquidityGauge.address, latestBlock.timestamp);
+        const tapBalanceAfter = await tapiocaOFT.balanceOf(tapiocaOFT.address);
+        const gaugeBalance = await tapiocaOFT.balanceOf(mockedLiquidityGauge.address);
+        expect(gaugeBalance.eq(tapBalanceBefore.sub(tapBalanceAfter))).to.be.true;
+
+        available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, latestBlock.timestamp);
+        expect(available.eq(0), 'available after').to.be.true;
+
+        time_travel(7 * DAY);
+        latestBlock = await ethers.provider.getBlock('latest');
+        await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
+        await tapiocaOFT.connect(signer).emitForWeek(0);
+        available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, latestBlock.timestamp);
+        expect(available.gt(0), 'available next week').to.be.true;
+    })
+
+    it("should be able to emit after week passed and rewards to be added to the gauge", async () => {
+        const initialWeight = BN(1).mul((1e18).toString());
+        const gaugeControllerInterface = await ethers.getContractAt('IGaugeController', gaugeController.address);
+
+        await gaugeController.add_type('Test', initialWeight);
+        await gaugeController.add_gauge(mockedLiquidityGauge.address, 0, initialWeight);
+        await tapiocaOFT.setMinter(gaugeDistributor.address);
+
+        time_travel(7 * DAY);
+        await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
+        const firstWeekBlock = await ethers.provider.getBlock('latest');
+
+        time_travel(7 * DAY);
+        await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
+        const secondWeekBlock = await ethers.provider.getBlock('latest');
+
+        let available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, firstWeekBlock.timestamp);
+        expect(available.eq(0), 'available first week').to.be.true;
+
+        available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, secondWeekBlock.timestamp);
+        expect(available.eq(0), 'available second week').to.be.true;
+
+        await tapiocaOFT.connect(signer).emitForWeek(firstWeekBlock.timestamp);
+        available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, firstWeekBlock.timestamp);
+        expect(available.gt(0), 'available first week after emit').to.be.true;
+        await gaugeDistributor.pushRewards(mockedLiquidityGauge.address, firstWeekBlock.timestamp);
+        available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, firstWeekBlock.timestamp);
+        expect(available.eq(0), 'available first week after push').to.be.true;
+
+        const gaugeBalanceFirstWeek = await tapiocaOFT.balanceOf(mockedLiquidityGauge.address);
+        await gaugeDistributor.pushRewards(mockedLiquidityGauge.address, firstWeekBlock.timestamp);
+        let gaugeBalance = await tapiocaOFT.balanceOf(mockedLiquidityGauge.address);
+        expect(gaugeBalance.eq(gaugeBalanceFirstWeek)).to.be.true;
+
+
+        await tapiocaOFT.connect(signer).emitForWeek(secondWeekBlock.timestamp);
+        available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, secondWeekBlock.timestamp);
+        expect(available.gt(0), 'available second week after emit').to.be.true;
+        await gaugeDistributor.pushRewards(mockedLiquidityGauge.address, secondWeekBlock.timestamp);
+        available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, secondWeekBlock.timestamp);
+        expect(available.eq(0), 'available second week after push').to.be.true;
+    })
+
 
     it('should add rewards weekly', async () => {
         const noOfWeeks = 10;
@@ -99,6 +187,7 @@ describe('gaugeDistributor', () => {
 
         await tapiocaOFT.setMinter(gaugeDistributor.address);
         const tapInitialSupply = await tapiocaOFT.totalSupply();
+        let latestBlock = await ethers.provider.getBlock('latest');
         for (var i = 0; i <= noOfWeeks; i++) {
             time_travel(7 * DAY);
             await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
@@ -110,11 +199,12 @@ describe('gaugeDistributor', () => {
             const tapSupplyAfter = await tapiocaOFT.totalSupply();
             expect(tapSupplyAfter.gt(tapSupplyBefore), 'TAP supply').to.be.true;
 
-            const available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address);
+            latestBlock = await ethers.provider.getBlock('latest');
+            const available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, latestBlock.timestamp);
             expect(available.gt(0), 'available').to.be.true;
 
             const gaugeBalanceBefore = await tapiocaOFT.balanceOf(mockedLiquidityGauge.address);
-            await gaugeDistributor.pushRewards(mockedLiquidityGauge.address);
+            await gaugeDistributor.pushRewards(mockedLiquidityGauge.address, latestBlock.timestamp);
             const gaugeBalanceAfter = await tapiocaOFT.balanceOf(mockedLiquidityGauge.address);
             const addedToGauge = gaugeBalanceAfter.sub(gaugeBalanceBefore);
             const emittedThisWeek = tapSupplyAfter.sub(tapSupplyBefore);
@@ -142,6 +232,7 @@ describe('gaugeDistributor', () => {
 
         await tapiocaOFT.setMinter(gaugeDistributor.address);
         const tapInitialSupply = await tapiocaOFT.totalSupply();
+        let latestBlock = await ethers.provider.getBlock('latest');
         for (var i = 0; i <= noOfWeeks; i++) {
             time_travel(7 * DAY);
             await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
@@ -156,10 +247,11 @@ describe('gaugeDistributor', () => {
             const tapSupplyAfter = await tapiocaOFT.totalSupply();
             expect(tapSupplyAfter.gt(tapSupplyBefore), 'TAP supply').to.be.true;
 
-            const available1 = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address);
+            latestBlock = await ethers.provider.getBlock('latest');
+            const available1 = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, latestBlock.timestamp);
             expect(available1.gt(0), 'available').to.be.true;
 
-            const available2 = await gaugeDistributor.availableRewards(anotherLiquidityGauge.address);
+            const available2 = await gaugeDistributor.availableRewards(anotherLiquidityGauge.address, latestBlock.timestamp);
             expect(available2.gt(0), 'available').to.be.true;
 
             const gaugeBalanceBefore = await tapiocaOFT.balanceOf(mockedLiquidityGauge.address);
@@ -168,7 +260,7 @@ describe('gaugeDistributor', () => {
                 anotherLiquidityGauge.address,
                 ethers.constants.AddressZero,
                 ethers.constants.AddressZero,
-            ]);
+            ], latestBlock.timestamp);
             const gaugeBalanceAfter = await tapiocaOFT.balanceOf(mockedLiquidityGauge.address);
             const addedToGauge = gaugeBalanceAfter.sub(gaugeBalanceBefore);
             const emittedThisWeek = tapSupplyAfter.sub(tapSupplyBefore);
