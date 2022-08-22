@@ -1,7 +1,16 @@
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ERC20Mock, LZEndpointMock, LiquidityGauge, TapOFT, VeTap, GaugeController, Minter, FeeDistributor } from '../../../typechain';
+import {
+    ERC20Mock,
+    LZEndpointMock,
+    TapOFT,
+    VeTap,
+    GaugeController,
+    FeeDistributor,
+    TimedGauge,
+    GaugeDistributor,
+} from '../../../typechain';
 
 import {
     deployLZEndpointMock,
@@ -10,12 +19,12 @@ import {
     BN,
     time_travel,
     deployGaugeController,
-    deployMinter,
-    deployLiquidityGauge,
     deployFeeDistributor,
+    deployTimedGauge,
+    deployGaugeDistributor,
 } from '../../test.utils';
 
-describe('governance - flow', () => {
+describe.only('governance - flow', () => {
     let signer: SignerWithAddress;
     let signer2: SignerWithAddress;
     let signer3: SignerWithAddress;
@@ -25,9 +34,9 @@ describe('governance - flow', () => {
     let tapiocaOFT: TapOFT;
     let veTapioca: VeTap;
     let gaugeController: GaugeController;
-    let minter: Minter;
-    let liquidityGauge: LiquidityGauge;
-    let liquidityGauge2: LiquidityGauge;
+    let gaugeDistributor: GaugeDistributor;
+    let liquidityGauge: TimedGauge;
+    let liquidityGauge2: TimedGauge;
     let feeDistributor: FeeDistributor;
     const DAY: number = 86400;
 
@@ -41,11 +50,21 @@ describe('governance - flow', () => {
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
         veTapioca = (await deployveTapiocaNFT(tapiocaOFT.address, 'veTapioca Token', 'veTAP', '1')) as VeTap;
         gaugeController = (await deployGaugeController(tapiocaOFT.address, veTapioca.address)) as GaugeController;
-        minter = (await deployMinter(tapiocaOFT.address, gaugeController.address)) as Minter;
+        gaugeDistributor = (await deployGaugeDistributor(tapiocaOFT.address, gaugeController.address)) as GaugeDistributor;
         erc20Mock = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
         erc20Mock2 = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
-        liquidityGauge = (await deployLiquidityGauge(erc20Mock.address, minter.address, signer.address)) as LiquidityGauge;
-        liquidityGauge2 = (await deployLiquidityGauge(erc20Mock2.address, minter.address, signer2.address)) as LiquidityGauge;
+        liquidityGauge = (await deployTimedGauge(
+            erc20Mock.address,
+            tapiocaOFT.address,
+            signer.address,
+            gaugeDistributor.address,
+        )) as TimedGauge;
+        liquidityGauge2 = (await deployTimedGauge(
+            erc20Mock2.address,
+            tapiocaOFT.address,
+            signer.address,
+            gaugeDistributor.address,
+        )) as TimedGauge;
         feeDistributor = (await deployFeeDistributor(
             veTapioca.address,
             latestBlock.timestamp,
@@ -54,11 +73,7 @@ describe('governance - flow', () => {
             signer2.address,
         )) as FeeDistributor;
 
-        await tapiocaOFT.setMinter(minter.address);
-    });
-
-    it('should do nothing', async () => {
-        expect(1).to.eq(1);
+        await tapiocaOFT.setMinter(gaugeDistributor.address);
     });
 
     it('should lock in the escrow and cast vote using the gauge controller', async () => {
@@ -106,7 +121,7 @@ describe('governance - flow', () => {
         expect(powerUsedAfterThirdVote.gt(powerUsedAfterFirstVote)).to.be.true;
     });
 
-    it('should lock, cast vote and have multiple users staking in various liquidity gauges', async () => {
+    it.only('should lock, cast vote and have multiple users staking in various liquidity gauges', async () => {
         const votingPower = 5000; //50%
         const amountToLock = BN(10000).mul((1e18).toString());
         const feeAmount = BN(1000).mul((1e18).toString());
@@ -118,6 +133,8 @@ describe('governance - flow', () => {
         const gaugeControllerInterface = await ethers.getContractAt('IGaugeController', gaugeController.address);
         const feeDistributorInterface = await ethers.getContractAt('IFeeDistributor', feeDistributor.address);
 
+        await liquidityGauge.unpause();
+        await liquidityGauge2.unpause();
         await tapiocaOFT.connect(signer).approve(veTapioca.address, amountToLock);
         await veTapioca.connect(signer).create_lock(amountToLock, latestBlock.timestamp + unlockTime);
 
@@ -152,35 +169,37 @@ describe('governance - flow', () => {
 
         //deposit into the liquidity gauge
         await erc20Mock.connect(signer).approve(liquidityGauge.address, amountToLock);
-        await liquidityGaugeInterface.connect(signer).deposit(amountToLock, signer.address);
+        await liquidityGaugeInterface.connect(signer).deposit(amountToLock);
 
         await erc20Mock2.connect(signer2).approve(liquidityGauge2.address, amountToLock);
-        await liquidityGaugeInterface2.connect(signer2).deposit(amountToLock, signer2.address);
+        await liquidityGaugeInterface2.connect(signer2).deposit(amountToLock);
+
+        await gaugeControllerInterface.gauge_relative_weight_write(liquidityGauge.address);
+        await gaugeControllerInterface.gauge_relative_weight_write(liquidityGauge2.address);
 
         //100 days
         for (var i = 0; i <= 14; i++) {
             time_travel(7 * DAY);
             await tapiocaOFT.connect(signer).emitForWeek(0);
+            await gaugeDistributor.pushRewards(liquidityGauge.address);
+            await gaugeDistributor.pushRewards(liquidityGauge2.address);
         }
 
-        await gaugeControllerInterface.gauge_relative_weight_write(liquidityGauge.address);
-        await gaugeControllerInterface.gauge_relative_weight_write(liquidityGauge2.address);
-
-        await minter.connect(signer).mint(liquidityGauge.address);
-        await minter.connect(signer2).mint(liquidityGauge2.address);
+        await liquidityGauge.connect(signer).claimRewards();
+        await liquidityGauge2.connect(signer2).claimRewards();
 
         const signerTapBalance = await tapiocaOFT.balanceOf(signer.address);
         const signer2TapBalance = await tapiocaOFT.balanceOf(signer2.address);
-        expect(signerTapBalance.gt(0)).to.be.true;
-        expect(signer2TapBalance.gt(0)).to.be.true;
+        expect(signerTapBalance.gt(0), 'tap balance 1').to.be.true;
+        expect(signer2TapBalance.gt(0), 'tap balance 2').to.be.true;
         expect(signerTapBalance.gt(signer2TapBalance)).to.be.true; //this had a vote so produced more rewards
 
         //simulate FeeDistributor fees
         let crtBLock = await ethers.provider.getBlock('latest');
         let veBalanceReportedByFeeSharingForSigner = await feeDistributor.ve_for_at(signer.address, crtBLock.timestamp);
         let veBalanceReportedByFeeSharingForSigner2 = await feeDistributor.ve_for_at(signer2.address, crtBLock.timestamp);
-        expect(veBalanceReportedByFeeSharingForSigner.gt(0)).to.be.true;
-        expect(veBalanceReportedByFeeSharingForSigner2.gt(0)).to.be.true;
+        expect(veBalanceReportedByFeeSharingForSigner.gt(0), 've balance 1').to.be.true;
+        expect(veBalanceReportedByFeeSharingForSigner2.gt(0), 've balance 2').to.be.true;
 
         await tapiocaOFT.connect(signer).approve(feeDistributor.address, feeAmount);
         await tapiocaOFT.connect(signer).transfer(feeDistributor.address, feeAmount); //normal flow: beachBar.withdrawAllProtocolFees(..)

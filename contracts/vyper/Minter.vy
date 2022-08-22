@@ -1,28 +1,31 @@
 # @version ^0.2.0
 """
-@title Token Minter
+@title Liquidity Gauges provisioner
 @author Curve Finance
 @license MIT
 """
 
+#TODO: update add_rewards with timestamp and retain addedInWeek
 
 interface LiquidityGauge:
     # Presumably, other gauges will provide the same interfaces
-    def integrate_fraction(addr: address) -> uint256: view
-    def user_checkpoint(addr: address) -> bool: nonpayable
+    def addRewards(amount:uint256): nonpayable
 
 interface TapOFT:
     def extractTAP(_to: address, _value: uint256): nonpayable
     def balanceOf(addr:address) -> uint256: view
+    def approve(_to:address, _value: uint256): nonpayable
 
 interface GaugeController:
     def gauge_types(addr: address) -> int128: view
+    def gauge_relative_weight(addr: address, time:uint256) -> uint256:view
 
 
-event Minted:
-    recipient: indexed(address)
-    gauge: address
-    minted: uint256
+
+event AddedRewards:
+    gauge: indexed(address)
+    sender: indexed(address)
+    added: uint256
 
 
 token: public(address)
@@ -50,39 +53,30 @@ def __init__(_token: address, _controller: address):
     self.admin = msg.sender
 
 
-@external
-@view
-def mint_test(gauge_addr:address, _for:address) -> uint256:
-    total_mint: uint256 = LiquidityGauge(gauge_addr).integrate_fraction(_for)
-    to_mint: uint256 = total_mint - self.minted[_for][gauge_addr]
-    return to_mint
-
-
 # Internal methods
-@internal
-def _mint_for(gauge_addr: address, _for: address) -> uint256:
+@internal 
+@view
+def _extractable_rewards(gauge_addr: address) -> uint256:
     assert GaugeController(self.controller).gauge_types(gauge_addr) >= 0,"gauge not valid" 
-    assert _for != ZERO_ADDRESS,"recipient not valid"
-
-    LiquidityGauge(gauge_addr).user_checkpoint(_for)
-    total_mint: uint256 = LiquidityGauge(gauge_addr).integrate_fraction(_for)
-    to_mint: uint256 = 0
-
-    if(total_mint>=self.minted[_for][gauge_addr]):
-        to_mint = total_mint - self.minted[_for][gauge_addr]
-
+    weight:uint256 = GaugeController(self.controller).gauge_relative_weight(gauge_addr, block.timestamp)
     available: uint256 = TapOFT(self.token).balanceOf(self.token)
-    assert available >= to_mint, "exceeds balance"
-    
-    
-    if to_mint > 0:
-        TapOFT(self.token).extractTAP(_for, to_mint)
-        self.minted[_for][gauge_addr] = total_mint
 
-        log Minted(_for, gauge_addr, total_mint)
-        
-    return to_mint
-    
+    to_add: uint256 =  weight * available / 10**18
+    return to_add
+
+@internal 
+def _add_rewards(gauge_addr: address, sender: address)-> uint256:
+    to_add: uint256 = self._extractable_rewards(gauge_addr)
+    available: uint256 = TapOFT(self.token).balanceOf(self.token)
+
+    if to_add > 0:
+        assert to_add <= available, "exceeds balance"
+        TapOFT(self.token).extractTAP(self, to_add)
+        TapOFT(self.token).approve(gauge_addr,to_add)
+        LiquidityGauge(gauge_addr).addRewards(to_add)
+        log AddedRewards(gauge_addr, sender, to_add)
+
+    return to_add
 
 
 # Owner methods
@@ -108,44 +102,35 @@ def apply_transfer_ownership():
     log ApplyOwnership(_admin)
 
 
-# Write methods
 @external
 @nonreentrant('lock')
-def mint(gauge_addr: address) -> uint256:
+def add_rewards(gauge_addr: address) -> uint256:
     """
-    @notice Mint everything which belongs to `msg.sender` and send to them
-    @param gauge_addr `LiquidityGauge` address to get mintable amount from
+    @notice Adds rewards to LiquidityGage
+    @param gauge_addr `LiquidityGauge` address
     """
-    return self._mint_for(gauge_addr, msg.sender)
+    assert msg.sender == self.admin,"unauthorized"
+    return self._add_rewards(gauge_addr, msg.sender)
 
 @external
 @nonreentrant('lock')
-def mint_many(gauge_addrs: address[8]):
+def add_rewards_many(gauge_addrs: address[8]):
     """
-    @notice Mint everything which belongs to `msg.sender` across multiple gauges
+    @notice Adds rewards to multiple gauges
     @param gauge_addrs List of `LiquidityGauge` addresses
     """
+    assert msg.sender == self.admin,"unauthorized"
+
     for i in range(8):
         if gauge_addrs[i] == ZERO_ADDRESS:
             break
-        self._mint_for(gauge_addrs[i], msg.sender)
+        self._add_rewards(gauge_addrs[i], msg.sender)
 
-@external
-@nonreentrant('lock')
-def mint_for(gauge_addr: address, _for: address):
-    """
-    @notice Mint tokens for `_for`
-    @dev Only possible when `msg.sender` has been approved via `toggle_approve_mint`
-    @param gauge_addr `LiquidityGauge` address to get mintable amount from
-    @param _for Address to mint to
-    """
-    if self.allowed_to_mint_for[msg.sender][_for]:
-        self._mint_for(gauge_addr, _for)
 
+# View methods
 @external
-def toggle_approve_mint(minting_user: address):
-    """
-    @notice allow `minting_user` to mint for `msg.sender`
-    @param minting_user Address to toggle permission for
-    """
-    self.allowed_to_mint_for[minting_user][msg.sender] = not self.allowed_to_mint_for[minting_user][msg.sender]
+@view
+def available_rewards(gauge_addr: address) -> uint256:
+    return self._extractable_rewards(gauge_addr)
+
+
