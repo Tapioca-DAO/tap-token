@@ -70,8 +70,6 @@ const config: HardhatUserConfig = {
             'VeTap',
             'FeeDistributor',
             'GaugeController',
-            'LiquidityGauge',
-            'Minter',
         ],
     },
 };

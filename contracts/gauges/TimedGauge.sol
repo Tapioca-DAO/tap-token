@@ -6,9 +6,7 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
-import 'hardhat/console.sol';
-
-contract TimedGauge is Ownable, Pausable, ReentrancyGuard {
+contract TimedGauge is Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // ==========
@@ -16,11 +14,11 @@ contract TimedGauge is Ownable, Pausable, ReentrancyGuard {
     // ==========
 
     /// @notice returns the receipt token allowed for deposits
-    address public immutable token;
+    address public token;
 
     /// @notice returns reward token
-    /// @dev it should be the TAP token
-    address public immutable reward;
+    /// @dev it should be te TAP token
+    address public reward;
 
     /// @notice rewards per second
     uint256 public rewardRate = 0;
@@ -44,11 +42,23 @@ contract TimedGauge is Ownable, Pausable, ReentrancyGuard {
     /// @notice accrued rewards per gauge user
     mapping(address => uint256) public rewards;
 
+    /// @notice contract's owner
+    address public owner;
+
+    /// @notice GaugeDistributor address
+    address public gaugeDistributor;
+
+    /// @notice return the kill status
+    bool public isKilled;
+
     /// @notice total supply of the contract
     uint256 private _totalSupply;
 
     /// @notice balances per gauge user
     mapping(address => uint256) private _balances;
+
+    /// @notice indicates if the contract has been initialized
+    bool private _initialized;
 
     // ==========
     // *EVENTS*
@@ -65,19 +75,36 @@ contract TimedGauge is Ownable, Pausable, ReentrancyGuard {
     event Withdrawn(address indexed user, uint256 amount);
     /// @notice event emitted when user claimed rewards
     event Claimed(address indexed user, uint256 reward);
+    /// @notice event emitted when the new owner is updated
+    event OwnerUpdated(address indexed old, address indexed newOwner);
 
     // ==========
     // * METHODS *
     // ==========
-    /// @notice creates a new TimedGauge
-    constructor(address _token, address _reward) {
+    //@notice initializes a new TimedGauge
+    /// @param _token deposit token address
+    /// @param _reward reward token address
+    /// @param _owner contract's owner
+    /// @param _gaugeDistributor the gauge distributor address
+    function init(
+        address _token,
+        address _reward,
+        address _owner,
+        address _gaugeDistributor
+    ) external {
+        require(!_initialized, 'unauthorized');
         require(_token != address(0), 'token not valid');
         require(_reward != address(0), 'reward token not valid');
+        require(_gaugeDistributor != address(0), 'distributor not valid');
 
         token = _token;
         reward = _reward;
+        gaugeDistributor = _gaugeDistributor;
         periodFinish = block.timestamp + rewardsDuration;
         _pause();
+
+        _initialized = true;
+        owner = _owner;
     }
 
     ///-- Onwer methods --
@@ -91,13 +118,18 @@ contract TimedGauge is Ownable, Pausable, ReentrancyGuard {
         _unpause();
     }
 
+    /// @notice kills the contract
+    function kill() external onlyOwner {
+        isKilled = true;
+    }
+
     /// @notice saves tokens from contract
     /// @param _token token's address
     /// @param _amount amount to be saved
     function emergencySave(address _token, uint256 _amount) external onlyOwner {
         require(_token != address(token), 'unauthorized');
         require(_amount > 0, 'amount not valid');
-        IERC20(_token).safeTransfer(owner(), _amount);
+        IERC20(_token).safeTransfer(owner, _amount);
         emit EmergencySave(_token, _amount);
     }
 
@@ -110,8 +142,10 @@ contract TimedGauge is Ownable, Pausable, ReentrancyGuard {
 
     /// @notice adds more rewards to the contract
     /// @param _amount new rewards amount
-    function addRewards(uint256 _amount) external onlyOwner updateReward(address(0)) {
+    function addRewards(uint256 _amount) external updateReward(address(0)) {
+        require(msg.sender == owner || msg.sender == gaugeDistributor, 'unauthorized');
         require(rewardsDuration > 0, 'reward duration not set');
+        require(!isKilled, 'contract killed');
         if (block.timestamp >= periodFinish) {
             rewardRate = _amount / rewardsDuration;
         } else {
@@ -203,13 +237,16 @@ contract TimedGauge is Ownable, Pausable, ReentrancyGuard {
         _claim();
     }
 
-    // @dev renounce ownership override to avoid losing contract's ownership
-    function renounceOwnership() public pure override {
-        revert('unauthorized');
+    // @notice sets a new owner for the contract
+    function transferOwnership(address _newOwner) external onlyOwner {
+        require(_newOwner != address(0), 'address not valid');
+        emit OwnerUpdated(owner, _newOwner);
+        owner = _newOwner;
     }
 
     ///-- Internal methods --
     function _claim() internal {
+        if(isKilled) return;
         uint256 _rewards = rewards[msg.sender];
         if (_rewards > 0) {
             rewards[msg.sender] = 0;
@@ -233,6 +270,11 @@ contract TimedGauge is Ownable, Pausable, ReentrancyGuard {
             rewards[account] = earned(account);
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, 'caller is not the owner');
         _;
     }
 }

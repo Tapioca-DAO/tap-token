@@ -1,7 +1,6 @@
 import { ethers } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { DeployFunction, Deployment } from 'hardhat-deploy/types';
-import fs from 'fs';
+import { DeployFunction } from 'hardhat-deploy/types';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -29,9 +28,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const gaugeControllerContract = await deployments.get('GaugeController');
 
     //deploy minter
-    console.log('   Deploying Minter...');
+    console.log('   Deploying Gauge Distributor...');
     const minterDeployArgs = [tapOFTDeployment.address, gaugeControllerContract.address];
-    await deploy('Minter', { from: deployer, log: true, args: minterDeployArgs });
+    await deploy('GaugeDistributor', { from: deployer, log: true, args: minterDeployArgs });
     const minterContract = await deployments.get('Minter');
     await (await tapOFTContract.setMinter(minterContract.address)).wait(); //set Minter on TapOFT
 

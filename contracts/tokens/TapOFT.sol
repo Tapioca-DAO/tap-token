@@ -7,6 +7,7 @@ import 'prb-math/contracts/PRBMathSD59x18.sol';
 /// @title Tapioca OFT token
 /// @notice OFT compatible TAP token
 /// @dev Latest size: 15.875 KiB
+/// @dev Emissions calculator: https://www.desmos.com/calculator/1fa0zen2ut
 contract TapOFT is PausableOFT {
     using PRBMathSD59x18 for int256;
 
@@ -55,9 +56,9 @@ contract TapOFT is PausableOFT {
     /// @dev initialized in the constructor with block.timestamp
     uint256 public immutable emissionsStartTime;
 
-    /// @notice returns true/false for a specific week
+    /// @notice returns the amount minted for a specific week
     /// @dev week is computed using (timestamp - emissionStartTime) / WEEK
-    mapping(int256 => bool) public weekMinted;
+    mapping(int256 => uint256) public mintedInWeek;
 
     /// @notice returns the minter address
     address public minter;
@@ -118,12 +119,6 @@ contract TapOFT is PausableOFT {
         require(totalSupply() == INITIAL_SUPPLY, 'initial supply not valid');
 
         emissionsStartTime = block.timestamp;
-
-        // //TODO: remove below
-        // rate = 0;
-        // miningEpoch = -1;
-        // startEpochSupply = INITIAL_SUPPLY;
-        // startEpochTime = block.timestamp + INFLATION_DELAY - RATE_REDUCTION_TIME;
     }
 
     ///-- Onwer methods --
@@ -172,7 +167,7 @@ contract TapOFT is PausableOFT {
         if (timestamp < emissionsStartTime) return 0;
 
         int256 x = int256((timestamp - emissionsStartTime) / WEEK);
-        if (weekMinted[x]) return 0;
+        if(mintedInWeek[x]>0) return 0;
 
         return uint256(_computeEmissionPerWeek(x));
     }
@@ -189,10 +184,10 @@ contract TapOFT is PausableOFT {
         }
 
         int256 x = int256((timestamp - emissionsStartTime) / WEEK);
-        if (weekMinted[x]) return 0;
+        if(mintedInWeek[x]>0) return 0;
 
-        weekMinted[x] = true;
         uint256 emission = uint256(_computeEmissionPerWeek(x));
+        mintedInWeek[x]= emission;
 
         _mint(address(this), emission);
         emit Minted(msg.sender, address(this), emission);
