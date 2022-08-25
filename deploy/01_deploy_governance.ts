@@ -31,7 +31,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         console.log(err);
     }
 
-
     //deploy GaugeController
     console.log('   Deploying GaugeController...');
     const gaugeContollerDeployArgs = [tapOFTDeployment.address, veTapContract.address];

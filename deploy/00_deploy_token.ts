@@ -47,16 +47,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 
     const tapOFTDeployment = await deployments.get('TapOFT');
-    const tapOFTContract = (await ethers.getContractAt('TapOFT', tapOFTDeployment.address)) as TapOFT;
-
-    // const latestBlock = await ethers.provider.getBlock('latest');
-    // let overrides = {
-    //     value: ethers.utils.parseEther('1.4'),
-    // };
-    // console.log('locking');
-    // await tapOFTContract.getVotingPower(ethers.utils.parseEther('1000'), latestBlock.timestamp + 2 * 365 * 86400, overrides);
-    // return;
-
     try {
         await hre.run('verify', {
             address: tapOFTDeployment.address,

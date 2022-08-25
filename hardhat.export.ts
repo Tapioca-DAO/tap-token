@@ -25,15 +25,6 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
                     },
                 },
             },
-            {
-                version: '0.4.11',
-                settings: {
-                    optimizer: {
-                        enabled: true,
-                        runs: 100,
-                    },
-                },
-            },
         ],
     },
     vyper: {
