@@ -25,8 +25,8 @@ describe('veTapioca', () => {
         signer = (await ethers.getSigners())[0];
         signer2 = (await ethers.getSigners())[1];
         signer3 = (await ethers.getSigners())[2];
-
-        LZEndpointMock = (await deployLZEndpointMock(0)) as LZEndpointMock;
+        const chainId = (await ethers.provider.getNetwork()).chainId;
+        LZEndpointMock = (await deployLZEndpointMock(chainId)) as LZEndpointMock;
         erc20Mock = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
         veTapioca = (await deployveTapiocaNFT(tapiocaOFT.address, veTapiocaName, veTapiocaSymbol, veTapiocaVersion)) as VeTap;
@@ -174,7 +174,7 @@ describe('veTapioca', () => {
         const signer2VeTapBalance = await erc20.balanceOf(signer2.address);
 
         //time tranvel 10 days
-        time_travel(10 * DAY);
+        await time_travel(10 * DAY);
 
         //lock from signer
         await tapiocaOFT.connect(signer).approve(veTapioca.address, amountToLock);
@@ -189,7 +189,7 @@ describe('veTapioca', () => {
         expect(signer2LockedEnd.gt(signerLockedEnd)).to.be.true;
 
         //time tranvel 100 days
-        time_travel(100 * DAY);
+        await time_travel(100 * DAY);
 
         await veTapioca.checkpoint();
         const signerVotingPower = await veTapioca.get_last_user_slope(signer.address);
@@ -267,7 +267,7 @@ describe('veTapioca', () => {
         await expect(veTapioca.connect(signer).withdraw()).to.be.reverted;
 
         //make sure the unlock time has passed
-        time_travel(10 * UNLOCK_TIME);
+        await time_travel(10 * UNLOCK_TIME);
 
         await veTapioca.connect(signer).withdraw();
 

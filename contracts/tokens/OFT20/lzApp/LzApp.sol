@@ -2,10 +2,12 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "../interfaces/ILayerZeroReceiver.sol";
-import "../interfaces/ILayerZeroUserApplicationConfig.sol";
-import "../interfaces/ILayerZeroEndpoint.sol";
+import '@openzeppelin/contracts/access/Ownable.sol';
+import '../interfaces/ILayerZeroReceiver.sol';
+import '../interfaces/ILayerZeroUserApplicationConfig.sol';
+import '../interfaces/ILayerZeroEndpoint.sol';
+
+
 
 // solhint-disable max-line-length
 
@@ -23,33 +25,60 @@ abstract contract LzApp is Ownable, ILayerZeroReceiver, ILayerZeroUserApplicatio
         lzEndpoint = ILayerZeroEndpoint(_endpoint);
     }
 
-    function lzReceive(uint16 _srcChainId, bytes memory _srcAddress, uint64 _nonce, bytes memory _payload) public virtual override {
+    function lzReceive(
+        uint16 _srcChainId,
+        bytes memory _srcAddress,
+        uint64 _nonce,
+        bytes memory _payload
+    ) public virtual override {
         // lzReceive must be called by the endpoint for security
-        require(_msgSender() == address(lzEndpoint), "LzApp: invalid endpoint caller");
+        require(_msgSender() == address(lzEndpoint), 'LzApp: invalid endpoint caller');
 
         bytes memory trustedRemote = trustedRemoteLookup[_srcChainId];
+
         // if will still block the message pathway from (srcChainId, srcAddress). should not receive message from untrusted remote.
-        require(_srcAddress.length == trustedRemote.length && keccak256(_srcAddress) == keccak256(trustedRemote), "LzApp: invalid source sending contract");
+         require(_srcAddress.length == trustedRemote.length && keccak256(_srcAddress) == keccak256(trustedRemote), "LzApp: invalid source sending contract");
 
         _blockingLzReceive(_srcChainId, _srcAddress, _nonce, _payload);
     }
 
     // abstract function - the default behaviour of LayerZero is blocking. See: NonblockingLzApp if you dont need to enforce ordered messaging
-    function _blockingLzReceive(uint16 _srcChainId, bytes memory _srcAddress, uint64 _nonce, bytes memory _payload) internal virtual;
+    function _blockingLzReceive(
+        uint16 _srcChainId,
+        bytes memory _srcAddress,
+        uint64 _nonce,
+        bytes memory _payload
+    ) internal virtual;
 
-    function _lzSend(uint16 _dstChainId, bytes memory _payload, address payable _refundAddress, address _zroPaymentAddress, bytes memory _adapterParams) internal virtual {
+    function _lzSend(
+        uint16 _dstChainId,
+        bytes memory _payload,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes memory _adapterParams
+    ) internal virtual {
         bytes memory trustedRemote = trustedRemoteLookup[_dstChainId];
-        require(trustedRemote.length != 0, "LzApp: destination chain is not a trusted source");
+        require(trustedRemote.length != 0, 'LzApp: destination chain is not a trusted source');
         lzEndpoint.send{value: msg.value}(_dstChainId, trustedRemote, _payload, _refundAddress, _zroPaymentAddress, _adapterParams);
     }
 
     //---------------------------UserApplication config----------------------------------------
-    function getConfig(uint16 _version, uint16 _chainId, address, uint _configType) external view returns (bytes memory) {
+    function getConfig(
+        uint16 _version,
+        uint16 _chainId,
+        address,
+        uint256 _configType
+    ) external view returns (bytes memory) {
         return lzEndpoint.getConfig(_version, _chainId, address(this), _configType);
     }
 
     // generic config for LayerZero user Application
-    function setConfig(uint16 _version, uint16 _chainId, uint _configType, bytes calldata _config) external override onlyOwner {
+    function setConfig(
+        uint16 _version,
+        uint16 _chainId,
+        uint256 _configType,
+        bytes calldata _config
+    ) external override onlyOwner {
         lzEndpoint.setConfig(_version, _chainId, _configType, _config);
     }
 

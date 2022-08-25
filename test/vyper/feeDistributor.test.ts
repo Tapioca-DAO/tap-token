@@ -21,8 +21,8 @@ describe('feeDistributor', () => {
         signer2 = (await ethers.getSigners())[1];
         signer3 = (await ethers.getSigners())[2];
         const latestBlock = await ethers.provider.getBlock('latest');
-
-        LZEndpointMock = (await deployLZEndpointMock(0)) as LZEndpointMock;
+        const chainId = (await ethers.provider.getNetwork()).chainId;
+        LZEndpointMock = (await deployLZEndpointMock(chainId)) as LZEndpointMock;
         erc20Mock = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
         veTapioca = (await deployveTapiocaNFT(tapiocaOFT.address, 'veTapioca Token', 'veTAP', '1')) as VeTap;
@@ -93,6 +93,7 @@ describe('feeDistributor', () => {
         const killStatus = await feeDistributor.is_killed();
         expect(killStatus).to.be.false;
         const depositAmount = BN(20000).mul((1e18).toString());
+        const signerBalance = await tapiocaOFT.balanceOf(signer.address);
 
         await tapiocaOFT.transfer(signer2.address, depositAmount);
         await expect(feeDistributor.connect(signer2).kill_me()).to.be.revertedWith('unauthorized');
@@ -152,7 +153,7 @@ describe('feeDistributor', () => {
         const latestBlock = await ethers.provider.getBlock('latest');
         const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
 
-        time_travel(1 * 86400);
+        await time_travel(1 * 86400);
 
         await tapiocaOFT.connect(signer).approve(veTapioca.address, amountToLock);
         await veTapioca.connect(signer).create_lock(amountToLock, latestBlock.timestamp + unlockTime);
@@ -160,7 +161,7 @@ describe('feeDistributor', () => {
         const balanceOfVeTokens = await erc20.balanceOf(signer.address);
         expect(balanceOfVeTokens.gt(0)).to.be.true;
 
-        time_travel(60 * 86400);
+        await time_travel(60 * 86400);
         const crtBlock = await ethers.provider.getBlock('latest');
 
         const veBalanceReportedByFeeSharing = await feeDistributor.ve_for_at(signer.address, crtBlock.timestamp);
@@ -176,7 +177,7 @@ describe('feeDistributor', () => {
         const feeDistributorInterface = await ethers.getContractAt('IFeeDistributor', feeDistributor.address);
 
         await prepareLock(tapiocaOFT, veTapioca, signer2, amountToLock, unlockTime, latestBlock.timestamp);
-        time_travel(50 * 86400);
+        await time_travel(50 * 86400);
 
         const crtBlock = await ethers.provider.getBlock('latest');
         const veBalanceReportedByFeeSharing = await feeDistributor.ve_for_at(signer2.address, crtBlock.timestamp);
@@ -196,7 +197,7 @@ describe('feeDistributor', () => {
         const signer2TapBalanceAfterClaim = await tapiocaOFT.balanceOf(signer2.address);
         expect(signer2TapBalanceAfterClaim.gt(0)).to.be.true;
 
-        time_travel(50 * 86400);
+        await time_travel(50 * 86400);
         await feeDistributorInterface.connect(signer2).claim(signer2.address, false);
         const signer2TapBalanceAfterClaim2 = await tapiocaOFT.balanceOf(signer2.address);
         expect(signer2TapBalanceAfterClaim2.gt(signer2TapBalanceAfterClaim)).to.be.true;
@@ -210,7 +211,7 @@ describe('feeDistributor', () => {
 
         await prepareLock(tapiocaOFT, veTapioca, signer2, amountToLock, unlockTime, latestBlock.timestamp);
 
-        time_travel(50 * 86400);
+        await time_travel(50 * 86400);
 
         const crtBlock = await ethers.provider.getBlock('latest');
         const veBalanceReportedByFeeSharing = await feeDistributor.ve_for_at(signer2.address, crtBlock.timestamp);
@@ -230,7 +231,7 @@ describe('feeDistributor', () => {
         const signer2TapBalanceAfterClaim = await tapiocaOFT.balanceOf(signer2.address);
         expect(signer2TapBalanceAfterClaim.gt(0)).to.be.true;
 
-        time_travel(50 * 86400);
+        await time_travel(50 * 86400);
         await feeDistributorInterface.connect(signer2).claim(signer2.address, false);
         const signer2TapBalanceAfterClaim2 = await tapiocaOFT.balanceOf(signer2.address);
         expect(signer2TapBalanceAfterClaim2.gt(signer2TapBalanceAfterClaim)).to.be.true;
@@ -244,7 +245,7 @@ describe('feeDistributor', () => {
         await prepareLock(tapiocaOFT, veTapioca, signer2, amountToLock, unlockTime, latestBlock.timestamp);
         await prepareLock(tapiocaOFT, veTapioca, signer3, amountToLock, unlockTime, latestBlock.timestamp);
 
-        time_travel(50 * 86400);
+        await time_travel(50 * 86400);
 
         const crtBlock = await ethers.provider.getBlock('latest');
         const signer2VeBalanceReportedByFeeSharing = await feeDistributor.ve_for_at(signer2.address, crtBlock.timestamp);
@@ -283,7 +284,7 @@ describe('feeDistributor', () => {
         expect(signer2TapBalanceAfterClaim.gt(0)).to.be.true;
         expect(signer3TapBalanceAfterClaim.gt(0)).to.be.true;
 
-        time_travel(50 * 86400);
+        await time_travel(50 * 86400);
 
         await feeDistributor.claim_many([
             signer2.address,

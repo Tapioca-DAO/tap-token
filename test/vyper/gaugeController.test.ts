@@ -22,8 +22,8 @@ describe('gaugeController', () => {
         signer2 = (await ethers.getSigners())[1];
         newGauge = (await ethers.getSigners())[2].address;
         anotherNewGauge = (await ethers.getSigners())[3].address;
-
-        LZEndpointMock = (await deployLZEndpointMock(0)) as LZEndpointMock;
+        const chainId = (await ethers.provider.getNetwork()).chainId;
+        LZEndpointMock = (await deployLZEndpointMock(chainId)) as LZEndpointMock;
         erc20Mock = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
         veTapioca = (await deployveTapiocaNFT(tapiocaOFT.address, 'veTapioca Token', 'veTAP', '1')) as VeTap;
@@ -85,7 +85,7 @@ describe('gaugeController', () => {
         const secondGauge = await gaugeController.gauges(1);
         expect(secondGauge.toLowerCase()).to.eq(anotherNewGauge.toLowerCase());
 
-        time_travel(5 * 7 * DAY);
+        await time_travel(5 * 7 * DAY);
 
         const firstGaugeWeight = await gaugeController.get_gauge_weight(firstGauge);
         expect(firstGaugeWeight).to.eq(0);
@@ -107,7 +107,7 @@ describe('gaugeController', () => {
         const secondGaugeWeight = await gaugeController.get_gauge_weight(anotherNewGauge);
         expect(secondGaugeWeight.eq(secondGaugeInitialWeight)).to.be.true;
 
-        time_travel(5 * 7 * DAY);
+        await time_travel(5 * 7 * DAY);
 
         const finalFirstGaugeWeight = await gaugeController.get_gauge_weight(newGauge);
         expect(finalFirstGaugeWeight.eq(firstGaugeInitialWeight)).to.be.true;
@@ -142,7 +142,7 @@ describe('gaugeController', () => {
         const secondGaugeWeight = await gaugeController.get_gauge_weight(anotherNewGauge);
         expect(secondGaugeWeight.eq(secondGaugeInitialWeight)).to.be.true;
 
-        time_travel(100 * 7 * DAY);
+        await time_travel(100 * 7 * DAY);
 
         const gaugeControllerInterface = await ethers.getContractAt('IGaugeController', gaugeController.address);
         await gaugeControllerInterface.gauge_relative_weight_write(newGauge);
@@ -185,14 +185,14 @@ describe('gaugeController', () => {
         await gaugeController.add_gauge(newGauge, 0, firstGaugeInitialWeight);
         await gaugeController.add_gauge(anotherNewGauge, 1, secondGaugeInitialWeight);
 
-        time_travel(DAY);
+        await time_travel(DAY);
         await gaugeController.checkpoint();
         let firstGaugeWeight = await gaugeController.get_gauge_weight(newGauge);
         let secondGaugeWeight = await gaugeController.get_gauge_weight(anotherNewGauge);
         expect(firstGaugeWeight.eq(firstGaugeInitialWeight)).to.be.true;
         expect(secondGaugeWeight.eq(secondGaugeInitialWeight)).to.be.true;
 
-        time_travel(DAY);
+        await time_travel(DAY);
         await gaugeController.checkpoint();
         firstGaugeWeight = await gaugeController.get_gauge_weight(newGauge);
         expect(firstGaugeWeight.eq(firstGaugeInitialWeight)).to.be.true;
@@ -200,7 +200,7 @@ describe('gaugeController', () => {
         secondGaugeWeight = await gaugeController.get_gauge_weight(anotherNewGauge);
         expect(secondGaugeWeight.eq(secondGaugeInitialWeight)).to.be.true;
 
-        time_travel(DAY);
+        await time_travel(DAY);
         await gaugeController.checkpoint();
         firstGaugeWeight = await gaugeController.get_gauge_weight(newGauge);
         expect(firstGaugeWeight.eq(firstGaugeInitialWeight)).to.be.true;
@@ -255,10 +255,10 @@ describe('gaugeController', () => {
         const gaugeWeightAfterFirstVote = await gaugeController.get_gauge_weight(newGauge);
         expect(gaugeWeightAfterFirstVote.gt(initialGaugeWeight)).to.be.true;
 
-        time_travel(DAY);
+        await time_travel(DAY);
         //user should not be able to cast another vote before 10 days has passed
         await expect(gaugeController.vote_for_gauge_weights(newGauge, votingPower)).to.be.revertedWith('cannot vote at the moment');
-        time_travel(10 * DAY);
+        await time_travel(10 * DAY);
 
         await gaugeController.vote_for_gauge_weights(newGauge, votingPower * 2);
         const slopeAfterVotingAgain = await gaugeController.vote_user_slopes(signer.address, newGauge);

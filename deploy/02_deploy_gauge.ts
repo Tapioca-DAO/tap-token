@@ -21,34 +21,29 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     if (hre.network.tags['optimism']) {
         try {
-
             await hre.run('verify', {
-                address: gaugeContract.address
+                address: gaugeContract.address,
             });
         } catch (err) {
             console.log(err);
         }
     }
 
-
     //deploy gauge factory
     const args = [gaugeContract.address];
-    await deploy("GaugeFactory", {
+    await deploy('GaugeFactory', {
         from: deployer,
         log: true,
-        args
+        args,
     });
-    const gaugeFactoryContract = await deployments.get("GaugeFactory");
-    if (hre.network.tags['optimism']) {
-        try {
-
-            await hre.run('verify', {
-                address: gaugeFactoryContract.address,
-                constructorArgsParams: args,
-            });
-        } catch (err) {
-            console.log(err);
-        }
+    const gaugeFactoryContract = await deployments.get('GaugeFactory');
+    try {
+        await hre.run('verify', {
+            address: gaugeFactoryContract.address,
+            constructorArgsParams: args,
+        });
+    } catch (err) {
+        console.log(err);
     }
 };
 

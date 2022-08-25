@@ -1,21 +1,8 @@
 import { BigNumberish } from 'ethers';
-import { ethers, network } from 'hardhat';
+import { time } from '@nomicfoundation/hardhat-network-helpers';
+import { ethers } from 'hardhat';
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
-
-async function resetVM() {
-    await ethers.provider.send('hardhat_reset', []);
-}
-
-async function mine_blocks(numberOfBlocks: number) {
-    for (let i = 0; i < numberOfBlocks; i++) {
-        await network.provider.send('evm_mine');
-    }
-}
-
-async function increase_block_timestamp(time: number) {
-    return network.provider.send('evm_increaseTime', [time]);
-}
 
 // ---
 // exports
@@ -25,9 +12,8 @@ export function BN(n: BigNumberish) {
     return ethers.BigNumber.from(n.toString());
 }
 
-export async function time_travel(time: number) {
-    increase_block_timestamp(time);
-    mine_blocks(1);
+export async function time_travel(time_: number) {
+    await time.increase(time_);
 }
 
 export type TLZ_Endpoint = {
@@ -72,8 +58,10 @@ export async function deployLZEndpointMock(chainId: number) {
     return lzEndpointContract;
 }
 
-export async function deployTapiocaOFT(lzEndpoint: string, to: string) {
-    const oftContract = await (await ethers.getContractFactory('TapOFT')).deploy(lzEndpoint, to, to, to, to, to, to, to, to);
+export async function deployTapiocaOFT(lzEndpoint: string, to: string, chainId_?: number) {
+    let { chainId } = await ethers.provider.getNetwork();
+    chainId = chainId_ ?? chainId;
+    const oftContract = await (await ethers.getContractFactory('TapOFT')).deploy(lzEndpoint, to, to, to, to, to, to, to, to, chainId);
     await oftContract.deployed();
 
     return oftContract;
@@ -112,4 +100,3 @@ export async function deployGaugeDistributor(tapToken: string, gaugeController: 
     await gaugeDistributorContract.deployed();
     return gaugeDistributorContract;
 }
-
