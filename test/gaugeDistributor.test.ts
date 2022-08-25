@@ -28,8 +28,8 @@ describe('gaugeDistributor', () => {
         signer = (await ethers.getSigners())[0];
         signer2 = (await ethers.getSigners())[1];
         const latestBlock = await ethers.provider.getBlock('latest');
-
-        LZEndpointMock = (await deployLZEndpointMock(0)) as LZEndpointMock;
+        const chainId = (await ethers.provider.getNetwork()).chainId;
+        LZEndpointMock = (await deployLZEndpointMock(chainId)) as LZEndpointMock;
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
         veTapioca = (await deployveTapiocaNFT(tapiocaOFT.address, 'veTapioca Token', 'veTAP', '1')) as VeTap;
         gaugeController = (await deployGaugeController(tapiocaOFT.address, veTapioca.address)) as GaugeController;
@@ -80,7 +80,7 @@ describe('gaugeDistributor', () => {
 
         let latestBlock = await ethers.provider.getBlock('latest');
         for (var i = 0; i <= noOfWeeks; i++) {
-            time_travel(7 * DAY);
+            await time_travel(7 * DAY);
             await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
             const gaugeRelativeWeight = await gaugeControllerInterface.gauge_relative_weight(mockedLiquidityGauge.address);
             expect(gaugeRelativeWeight.gt(0), 'weight').to.be.true;
@@ -104,7 +104,7 @@ describe('gaugeDistributor', () => {
         await gaugeController.add_gauge(mockedLiquidityGauge.address, 0, initialWeight);
         await tapiocaOFT.setMinter(gaugeDistributor.address);
 
-        time_travel(7 * DAY);
+        await time_travel(7 * DAY);
         await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
         const tapSupplyBefore = await tapiocaOFT.totalSupply();
         await tapiocaOFT.connect(signer).emitForWeek(0);
@@ -125,7 +125,7 @@ describe('gaugeDistributor', () => {
         available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, latestBlock.timestamp);
         expect(available.eq(0), 'available after').to.be.true;
 
-        time_travel(7 * DAY);
+        await time_travel(7 * DAY);
         latestBlock = await ethers.provider.getBlock('latest');
         await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
         await tapiocaOFT.connect(signer).emitForWeek(0);
@@ -141,11 +141,11 @@ describe('gaugeDistributor', () => {
         await gaugeController.add_gauge(mockedLiquidityGauge.address, 0, initialWeight);
         await tapiocaOFT.setMinter(gaugeDistributor.address);
 
-        time_travel(7 * DAY);
+        await time_travel(7 * DAY);
         await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
         const firstWeekBlock = await ethers.provider.getBlock('latest');
 
-        time_travel(7 * DAY);
+        await time_travel(7 * DAY);
         await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
         const secondWeekBlock = await ethers.provider.getBlock('latest');
 
@@ -189,7 +189,7 @@ describe('gaugeDistributor', () => {
         const tapInitialSupply = await tapiocaOFT.totalSupply();
         let latestBlock = await ethers.provider.getBlock('latest');
         for (var i = 0; i <= noOfWeeks; i++) {
-            time_travel(7 * DAY);
+            await time_travel(7 * DAY);
             await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
             const gaugeRelativeWeight = await gaugeControllerInterface.gauge_relative_weight(mockedLiquidityGauge.address);
             expect(gaugeRelativeWeight.gt(0), 'weight').to.be.true;
@@ -234,7 +234,7 @@ describe('gaugeDistributor', () => {
         const tapInitialSupply = await tapiocaOFT.totalSupply();
         let latestBlock = await ethers.provider.getBlock('latest');
         for (var i = 0; i <= noOfWeeks; i++) {
-            time_travel(7 * DAY);
+            await time_travel(7 * DAY);
             await gaugeControllerInterface.gauge_relative_weight_write(mockedLiquidityGauge.address);
             await gaugeControllerInterface.gauge_relative_weight_write(anotherLiquidityGauge.address);
             const gaugeRelativeWeight = await gaugeControllerInterface.gauge_relative_weight(mockedLiquidityGauge.address);

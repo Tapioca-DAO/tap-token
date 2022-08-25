@@ -2,9 +2,9 @@ import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import writeJsonFile from 'write-json-file';
-import { LZEndpointMock, TapOFT } from '../../typechain';
+import { LZEndpointMock, TapOFT, VeTap } from '../../typechain';
 
-import { deployLZEndpointMock, deployTapiocaOFT, BN, time_travel } from '../test.utils';
+import { deployLZEndpointMock, deployTapiocaOFT, deployveTapiocaNFT, BN, time_travel } from '../test.utils';
 import { BigNumberish } from 'ethers';
 
 describe('tapOFT', () => {
@@ -18,24 +18,36 @@ describe('tapOFT', () => {
     let tapiocaOFT0: TapOFT;
     let tapiocaOFT1: TapOFT;
 
+    let veTapioca0: VeTap;
+    let veTapioca1: VeTap;
+
+    const veTapiocaName = 'veTapioca Token';
+    const veTapiocaSymbol = 'veTAP';
+    const veTapiocaVersion = '1';
+
     beforeEach(async () => {
         signer = (await ethers.getSigners())[0];
         minter = (await ethers.getSigners())[1];
         normalUser = (await ethers.getSigners())[2];
 
-        LZEndpointMock0 = await deployLZEndpointMock(0);
-        LZEndpointMock1 = await deployLZEndpointMock(1);
+        const chainId = (await ethers.provider.getNetwork()).chainId;
+
+        LZEndpointMock0 = await deployLZEndpointMock(chainId);
+        LZEndpointMock1 = await deployLZEndpointMock(11);
 
         tapiocaOFT0 = (await deployTapiocaOFT(LZEndpointMock0.address, signer.address)) as TapOFT;
         tapiocaOFT1 = (await deployTapiocaOFT(LZEndpointMock1.address, signer.address)) as TapOFT;
+        veTapioca0 = (await deployveTapiocaNFT(tapiocaOFT0.address, veTapiocaName, veTapiocaSymbol, veTapiocaVersion)) as VeTap;
+        veTapioca1 = (await deployveTapiocaNFT(tapiocaOFT1.address, veTapiocaName, veTapiocaSymbol, veTapiocaVersion)) as VeTap;
     });
 
     it('should check initial state', async () => {
         expect(await tapiocaOFT0.decimals()).eq(18);
         expect(await tapiocaOFT1.decimals()).eq(18);
 
-        expect(await LZEndpointMock0.getChainId()).eq(0);
-        expect(await LZEndpointMock1.getChainId()).eq(1);
+        const chainId = (await ethers.provider.getNetwork()).chainId;
+        expect(await LZEndpointMock0.getChainId()).eq(chainId);
+        expect(await LZEndpointMock1.getChainId()).eq(11);
 
         expect(await tapiocaOFT0.paused()).to.be.false;
         expect(await tapiocaOFT1.paused()).to.be.false;
@@ -58,6 +70,7 @@ describe('tapOFT', () => {
                 signer.address,
                 signer.address,
                 signer.address,
+                1,
             ),
         ).to.be.reverted;
     });
@@ -77,7 +90,7 @@ describe('tapOFT', () => {
         const timestampTooSmall = await tapiocaOFT0.availableForWeek(1);
         expect(timestampTooSmall.eq(0)).to.be.true;
 
-        time_travel(10 * 86400);
+        await time_travel(10 * 86400);
         let validAmount = await tapiocaOFT0.availableForWeek(0);
         expect(validAmount.gt(0)).to.be.true;
 
@@ -91,6 +104,17 @@ describe('tapOFT', () => {
 
         validAmount = await tapiocaOFT0.availableForWeek(0);
         expect(validAmount.eq(0)).to.be.true;
+    });
+
+    it('should not allow emit from another chain', async () => {
+        const chainBLzEndpoint = await deployLZEndpointMock(11);
+        const chainBTap = await deployTapiocaOFT(chainBLzEndpoint.address, signer.address, 10);
+        await time_travel(10 * 86400);
+
+        let validAmount = await chainBTap.availableForWeek(0);
+        expect(validAmount.gt(0)).to.be.true;
+
+        await expect(chainBTap.connect(signer).emitForWeek(0)).to.be.revertedWith('chain not valid');
     });
 
     it('should be able to set new params for emissions formula', async () => {
@@ -109,7 +133,7 @@ describe('tapOFT', () => {
         await expect(tapiocaOFT0.connect(normalUser).emitForWeek(999999999999999)).to.be.revertedWith('timestamp not valid');
         await expect(tapiocaOFT0.connect(normalUser).emitForWeek(1)).to.be.revertedWith('timestamp not valid');
 
-        time_travel(50 * 86400);
+        await time_travel(50 * 86400);
         const initialEmission = await tapiocaOFT0.connect(signer).callStatic.emitForWeek(0);
         expect(initialEmission.gt(0)).to.be.true;
 
@@ -131,7 +155,7 @@ describe('tapOFT', () => {
 
     it('should extract minted from owner', async () => {
         const bigAmount = BN(100000000).mul((1e18).toString());
-        time_travel(50 * 86400);
+        await time_travel(50 * 86400);
         await expect(tapiocaOFT0.connect(signer).emitForWeek(0)).to.emit(tapiocaOFT0, 'Minted');
 
         await expect(tapiocaOFT0.connect(normalUser).extractTAP(normalUser.address, 0)).to.be.revertedWith('unauthorized');
@@ -149,7 +173,7 @@ describe('tapOFT', () => {
 
     it('should extract minted from minter', async () => {
         const bigAmount = BN(100000000).mul((1e18).toString());
-        time_travel(50 * 86400);
+        await time_travel(50 * 86400);
         await expect(tapiocaOFT0.connect(signer).emitForWeek(0)).to.emit(tapiocaOFT0, 'Minted');
 
         await expect(tapiocaOFT0.connect(minter).extractTAP(normalUser.address, bigAmount)).to.be.revertedWith('unauthorized');
@@ -171,7 +195,7 @@ describe('tapOFT', () => {
         await tapiocaOFT0.pauseSendTokens(true);
         await expect(tapiocaOFT0.connect(signer).emitForWeek(0)).to.be.reverted;
         await tapiocaOFT0.pauseSendTokens(false);
-        time_travel(50 * 86400);
+        await time_travel(50 * 86400);
         await expect(tapiocaOFT0.connect(signer).emitForWeek(0)).to.emit(tapiocaOFT0, 'Minted');
     });
 
@@ -206,7 +230,7 @@ describe('tapOFT', () => {
         const emissionJsonContent: any = {};
         let sum: BigNumberish = 0;
         for (var i = 0; i <= noOfWeeks; i++) {
-            time_travel(7 * 86400);
+            await time_travel(7 * 86400);
             const available = await tapiocaOFT0.callStatic.emitForWeek(0);
             sum = available.add(sum);
 
@@ -216,5 +240,88 @@ describe('tapOFT', () => {
 
         await writeJsonFile('test/tokens/extraSupplyPerWeek.json', supplyJsonContent);
         await writeJsonFile('test/tokens/emissionsPerWeek.json', emissionJsonContent);
+    });
+
+    it('should be able to set the veTap address', async () => {
+        await expect(tapiocaOFT0.connect(normalUser).setVeTap(signer.address)).to.be.reverted;
+        await tapiocaOFT0.connect(signer).setVeTap(minter.address);
+    });
+
+    it('should be able to set the governance chain identifier', async () => {
+        await expect(tapiocaOFT0.connect(normalUser).setGovernanceChainIdentifier(4)).to.be.reverted;
+        await tapiocaOFT0.connect(signer).setGovernanceChainIdentifier(4);
+    });
+
+    it('should be able to lock from TapOFT', async () => {
+        //rinkeby
+        //mumbai
+        const amountToLock = BN(10000).mul((1e18).toString());
+        const biggerAmount = BN(20000).mul((1e18).toString());
+        const unlockTime = 2 * 365 * 86400;
+
+        const optimismChainId = 11;
+        const actualChainId = (await ethers.provider.getNetwork()).chainId;
+
+        const tapTokenA = await deployTapiocaOFT(LZEndpointMock0.address, signer.address, optimismChainId);
+        const tapTokenB = await deployTapiocaOFT(LZEndpointMock0.address, signer.address);
+
+        const veTapToken = (await deployveTapiocaNFT(tapTokenB.address, veTapiocaName, veTapiocaSymbol, veTapiocaVersion)) as VeTap;
+        await tapTokenB.setVeTap(veTapToken.address);
+
+        await LZEndpointMock0.setDestLzEndpoint(tapTokenA.address, LZEndpointMock0.address);
+        await LZEndpointMock0.setDestLzEndpoint(tapTokenB.address, LZEndpointMock0.address);
+
+        await tapTokenA.setTrustedRemote(optimismChainId, tapTokenB.address);
+        await tapTokenB.setTrustedRemote(optimismChainId, tapTokenA.address);
+
+        await tapTokenA.setTrustedRemote(actualChainId, tapTokenB.address);
+        await tapTokenB.setTrustedRemote(actualChainId, tapTokenA.address);
+
+        await tapTokenB
+            .connect(signer)
+            .sendFrom(
+                signer.address,
+                optimismChainId,
+                signer.address,
+                amountToLock,
+                signer.address,
+                ethers.constants.AddressZero,
+                ethers.utils.formatBytes32String(''),
+            );
+
+        const latestBlock = await ethers.provider.getBlock('latest');
+
+        const sameChainLzEndpoint = await deployLZEndpointMock(100);
+        const sameChainTap = await deployTapiocaOFT(sameChainLzEndpoint.address, signer.address, 100);
+        await expect(sameChainTap.getVotingPower(amountToLock, latestBlock.timestamp + unlockTime, 10)).to.be.revertedWith(
+            'use VeTap directly',
+        );
+
+        await expect(tapTokenA.getVotingPower(amountToLock, latestBlock.timestamp + unlockTime, 55)).to.be.revertedWith('action not valid');
+
+        await tapTokenA.getVotingPower(amountToLock, latestBlock.timestamp + unlockTime, 10);
+
+        const erc20 = await ethers.getContractAt('IOFT', veTapToken.address);
+        const votingPower = await erc20.balanceOf(signer.address);
+        expect(votingPower.gt(0)).to.be.true;
+
+        let totalSupply = await tapTokenB.balanceOf(veTapToken.address);
+
+        await tapTokenB
+            .connect(signer)
+            .sendFrom(
+                signer.address,
+                optimismChainId,
+                signer.address,
+                biggerAmount,
+                signer.address,
+                ethers.constants.AddressZero,
+                ethers.utils.formatBytes32String(''),
+            );
+
+        await tapTokenA.getVotingPower(biggerAmount, 0, 11);
+        const newVotingPower = await erc20.balanceOf(signer.address);
+        totalSupply = await tapTokenB.balanceOf(veTapToken.address);
+        expect(newVotingPower.gt(votingPower)).to.be.true;
     });
 });

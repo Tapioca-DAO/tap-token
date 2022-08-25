@@ -2,6 +2,8 @@ import { ethers } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 
+// VeTap test: https://rinkeby.etherscan.io/address/0xAEACDCA87FD3A128fd579C7F197c40EBA104810e
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy } = deployments;
@@ -20,6 +22,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: veTapDeployArgs,
     });
     const veTapContract = await deployments.get('VeTap');
+    try {
+        await hre.run('verify', {
+            address: veTapContract.address,
+            constructorArgsParams: veTapDeployArgs,
+        });
+    } catch (err) {
+        console.log(err);
+    }
+
 
     //deploy GaugeController
     console.log('   Deploying GaugeController...');
@@ -42,46 +53,44 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const feeDistributorContract = await deployments.get('FeeDistributor');
 
     console.log('   Verifying Contracts...');
-    if (hre.network.tags['optimism']) {
-        console.log('   Verifying VeTap...');
-        try {
-            await hre.run('verify', {
-                address: veTapContract.address,
-                constructorArgsParams: veTapDeployArgs,
-            });
-        } catch (err) {
-            console.log(err);
-        }
+    console.log('   Verifying VeTap...');
+    try {
+        await hre.run('verify', {
+            address: veTapContract.address,
+            constructorArgsParams: veTapDeployArgs,
+        });
+    } catch (err) {
+        console.log(err);
+    }
 
-        console.log('   Verifying GaugeController...');
-        try {
-            await hre.run('verify', {
-                address: gaugeControllerContract.address,
-                constructorArgsParams: gaugeContollerDeployArgs,
-            });
-        } catch (err) {
-            console.log(err);
-        }
+    console.log('   Verifying GaugeController...');
+    try {
+        await hre.run('verify', {
+            address: gaugeControllerContract.address,
+            constructorArgsParams: gaugeContollerDeployArgs,
+        });
+    } catch (err) {
+        console.log(err);
+    }
 
-        console.log('   Verifying Minter...');
-        try {
-            await hre.run('verify', {
-                address: minterContract.address,
-                constructorArgsParams: minterDeployArgs,
-            });
-        } catch (err) {
-            console.log(err);
-        }
+    console.log('   Verifying Minter...');
+    try {
+        await hre.run('verify', {
+            address: minterContract.address,
+            constructorArgsParams: minterDeployArgs,
+        });
+    } catch (err) {
+        console.log(err);
+    }
 
-        console.log('   Verifying FeeDistributor...');
-        try {
-            await hre.run('verify', {
-                address: feeDistributorContract.address,
-                constructorArgsParams: feeDistributorArgs,
-            });
-        } catch (err) {
-            console.log(err);
-        }
+    console.log('   Verifying FeeDistributor...');
+    try {
+        await hre.run('verify', {
+            address: feeDistributorContract.address,
+            constructorArgsParams: feeDistributorArgs,
+        });
+    } catch (err) {
+        console.log(err);
     }
 };
 

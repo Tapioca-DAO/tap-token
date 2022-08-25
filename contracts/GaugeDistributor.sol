@@ -84,7 +84,6 @@ contract GaugeDistributor is Ownable, ReentrancyGuard {
 
         int256 week = _getWeek(timestamp);
         uint256 availableAtTimestamp = ITapOFT(token).mintedInWeek(week);
-        uint256 balance = ITapOFT(token).balanceOf(token);
 
         uint256 weight = IGaugeController(controller).gauge_relative_weight(gaugeAddr);
         uint256 toExtract = (weight * availableAtTimestamp) / 10**18;

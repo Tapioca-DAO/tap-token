@@ -45,8 +45,8 @@ describe('governance - flow', () => {
         signer2 = (await ethers.getSigners())[1];
         signer3 = (await ethers.getSigners())[2];
         const latestBlock = await ethers.provider.getBlock('latest');
-
-        LZEndpointMock = (await deployLZEndpointMock(0)) as LZEndpointMock;
+        const chainId = (await ethers.provider.getNetwork()).chainId;
+        LZEndpointMock = (await deployLZEndpointMock(chainId)) as LZEndpointMock;
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
         veTapioca = (await deployveTapiocaNFT(tapiocaOFT.address, 'veTapioca Token', 'veTAP', '1')) as VeTap;
         gaugeController = (await deployGaugeController(tapiocaOFT.address, veTapioca.address)) as GaugeController;
@@ -99,7 +99,7 @@ describe('governance - flow', () => {
 
         //100 days
         for (var i = 0; i <= 14; i++) {
-            time_travel(7 * DAY);
+            await time_travel(7 * DAY);
             await tapiocaOFT.connect(signer).emitForWeek(0);
         }
 
@@ -110,7 +110,7 @@ describe('governance - flow', () => {
         expect(gaugeWeightAfterSecondVote.gt(0)).to.be.true;
         expect(powerUsedAfterSecondVote.gt(0)).to.be.true;
 
-        time_travel(100 * DAY);
+        await time_travel(100 * DAY);
 
         await gaugeController.connect(signer).vote_for_gauge_weights(liquidityGauge.address, 2 * votingPower);
         const powerUsedAfterThirdVote = await gaugeController.vote_user_power(signer.address);
@@ -146,7 +146,7 @@ describe('governance - flow', () => {
         expect(balanceOfVeTokens.gt(0)).to.be.true;
 
         for (var i = 0; i <= 0; i++) {
-            time_travel(7 * DAY);
+            await time_travel(7 * DAY);
             await tapiocaOFT.connect(signer).emitForWeek(0);
         }
 
@@ -180,7 +180,7 @@ describe('governance - flow', () => {
 
         //100 days
         for (var i = 0; i <= 14; i++) {
-            time_travel(7 * DAY);
+            await time_travel(7 * DAY);
             await gaugeControllerInterface.gauge_relative_weight_write(liquidityGauge.address);
             await gaugeControllerInterface.gauge_relative_weight_write(liquidityGauge2.address);
             latestBlock = await ethers.provider.getBlock('latest');
@@ -214,7 +214,7 @@ describe('governance - flow', () => {
         const feeDistributorBalance = await tapiocaOFT.balanceOf(feeDistributor.address);
         expect(feeDistributorBalance.eq(feeAmount)).to.be.true;
 
-        time_travel(2 * DAY);
+        await time_travel(2 * DAY);
         crtBLock = await ethers.provider.getBlock('latest');
         veBalanceReportedByFeeSharingForSigner2 = await feeDistributor.ve_for_at(signer2.address, crtBLock.timestamp);
 
@@ -291,7 +291,7 @@ describe('governance - flow', () => {
 
         //100 days
         for (var i = 0; i <= 14; i++) {
-            time_travel(7 * DAY);
+            await time_travel(7 * DAY);
             await gaugeControllerInterface.gauge_relative_weight_write(liquidityGauge.address);
             await gaugeControllerInterface.gauge_relative_weight_write(liquidityGauge2.address);
 

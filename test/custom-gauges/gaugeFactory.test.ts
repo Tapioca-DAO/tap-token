@@ -1,8 +1,16 @@
-import hre, { ethers } from 'hardhat';
+import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { LZEndpointMock, TapOFT, TimedGauge, ERC20Mock, GaugeFactory, GaugeDistributor, GaugeController, VeTap } from '../../typechain';
-import { deployLZEndpointMock, deployTapiocaOFT, deployTimedGauge, deployGaugeFactory, deployveTapiocaNFT, deployGaugeController, deployGaugeDistributor } from '../test.utils';
+import {
+    deployLZEndpointMock,
+    deployTapiocaOFT,
+    deployTimedGauge,
+    deployGaugeFactory,
+    deployveTapiocaNFT,
+    deployGaugeController,
+    deployGaugeDistributor,
+} from '../test.utils';
 
 describe('GaugeFactory', () => {
     let signer: SignerWithAddress;
@@ -17,13 +25,13 @@ describe('GaugeFactory', () => {
     let LZEndpointMock: LZEndpointMock;
     let gaugeFactory: GaugeFactory;
     beforeEach(async () => {
-        // const minterDeployArgs = [tapOFTDeployment.address, gaugeControllerContract.address];
         signer = (await ethers.getSigners())[0];
         user = (await ethers.getSigners())[1];
-        LZEndpointMock = await deployLZEndpointMock(0);
+        const chainId = (await ethers.provider.getNetwork()).chainId;
+        LZEndpointMock = await deployLZEndpointMock(chainId);
         tapToken = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
-        erc20Mock = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
-        erc20Mock2 = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
+        erc20Mock = await (await ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
+        erc20Mock2 = await (await ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
         veTapioca = (await deployveTapiocaNFT(tapToken.address, 'veTapioca Token', 'veTAP', '1')) as VeTap;
         gaugeController = (await deployGaugeController(tapToken.address, veTapioca.address)) as GaugeController;
         gaugeDistributor = (await deployGaugeDistributor(tapToken.address, gaugeController.address)) as GaugeDistributor;

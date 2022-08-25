@@ -143,7 +143,7 @@ def assert_not_contract(addr: address):
         if self.whitelisted_contracts[addr]:
             return
 
-        raise "1000"
+        raise "contract not valid"
 
 @internal
 def _checkpoint(addr: address, old_locked: LockedBalance, new_locked: LockedBalance):
@@ -594,7 +594,8 @@ def create_lock_for(_addr: address, _value: uint256, _unlock_time: uint256):
     @param _value Amount to deposit
     @param _unlock_time Epoch time when tokens unlock, rounded down to whole weeks
     """
-    assert msg.sender == self.admin #dev: only admin
+    assert (msg.sender == self.token) or (msg.sender==self.admin), "unauthorized"
+    
     unlock_time: uint256 = (_unlock_time / WEEK) * WEEK  # Locktime is rounded down to weeks
     _locked: LockedBalance = self.locked[_addr]
     assert _value > 0,"value not valid"# dev: need non-zero value
@@ -621,6 +622,24 @@ def increase_amount(_value: uint256):
 
     self._deposit_for(msg.sender, msg.sender, _value, 0, _locked, INCREASE_LOCK_AMOUNT)
 
+@external
+@nonreentrant('lock')
+def increase_amount_for(_addr: address, _value: uint256):
+    """
+    @notice Deposit `_value` additional tokens for `_addr`
+            without modifying the unlock time
+    @param _value Amount of tokens to deposit and add to the lock
+    """
+    assert (msg.sender == self.token) or (msg.sender==self.admin), "unauthorized"
+
+    self.assert_not_contract(_addr)
+    _locked: LockedBalance = self.locked[_addr]
+
+    assert _value > 0,"value not valid"  # dev: need non-zero value
+    assert _locked.amount > 0, "locked amount not valid"
+    assert _locked.end > block.timestamp,"locked end not valid"
+
+    self._deposit_for(msg.sender, _addr, _value, 0, _locked, INCREASE_LOCK_AMOUNT)
 
 @external
 @nonreentrant('lock')

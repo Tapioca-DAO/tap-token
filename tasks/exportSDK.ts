@@ -11,12 +11,10 @@ import { getDeployments } from '../scripts/getDeployments-script';
 export const exportSDK__task = async (taskArgs: { mainnet?: boolean }, hre: HardhatRuntimeEnvironment) => {
     const cwd = process.cwd();
     const { mainnet } = taskArgs;
-
     const __deployments = { prev: {} };
     try {
         __deployments.prev = JSON.parse(fs.readFileSync('tapioca-sdk/src/addresses.json', 'utf-8'));
     } catch (e) {}
-
     if (mainnet) {
         const deployments = {
             ...__deployments.prev,
@@ -42,7 +40,6 @@ export const exportSDK__task = async (taskArgs: { mainnet?: boolean }, hre: Hard
             'ILiquidityGauge',
         ].some((v) => e.split('/').slice(-1)[0] === v.concat('.json')),
     );
-
     await runTypeChain({
         cwd,
         filesToProcess: allFiles,
@@ -52,6 +49,7 @@ export const exportSDK__task = async (taskArgs: { mainnet?: boolean }, hre: Hard
         flags: {
             alwaysGenerateOverloads: true,
             environment: 'hardhat',
+            discriminateTypes: false,
         },
     });
 };

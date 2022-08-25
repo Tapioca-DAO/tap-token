@@ -20,7 +20,8 @@ describe('TimedGauge', () => {
         signer = (await ethers.getSigners())[0];
         user = (await ethers.getSigners())[1];
         user2 = (await ethers.getSigners())[2];
-        LZEndpointMock = await deployLZEndpointMock(0);
+        const chainId = (await ethers.provider.getNetwork()).chainId;
+        LZEndpointMock = await deployLZEndpointMock(chainId);
         tapToken = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
         erc20Mock = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
         erc20Mock2 = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
@@ -94,14 +95,14 @@ describe('TimedGauge', () => {
         expect(extracted.eq(amount)).to.be.true;
     });
 
-    it("should kill the contract", async () => {
+    it('should kill the contract', async () => {
         await expect(gauge.connect(user2).kill()).to.be.reverted;
         let killStatus = await gauge.isKilled();
         expect(killStatus).to.be.false;
         await gauge.connect(signer).kill();
         killStatus = await gauge.isKilled();
         expect(killStatus).to.be.true;
-    })
+    });
     it('should update reward duration', async () => {
         await expect(gauge.connect(user).updateRewardDuration(1000 * 365)).to.be.reverted;
 
@@ -117,19 +118,19 @@ describe('TimedGauge', () => {
         const amount = BN(1000000).mul((1e18).toString());
 
         await gauge.connect(signer).updateRewardDuration(0);
-        await expect(gauge.connect(signer).addRewards(0)).to.be.revertedWith("reward duration not set");
+        await expect(gauge.connect(signer).addRewards(0)).to.be.revertedWith('reward duration not set');
 
         await gauge.connect(signer).updateRewardDuration(4 * 365 * 86400);
 
-        await expect(gauge.connect(user2).addRewards(0)).to.be.revertedWith("unauthorized");
+        await expect(gauge.connect(user2).addRewards(0)).to.be.revertedWith('unauthorized');
 
         await tapToken.connect(signer).approve(gauge.address, amount);
 
         const rewardRateBefore = await gauge.rewardRate();
         const lastUpdateTimeBefore = await gauge.lastUpdateTime();
         const periodFinishBefore = await gauge.periodFinish();
-        time_travel(10 * 86400);
-        await expect(gauge.connect(user2).addRewards(amount)).to.be.revertedWith("unauthorized");
+        await time_travel(10 * 86400);
+        await expect(gauge.connect(user2).addRewards(amount)).to.be.revertedWith('unauthorized');
         await expect(gauge.addRewards(amount)).to.emit(gauge, 'RewardAdded');
 
         const rewardRateAfter = await gauge.rewardRate();
@@ -141,12 +142,12 @@ describe('TimedGauge', () => {
         expect(periodFinishAfter.gt(periodFinishBefore)).to.be.true;
 
         await gauge.kill();
-        await expect(gauge.connect(signer).addRewards(amount)).to.be.revertedWith("contract killed");
+        await expect(gauge.connect(signer).addRewards(amount)).to.be.revertedWith('contract killed');
     });
 
     it('should add rewards to the contract after period ended', async () => {
         const amount = BN(1000000).mul((1e18).toString());
-        time_travel(50 * 365 * 86400);
+        await time_travel(50 * 365 * 86400);
         await tapToken.connect(signer).approve(gauge.address, amount);
 
         const rewardRateBefore = await gauge.rewardRate();
@@ -281,7 +282,7 @@ describe('TimedGauge', () => {
         await tapToken.connect(signer).approve(gauge.address, amount);
         await expect(gauge.addRewards(amount)).to.emit(gauge, 'RewardAdded');
 
-        time_travel(100 * 86400);
+        await time_travel(100 * 86400);
 
         const tapBalanceBefore = await tapToken.balanceOf(user.address);
         await expect(gauge.connect(user).claimRewards()).to.emit(gauge, 'Claimed');
@@ -289,12 +290,12 @@ describe('TimedGauge', () => {
         expect(tapBalanceAfter.gt(tapBalanceBefore)).to.be.true;
         expect(tapBalanceAfter.gt(0)).to.be.true;
 
-        time_travel(100 * 86400);
+        await time_travel(100 * 86400);
         await expect(gauge.connect(user).claimRewards()).to.emit(gauge, 'Claimed');
         const tapBalanceAfter2ndClaim = await tapToken.balanceOf(user.address);
         expect(tapBalanceAfter2ndClaim.gt(tapBalanceAfter)).to.be.true;
 
-        time_travel(100 * 86400);
+        await time_travel(100 * 86400);
         const depositTokenBalanceBefore = await erc20Mock.balanceOf(user.address);
         await expect(gauge.connect(user).withdraw(amount)).to.emit(gauge, 'Withdrawn');
         const depositTokenBalanceAfter = await erc20Mock.balanceOf(user.address);
@@ -317,7 +318,7 @@ describe('TimedGauge', () => {
         await tapToken.connect(signer).approve(gauge.address, amount);
         await expect(gauge.addRewards(amount)).to.emit(gauge, 'RewardAdded');
 
-        time_travel(100 * 86400);
+        await time_travel(100 * 86400);
         const tapBalanceBefore = await tapToken.balanceOf(user.address);
         const depositTokenBalanceBefore = await erc20Mock.balanceOf(user.address);
         await expect(gauge.connect(user).exit()).to.emit(gauge, 'Withdrawn');
@@ -348,7 +349,7 @@ describe('TimedGauge', () => {
             'The current file shows how many rewards a user gets when rewards are added initially (58M TAP token). This user is the only one with a stake in the gauge';
         let sum: BigNumber = BN(0);
         for (let i = 0; i < noOfWeeks; i++) {
-            time_travel(7 * 86400);
+            await time_travel(7 * 86400);
             const balanceBefore = await tapToken.balanceOf(user.address);
             await expect(gauge.connect(user).claimRewards()).to.emit(gauge, 'Claimed');
             const balanceAfter = await tapToken.balanceOf(user.address);
@@ -374,7 +375,7 @@ describe('TimedGauge', () => {
         let sum: BigNumber = BN(0);
         let totalRewards: BigNumber = BN(0);
         for (var i = 0; i <= noOfWeeks; i++) {
-            time_travel(7 * 86400);
+            await time_travel(7 * 86400);
             const available = await tapToken.callStatic.emitForWeek(0);
             totalRewards = available.add(totalRewards);
 
@@ -412,7 +413,7 @@ describe('TimedGauge', () => {
         const rewardsJsonContent: any = {};
         let sum: BigNumber = BN(0);
         for (let i = 0; i < noOfWeeks; i++) {
-            time_travel(7 * 86400);
+            await time_travel(7 * 86400);
             const userBalanceBefore = await tapToken.balanceOf(user.address);
             await gauge.connect(user).claimRewards();
             const userBalanceAfter = await tapToken.balanceOf(user.address);
@@ -447,7 +448,7 @@ describe('TimedGauge', () => {
         const rewardsJsonContent: any = {};
         let sum: BigNumber = BN(0);
         for (let i = 0; i < noOfWeeks; i++) {
-            time_travel(7 * 86400);
+            await time_travel(7 * 86400);
             const available = await tapToken.callStatic.emitForWeek(0);
 
             const userBalanceBefore = await tapToken.balanceOf(user.address);
