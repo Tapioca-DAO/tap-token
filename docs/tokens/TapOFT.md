@@ -6,9 +6,94 @@
 
 OFT compatible TAP token
 
-
+*Latest size: 17.663  KiBEmissions calculator: https://www.desmos.com/calculator/1fa0zen2ut*
 
 ## Methods
+
+### INCREASE_AMOUNT
+
+```solidity
+function INCREASE_AMOUNT() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### INITIAL_SUPPLY
+
+```solidity
+function INITIAL_SUPPLY() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### LOCK
+
+```solidity
+function LOCK() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### WEEK
+
+```solidity
+function WEEK() external view returns (uint256)
+```
+
+seconds in a week
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### a_param
+
+```solidity
+function a_param() external view returns (int256)
+```
+
+the a parameter used in the emission function; can be changed by governance
+
+*formula: b(xe^(c-f(x))) where f(x)=x/a*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | int256 | undefined |
 
 ### allowance
 
@@ -56,6 +141,45 @@ function approve(address spender, uint256 amount) external nonpayable returns (b
 |---|---|---|
 | _0 | bool | undefined |
 
+### availableForWeek
+
+```solidity
+function availableForWeek(uint256 timestamp) external view returns (uint256)
+```
+
+returns available emissions for a specific timestamp
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| timestamp | uint256 | the moment in time to emit for |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### b_param
+
+```solidity
+function b_param() external view returns (int256)
+```
+
+the b parameter used in the emission function; can be changed by governance
+
+*formula: b(xe^(c-f(x))) where f(x)=x/a*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | int256 | undefined |
+
 ### balanceOf
 
 ```solidity
@@ -78,6 +202,23 @@ function balanceOf(address account) external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### c_param
+
+```solidity
+function c_param() external view returns (int256)
+```
+
+the c parameter used in the emission function; can be changed by governance
+
+*formula: b(xe^(c-f(x))) where f(x)=x/a*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | int256 | undefined |
+
 ### circulatingSupply
 
 ```solidity
@@ -94,23 +235,6 @@ function circulatingSupply() external view returns (uint256)
 | Name | Type | Description |
 |---|---|---|
 | _0 | uint256 | undefined |
-
-### createTAP
-
-```solidity
-function createTAP(address _to, uint256 _amount) external nonpayable
-```
-
--- Write methods --mints more TAP
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _to | address | the receiver address |
-| _amount | uint256 | TAP amount |
 
 ### decimals
 
@@ -152,6 +276,45 @@ function decreaseAllowance(address spender, uint256 subtractedValue) external no
 |---|---|---|
 | _0 | bool | undefined |
 
+### emissionsStartTime
+
+```solidity
+function emissionsStartTime() external view returns (uint256)
+```
+
+starts time for emissions
+
+*initialized in the constructor with block.timestamp*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### emitForWeek
+
+```solidity
+function emitForWeek(uint256 timestamp) external nonpayable returns (uint256)
+```
+
+-- Write methods --returns the available emissions for a specific week
+
+*formula: b(xe^(c-f(x))) where f(x)=x/a*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| timestamp | uint256 | the moment in time to emit for |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### estimateSendFee
 
 ```solidity
@@ -178,6 +341,23 @@ function estimateSendFee(uint16 _dstChainId, bytes _toAddress, uint256 _amount, 
 |---|---|---|
 | nativeFee | uint256 | undefined |
 | zroFee | uint256 | undefined |
+
+### extractTAP
+
+```solidity
+function extractTAP(address _to, uint256 _amount) external nonpayable
+```
+
+extracts from the minted TAP
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _to | address | the receiver address |
+| _amount | uint256 | TAP amount |
 
 ### failedMessages
 
@@ -244,6 +424,41 @@ function getConfig(uint16 _version, uint16 _chainId, address, uint256 _configTyp
 | Name | Type | Description |
 |---|---|---|
 | _0 | bytes | undefined |
+
+### getVotingPower
+
+```solidity
+function getVotingPower(uint256 _amount, uint256 _time, uint256 _action) external payable
+```
+
+lock TapOFT and get veTap on Optimism
+
+*cannot be called on Optimism; use VeTap directly*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _amount | uint256 | the amount of TAP to lock for voting power |
+| _time | uint256 | lock duration |
+| _action | uint256 | undefined |
+
+### governanceChainIdentifier
+
+```solidity
+function governanceChainIdentifier() external view returns (uint16)
+```
+
+LayerZero governance chain identifier
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint16 | undefined |
 
 ### increaseAllowance
 
@@ -326,6 +541,28 @@ function lzReceive(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes _
 | _srcAddress | bytes | undefined |
 | _nonce | uint64 | undefined |
 | _payload | bytes | undefined |
+
+### mintedInWeek
+
+```solidity
+function mintedInWeek(int256) external view returns (uint256)
+```
+
+returns the amount minted for a specific week
+
+*week is computed using (timestamp - emissionStartTime) / WEEK*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | int256 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
 
 ### minter
 
@@ -499,6 +736,54 @@ function sendFrom(address _from, uint16 _dstChainId, bytes _toAddress, uint256 _
 | _zroPaymentAddress | address | undefined |
 | _adapterParams | bytes | undefined |
 
+### setAParam
+
+```solidity
+function setAParam(int256 val) external nonpayable
+```
+
+sets a new value for parameter
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| val | int256 | the new value |
+
+### setBParam
+
+```solidity
+function setBParam(int256 val) external nonpayable
+```
+
+sets a new value for parameter
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| val | int256 | the new value |
+
+### setCParam
+
+```solidity
+function setCParam(int256 val) external nonpayable
+```
+
+sets a new value for parameter
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| val | int256 | the new value |
+
 ### setConfig
 
 ```solidity
@@ -518,13 +803,13 @@ function setConfig(uint16 _version, uint16 _chainId, uint256 _configType, bytes 
 | _configType | uint256 | undefined |
 | _config | bytes | undefined |
 
-### setMinter
+### setGovernanceChainIdentifier
 
 ```solidity
-function setMinter(address _minter) external nonpayable
+function setGovernanceChainIdentifier(uint16 _identifier) external nonpayable
 ```
 
--- Onwer methods --
+-- Onwer methods --sets the governance chain identifier
 
 
 
@@ -532,7 +817,23 @@ function setMinter(address _minter) external nonpayable
 
 | Name | Type | Description |
 |---|---|---|
-| _minter | address | undefined |
+| _identifier | uint16 | LayerZero chain identifier |
+
+### setMinter
+
+```solidity
+function setMinter(address _minter) external nonpayable
+```
+
+sets a new minter address
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _minter | address | the new address |
 
 ### setReceiveVersion
 
@@ -582,6 +883,22 @@ function setTrustedRemote(uint16 _srcChainId, bytes _srcAddress) external nonpay
 |---|---|---|
 | _srcChainId | uint16 | undefined |
 | _srcAddress | bytes | undefined |
+
+### setVeTap
+
+```solidity
+function setVeTap(address addr) external nonpayable
+```
+
+sets the VotingEscrow address
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| addr | address | the VotingEscrow address |
 
 ### supportsInterface
 
@@ -724,9 +1041,43 @@ function trustedRemoteLookup(uint16) external view returns (bytes)
 |---|---|---|
 | _0 | bytes | undefined |
 
+### veTap
+
+```solidity
+function veTap() external view returns (address)
+```
+
+returns the voting escrow address
+
+*veTap is deployed only on Optimism*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | address | undefined |
+
 
 
 ## Events
+
+### AParamUpdated
+
+```solidity
+event AParamUpdated(int256 _old, int256 _new)
+```
+
+event emitted when the A parameter of the emission formula is updated
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _old  | int256 | undefined |
+| _new  | int256 | undefined |
 
 ### Approval
 
@@ -746,6 +1097,23 @@ event Approval(address indexed owner, address indexed spender, uint256 value)
 | spender `indexed` | address | undefined |
 | value  | uint256 | undefined |
 
+### BParamUpdated
+
+```solidity
+event BParamUpdated(int256 _old, int256 _new)
+```
+
+event emitted when the B parameter of the emission formula is updated
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _old  | int256 | undefined |
+| _new  | int256 | undefined |
+
 ### Burned
 
 ```solidity
@@ -763,6 +1131,57 @@ event emitted when new TAP is burned
 | _by `indexed` | address | undefined |
 | _from `indexed` | address | undefined |
 | _amount  | uint256 | undefined |
+
+### CParamUpdated
+
+```solidity
+event CParamUpdated(int256 _old, int256 _new)
+```
+
+event emitted when the C parameter of the emission formula is updated
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _old  | int256 | undefined |
+| _new  | int256 | undefined |
+
+### GovernanceChainIdentifierUpdated
+
+```solidity
+event GovernanceChainIdentifierUpdated(uint16 _old, uint16 _new)
+```
+
+event emitted when the governance chain identifier is updated
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _old  | uint16 | undefined |
+| _new  | uint16 | undefined |
+
+### IncreasedVeAmount
+
+```solidity
+event IncreasedVeAmount(address indexed forAddr, uint256 amount)
+```
+
+event emitted when TAP amount from veTap is increased
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| forAddr `indexed` | address | undefined |
+| amount  | uint256 | undefined |
 
 ### MessageFailed
 
@@ -942,5 +1361,212 @@ event Unpaused(address account)
 |---|---|---|
 | account  | address | undefined |
 
+### UpdateMiningParameters
+
+```solidity
+event UpdateMiningParameters(uint256 _blockTimestmap, uint256 _rate, uint256 _startEpochSupply)
+```
+
+event emitted when mining parameters are updated
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _blockTimestmap  | uint256 | undefined |
+| _rate  | uint256 | undefined |
+| _startEpochSupply  | uint256 | undefined |
+
+### VeLockedFor
+
+```solidity
+event VeLockedFor(address indexed forAddr, uint256 amount, uint256 time)
+```
+
+event emitted when TAP is locked for voting
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| forAddr `indexed` | address | undefined |
+| amount  | uint256 | undefined |
+| time  | uint256 | undefined |
+
+### VeTapUpdated
+
+```solidity
+event VeTapUpdated(address indexed _old, address indexed _new)
+```
+
+event emitted when veTap address is updated
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _old `indexed` | address | undefined |
+| _new `indexed` | address | undefined |
+
+
+
+## Errors
+
+### PRBMathSD59x18__DivInputTooSmall
+
+```solidity
+error PRBMathSD59x18__DivInputTooSmall()
+```
+
+Emitted when one of the inputs is MIN_SD59x18.
+
+
+
+
+### PRBMathSD59x18__DivOverflow
+
+```solidity
+error PRBMathSD59x18__DivOverflow(uint256 rAbs)
+```
+
+Emitted when one of the intermediary unsigned results overflows SD59x18.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| rAbs | uint256 | undefined |
+
+### PRBMathSD59x18__Exp2InputTooBig
+
+```solidity
+error PRBMathSD59x18__Exp2InputTooBig(int256 x)
+```
+
+Emitted when the input is greater than 192.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| x | int256 | undefined |
+
+### PRBMathSD59x18__FromIntOverflow
+
+```solidity
+error PRBMathSD59x18__FromIntOverflow(int256 x)
+```
+
+Emitted when converting a basic integer to the fixed-point format overflows SD59x18.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| x | int256 | undefined |
+
+### PRBMathSD59x18__FromIntUnderflow
+
+```solidity
+error PRBMathSD59x18__FromIntUnderflow(int256 x)
+```
+
+Emitted when converting a basic integer to the fixed-point format underflows SD59x18.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| x | int256 | undefined |
+
+### PRBMathSD59x18__LogInputTooSmall
+
+```solidity
+error PRBMathSD59x18__LogInputTooSmall(int256 x)
+```
+
+Emitted when the input is less than or equal to zero.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| x | int256 | undefined |
+
+### PRBMathSD59x18__MulInputTooSmall
+
+```solidity
+error PRBMathSD59x18__MulInputTooSmall()
+```
+
+Emitted when one of the inputs is MIN_SD59x18.
+
+
+
+
+### PRBMathSD59x18__MulOverflow
+
+```solidity
+error PRBMathSD59x18__MulOverflow(uint256 rAbs)
+```
+
+Emitted when the intermediary absolute result overflows SD59x18.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| rAbs | uint256 | undefined |
+
+### PRBMath__MulDivFixedPointOverflow
+
+```solidity
+error PRBMath__MulDivFixedPointOverflow(uint256 prod1)
+```
+
+Emitted when the result overflows uint256.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| prod1 | uint256 | undefined |
+
+### PRBMath__MulDivOverflow
+
+```solidity
+error PRBMath__MulDivOverflow(uint256 prod1, uint256 denominator)
+```
+
+Emitted when the result overflows uint256.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| prod1 | uint256 | undefined |
+| denominator | uint256 | undefined |
 
 
