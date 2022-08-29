@@ -68,8 +68,6 @@ describe('tapOFT', () => {
                 signer.address,
                 signer.address,
                 signer.address,
-                signer.address,
-                signer.address,
                 1,
             ),
         ).to.be.reverted;
