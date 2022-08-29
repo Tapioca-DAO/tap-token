@@ -19,14 +19,12 @@ contract TapOFT is PausableOFT {
 
     //  Allocation:
     // =========
-    // * team - 15M
-    // * advisors - 4M
-    // * global incentives - 50M
-    // * initial dex liquidity - 4M
-    // * seed - 10M
-    // * private - 12M
-    // * ido - 3M
-    // * aidrop - 2M
+    // * Team: 15m
+    // * Advisors: 4m
+    // * DAO: 63m
+    // * Seed: 8m
+    // * OTC: 5m
+    // * LBP: 5m
     // == 100M ==
     uint256 public constant INITIAL_SUPPLY = 1e18 * 100_000_000;
     uint256 public constant LOCK = 10;
@@ -99,23 +97,19 @@ contract TapOFT is PausableOFT {
     /// @param _lzEndpoint the layer zero address endpoint deployed on the current chain
     /// @param _team address for the team tokens
     /// @param _advisors address for the advisors tokens
-    /// @param _globalIncentives address for the global incentives tokens
-    /// @param _initialDexLiquidity address for the initial dex liquidity tokens
+    /// @param _dao address for the DAO tokens
     /// @param _seed address for the seed tokens
-    /// @param _private address for the private sale tokens
-    /// @param _ido address for the ido tokens
-    /// @param _airdrop address for the airdrop tokens
+    /// @param _otc address for the OTC tokens
+    /// @param _lbp address for the LBP tokens
     /// @param _governanceChainId LayerZero governance chain identifier
     constructor(
         address _lzEndpoint,
         address _team,
         address _advisors,
-        address _globalIncentives,
-        address _initialDexLiquidity,
+        address _dao,
         address _seed,
-        address _private,
-        address _ido,
-        address _airdrop,
+        address _otc,
+        address _lbp,
         uint16 _governanceChainId
     ) PausableOFT('Tapioca', 'TAP', _lzEndpoint) {
         require(_lzEndpoint != address(0), 'LZ endpoint not valid');
@@ -123,12 +117,10 @@ contract TapOFT is PausableOFT {
         if (_getChainId() == governanceChainIdentifier) {
             _mint(_team, 1e18 * 15_000_000);
             _mint(_advisors, 1e18 * 4_000_000);
-            _mint(_globalIncentives, 1e18 * 50_000_000);
-            _mint(_initialDexLiquidity, 1e18 * 4_000_000);
-            _mint(_seed, 1e18 * 10_000_000);
-            _mint(_private, 1e18 * 12_000_000);
-            _mint(_ido, 1e18 * 3_000_000);
-            _mint(_airdrop, 1e18 * 2_000_000);
+            _mint(_dao, 1e18 * 63_000_000);
+            _mint(_seed, 1e18 * 8_000_000);
+            _mint(_otc, 1e18 * 5_000_000);
+            _mint(_lbp, 1e18 * 5_000_000);
             require(totalSupply() == INITIAL_SUPPLY, 'initial supply not valid');
         }
         emissionsStartTime = block.timestamp;

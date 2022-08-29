@@ -61,7 +61,7 @@ export async function deployLZEndpointMock(chainId: number) {
 export async function deployTapiocaOFT(lzEndpoint: string, to: string, chainId_?: number) {
     let { chainId } = await ethers.provider.getNetwork();
     chainId = chainId_ ?? chainId;
-    const oftContract = await (await ethers.getContractFactory('TapOFT')).deploy(lzEndpoint, to, to, to, to, to, to, to, to, chainId);
+    const oftContract = await (await ethers.getContractFactory('TapOFT')).deploy(lzEndpoint, to, to, to, to, to, to, chainId);
     await oftContract.deployed();
 
     return oftContract;
