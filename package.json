@@ -61,6 +61,7 @@
     },
     "dependencies": {
         "@prb/math": "^2.5.0",
-        "husky": "^8.0.1"
+        "husky": "^8.0.1",
+        "tapioca-sdk": "^1.0.8"
     }
 }
