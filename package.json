@@ -1,5 +1,5 @@
 {
-    "name": "tapioca-bar",
+    "name": "tap-token",
     "license": "MIT",
     "scripts": {
         "compile": "yarn clean && NODE_ENV=compile hardhat compile --quiet && yarn solhint",
