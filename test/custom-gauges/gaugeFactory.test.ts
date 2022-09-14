@@ -1,7 +1,12 @@
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { LZEndpointMock, TapOFT, TimedGauge, ERC20Mock, GaugeFactory, GaugeDistributor, GaugeController, VeTap } from '../../typechain';
+
+import { LZEndpointMock, TapOFT, TimedGauge, ERC20Mock, GaugeFactory, GaugeDistributor } from '../../typechain/';
+import { GaugeController } from '../../typechain/contracts/vyper/GaugeController.vy';
+import { VeTap } from '../../typechain/contracts/vyper/VeTap.vy';
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+
 import {
     deployLZEndpointMock,
     deployTapiocaOFT,
@@ -24,7 +29,8 @@ describe('GaugeFactory', () => {
     let gaugeController: GaugeController;
     let LZEndpointMock: LZEndpointMock;
     let gaugeFactory: GaugeFactory;
-    beforeEach(async () => {
+
+    async function register() {
         signer = (await ethers.getSigners())[0];
         user = (await ethers.getSigners())[1];
         const chainId = (await ethers.provider.getNetwork()).chainId;
@@ -39,6 +45,10 @@ describe('GaugeFactory', () => {
         gaugeFactory = (await deployGaugeFactory(gauge.address)) as GaugeFactory;
 
         await tapToken.setMinter(gaugeDistributor.address);
+    }
+
+    beforeEach(async () => {
+        await loadFixture(register);
     });
 
     it('should check initial state', async () => {

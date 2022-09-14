@@ -51,6 +51,9 @@ INCREASE_LOCK_AMOUNT: constant(int128) = 2
 INCREASE_UNLOCK_TIME: constant(int128) = 3
 
 
+event PenaltyReceiver:
+    receiver:address
+
 event CommitOwnership:
     admin: address
 
@@ -81,6 +84,7 @@ MULTIPLIER: constant(uint256) = 10 ** 18
 
 token: public(address)
 supply: public(uint256)
+penaltyReceiver: public(address)
 
 locked: public(HashMap[address, LockedBalance])
 
@@ -131,6 +135,7 @@ def __init__(token_addr: address, _name: String[64], _symbol: String[32], _versi
     self.name = _name
     self.symbol = _symbol
     self.version = _version
+    self.penaltyReceiver = msg.sender
 
 # Internal methods
 @internal
@@ -346,6 +351,17 @@ def supply_at(point: Point, t: uint256) -> uint256:
 
 
 # Owner methods
+@external
+def set_penalty_receiver(addr: address):
+    """
+    @notice Updates the address where penalties obtained from withdrawing earlier are sent to
+    """
+    assert msg.sender == self.admin,"unauthorized"  # dev: admin only
+    assert addr != ZERO_ADDRESS,"receiver not valid"
+
+    self.penaltyReceiver = addr
+    log PenaltyReceiver(addr)
+
 @external
 def commit_transfer_ownership(addr: address):
     """
@@ -688,3 +704,38 @@ def withdraw():
     log Withdraw(msg.sender, value, block.timestamp)
     log Supply(supply_before, supply_before - value)
 
+
+
+@external
+@nonreentrant('lock')
+def force_withdraw():
+    """
+    @notice Withdraw all tokens for `msg.sender`
+    @dev Will pay a penalty based on time.
+    With a 4 years lock on withdraw, you pay 75% penalty during the first year.
+    penalty decrease linearly to zero starting when time left is under 3 years.
+    """
+
+    _locked: LockedBalance = self.locked[msg.sender]
+    assert block.timestamp < _locked.end, "locked end not valid"
+
+    time_left: uint256 = _locked.end - block.timestamp
+    penalty_ratio: uint256 = min(MULTIPLIER * 3 / 4,  MULTIPLIER * time_left / MAXTIME)
+    value: uint256 = convert(_locked.amount, uint256)
+    old_locked: LockedBalance = _locked
+    _locked.end = 0
+    _locked.amount = 0
+    self.locked[msg.sender] = _locked
+    supply_before: uint256 = self.supply
+    self.supply = supply_before - value
+    # old_locked can have either expired <= timestamp or zero end
+    # _locked has only 0 end
+    # Both can have >= 0 amount
+    self._checkpoint(msg.sender, old_locked, _locked)
+
+    penalty: uint256 = value * penalty_ratio / MULTIPLIER
+    assert ERC20(self.token).transfer(msg.sender, value - penalty)
+    assert ERC20(self.token).transfer(self.penaltyReceiver, penalty)
+
+    log Withdraw(msg.sender, value, block.timestamp)
+    log Supply(supply_before, supply_before - value)

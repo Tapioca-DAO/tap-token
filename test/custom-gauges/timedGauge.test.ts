@@ -1,10 +1,11 @@
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { LZEndpointMock, TapOFT, TimedGauge, ERC20Mock } from '../../typechain';
+import { LZEndpointMock, TapOFT, TimedGauge, ERC20Mock } from '../../typechain/';
 import writeJsonFile from 'write-json-file';
 import { deployLZEndpointMock, deployTapiocaOFT, BN, time_travel, deployTimedGauge } from '../test.utils';
 import { BigNumber } from 'ethers';
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
 describe('TimedGauge', () => {
     let signer: SignerWithAddress;
@@ -16,7 +17,7 @@ describe('TimedGauge', () => {
     let erc20Mock2: ERC20Mock;
     let LZEndpointMock: LZEndpointMock;
 
-    beforeEach(async () => {
+    async function register() {
         signer = (await ethers.getSigners())[0];
         user = (await ethers.getSigners())[1];
         user2 = (await ethers.getSigners())[2];
@@ -26,6 +27,9 @@ describe('TimedGauge', () => {
         erc20Mock = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
         erc20Mock2 = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
         gauge = (await deployTimedGauge(erc20Mock.address, tapToken.address, signer.address, user.address)) as TimedGauge;
+    }
+    beforeEach(async () => {
+        await loadFixture(register);
     });
 
     it('should check initial state', async () => {

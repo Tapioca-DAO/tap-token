@@ -1,7 +1,9 @@
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { LZEndpointMock, GaugeDistributor, TapOFT, VeTap, GaugeController } from '../typechain';
+import { LZEndpointMock, GaugeDistributor, TapOFT } from '../typechain/';
+import { GaugeController } from '../typechain/contracts/vyper/GaugeController.vy';
+import { VeTap } from '../typechain/contracts/vyper/VeTap.vy';
 
 import {
     deployLZEndpointMock,
@@ -12,6 +14,7 @@ import {
     deployGaugeController,
     deployGaugeDistributor,
 } from './test.utils';
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
 describe('gaugeDistributor', () => {
     let signer: SignerWithAddress;
@@ -24,10 +27,9 @@ describe('gaugeDistributor', () => {
     let gaugeDistributor: GaugeDistributor;
     const DAY: number = 86400;
 
-    beforeEach(async () => {
+    async function register() {
         signer = (await ethers.getSigners())[0];
         signer2 = (await ethers.getSigners())[1];
-        const latestBlock = await ethers.provider.getBlock('latest');
         const chainId = (await ethers.provider.getNetwork()).chainId;
         LZEndpointMock = (await deployLZEndpointMock(chainId)) as LZEndpointMock;
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
@@ -38,6 +40,10 @@ describe('gaugeDistributor', () => {
         const mockedLiquidityGaugeFactory = await ethers.getContractFactory('LiquidityMockGauge');
         mockedLiquidityGauge = await mockedLiquidityGaugeFactory.connect(signer).deploy();
         await mockedLiquidityGauge.setToken(tapiocaOFT.address);
+    }
+
+    beforeEach(async () => {
+        await loadFixture(register);
     });
 
     it('should do nothing', async () => {
@@ -55,8 +61,8 @@ describe('gaugeDistributor', () => {
         expect(savedController.toLowerCase()).to.eq(gaugeController.address.toLowerCase());
     });
 
-    it("should not create a contract without right params", async () => {
-        const factory = await ethers.getContractFactory("GaugeDistributor");
+    it('should not create a contract without right params', async () => {
+        const factory = await ethers.getContractFactory('GaugeDistributor');
         await expect(factory.deploy(ethers.constants.AddressZero, gaugeController.address)).to.be.reverted;
         await expect(factory.deploy(tapiocaOFT.address, ethers.constants.AddressZero)).to.be.reverted;
     });
@@ -131,9 +137,9 @@ describe('gaugeDistributor', () => {
         await tapiocaOFT.connect(signer).emitForWeek(0);
         available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, latestBlock.timestamp);
         expect(available.gt(0), 'available next week').to.be.true;
-    })
+    });
 
-    it("should be able to emit after week passed and rewards to be added to the gauge", async () => {
+    it('should be able to emit after week passed and rewards to be added to the gauge', async () => {
         const initialWeight = BN(1).mul((1e18).toString());
         const gaugeControllerInterface = await ethers.getContractAt('IGaugeController', gaugeController.address);
 
@@ -167,15 +173,13 @@ describe('gaugeDistributor', () => {
         let gaugeBalance = await tapiocaOFT.balanceOf(mockedLiquidityGauge.address);
         expect(gaugeBalance.eq(gaugeBalanceFirstWeek)).to.be.true;
 
-
         await tapiocaOFT.connect(signer).emitForWeek(secondWeekBlock.timestamp);
         available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, secondWeekBlock.timestamp);
         expect(available.gt(0), 'available second week after emit').to.be.true;
         await gaugeDistributor.pushRewards(mockedLiquidityGauge.address, secondWeekBlock.timestamp);
         available = await gaugeDistributor.availableRewards(mockedLiquidityGauge.address, secondWeekBlock.timestamp);
         expect(available.eq(0), 'available second week after push').to.be.true;
-    })
-
+    });
 
     it('should add rewards weekly', async () => {
         const noOfWeeks = 10;
@@ -255,12 +259,10 @@ describe('gaugeDistributor', () => {
             expect(available2.gt(0), 'available').to.be.true;
 
             const gaugeBalanceBefore = await tapiocaOFT.balanceOf(mockedLiquidityGauge.address);
-            await gaugeDistributor.pushRewardsToMany([
-                mockedLiquidityGauge.address,
-                anotherLiquidityGauge.address,
-                ethers.constants.AddressZero,
-                ethers.constants.AddressZero,
-            ], latestBlock.timestamp);
+            await gaugeDistributor.pushRewardsToMany(
+                [mockedLiquidityGauge.address, anotherLiquidityGauge.address, ethers.constants.AddressZero, ethers.constants.AddressZero],
+                latestBlock.timestamp,
+            );
             const gaugeBalanceAfter = await tapiocaOFT.balanceOf(mockedLiquidityGauge.address);
             const addedToGauge = gaugeBalanceAfter.sub(gaugeBalanceBefore);
             const emittedThisWeek = tapSupplyAfter.sub(tapSupplyBefore);

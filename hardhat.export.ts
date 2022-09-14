@@ -109,7 +109,7 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
             'GaugeController',
         ],
     },
-    typechain: {
+    typechain: { 
         outDir: 'typechain',
         target: 'ethers-v5',
     },
