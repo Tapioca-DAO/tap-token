@@ -1,9 +1,12 @@
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ERC20Mock, LZEndpointMock, GaugeController, TapOFT, VeTap } from '../../typechain';
+import { ERC20Mock, LZEndpointMock, TapOFT } from '../../typechain/';
+import { VeTap } from '../../typechain/contracts/vyper/VeTap.vy';
+import { GaugeController } from '../../typechain/contracts/vyper/GaugeController.vy';
 
 import { deployLZEndpointMock, deployTapiocaOFT, deployveTapiocaNFT, BN, time_travel, deployGaugeController } from '../test.utils';
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
 describe('gaugeController', () => {
     let signer: SignerWithAddress;
@@ -17,7 +20,7 @@ describe('gaugeController', () => {
     let gaugeController: GaugeController;
     const DAY: number = 86400;
 
-    beforeEach(async () => {
+    async function register() {
         signer = (await ethers.getSigners())[0];
         signer2 = (await ethers.getSigners())[1];
         newGauge = (await ethers.getSigners())[2].address;
@@ -28,6 +31,10 @@ describe('gaugeController', () => {
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
         veTapioca = (await deployveTapiocaNFT(tapiocaOFT.address, 'veTapioca Token', 'veTAP', '1')) as VeTap;
         gaugeController = (await deployGaugeController(tapiocaOFT.address, veTapioca.address)) as GaugeController;
+    }
+
+    beforeEach(async () => {
+        await loadFixture(register);
     });
 
     it('should do nothing', async () => {

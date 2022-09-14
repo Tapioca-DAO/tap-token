@@ -1,7 +1,9 @@
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ERC20Mock, LZEndpointMock, VeTap, TapOFT } from '../../typechain';
+import { ERC20Mock, LZEndpointMock, TapOFT } from '../../typechain/';
+import { VeTap } from '../../typechain/contracts/vyper/VeTap.vy';
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
 import { deployLZEndpointMock, deployTapiocaOFT, deployveTapiocaNFT, BN, time_travel } from '../test.utils';
 
@@ -21,7 +23,7 @@ describe('veTapioca', () => {
     const HALF_UNLOCK_TIME: number = 2 * 365 * DAY; //half of max time
     const UNLOCK_TIME: number = 2 * HALF_UNLOCK_TIME; //max time
 
-    beforeEach(async () => {
+    async function register() {
         signer = (await ethers.getSigners())[0];
         signer2 = (await ethers.getSigners())[1];
         signer3 = (await ethers.getSigners())[2];
@@ -30,6 +32,10 @@ describe('veTapioca', () => {
         erc20Mock = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
         veTapioca = (await deployveTapiocaNFT(tapiocaOFT.address, veTapiocaName, veTapiocaSymbol, veTapiocaVersion)) as VeTap;
+    }
+
+    beforeEach(async () => {
+        await loadFixture(register);
     });
 
     it('should do nothing', async () => {
@@ -277,7 +283,7 @@ describe('veTapioca', () => {
         expect(signerFinalVeTapBalance.eq(0)).to.be.true;
     });
 
-    it.only('should be able to force withdraw with a penaly', async () => {
+    it('should be able to force withdraw with a penaly', async () => {
         const amountToLock = BN(10000).mul((1e18).toString());
         const finalPossibleAmount = BN(2500).mul((1e18).toString());
         const latestBlock = await ethers.provider.getBlock('latest');

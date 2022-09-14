@@ -2,10 +2,12 @@ import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import writeJsonFile from 'write-json-file';
-import { LZEndpointMock, TapOFT, VeTap } from '../../typechain';
+import { LZEndpointMock, TapOFT } from '../../typechain/';
+import { VeTap } from '../../typechain/contracts/vyper/VeTap.vy';
 
 import { deployLZEndpointMock, deployTapiocaOFT, deployveTapiocaNFT, BN, time_travel } from '../test.utils';
 import { BigNumberish } from 'ethers';
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
 describe('tapOFT', () => {
     let signer: SignerWithAddress;
@@ -25,7 +27,7 @@ describe('tapOFT', () => {
     const veTapiocaSymbol = 'veTAP';
     const veTapiocaVersion = '1';
 
-    beforeEach(async () => {
+    async function register() {
         signer = (await ethers.getSigners())[0];
         minter = (await ethers.getSigners())[1];
         normalUser = (await ethers.getSigners())[2];
@@ -39,6 +41,10 @@ describe('tapOFT', () => {
         tapiocaOFT1 = (await deployTapiocaOFT(LZEndpointMock1.address, signer.address)) as TapOFT;
         veTapioca0 = (await deployveTapiocaNFT(tapiocaOFT0.address, veTapiocaName, veTapiocaSymbol, veTapiocaVersion)) as VeTap;
         veTapioca1 = (await deployveTapiocaNFT(tapiocaOFT1.address, veTapiocaName, veTapiocaSymbol, veTapiocaVersion)) as VeTap;
+    }
+
+    beforeEach(async () => {
+        await loadFixture(register);
     });
 
     it('should check initial state', async () => {
