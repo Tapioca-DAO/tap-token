@@ -1,10 +1,14 @@
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ERC20Mock, LZEndpointMock, FeeDistributor, TapOFT, VeTap } from '../../typechain';
+import { ERC20Mock, LZEndpointMock, TapOFT } from '../../typechain/';
+import { VeTap } from '../../typechain/contracts/vyper/VeTap.vy';
+import { FeeDistributor } from '../../typechain/contracts/vyper/FeeDistributor.vy';
 
 import { deployLZEndpointMock, deployTapiocaOFT, deployveTapiocaNFT, BN, time_travel, deployFeeDistributor } from '../test.utils';
 import { BigNumber } from 'ethers';
+
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
 describe('feeDistributor', () => {
     let signer: SignerWithAddress;
@@ -16,7 +20,7 @@ describe('feeDistributor', () => {
     let veTapioca: VeTap;
     let feeDistributor: FeeDistributor;
 
-    beforeEach(async () => {
+    async function register() {
         signer = (await ethers.getSigners())[0];
         signer2 = (await ethers.getSigners())[1];
         signer3 = (await ethers.getSigners())[2];
@@ -33,6 +37,10 @@ describe('feeDistributor', () => {
             signer.address,
             signer2.address,
         )) as FeeDistributor;
+    }
+
+    beforeEach(async () => {
+        await loadFixture(register);
     });
 
     it('should do nothing', async () => {
