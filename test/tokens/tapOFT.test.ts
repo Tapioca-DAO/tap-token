@@ -34,8 +34,8 @@ describe('tapOFT', () => {
 
         const chainId = (await ethers.provider.getNetwork()).chainId;
 
-        LZEndpointMock0 = await deployLZEndpointMock(chainId);
-        LZEndpointMock1 = await deployLZEndpointMock(11);
+        LZEndpointMock0 = (await deployLZEndpointMock(chainId)) as LZEndpointMock;
+        LZEndpointMock1 = (await deployLZEndpointMock(11)) as LZEndpointMock;
 
         tapiocaOFT0 = (await deployTapiocaOFT(LZEndpointMock0.address, signer.address)) as TapOFT;
         tapiocaOFT1 = (await deployTapiocaOFT(LZEndpointMock1.address, signer.address)) as TapOFT;

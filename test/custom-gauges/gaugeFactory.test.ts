@@ -34,10 +34,14 @@ describe('GaugeFactory', () => {
         signer = (await ethers.getSigners())[0];
         user = (await ethers.getSigners())[1];
         const chainId = (await ethers.provider.getNetwork()).chainId;
-        LZEndpointMock = await deployLZEndpointMock(chainId);
+        LZEndpointMock = (await deployLZEndpointMock(chainId)) as LZEndpointMock;
         tapToken = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
-        erc20Mock = await (await ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
-        erc20Mock2 = await (await ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
+        erc20Mock = (await (
+            await ethers.getContractFactory('ERC20Mock')
+        ).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9))) as ERC20Mock;
+        erc20Mock2 = (await (
+            await ethers.getContractFactory('ERC20Mock')
+        ).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9))) as ERC20Mock;
         veTapioca = (await deployveTapiocaNFT(tapToken.address, 'veTapioca Token', 'veTAP', '1')) as VeTap;
         gaugeController = (await deployGaugeController(tapToken.address, veTapioca.address)) as GaugeController;
         gaugeDistributor = (await deployGaugeDistributor(tapToken.address, gaugeController.address)) as GaugeDistributor;
