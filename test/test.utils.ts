@@ -100,3 +100,15 @@ export async function deployGaugeDistributor(tapToken: string, gaugeController: 
     await gaugeDistributorContract.deployed();
     return gaugeDistributorContract;
 }
+
+export async function deployBoostV2(veToken: string) {
+    const boostv2Contract = await (await ethers.getContractFactory('BoostV2')).deploy(veToken);
+    await boostv2Contract.deployed();
+    return boostv2Contract;
+}
+
+export async function deployVotingEscrowDelegation(name: string, symbol: string, baseUri: string, veToken: string) {
+    const votingDelegation = await (await ethers.getContractFactory('VotingEscrowDelegation')).deploy(name, symbol, baseUri, veToken);
+    await votingDelegation.deployed();
+    return votingDelegation;
+}

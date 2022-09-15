@@ -29,7 +29,9 @@ describe('veTapioca', () => {
         signer3 = (await ethers.getSigners())[2];
         const chainId = (await ethers.provider.getNetwork()).chainId;
         LZEndpointMock = (await deployLZEndpointMock(chainId)) as LZEndpointMock;
-        erc20Mock = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
+        erc20Mock = (await (
+            await hre.ethers.getContractFactory('ERC20Mock')
+        ).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9))) as ERC20Mock;
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
         veTapioca = (await deployveTapiocaNFT(tapiocaOFT.address, veTapiocaName, veTapiocaSymbol, veTapiocaVersion)) as VeTap;
     }

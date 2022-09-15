@@ -168,15 +168,15 @@ def _balance_of(_user: address) -> uint256:
 
 @internal
 def _boost(_from: address, _to: address, _amount: uint256, _endtime: uint256):
-    assert _to not in [_from, ZERO_ADDRESS]
-    assert _amount != 0
-    assert _endtime > block.timestamp
-    assert _endtime % WEEK == 0
-    assert _endtime <= VotingEscrow(VE).locked__end(_from)
+    assert _to not in [_from, ZERO_ADDRESS], "receiver not valid"
+    assert _amount != 0, "amount not valid"
+    assert _endtime > block.timestamp, "min time"
+    assert _endtime % WEEK == 0, "time not valid"
+    assert _endtime <= VotingEscrow(VE).locked__end(_from), "max time"
 
     # checkpoint delegated point
     point: Point = self._checkpoint_write(_from, True)
-    assert _amount <= VotingEscrow(VE).balanceOf(_from) - (point.bias - point.slope * (block.timestamp - point.ts))
+    assert _amount <= VotingEscrow(VE).balanceOf(_from) - (point.bias - point.slope * (block.timestamp - point.ts)),"amount not valid"
 
     # calculate slope and bias being added
     slope: uint256 = _amount / (_endtime - block.timestamp)
@@ -236,8 +236,8 @@ def approve(_spender: address, _value: uint256) -> bool:
 
 @external
 def permit(_owner: address, _spender: address, _value: uint256, _deadline: uint256, _v: uint8, _r: bytes32, _s: bytes32) -> bool:
-    assert _owner != ZERO_ADDRESS
-    assert block.timestamp <= _deadline
+    assert _owner != ZERO_ADDRESS, "address not valid"
+    assert block.timestamp <= _deadline, "time not valid"
 
     nonce: uint256 = self.nonces[_owner]
     digest: bytes32 = keccak256(
@@ -248,7 +248,7 @@ def permit(_owner: address, _spender: address, _value: uint256, _deadline: uint2
         )
     )
 
-    assert ecrecover(digest, convert(_v, uint256), convert(_r, uint256), convert(_s, uint256)) == _owner
+    assert ecrecover(digest, convert(_v, uint256), convert(_r, uint256), convert(_s, uint256)) == _owner, "verification failed"
 
     self.allowance[_owner][_spender] = _value
     self.nonces[_owner] = nonce + 1

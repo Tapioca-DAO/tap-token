@@ -4,12 +4,13 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { ERC20Mock, LZEndpointMock, TapOFT } from '../../typechain/';
 import { VeTap } from '../../typechain/contracts/vyper/VeTap.vy';
 import { BoostV2 } from '../../typechain/contracts/vyper/BoostV2.vy';
+import { DelegationProxy } from '../../typechain/contracts/vyper/DelegationProxy.vy';
 
 import { deployLZEndpointMock, deployTapiocaOFT, deployveTapiocaNFT, deployBoostV2, BN } from '../test.utils';
 
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
-describe('boost v2', () => {
+describe('delegation proxy', () => {
     let signer: SignerWithAddress;
     let signer2: SignerWithAddress;
     let LZEndpointMock: LZEndpointMock;
@@ -17,6 +18,7 @@ describe('boost v2', () => {
     let tapiocaOFT: TapOFT;
     let veTapioca: VeTap;
     let boostV2: BoostV2;
+    let delegationProxy: DelegationProxy;
 
     const veTapiocaName = 'veTapioca Token';
     const veTapiocaSymbol = 'veTAP';
@@ -36,6 +38,9 @@ describe('boost v2', () => {
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
         veTapioca = (await deployveTapiocaNFT(tapiocaOFT.address, veTapiocaName, veTapiocaSymbol, veTapiocaVersion)) as VeTap;
         boostV2 = (await deployBoostV2(veTapioca.address)) as BoostV2;
+        delegationProxy = (await (
+            await hre.ethers.getContractFactory('DelegationProxy')
+        ).deploy(boostV2.address, signer.address, signer.address)) as DelegationProxy;
     }
 
     beforeEach(async () => {
@@ -44,48 +49,6 @@ describe('boost v2', () => {
 
     it('should do nothing', async () => {
         expect(1).to.eq(1);
-    });
-
-    it('should check view properties', async () => {
-        const domainSeparator = await boostV2.DOMAIN_SEPARATOR();
-        expect(domainSeparator.length > 0).to.be.true;
-
-        const veAddress = await boostV2.VE();
-        expect(veAddress.toLowerCase()).to.eq(veTapioca.address.toLowerCase());
-
-        const decimals = await boostV2.decimals();
-        expect(decimals == 18).to.be.true;
-
-        const savedName = await boostV2.name();
-        expect(savedName).to.eq('Vote-Escrowed Boost');
-
-        const savedSymbol = await boostV2.symbol();
-        expect(savedSymbol).to.eq('veBoost');
-
-        const delegableBalance = await boostV2.delegable_balance(signer.address);
-        expect(delegableBalance.eq(0)).to.be.true;
-
-        const receivedBalance = await boostV2.received_balance(signer.address);
-        expect(receivedBalance.eq(0)).to.be.true;
-    });
-
-    it('should approve and increase allowance', async () => {
-        const amount = BN(1000).mul((1e18).toString());
-
-        let currentAllowance = await boostV2.allowance(signer.address, signer2.address);
-        expect(currentAllowance.eq(0)).to.be.true;
-
-        await expect(boostV2.approve(signer2.address, amount)).to.not.be.reverted;
-        currentAllowance = await boostV2.allowance(signer.address, signer2.address);
-        expect(currentAllowance.eq(amount)).to.be.true;
-
-        await expect(boostV2.increaseAllowance(signer2.address, amount)).to.not.be.reverted;
-        currentAllowance = await boostV2.allowance(signer.address, signer2.address);
-        expect(currentAllowance.eq(amount.mul(2))).to.be.true;
-
-        await expect(boostV2.decreaseAllowance(signer2.address, amount)).to.not.be.reverted;
-        currentAllowance = await boostV2.allowance(signer.address, signer2.address);
-        expect(currentAllowance.eq(amount)).to.be.true;
     });
 
     it('should delegate', async () => {
@@ -108,20 +71,22 @@ describe('boost v2', () => {
 
         const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
 
-        const signerVotingBalance = await erc20.balanceOf(signer.address);
+        const signerVotingBalance = await delegationProxy.adjusted_balance_of(signer.address);
+        const signerVotingBalanceBeforeFromVe = await erc20.balanceOf(signer.address);
+        expect(signerVotingBalanceBeforeFromVe.eq(signerVotingBalance)).to.be.true;
         expect(signerVotingBalance.gt(minLockedAmount)).to.be.true;
 
         const delegable = await boostV2.delegable_balance(signer.address);
         expect(delegable.gt(0)).to.be.true;
 
+        await expect(delegationProxy.set_delegation(boostV2.address)).to.emit(delegationProxy, 'DelegationSet');
         await expect(boostV2Interface.boost(signer2.address, amount, 1693440000, signer.address)).to.not.be.reverted;
 
-        const delegatedBySigner = await boostV2.delegated(signer.address);
-        expect(delegatedBySigner[0].gt(0)).to.be.true;
-
-        const receivedBalance = await boostV2.received_balance(signer2.address);
-        expect(receivedBalance.gt(0)).to.be.true;
-
-        expect(receivedBalance.eq(delegatedBySigner[0])).to.be.true;
+        const signerVotingBalanceAfterFromVe = await erc20.balanceOf(signer.address);
+        const balance = await delegationProxy.adjusted_balance_of(signer2.address);
+        expect(balance.gt(0)).to.be.true;
+        expect(balance.lte(signerVotingBalance)).to.be.true;
+        expect(signerVotingBalanceAfterFromVe.lte(signerVotingBalanceBeforeFromVe)).to.be.true; //should have not decrease the original veBalance of signer
+        expect(signerVotingBalanceAfterFromVe.sub(signerVotingBalanceBeforeFromVe).lt(BN(100).mul((1e18).toString()))).to.be.true;
     });
 });

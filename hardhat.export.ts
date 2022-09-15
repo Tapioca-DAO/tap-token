@@ -107,9 +107,12 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
             'VeTap',
             'FeeDistributor',
             'GaugeController',
+            'BoostV2',
+            'DelegationProxy',
+            'VotingEscrowDelegation',
         ],
     },
-    typechain: { 
+    typechain: {
         outDir: 'typechain',
         target: 'ethers-v5',
     },

@@ -22,10 +22,14 @@ describe('TimedGauge', () => {
         user = (await ethers.getSigners())[1];
         user2 = (await ethers.getSigners())[2];
         const chainId = (await ethers.provider.getNetwork()).chainId;
-        LZEndpointMock = await deployLZEndpointMock(chainId);
+        LZEndpointMock = (await deployLZEndpointMock(chainId)) as LZEndpointMock;
         tapToken = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
-        erc20Mock = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
-        erc20Mock2 = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
+        erc20Mock = (await (
+            await hre.ethers.getContractFactory('ERC20Mock')
+        ).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9))) as ERC20Mock;
+        erc20Mock2 = (await (
+            await hre.ethers.getContractFactory('ERC20Mock')
+        ).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9))) as ERC20Mock;
         gauge = (await deployTimedGauge(erc20Mock.address, tapToken.address, signer.address, user.address)) as TimedGauge;
     }
     beforeEach(async () => {
