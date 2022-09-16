@@ -6,12 +6,20 @@ import './IAuraIntegrator.sol';
 import './IAuraLocker.sol';
 
 contract AuraIntegrator is IAuraIntegrator, Ownable {
+    // ==========
+    // *DATA*
+    // ==========
+
     uint256 public override usedAuraBalance;
     uint256 public override totalAuraBalance;
     IERC20 public override auraToken;
     IAuraLocker public auraLocker;
 
     address public delegatedTo;
+
+    // ==========
+    // *EVENTS*
+    // ==========
 
     event AuraLockerUpdated(address indexed oldVal, address indexed newVal);
     event DelegateeUpdated(address indexed oldVal, address indexed newVal);
@@ -22,20 +30,11 @@ contract AuraIntegrator is IAuraIntegrator, Ownable {
         delegatedTo = _delegatedTo;
     }
 
-    /// @notice update AuraLocker contract address
-    /// @param _locker the new locker address
-    function setAuraLocker(IAuraLocker _locker) external onlyOwner {
-        emit AuraLockerUpdated(address(auraLocker), address(_locker));
-        auraLocker = _locker;
-    }
+    // ==========
+    // *METHODS*
+    // ==========
 
-    /// @notice sets delegatee
-    /// @param _delegateTo the new delegatee address
-    function setDelegatee(address _delegateTo) external onlyOwner {
-        emit DelegateeUpdated(delegatedTo, _delegateTo);
-        delegatedTo = _delegateTo;
-    }
-
+    ///-- Write methods --
     /// @notice called by owner to execute any method on the AuraLocker contract
     /// @param data the encoded function data
     function executeAuraLockerFn(bytes memory data) external override onlyOwner returns (bool success, bytes memory result) {
@@ -61,6 +60,22 @@ contract AuraIntegrator is IAuraIntegrator, Ownable {
         _delegate();
     }
 
+    ///-- Owner methods --
+    /// @notice update AuraLocker contract address
+    /// @param _locker the new locker address
+    function setAuraLocker(IAuraLocker _locker) external onlyOwner {
+        emit AuraLockerUpdated(address(auraLocker), address(_locker));
+        auraLocker = _locker;
+    }
+
+    /// @notice sets delegatee
+    /// @param _delegateTo the new delegatee address
+    function setDelegatee(address _delegateTo) external onlyOwner {
+        emit DelegateeUpdated(delegatedTo, _delegateTo);
+        delegatedTo = _delegateTo;
+    }
+
+    ///-- Private methods --
     function _lock(uint256 amount) private {
         auraToken.approve(address(auraLocker), amount);
         auraLocker.lock(address(this), amount);

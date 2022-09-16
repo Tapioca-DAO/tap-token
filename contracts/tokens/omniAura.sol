@@ -13,9 +13,16 @@ import '../aura/IAuraIntegrator.sol';
 /// @dev Contract receives Aura which is sent to AuraIntegrator and mints back oAura
 contract omniAura is PausableOFT {
     using SafeERC20 for IERC20;
+    // ==========
+    // *DATA*
+    // ==========
 
     IERC20 public immutable auraToken;
     IAuraIntegrator public auraIntegrator;
+
+    // ==========
+    // *EVENTS*
+    // ==========
 
     event AuraIntegratorUpdated(address indexed oldAddr, address indexed newAddr);
     event Minted(address indexed from, address indexed to, uint256 amount, bool status);
@@ -26,6 +33,10 @@ contract omniAura is PausableOFT {
         auraIntegrator = _auraIntegrator;
         auraToken = IERC20(_auraIntegrator.auraToken());
     }
+
+    // ==========
+    // *METHODS*
+    // ==========
 
     //-- View methods --
     /// @notice returns token's decimals
@@ -40,7 +51,6 @@ contract omniAura is PausableOFT {
     }
 
     //-- Write methods --
-
     /// @notice mints oAura to sender
     /// @param amount the amount to mint
     function wrap(uint256 amount) external whenNotPaused returns (bool status) {
@@ -55,6 +65,7 @@ contract omniAura is PausableOFT {
         status = _mint(msg.sender, recipient, amount);
     }
 
+    //-- Private methods --
     function _mint(
         address from,
         address recipient,
