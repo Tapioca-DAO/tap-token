@@ -7,7 +7,7 @@
 @notice Votes have a weight depending on time, so that users are
         committed to the future of (whatever they are voting for)
 @dev Vote weight decays linearly over time. Lock time cannot be
-     more than `MAXTIME` (4 years).
+     more than `MAXTIME` (2 years).
 """
 
 # Voting escrow to have time-weighted votes
@@ -21,7 +21,7 @@
 #   |  /
 #   |/
 # 0 +--------+------> time
-#       maxtime (4 years?)
+#       maxtime (2 years?)
 
 struct Point:
     bias: int128
@@ -79,7 +79,7 @@ event Supply:
 
 DAY: constant(uint256) = 86400
 WEEK: constant(uint256) = 7 * 86400  # all future times are rounded by week
-MAXTIME: constant(uint256) = 4 * 365 * 86400  # 4 years
+MAXTIME: constant(uint256) = 2 * 365 * 86400  # 2 years
 MULTIPLIER: constant(uint256) = 10 ** 18
 
 token: public(address)

@@ -223,7 +223,7 @@ describe('gaugeController', () => {
         const amountToLock = BN(10000).mul((1e18).toString());
         const invalidSigner = (await ethers.getSigners())[4];
         const latestBlock = await ethers.provider.getBlock('latest');
-        const unlockTime: number = 4 * 365 * DAY; //max time
+        const unlockTime: number = 2 * 365 * DAY; //max time
 
         await gaugeController.add_type('Test', 0);
         await gaugeController.add_type('Test2', 0);

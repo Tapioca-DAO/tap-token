@@ -80,7 +80,7 @@ describe('governance - flow', () => {
         const votingPower = 5000; //50%
         const amountToLock = BN(10000).mul((1e18).toString());
         const latestBlock = await ethers.provider.getBlock('latest');
-        const unlockTime: number = 4 * 365 * DAY; //max time
+        const unlockTime: number = 2 * 365 * DAY; //max time
 
         await tapiocaOFT.connect(signer).approve(veTapioca.address, amountToLock);
         await veTapioca.connect(signer).create_lock(amountToLock, latestBlock.timestamp + unlockTime);
@@ -126,7 +126,7 @@ describe('governance - flow', () => {
         const amountToLock = BN(10000).mul((1e18).toString());
         const feeAmount = BN(1000).mul((1e18).toString());
         let latestBlock = await ethers.provider.getBlock('latest');
-        const unlockTime: number = 4 * 365 * DAY; //max time
+        const unlockTime: number = 2 * 365 * DAY; //max time
         const erc20VotingEscrow = await ethers.getContractAt('IOFT', veTapioca.address);
         const liquidityGaugeInterface = await ethers.getContractAt('ILiquidityGauge', liquidityGauge.address);
         const liquidityGaugeInterface2 = await ethers.getContractAt('ILiquidityGauge', liquidityGauge2.address);
@@ -232,8 +232,8 @@ describe('governance - flow', () => {
         const halfAmountToLock = BN(5000).mul((1e18).toString());
         const feeAmount = BN(1000).mul((1e18).toString());
         let latestBlock = await ethers.provider.getBlock('latest');
-        const unlockTime: number = 4 * 365 * DAY; //max time
-        const halfUnlockTime: number = 2 * 365 * DAY; //max time
+        const unlockTime: number = 2 * 365 * DAY; //max time
+        const halfUnlockTime: number = 1 * 365 * DAY; //max time
         const erc20VotingEscrow = await ethers.getContractAt('IOFT', veTapioca.address);
         const liquidityGaugeInterface = await ethers.getContractAt('ILiquidityGauge', liquidityGauge.address);
         const liquidityGaugeInterface2 = await ethers.getContractAt('ILiquidityGauge', liquidityGauge2.address);
