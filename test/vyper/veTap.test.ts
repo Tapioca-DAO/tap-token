@@ -20,7 +20,7 @@ describe('veTapioca', () => {
     const veTapiocaSymbol = 'veTAP';
     const veTapiocaVersion = '1';
     const DAY: number = 86400;
-    const HALF_UNLOCK_TIME: number = 2 * 365 * DAY; //half of max time
+    const HALF_UNLOCK_TIME: number = 1 * 365 * DAY; //half of max time
     const UNLOCK_TIME: number = 2 * HALF_UNLOCK_TIME; //max time
 
     async function register() {
