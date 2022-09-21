@@ -67,6 +67,19 @@ export async function deployTapiocaOFT(lzEndpoint: string, to: string, chainId_?
     return oftContract;
 }
 
+export async function deployAuraIntegrator(auraLocker: string, delegateTo: string) {
+    const integrator = await (await ethers.getContractFactory('AuraIntegrator')).deploy(auraLocker, delegateTo);
+    await integrator.deployed();
+
+    return integrator;
+}
+export async function deployOmniAura(lzEndpoint: string, auraIntegrator: string) {
+    const oftContract = await (await ethers.getContractFactory('omniAura')).deploy(lzEndpoint, auraIntegrator);
+    await oftContract.deployed();
+
+    return oftContract;
+}
+
 export async function deployveTapiocaNFT(tapiocaOFT: string, veTapiocaName: string, veTapiocaSymbol: string, veTapiocaVersion: string) {
     const veTapiocaOFTContract = await (
         await ethers.getContractFactory('VeTap')
