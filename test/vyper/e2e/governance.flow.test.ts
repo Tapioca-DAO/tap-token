@@ -10,6 +10,8 @@ import {
     FeeDistributor,
     TimedGauge,
     GaugeDistributor,
+    EsTapOFT,
+    EsTapVesting,
 } from '../../../typechain';
 
 import {
@@ -22,6 +24,8 @@ import {
     deployFeeDistributor,
     deployTimedGauge,
     deployGaugeDistributor,
+    deployEsTap,
+    deployEsTapVesting,
 } from '../../test.utils';
 
 describe('governance - flow', () => {
@@ -38,6 +42,8 @@ describe('governance - flow', () => {
     let liquidityGauge: TimedGauge;
     let liquidityGauge2: TimedGauge;
     let feeDistributor: FeeDistributor;
+    let esTap: EsTapOFT;
+    let esTapVesting: EsTapVesting;
     const DAY: number = 86400;
 
     beforeEach(async () => {
@@ -74,6 +80,11 @@ describe('governance - flow', () => {
         )) as FeeDistributor;
 
         await tapiocaOFT.setMinter(gaugeDistributor.address);
+
+        esTap = (await deployEsTap(LZEndpointMock.address, feeDistributor.address, signer.address)) as EsTapOFT;
+        esTapVesting = (await deployEsTapVesting(tapiocaOFT.address, esTap.address)) as EsTapVesting;
+
+        await esTap.setBurner(esTapVesting.address);
     });
 
     it('should lock in the escrow and cast vote using the gauge controller', async () => {
@@ -177,7 +188,6 @@ describe('governance - flow', () => {
         await erc20Mock2.connect(signer2).approve(liquidityGauge2.address, amountToLock);
         await liquidityGaugeInterface2.connect(signer2).deposit(amountToLock);
 
-
         //100 days
         for (var i = 0; i <= 14; i++) {
             await time_travel(7 * DAY);
@@ -220,13 +230,16 @@ describe('governance - flow', () => {
 
         expect(veBalanceReportedByFeeSharingForSigner2.gt(0)).to.be.true;
 
+        await feeDistributor.setEsTapVesting(esTapVesting.address);
+        await feeDistributor.setEsTapToken(esTap.address);
+
         await feeDistributorInterface.connect(signer2).claim(signer2.address, false);
 
-        const signer2TapBalanceAfterClaim = await tapiocaOFT.balanceOf(signer2.address);
-        expect(signer2TapBalanceAfterClaim.gt(signer2TapBalance)).to.be.true;
+        const signer2esTapBalanceAfterClaim = await esTap.balanceOf(signer2.address);
+        expect(signer2esTapBalanceAfterClaim.gt(0)).to.be.true;
     });
 
-    it("should have multiple gauges with different weights", async () => {
+    it('should have multiple gauges with different weights', async () => {
         const votingPower = 5000; //50%
         const amountToLock = BN(10000).mul((1e18).toString());
         const halfAmountToLock = BN(5000).mul((1e18).toString());
@@ -239,7 +252,6 @@ describe('governance - flow', () => {
         const liquidityGaugeInterface2 = await ethers.getContractAt('ILiquidityGauge', liquidityGauge2.address);
         const gaugeControllerInterface = await ethers.getContractAt('IGaugeController', gaugeController.address);
 
-
         await liquidityGauge.unpause();
         await liquidityGauge2.unpause();
 
@@ -249,7 +261,6 @@ describe('governance - flow', () => {
         await tapiocaOFT.connect(signer).transfer(signer2.address, amountToLock);
         await tapiocaOFT.connect(signer2).approve(veTapioca.address, amountToLock);
         await veTapioca.connect(signer2).create_lock(amountToLock, latestBlock.timestamp + unlockTime);
-
 
         await tapiocaOFT.connect(signer).transfer(signer3.address, amountToLock);
         await tapiocaOFT.connect(signer3).approve(veTapioca.address, amountToLock);
@@ -262,7 +273,6 @@ describe('governance - flow', () => {
         balanceOfVeTokens = await erc20VotingEscrow.balanceOf(signer3.address);
         expect(balanceOfVeTokens.gt(0)).to.be.true;
 
-
         //add types and gauges
         const initialWeight = BN(1).mul((1e18).toString());
         await gaugeController.add_type('Test', initialWeight);
@@ -272,7 +282,6 @@ describe('governance - flow', () => {
         await gaugeController.connect(signer2).vote_for_gauge_weights(liquidityGauge.address, votingPower);
         await gaugeController.connect(signer2).vote_for_gauge_weights(liquidityGauge2.address, votingPower);
         await gaugeController.connect(signer3).vote_for_gauge_weights(liquidityGauge2.address, votingPower);
-
 
         //get receipt balances (simulating mixologist receipts)
         await erc20Mock.connect(signer).freeMint(amountToLock);
@@ -323,8 +332,5 @@ describe('governance - flow', () => {
         expect(signer2TapBalance.gt(0), 'tap balance 2').to.be.true;
         expect(signer3TapBalance.gt(0), 'tap balance 3').to.be.true;
         expect(signer2TapBalance.gt(signer3TapBalance)).to.be.true;
-
-
-
     });
 });

@@ -67,6 +67,20 @@ export async function deployTapiocaOFT(lzEndpoint: string, to: string, chainId_?
     return oftContract;
 }
 
+export async function deployEsTap(lzEndpoint: string, minter: string, burner: string) {
+    const oftContract = await (await ethers.getContractFactory('esTapOFT')).deploy(lzEndpoint, minter, burner);
+    await oftContract.deployed();
+
+    return oftContract;
+}
+
+export async function deployEsTapVesting(tap: string, esTap: string) {
+    const vestingContract = await (await ethers.getContractFactory('esTapVesting')).deploy(tap, esTap);
+    await vestingContract.deployed();
+
+    return vestingContract;
+}
+
 export async function deployveTapiocaNFT(tapiocaOFT: string, veTapiocaName: string, veTapiocaSymbol: string, veTapiocaVersion: string) {
     const veTapiocaOFTContract = await (
         await ethers.getContractFactory('VeTap')

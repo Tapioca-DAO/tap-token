@@ -1,11 +1,20 @@
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ERC20Mock, LZEndpointMock, TapOFT } from '../../typechain/';
+import { ERC20Mock, EsTapOFT, EsTapVesting, LZEndpointMock, TapOFT } from '../../typechain/';
 import { VeTap } from '../../typechain/contracts/vyper/VeTap.vy';
 import { FeeDistributor } from '../../typechain/contracts/vyper/FeeDistributor.vy';
 
-import { deployLZEndpointMock, deployTapiocaOFT, deployveTapiocaNFT, BN, time_travel, deployFeeDistributor } from '../test.utils';
+import {
+    deployLZEndpointMock,
+    deployTapiocaOFT,
+    deployveTapiocaNFT,
+    BN,
+    time_travel,
+    deployFeeDistributor,
+    deployEsTap,
+    deployEsTapVesting,
+} from '../test.utils';
 import { BigNumber } from 'ethers';
 
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
@@ -19,6 +28,8 @@ describe('feeDistributor', () => {
     let tapiocaOFT: TapOFT;
     let veTapioca: VeTap;
     let feeDistributor: FeeDistributor;
+    let esTap: EsTapOFT;
+    let esTapVesting: EsTapVesting;
 
     async function register() {
         signer = (await ethers.getSigners())[0];
@@ -37,6 +48,10 @@ describe('feeDistributor', () => {
             signer.address,
             signer2.address,
         )) as FeeDistributor;
+        esTap = (await deployEsTap(LZEndpointMock.address, feeDistributor.address, signer.address)) as EsTapOFT;
+        esTapVesting = (await deployEsTapVesting(tapiocaOFT.address, esTap.address)) as EsTapVesting;
+
+        await esTap.setBurner(esTapVesting.address);
     }
 
     beforeEach(async () => {
@@ -200,15 +215,27 @@ describe('feeDistributor', () => {
         const signer2TapBalanceBeforeClaim = await tapiocaOFT.balanceOf(signer2.address);
         expect(signer2TapBalanceBeforeClaim.eq(0)).to.be.true;
 
+        await expect(feeDistributorInterface.connect(signer2).claim(signer2.address, false)).to.be.revertedWith('vesting not set');
+        //set esTap vesting
+        await feeDistributor.setEsTapVesting(esTapVesting.address);
+
+        //set esTap token
+        await expect(feeDistributorInterface.connect(signer2).claim(signer2.address, false)).to.be.revertedWith('esTap not set');
+        await feeDistributor.setEsTapToken(esTap.address);
+
         await feeDistributorInterface.connect(signer2).claim(signer2.address, false);
 
-        const signer2TapBalanceAfterClaim = await tapiocaOFT.balanceOf(signer2.address);
-        expect(signer2TapBalanceAfterClaim.gt(0)).to.be.true;
+        const signer2esTapBalanceAfterClaim = await esTap.balanceOf(signer2.address);
+        expect(signer2esTapBalanceAfterClaim.gt(0)).to.be.true;
+        const esTapVestingBalanceAfterClaim = await tapiocaOFT.balanceOf(esTapVesting.address);
+        expect(esTapVestingBalanceAfterClaim.gt(0)).to.be.true;
 
         await time_travel(50 * 86400);
         await feeDistributorInterface.connect(signer2).claim(signer2.address, false);
-        const signer2TapBalanceAfterClaim2 = await tapiocaOFT.balanceOf(signer2.address);
-        expect(signer2TapBalanceAfterClaim2.gt(signer2TapBalanceAfterClaim)).to.be.true;
+        const signer2esTapBalanceAfterClaim2 = await esTap.balanceOf(signer2.address);
+        expect(signer2esTapBalanceAfterClaim2.gt(signer2esTapBalanceAfterClaim)).to.be.true;
+        const esTapVestingBalanceAfterClaim2 = await tapiocaOFT.balanceOf(esTapVesting.address);
+        expect(esTapVestingBalanceAfterClaim2.gt(esTapVestingBalanceAfterClaim)).to.be.true;
     });
 
     it('should claim when simulating a beachBar call', async () => {
@@ -216,6 +243,9 @@ describe('feeDistributor', () => {
         const amountToLock = BN(10000).mul((1e18).toString());
         const latestBlock = await ethers.provider.getBlock('latest');
         const feeDistributorInterface = await ethers.getContractAt('IFeeDistributor', feeDistributor.address);
+
+        await feeDistributor.setEsTapVesting(esTapVesting.address);
+        await feeDistributor.setEsTapToken(esTap.address);
 
         await prepareLock(tapiocaOFT, veTapioca, signer2, amountToLock, unlockTime, latestBlock.timestamp);
 
@@ -231,18 +261,55 @@ describe('feeDistributor', () => {
         const feeDistributorBalance = await tapiocaOFT.balanceOf(feeDistributor.address);
         expect(feeDistributorBalance.eq(amountToLock)).to.be.true;
 
-        const signer2TapBalanceBeforeClaim = await tapiocaOFT.balanceOf(signer2.address);
-        expect(signer2TapBalanceBeforeClaim.eq(0)).to.be.true;
+        const signer2esTapBalanceBeforeClaim = await esTap.balanceOf(signer2.address);
+        expect(signer2esTapBalanceBeforeClaim.eq(0)).to.be.true;
 
         await feeDistributorInterface.connect(signer2).claim(signer2.address, false);
 
-        const signer2TapBalanceAfterClaim = await tapiocaOFT.balanceOf(signer2.address);
-        expect(signer2TapBalanceAfterClaim.gt(0)).to.be.true;
+        const signer2esTapBalanceAfterClaim = await esTap.balanceOf(signer2.address);
+        expect(signer2esTapBalanceAfterClaim.gt(0)).to.be.true;
 
         await time_travel(50 * 86400);
         await feeDistributorInterface.connect(signer2).claim(signer2.address, false);
-        const signer2TapBalanceAfterClaim2 = await tapiocaOFT.balanceOf(signer2.address);
-        expect(signer2TapBalanceAfterClaim2.gt(signer2TapBalanceAfterClaim)).to.be.true;
+        const signer2esTapBalanceAfterClaim2 = await esTap.balanceOf(signer2.address);
+        expect(signer2esTapBalanceAfterClaim2.gt(signer2esTapBalanceAfterClaim)).to.be.true;
+    });
+
+    it('should claim and lock when simulating a beachBar call', async () => {
+        const unlockTime = 2 * 365 * 86400; //max time
+        const amountToLock = BN(10000).mul((1e18).toString());
+        const latestBlock = await ethers.provider.getBlock('latest');
+        const feeDistributorInterface = await ethers.getContractAt('IFeeDistributor', feeDistributor.address);
+
+        await feeDistributor.setEsTapVesting(esTapVesting.address);
+        await feeDistributor.setEsTapToken(esTap.address);
+
+        await prepareLock(tapiocaOFT, veTapioca, signer2, amountToLock, unlockTime, latestBlock.timestamp);
+
+        await time_travel(50 * 86400);
+
+        const crtBlock = await ethers.provider.getBlock('latest');
+        const veBalanceReportedByFeeSharing = await feeDistributor.ve_for_at(signer2.address, crtBlock.timestamp);
+        expect(veBalanceReportedByFeeSharing.gt(0)).to.be.true;
+
+        await tapiocaOFT.connect(signer).approve(feeDistributor.address, amountToLock);
+        await tapiocaOFT.connect(signer).transfer(feeDistributor.address, amountToLock); //normal flow: beachBar.withdrawAllProtocolFees(..)
+
+        const feeDistributorBalance = await tapiocaOFT.balanceOf(feeDistributor.address);
+        expect(feeDistributorBalance.eq(amountToLock)).to.be.true;
+
+        const signer2esTapBalanceBeforeClaim = await esTap.balanceOf(signer2.address);
+        expect(signer2esTapBalanceBeforeClaim.eq(0)).to.be.true;
+
+        await feeDistributorInterface.connect(signer2).claim(signer2.address, false);
+
+        const signer2esTapBalanceAfterClaim = await esTap.balanceOf(signer2.address);
+        expect(signer2esTapBalanceAfterClaim.gt(0)).to.be.true;
+
+        await time_travel(50 * 86400);
+        await feeDistributorInterface.connect(signer2).claim(signer2.address, true);
+        const vestingData = await esTapVesting.vestingData(signer2.address);
+        expect(vestingData[3].gt(0)).to.be.true;
     });
 
     it('should claim many', async () => {

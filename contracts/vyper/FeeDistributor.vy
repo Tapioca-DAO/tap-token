@@ -17,6 +17,12 @@ interface VotingEscrow:
     def deposit_for(addr: address, amount: uint256): nonpayable
 
 
+interface EsTap:
+    def mintFor(_for: address, amount: uint256): nonpayable
+
+interface EsTapVesting:
+    def vestFor(esTapAmount: uint256, _for: address): nonpayable
+
 event CommitAdmin:
     admin: address
 
@@ -35,6 +41,12 @@ event Claimed:
     amount: uint256
     claim_epoch: uint256
     max_epoch: uint256
+
+event EsTapSet:
+    newAddr: indexed(address)
+
+event EsTapVestingSet:
+    newAddr: indexed(address)
 
 
 struct Point:
@@ -55,6 +67,8 @@ user_epoch_of: public(HashMap[address, uint256])
 last_token_time: public(uint256)
 tokens_per_week: public(uint256[1000000000000000])
 
+estap_token: public(address)
+estap_vesting: public(address)
 voting_escrow: public(address)
 token: public(address)
 total_received: public(uint256)
@@ -280,6 +294,31 @@ def _claim(addr: address, ve: address, _last_token_time: uint256) -> uint256:
 
 # Owner methods
 @external
+def setEsTapToken(_addr: address):
+    """
+    @notice sets the esTap token address
+    @param _addr the esTap token address
+    """
+
+    assert msg.sender == self.admin,"unauthorized"  # dev: access denied
+    assert _addr != ZERO_ADDRESS,"not valid"
+    self.estap_token = _addr
+    log EsTapSet(_addr)
+
+@external
+def setEsTapVesting(_addr: address):
+    """
+    @notice sets the esTapVesting token address
+    @param _addr the esTapVesting address
+    """
+
+    assert msg.sender == self.admin,"unauthorized"  # dev: access denied
+    assert _addr != ZERO_ADDRESS,"not valid"
+    self.estap_vesting = _addr
+    log EsTapVestingSet(_addr)
+
+
+@external
 def commit_admin(_addr: address):
     """
     @notice Commit transfer of ownership
@@ -401,6 +440,9 @@ def claim(_addr: address = msg.sender, _lock: bool = False) -> uint256:
     @return uint256 Amount of fees claimed in the call
     """
     assert not self.is_killed
+    assert self.estap_vesting != ZERO_ADDRESS,"vesting not set"
+    assert self.estap_token != ZERO_ADDRESS,"esTap not set"
+
     if _lock:
         assert _addr == msg.sender,"unauthorized"
 
@@ -417,13 +459,17 @@ def claim(_addr: address = msg.sender, _lock: bool = False) -> uint256:
 
     amount: uint256 = self._claim(_addr, self.voting_escrow, last_token_time)
     if amount != 0:
+
         token: address = self.token
         if _lock:
-            voting_escrow: address = self.voting_escrow
-            ERC20(token).approve(voting_escrow, amount)
-            VotingEscrow(voting_escrow).deposit_for(_addr, amount)
+            ERC20(self.token).transfer(self.estap_vesting, amount)
+            EsTap(self.estap_token).mintFor(self, amount)
+            ERC20(self.estap_token).approve(self.estap_vesting, amount)
+            EsTapVesting(self.estap_vesting).vestFor(amount, _addr)
+
         else:
-            self._transfer_to(_addr, token, amount)
+            EsTap(self.estap_token).mintFor(_addr, amount)
+            ERC20(self.token).transfer(self.estap_vesting, amount)
 
         self.token_last_balance -= amount
 
