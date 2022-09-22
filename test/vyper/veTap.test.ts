@@ -20,7 +20,7 @@ describe('veTapioca', () => {
     const veTapiocaSymbol = 'veTAP';
     const veTapiocaVersion = '1';
     const DAY: number = 86400;
-    const HALF_UNLOCK_TIME: number = 2 * 365 * DAY; //half of max time
+    const HALF_UNLOCK_TIME: number = 1 * 365 * DAY; //half of max time
     const UNLOCK_TIME: number = 2 * HALF_UNLOCK_TIME; //max time
 
     async function register() {
@@ -29,7 +29,9 @@ describe('veTapioca', () => {
         signer3 = (await ethers.getSigners())[2];
         const chainId = (await ethers.provider.getNetwork()).chainId;
         LZEndpointMock = (await deployLZEndpointMock(chainId)) as LZEndpointMock;
-        erc20Mock = await (await hre.ethers.getContractFactory('ERC20Mock')).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9));
+        erc20Mock = (await (
+            await hre.ethers.getContractFactory('ERC20Mock')
+        ).deploy(ethers.BigNumber.from((1e18).toString()).mul(1e9))) as ERC20Mock;
         tapiocaOFT = (await deployTapiocaOFT(LZEndpointMock.address, signer.address)) as TapOFT;
         veTapioca = (await deployveTapiocaNFT(tapiocaOFT.address, veTapiocaName, veTapiocaSymbol, veTapiocaVersion)) as VeTap;
     }

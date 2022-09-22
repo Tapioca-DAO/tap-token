@@ -81,6 +81,19 @@ export async function deployEsTapVesting(tap: string, esTap: string) {
     return vestingContract;
 }
 
+export async function deployAuraIntegrator(auraLocker: string, delegateTo: string) {
+    const integrator = await (await ethers.getContractFactory('AuraIntegrator')).deploy(auraLocker, delegateTo);
+    await integrator.deployed();
+
+    return integrator;
+}
+export async function deployOmniAura(lzEndpoint: string, auraIntegrator: string) {
+    const oftContract = await (await ethers.getContractFactory('omniAura')).deploy(lzEndpoint, auraIntegrator);
+    await oftContract.deployed();
+
+    return oftContract;
+}
+
 export async function deployveTapiocaNFT(tapiocaOFT: string, veTapiocaName: string, veTapiocaSymbol: string, veTapiocaVersion: string) {
     const veTapiocaOFTContract = await (
         await ethers.getContractFactory('VeTap')
@@ -113,4 +126,16 @@ export async function deployGaugeDistributor(tapToken: string, gaugeController: 
     const gaugeDistributorContract = await (await ethers.getContractFactory('GaugeDistributor')).deploy(tapToken, gaugeController);
     await gaugeDistributorContract.deployed();
     return gaugeDistributorContract;
+}
+
+export async function deployBoostV2(veToken: string) {
+    const boostv2Contract = await (await ethers.getContractFactory('BoostV2')).deploy(veToken);
+    await boostv2Contract.deployed();
+    return boostv2Contract;
+}
+
+export async function deployVotingEscrowDelegation(name: string, symbol: string, baseUri: string, veToken: string) {
+    const votingDelegation = await (await ethers.getContractFactory('VotingEscrowDelegation')).deploy(name, symbol, baseUri, veToken);
+    await votingDelegation.deployed();
+    return votingDelegation;
 }

@@ -28,7 +28,7 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
         ],
     },
     vyper: {
-        compilers: [{ version: '0.2.8' }],
+        compilers: [{ version: '0.2.15' }, { version: '0.2.8' }, { version: '0.3.1' }, { version: '0.3.3' }],
     },
     namedAccounts: {
         deployer: 0,
@@ -107,9 +107,12 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
             'VeTap',
             'FeeDistributor',
             'GaugeController',
+            'BoostV2',
+            'DelegationProxy',
+            'VotingEscrowDelegation',
         ],
     },
-    typechain: { 
+    typechain: {
         outDir: 'typechain',
         target: 'ethers-v5',
     },

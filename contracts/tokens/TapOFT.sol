@@ -126,7 +126,7 @@ contract TapOFT is PausableOFT {
         emissionsStartTime = block.timestamp;
     }
 
-    ///-- Onwer methods --
+    ///-- Owner methods --
     /// @notice sets the governance chain identifier
     /// @param _identifier LayerZero chain identifier
     function setGovernanceChainIdentifier(uint16 _identifier) external onlyOwner {
