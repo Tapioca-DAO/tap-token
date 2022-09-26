@@ -114,7 +114,10 @@ describe('boost v2', () => {
         const delegable = await boostV2.delegable_balance(signer.address);
         expect(delegable.gt(0)).to.be.true;
 
-        await expect(boostV2Interface.boost(signer2.address, amount, 1693440000, signer.address)).to.not.be.reverted;
+        const week = 86400 * 7;
+        const dividable = parseInt((latestBlock.timestamp / week).toString());
+        const boostTime = (dividable + 10) * week;
+        await expect(boostV2Interface.boost(signer2.address, amount, boostTime, signer.address)).to.not.be.reverted;
 
         const delegatedBySigner = await boostV2.delegated(signer.address);
         expect(delegatedBySigner[0].gt(0)).to.be.true;
