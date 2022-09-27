@@ -256,7 +256,7 @@ describe('tapOFT', () => {
         await tapiocaOFT0.connect(signer).setGovernanceChainIdentifier(4);
     });
 
-    it('should be able to lock from TapOFT', async () => {
+    it.skip('should be able to lock from TapOFT', async () => {
         //rinkeby
         //mumbai
         const amountToLock = BN(10000).mul((1e18).toString());
@@ -290,7 +290,7 @@ describe('tapOFT', () => {
                 amountToLock,
                 signer.address,
                 ethers.constants.AddressZero,
-                ethers.utils.formatBytes32String(''),
+                ethers.utils.toUtf8Bytes(''),
             );
 
         const latestBlock = await ethers.provider.getBlock('latest');
