@@ -24,7 +24,7 @@ describe('delegation proxy', () => {
     const veTapiocaSymbol = 'veTAP';
     const veTapiocaVersion = '1';
     const DAY: number = 86400;
-    const HALF_UNLOCK_TIME: number = 2 * 365 * DAY; //half of max time
+    const HALF_UNLOCK_TIME: number = 1 * 365 * DAY; //half of max time
     const UNLOCK_TIME: number = 2 * HALF_UNLOCK_TIME; //max time
 
     async function register() {
@@ -79,8 +79,11 @@ describe('delegation proxy', () => {
         const delegable = await boostV2.delegable_balance(signer.address);
         expect(delegable.gt(0)).to.be.true;
 
+        const week = 86400 * 7;
+        const dividable = parseInt((latestBlock.timestamp / week).toString());
+        const boostTime = (dividable + 1) * week;
         await expect(delegationProxy.set_delegation(boostV2.address)).to.emit(delegationProxy, 'DelegationSet');
-        await expect(boostV2Interface.boost(signer2.address, amount, 1693440000, signer.address)).to.not.be.reverted;
+        await expect(boostV2Interface.boost(signer2.address, amount, boostTime, signer.address)).to.not.be.reverted;
 
         const signerVotingBalanceAfterFromVe = await erc20.balanceOf(signer.address);
         const balance = await delegationProxy.adjusted_balance_of(signer2.address);
