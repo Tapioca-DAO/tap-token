@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import './interfaces/IVeTap.sol';
+import './interfaces/ILayerZeroEndpoint.sol';
 import './OFT20/PausableOFT.sol';
-import './OFT20/interfaces/ILayerZeroEndpoint.sol';
 import 'prb-math/contracts/PRBMathSD59x18.sol';
 
 /// @title Tapioca OFT token
@@ -253,18 +253,17 @@ contract TapOFT is PausableOFT {
         _debitFrom(msg.sender, _getChainId(), packedAddress, _amount);
 
         //send to governance chain with the following format [receiver, amount, lock, duration]
-        bytes memory payload = abi.encode(abi.encodePacked(msg.sender), _amount, _action, _time);
-        _lzSend(governanceChainIdentifier, payload, payable(msg.sender), address(0x0), bytes(''));
+        bytes memory payload = abi.encode(packedAddress, _amount, _action, _time);
+        _lzSend(governanceChainIdentifier, payload, payable(msg.sender), address(0x0), bytes(''), msg.value);
 
-        uint64 nonce = lzEndpoint.getOutboundNonce(governanceChainIdentifier, address(this));
-        emit SendToChain(msg.sender, governanceChainIdentifier, packedAddress, _amount, nonce);
+        emit SendToChain(governanceChainIdentifier, msg.sender, packedAddress, _amount);
     }
 
     ///-- Internal methods --
     function _nonblockingLzReceive(
         uint16 _srcChainId,
         bytes memory _srcAddress,
-        uint64 _nonce,
+        uint64,
         bytes memory _payload
     ) internal override {
         // decode and load the toAddress
@@ -292,7 +291,7 @@ contract TapOFT is PausableOFT {
             _creditTo(_srcChainId, toAddress, amount);
         }
 
-        emit ReceiveFromChain(_srcChainId, _srcAddress, toAddress, amount, _nonce);
+        emit ReceiveFromChain(_srcChainId, _srcAddress, toAddress, amount);
     }
 
     ///-- Private methods --
