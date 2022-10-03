@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import 'gitsub_tapioca-sdk/src/contracts/interfaces/ILayerZeroEndpoint.sol';
-import 'gitsub_tapioca-sdk/src/contracts/token/oft/extension/PausableOFT.sol';
+import 'gitsub_tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol';
+import 'gitsub_tapioca-sdk/dist/contracts/token/oft/extension/PausableOFT.sol';
 
 contract USD0 is PausableOFT {
     /// @notice addresses allowed to mint USD0

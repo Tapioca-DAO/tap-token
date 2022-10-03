@@ -332,7 +332,7 @@ describe('tapOFT', () => {
             value: ethers.utils.parseEther('2'),
         });
 
-        const erc20 = await ethers.getContractAt('IOFT', veTapToken.address);
+        const erc20 = await ethers.getContractAt('ERC20Mock', veTapToken.address);
         const votingPower = await erc20.balanceOf(signer.address);
         expect(votingPower.gt(0)).to.be.true;
 
