@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import './interfaces/IVeTap.sol';
-import './OFT20/PausableOFT.sol';
-import './OFT20/interfaces/ILayerZeroEndpoint.sol';
+import 'tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol';
+import 'tapioca-sdk/dist/contracts/token/oft/extension/PausableOFT.sol';
+import 'tapioca-sdk/dist/contracts/libraries/LzLib.sol';
 import 'prb-math/contracts/PRBMathSD59x18.sol';
 
 /// @title Tapioca OFT token
@@ -11,7 +12,9 @@ import 'prb-math/contracts/PRBMathSD59x18.sol';
 /// @dev Latest size: 17.663  KiB
 /// @dev Emissions calculator: https://www.desmos.com/calculator/1fa0zen2ut
 contract TapOFT is PausableOFT {
+    using ExcessivelySafeCall for address;
     using PRBMathSD59x18 for int256;
+    using BytesLib for bytes;
 
     // ==========
     // *DATA*
@@ -243,40 +246,35 @@ contract TapOFT is PausableOFT {
     function getVotingPower(
         uint256 _amount,
         uint256 _time,
-        uint256 _action
+        uint256 _action,
+        uint256 _extraGasLimit
     ) external payable {
         require(_getChainId() != governanceChainIdentifier, 'use VeTap directly');
         require(_action == LOCK || _action == INCREASE_AMOUNT, 'action not valid');
 
-        //debit from current chain
-        bytes memory packedAddress = abi.encodePacked(msg.sender);
-        _debitFrom(msg.sender, _getChainId(), packedAddress, _amount);
+        bytes memory toAddress = abi.encodePacked(msg.sender);
 
-        //send to governance chain with the following format [receiver, amount, lock, duration]
-        bytes memory payload = abi.encode(abi.encodePacked(msg.sender), _amount, _action, _time);
-        _lzSend(governanceChainIdentifier, payload, payable(msg.sender), address(0x0), bytes(''));
+        _debitFrom(msg.sender, _getChainId(), toAddress, _amount);
+        bytes memory lzPayload = abi.encode(PT_SEND, abi.encodePacked(msg.sender), toAddress, _amount, _action, _time);
+        bytes memory adapterParam = LzLib.buildDefaultAdapterParams(_extraGasLimit);
+        _lzSend(governanceChainIdentifier, lzPayload, payable(msg.sender), address(0x0), adapterParam, msg.value);
 
-        uint64 nonce = lzEndpoint.getOutboundNonce(governanceChainIdentifier, address(this));
-        emit SendToChain(msg.sender, governanceChainIdentifier, packedAddress, _amount, nonce);
+        emit SendToChain(governanceChainIdentifier, msg.sender, toAddress, _amount);
     }
 
     ///-- Internal methods --
-    function _nonblockingLzReceive(
+    function _sendAck(
         uint16 _srcChainId,
-        bytes memory _srcAddress,
-        uint64 _nonce,
+        bytes memory,
+        uint64,
         bytes memory _payload
-    ) internal override {
-        // decode and load the toAddress
-        (bytes memory toAddressBytes, uint256 amount, uint256 action, uint256 time) = abi.decode(
+    ) internal virtual override {
+        (, bytes memory from, bytes memory toAddressBytes, uint256 amount, uint256 action, uint256 time) = abi.decode(
             _payload,
-            (bytes, uint256, uint256, uint256)
+            (uint16, bytes, bytes, uint256, uint256, uint256)
         );
-        address toAddress;
-        assembly {
-            toAddress := mload(add(toAddressBytes, 20))
-        }
 
+        address toAddress = toAddressBytes.toAddress(0);
         if (action == LOCK) {
             _creditTo(_srcChainId, address(this), amount);
             _approve(address(this), veTap, amount);
@@ -292,7 +290,7 @@ contract TapOFT is PausableOFT {
             _creditTo(_srcChainId, toAddress, amount);
         }
 
-        emit ReceiveFromChain(_srcChainId, _srcAddress, toAddress, amount, _nonce);
+        emit ReceiveFromChain(_srcChainId, from, toAddress, amount);
     }
 
     ///-- Private methods --

@@ -116,7 +116,7 @@ describe('veTapioca', () => {
         const lockedEnd = await veTapioca.locked__end(signer.address);
         expect(lockedEnd).to.eq(0);
 
-        const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
+        const erc20 = await ethers.getContractAt('ERC20Mock', veTapioca.address);
 
         const balanceOf = await erc20.balanceOf(signer.address);
         expect(balanceOf).to.eq(0);
@@ -154,7 +154,7 @@ describe('veTapioca', () => {
         await tapiocaOFT.connect(signer).approve(veTapioca.address, amountToLock);
         await veTapioca.connect(signer).create_lock(amountToLock, latestBlock.timestamp + UNLOCK_TIME);
 
-        const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
+        const erc20 = await ethers.getContractAt('ERC20Mock', veTapioca.address);
 
         const signerVotingBalance = await erc20.balanceOf(signer.address);
         expect(signerVotingBalance.gt(minLockedAmount)).to.be.true;
@@ -163,7 +163,7 @@ describe('veTapioca', () => {
     it('should be able to create a lock and voting power should decrease over time', async () => {
         const amountToLock = BN(10000).mul((1e18).toString());
         const latestBlock = await ethers.provider.getBlock('latest');
-        const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
+        const erc20 = await ethers.getContractAt('ERC20Mock', veTapioca.address);
 
         const signerBalanceOfTAP = await tapiocaOFT.balanceOf(signer.address);
         expect(signerBalanceOfTAP.gt(0)).to.be.true;
@@ -211,7 +211,7 @@ describe('veTapioca', () => {
     it('should increase unlock time for position', async () => {
         const amountToLock = BN(10000).mul((1e18).toString());
         const latestBlock = await ethers.provider.getBlock('latest');
-        const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
+        const erc20 = await ethers.getContractAt('ERC20Mock', veTapioca.address);
 
         await tapiocaOFT.connect(signer).approve(veTapioca.address, amountToLock);
         await veTapioca.connect(signer).create_lock(amountToLock, latestBlock.timestamp + HALF_UNLOCK_TIME);
@@ -231,7 +231,7 @@ describe('veTapioca', () => {
     it('should increase amount for position', async () => {
         const amountToLock = BN(10000).mul((1e18).toString());
         const latestBlock = await ethers.provider.getBlock('latest');
-        const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
+        const erc20 = await ethers.getContractAt('ERC20Mock', veTapioca.address);
 
         await tapiocaOFT.connect(signer).approve(veTapioca.address, amountToLock);
         await veTapioca.connect(signer).create_lock(amountToLock, latestBlock.timestamp + HALF_UNLOCK_TIME);
@@ -248,7 +248,7 @@ describe('veTapioca', () => {
     it('should create a lock for someone else', async () => {
         const amountToLock = BN(10000).mul((1e18).toString());
         const latestBlock = await ethers.provider.getBlock('latest');
-        const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
+        const erc20 = await ethers.getContractAt('ERC20Mock', veTapioca.address);
 
         await tapiocaOFT.connect(signer).approve(veTapioca.address, amountToLock);
         await veTapioca.connect(signer).create_lock_for(signer2.address, amountToLock, latestBlock.timestamp + UNLOCK_TIME);
@@ -264,7 +264,7 @@ describe('veTapioca', () => {
         const amountToLock = BN(10000).mul((1e18).toString());
         const finalPossibleAmount = BN(2500).mul((1e18).toString());
         const latestBlock = await ethers.provider.getBlock('latest');
-        const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
+        const erc20 = await ethers.getContractAt('ERC20Mock', veTapioca.address);
 
         await tapiocaOFT.connect(signer).approve(veTapioca.address, amountToLock);
         await veTapioca.connect(signer).create_lock(amountToLock, latestBlock.timestamp + UNLOCK_TIME);
@@ -289,7 +289,7 @@ describe('veTapioca', () => {
         const amountToLock = BN(10000).mul((1e18).toString());
         const finalPossibleAmount = BN(2500).mul((1e18).toString());
         const latestBlock = await ethers.provider.getBlock('latest');
-        const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
+        const erc20 = await ethers.getContractAt('ERC20Mock', veTapioca.address);
 
         await veTapioca.set_penalty_receiver(signer3.address);
 

@@ -57,7 +57,12 @@ export async function deployLZEndpointMock(chainId: number) {
 
     return lzEndpointContract;
 }
+export async function deployUsd0(lzEndpoint: string) {
+    const oftContract = await (await ethers.getContractFactory('USD0')).deploy(lzEndpoint);
+    await oftContract.deployed();
 
+    return oftContract;
+}
 export async function deployTapiocaOFT(lzEndpoint: string, to: string, chainId_?: number) {
     let { chainId } = await ethers.provider.getNetwork();
     chainId = chainId_ ?? chainId;

@@ -159,7 +159,7 @@ describe('feeDistributor', () => {
         const unlockTime = 2 * 365 * 86400; //max time
         const amountToLock = BN(10000).mul((1e18).toString());
         const latestBlock = await ethers.provider.getBlock('latest');
-        const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
+        const erc20 = await ethers.getContractAt('ERC20Mock', veTapioca.address);
 
         await time_travel(1 * 86400);
 

@@ -106,7 +106,7 @@ describe('boost v2', () => {
         await tapiocaOFT.connect(signer).approve(veTapioca.address, amountToLock);
         await veTapioca.connect(signer).create_lock(amountToLock, latestBlock.timestamp + UNLOCK_TIME);
 
-        const erc20 = await ethers.getContractAt('IOFT', veTapioca.address);
+        const erc20 = await ethers.getContractAt('ERC20Mock', veTapioca.address);
 
         const signerVotingBalance = await erc20.balanceOf(signer.address);
         expect(signerVotingBalance.gt(minLockedAmount)).to.be.true;
