@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 import './interfaces/IVeTap.sol';
-import 'gitsub_tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol';
-import 'gitsub_tapioca-sdk/dist/contracts/token/oft/extension/PausableOFT.sol';
-import 'gitsub_tapioca-sdk/dist/contracts/libraries/LzLib.sol';
+import 'tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol';
+import 'tapioca-sdk/dist/contracts/token/oft/extension/PausableOFT.sol';
+import 'tapioca-sdk/dist/contracts/libraries/LzLib.sol';
 import 'prb-math/contracts/PRBMathSD59x18.sol';
 
 /// @title Tapioca OFT token

@@ -3,9 +3,9 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-import 'gitsub_tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol';
-import 'gitsub_tapioca-sdk/dist/contracts/interfaces/ILayerZeroReceiver.sol';
-import 'gitsub_tapioca-sdk/dist/contracts/libraries/LzLib.sol';
+import 'tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol';
+import 'tapioca-sdk/dist/contracts/interfaces/ILayerZeroReceiver.sol';
+import 'tapioca-sdk/dist/contracts/libraries/LzLib.sol';
 
 /*
 like a real LayerZero endpoint but can be mocked, which handle message transmission, verification, and receipt.
