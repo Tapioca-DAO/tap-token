@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import './OFT20/PausableOFT.sol';
-import './OFT20/interfaces/ILayerZeroEndpoint.sol';
+import 'gitsub_tapioca-sdk/src/contracts/token/oft/extension/PausableOFT.sol';
+import 'gitsub_tapioca-sdk/src/contracts/interfaces/ILayerZeroEndpoint.sol';
 
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 

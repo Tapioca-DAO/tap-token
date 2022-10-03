@@ -35,7 +35,7 @@ describe('omniAura', () => {
             await hre.ethers.getContractFactory('AuraLockerMock')
         ).deploy('test', 't', auraToken.address, erc20Mock.address, erc20Mock.address)) as AuraLockerMock; //aura
 
-        auraIntegrator = (await deployAuraIntegrator(auraLockerMock.address, signer2.address)) as AuraIntegrator; //TODO add aura locker
+        auraIntegrator = (await deployAuraIntegrator(auraLockerMock.address, signer2.address)) as AuraIntegrator;
         LZEndpointMock0 = await deployLZEndpointMock(1);
         oAura = (await deployOmniAura(LZEndpointMock0.address, auraIntegrator.address)) as OmniAura;
     }
