@@ -12,8 +12,13 @@
         "verify_contract": "hardhat verify --network",
         "@comment deploy": "Deploy scripts",
         "deploy:TapOFT": "hardhat deploy --tags TapOFT --network",
-        "deploy:Governance": "hardhat deploy --tags Governance --network",
-        "deploy:LiquidityGauge": "hardhat deploy --tags LiquidityGauge --network",
+        "deploy:VeTap": "hardhat deploy --tags VeTap --network",
+        "deploy:GaugeController": "hardhat deploy --tags GaugeController --network",
+        "deploy:GaugeDistributor": "hardhat deploy --tags GaugeDistributor --network",
+        "deploy:FeeDistributor": "hardhat deploy --tags FeeDistributor --network",
+        "deploy:BoostV2": "hardhat deploy --tags BoostV2 --network",
+        "deploy:DelegationProxy": "hardhat deploy --tags DelegationProxy --network",
+        "deploy:GaugeFactory": "hardhat deploy --tags GaugeFactory --network",
         "generate-sdk": "npx hardhat exportSDK",
         "prepare": "husky install"
     },
@@ -63,6 +68,6 @@
         "@prb/math": "^2.5.0",
         "husky": "^8.0.1",
         "lodash": "^4.17.21",
-        "tapioca-sdk": "^1.1.1"
+        "tapioca-sdk": "^1.1.12"
     }
 }
