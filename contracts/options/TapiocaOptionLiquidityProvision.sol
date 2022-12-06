@@ -2,8 +2,12 @@
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol';
+import '@boringcrypto/boring-solidity/contracts/BoringOwnable.sol';
 import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/security/Pausable.sol';
+import '../interfaces/IYieldBox.sol';
 
 //
 //                 .(%%%%%%%%%%%%*       *
@@ -28,32 +32,30 @@ import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 //                     ,**//*,.
 
 struct LockPosition {
-    uint128 tOLR_SGL_ID; // tOLR Singularity market ID
+    uint128 sglAssetID; // Singularity market YieldBox asset ID
     uint128 amount; // amount of tOLR tokens locked.
     uint128 lockTime; // time when the tokens were locked
     uint128 lockDuration; // duration of the lock
 }
 
-contract TapiocaOptionLiquidityProvision is ERC721, IERC1155Receiver {
+contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     uint256 public tokenCounter; // Counter for token IDs
     mapping(uint256 => LockPosition) public lockPositions; // TokenID => LockPosition
 
-    IERC1155 public immutable tOLR; // Tapioca Option Lock Registry address
+    IYieldBox public immutable yieldBox;
+    mapping(IERC20 => uint256) public activeSingularities; // Singularity market address => YieldBox Asset ID (0 if not active)
 
-    constructor(address _tOLR) ERC721('TapiocaOptionLiquidityProvision', 'tOLP') {
-        tOLR = IERC1155(_tOLR);
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == address(tOLR), 'tOLP: only tOLR');
-        _;
+    constructor(address _yieldBox) ERC721('TapiocaOptionLiquidityProvision', 'tOLP') {
+        yieldBox = IYieldBox(_yieldBox);
     }
 
     // ==========
     //   EVENTS
     // ==========
-    event Mint(address indexed to, uint128 indexed tOLM_SGL_ID, LockPosition lockPosition);
-    event Burn(address indexed to, uint128 indexed tOLM_SGL_ID, LockPosition lockPosition);
+    event Mint(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition);
+    event Burn(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition);
+    event RegisterSingularity(address sgl, uint256 assetID);
+    event UnregisterSingularity(address sgl, uint256 assetID);
 
     // =========
     //    READ
@@ -71,71 +73,74 @@ contract TapiocaOptionLiquidityProvision is ERC721, IERC1155Receiver {
     //    WRITE
     // ==========
 
-    /// @notice Locks tOLM tokens for a given duration
-    /// @param _from Address to mint the token from
-    /// @param _to Address to mint the token to
-    /// @param _tOLM_SGL_ID Singularity market ID
+    /// @notice Locks tOLR tokens for a given duration
+    /// @param _from Address to transfer the SGL tokens from
+    /// @param _to Address to mint the tOLP NFT to
+    /// @param _singularity Singularity market address
     /// @param _lockDuration Duration of the lock
-    /// @param _amount Amount of tOLM tokens to lock
+    /// @param _amount Amount of tOLR tokens to lock
     /// @return tokenId The ID of the minted NFT
-    function mint(
+    function lock(
         address _from,
         address _to,
-        uint128 _tOLM_SGL_ID,
+        address _singularity,
         uint128 _lockDuration,
         uint128 _amount
-    ) external onlyOwner returns (uint256 tokenId) {
+    ) external returns (uint256 tokenId) {
         require(_lockDuration > 0, 'tOLP: lock duration must be > 0');
         require(_amount > 0, 'tOLP: amount must be > 0');
-        // Transfer the tOLR tokens to this contract
-        tOLR.safeTransferFrom(_from, _to, _tOLM_SGL_ID, _amount, '');
 
-        // Mint the tOLP NFT
+        uint256 sglAssetID = activeSingularities[IERC20(_singularity)];
+        require(sglAssetID > 0, 'tOLP: singularity not active');
+
+        // Transfer the Singularity position to this contract
+        (, uint256 depositedShares) = yieldBox.depositAsset(sglAssetID, _from, address(this), _amount, 0);
+
+        // Mint the tOLP NFT position
         tokenId = tokenCounter++;
         _safeMint(_to, tokenId);
 
         // Create the lock position
         LockPosition storage lockPosition = lockPositions[tokenId];
-        lockPosition.tOLR_SGL_ID = _tOLM_SGL_ID;
         lockPosition.lockTime = uint128(block.timestamp);
+        lockPosition.sglAssetID = uint128(sglAssetID);
         lockPosition.lockDuration = _lockDuration;
         lockPosition.amount = _amount;
 
-        emit Mint(_to, _tOLM_SGL_ID, lockPosition);
+        emit Mint(_to, uint128(sglAssetID), lockPosition);
     }
 
-    /// @notice Unlocks tOLM tokens
-    /// @param _tokenId ID of the NFT to unlock
+    /// @notice Unlocks tOLP tokens
+    /// @param _tokenId ID of the position to unlock
     /// @param _to Address to send the tokens to
-    function burn(uint256 _tokenId, address _to) external {
+    function unlock(uint256 _tokenId, address _to) external returns (uint256 amountOut) {
         LockPosition memory lockPosition = lockPositions[_tokenId];
         require(block.timestamp >= lockPosition.lockTime + lockPosition.lockDuration, 'tOLP: Lock not expired');
 
         require(_isApprovedOrOwner(msg.sender, _tokenId), 'tOLP: not owner nor approved');
         _burn(_tokenId);
 
-        // Transfer the tOLM tokens back to the owner
-        tOLR.safeTransferFrom(address(this), _to, lockPosition.tOLR_SGL_ID, lockPosition.amount, '');
-        emit Burn(_to, lockPosition.tOLR_SGL_ID, lockPosition);
+        // Refund for freeing up chain space
+        delete lockPositions[_tokenId];
+
+        // Transfer the tOLR tokens back to the owner
+        (amountOut, ) = yieldBox.withdraw(lockPosition.sglAssetID, address(this), _to, lockPosition.amount, 0);
+        emit Burn(_to, lockPosition.sglAssetID, lockPosition);
     }
 
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata
-    ) external pure returns (bytes4) {
-        return 0xf23a6e61;
+    // =========
+    //   OWNER
+    // =========
+    function registerSingularity(IERC20 singularity, uint256 assetID) external onlyOwner {
+        require(activeSingularities[singularity] == 0, 'TapiocaOptions: already registered');
+        activeSingularities[singularity] = assetID;
+        emit RegisterSingularity(address(singularity), assetID);
     }
 
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] calldata,
-        uint256[] calldata,
-        bytes calldata
-    ) external pure returns (bytes4) {
-        return 0x0;
+    function unregisterSingularity(IERC20 singularity) external onlyOwner {
+        uint256 sglAssetID = activeSingularities[singularity];
+        require(sglAssetID > 0, 'TapiocaOptions: not registered');
+        activeSingularities[singularity] = 0;
+        emit UnregisterSingularity(address(singularity), sglAssetID);
     }
 }
