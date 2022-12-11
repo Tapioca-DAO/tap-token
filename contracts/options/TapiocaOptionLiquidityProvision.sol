@@ -94,7 +94,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         require(sglAssetID > 0, 'tOLP: singularity not active');
 
         // Transfer the Singularity position to this contract
-        (, uint256 depositedShares) = yieldBox.depositAsset(sglAssetID, _from, address(this), _amount, 0);
+        yieldBox.depositAsset(sglAssetID, _from, address(this), _amount, 0);
 
         // Mint the tOLP NFT position
         tokenId = tokenCounter++;
