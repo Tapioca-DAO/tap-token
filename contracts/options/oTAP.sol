@@ -26,10 +26,8 @@ import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 //                     ,**//*,.
 
 struct TapOption {
-    uint128 discount; // discount amount in bps
     uint128 expiry; // timestamp, as once one wise man said, the sun will go dark before this overflows
     uint128 amount; // amount of entitled TAP. Tap has a max supply of 100*10^24, so this should be fine
-    bool exercised; // whether the option has been exercised
 }
 
 contract OTAP is ERC721 {
@@ -39,7 +37,7 @@ contract OTAP is ERC721 {
 
     mapping(uint256 => TapOption) public options; // tokenId => Option
 
-    constructor(address _minter) ERC721('oTAP', 'oTAP') {
+    constructor(address _minter) ERC721('Option TAP', 'oTAP') {
         minter = _minter;
     }
 
@@ -62,7 +60,7 @@ contract OTAP is ERC721 {
         return _isApprovedOrOwner(spender, tokenId);
     }
 
-    // @notice Return the owner of the tokenId and the attributes of the option.
+    /// @notice Return the owner of the tokenId and the attributes of the option.
     function attributes(uint256 tokenId) external view returns (address owner, TapOption memory) {
         return (ownerOf(tokenId), options[tokenId]);
     }
@@ -73,48 +71,31 @@ contract OTAP is ERC721 {
 
     /// @notice mints an OTAP
     /// @param _to address to mint to
-    /// @param _discount discount amount in bps
     /// @param _expiry timestamp
     /// @param _amount amount of entitled TAP
     function mint(
         address _to,
-        uint128 _discount,
         uint128 _expiry,
         uint128 _amount
     ) external onlyMinter {
-        uint256 tokenId = mintedOTAP;
+        uint256 tokenId = mintedOTAP++;
         _safeMint(_to, tokenId);
 
         TapOption storage option = options[tokenId];
-        option.discount = _discount;
         option.expiry = _expiry;
         option.amount = _amount;
-
-        unchecked {
-            mintedOTAP++;
-        }
-        mintedTAP += uint256(_amount);
 
         emit Mint(_to, tokenId, option);
     }
 
+    /// @notice exercises an oTAP call
+    /// @param _tokenId tokenId of the oTAP
     function exercise(uint256 _tokenId) external onlyMinter {
         TapOption memory option = options[_tokenId];
-        require(option.expiry > block.timestamp, 'OTAP: option expired');
-        require(!option.exercised, 'OTAP: option already exercised');
+        require(option.expiry >= block.timestamp, 'OTAP: option expired');
 
-        options[_tokenId].exercised = true;
+        mintedTAP += uint256(option.amount);
 
         emit Exercise(ownerOf(_tokenId), _tokenId);
-    }
-
-    function burn(uint256 _tokenId) external {
-        require(_isApprovedOrOwner(msg.sender, _tokenId), 'OTAP: not owner nor approved');
-
-        TapOption storage option = options[_tokenId];
-        require(option.expiry <= block.timestamp, 'OTAP: option not expired');
-        require(!option.exercised, 'OTAP: option already exercised');
-
-        _burn(_tokenId);
     }
 }
