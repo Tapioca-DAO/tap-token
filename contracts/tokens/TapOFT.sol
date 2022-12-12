@@ -193,6 +193,17 @@ contract TapOFT is PausableOFT {
         return 18;
     }
 
+    /// @notice Returns the current week given a timestamp
+    function timestampToWeek(uint256 timestamp) external view returns (int256) {
+        if (timestamp > block.timestamp) return 0;
+        if (timestamp == 0) {
+            timestamp = block.timestamp;
+        }
+        if (timestamp < emissionsStartTime) return 0;
+
+        return _timestampToWeek(timestamp);
+    }
+
     /// @notice returns available emissions for a specific timestamp
     /// @param timestamp the moment in time to emit for
     function availableForWeek(uint256 timestamp) external view returns (uint256) {
@@ -202,7 +213,7 @@ contract TapOFT is PausableOFT {
         }
         if (timestamp < emissionsStartTime) return 0;
 
-        int256 x = int256((timestamp - emissionsStartTime) / WEEK);
+        int256 x = _timestampToWeek(timestamp);
         if (mintedInWeek[x] > 0) return 0;
 
         return uint256(_computeEmissionPerWeek(x));
@@ -220,7 +231,7 @@ contract TapOFT is PausableOFT {
         }
         require(_getChainId() == governanceChainIdentifier, 'chain not valid');
 
-        int256 x = int256((timestamp - emissionsStartTime) / WEEK);
+        int256 x = _timestampToWeek(timestamp);
         if (mintedInWeek[x] > 0) return 0;
 
         uint256 emission = uint256(_computeEmissionPerWeek(x));
@@ -277,6 +288,11 @@ contract TapOFT is PausableOFT {
     }
 
     ///-- Internal methods --
+
+    function _timestampToWeek(uint256 timestamp) internal view returns (int256) {
+        return int256((timestamp - emissionsStartTime) / WEEK);
+    }
+
     function _sendAck(
         uint16 _srcChainId,
         bytes memory,
