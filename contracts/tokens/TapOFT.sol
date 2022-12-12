@@ -49,15 +49,15 @@ contract TapOFT is PausableOFT {
 
     /// @notice the a parameter used in the emission function; can be changed by governance
     /// @dev formula: b(xe^(c-f(x))) where f(x)=x/a
-    int256 public a_param = 24 * 10e17; // 24
+    int256 public a_param = 29 * 10e17; // 29
 
     /// @notice the b parameter used in the emission function; can be changed by governance
     /// @dev formula: b(xe^(c-f(x))) where f(x)=x/a
-    int256 public b_param = 2500;
+    int256 public b_param = 3300;
 
     /// @notice the c parameter used in the emission function; can be changed by governance
     /// @dev formula: b(xe^(c-f(x))) where f(x)=x/a
-    int256 public c_param = 37 * 10e16; // 3.7
+    int256 public c_param = 36 * 10e16; // 3.6
 
     /// @notice seconds in a week
     uint256 public constant WEEK = 604800;
@@ -316,7 +316,7 @@ contract TapOFT is PausableOFT {
 
     /// @notice returns the available emissions for a specific week
     /// @dev formula: b(xe^(c-f(x))) where f(x)=x/a
-    /// @dev constants: a = 24, b = 2500, c = 3.7
+    /// @dev constants: a = 29, b = 3300, c = 3.6
     /// @param x week number
     function _computeEmissionPerWeek(int256 x) private view returns (int256 result) {
         int256 fx = PRBMathSD59x18.fromInt(x).div(a_param);
