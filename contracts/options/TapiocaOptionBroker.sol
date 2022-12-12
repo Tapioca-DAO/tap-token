@@ -42,16 +42,20 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     OTAP public immutable oTAP;
     TapOFT public immutable tapOFT;
 
+    uint256 public immutable start = block.timestamp; // timestamp of the start of the contract
+    uint256 public lastEpochUpdate; // timestamp of the last epoch update
     uint256 public epoch; // Represents the number of weeks since the start of the contract
     uint256 constant WEEK = 7 days;
 
     mapping(address => mapping(uint256 => Participation)) public participants; // user => sglAssetId => Participation
     mapping(uint256 => mapping(uint256 => bool)) public oTAPCalls; // oTAPTokenID => epoch => hasExercised
 
+    mapping(uint256 => mapping(uint256 => uint256)) public singularityGauges; // epoch => sglAssetId => availableTAP
+
     /// ===== TWAML ======
     uint256 constant dMIN = 5 * 1e4;
     uint256 constant dMAX = 50 * 1e4; // 5% - 50% discount
-    uint256 constant MIN_WEIGHT_FACTOR = 10; // 0.1%
+    uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
 
     uint256 public cumulative;
     uint256 public averageMagnitude;
@@ -75,6 +79,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     event Participate(uint256 indexed epoch, uint256 indexed sglAssetID, uint256 totalWeight, LockPosition lock, uint256 discount);
     event EpochUpdate(uint256 indexed epoch, uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 totalParticipants);
     event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 amount);
+    event NewEpoch();
 
     // ==========
     //    READ
@@ -153,6 +158,20 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         oTAPCalls[_oTAPTokenID][epoch] = true;
     }
 
+    /// @notice Start a new epoch, extract TAP from the TapOFT contract and emit it to the active singularities
+    function newEpoch() external {
+        require(block.timestamp >= lastEpochUpdate + WEEK, 'TapiocaOptionBroker: too soon');
+
+        // Update epoch info
+        lastEpochUpdate = block.timestamp;
+        epoch++;
+
+        uint256 epochTAP = _extractTap();
+        _emitToGauges(epochTAP);
+
+        emit NewEpoch();
+    }
+
     // =========
     //   OWNER
     // =========
@@ -160,4 +179,28 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     // ============
     //   INTERNAL
     // ============
+
+    /// @notice Emit TAP to the gauges equitably
+    function _emitToGauges(uint256 _epochTAP) internal {
+        uint256[] memory singularities = tOLP.getSingularities();
+        uint256 quotaPerSingularity = _epochTAP / singularities.length;
+
+        unchecked {
+            for (uint256 i = 0; i < singularities.length; i++) {
+                singularityGauges[epoch][singularities[i]] = quotaPerSingularity;
+            }
+        }
+    }
+
+    /// @notice Extract TAP from the TapOFT contract for the current epoch
+    function _extractTap() internal returns (uint256 emissionForEpoch) {
+        emissionForEpoch = tapOFT.availableForWeek(block.timestamp);
+        if (emissionForEpoch == 0) {
+            emissionForEpoch = tapOFT.mintedInWeek(tapOFT.timestampToWeek(block.timestamp));
+        } else {
+            tapOFT.emitForWeek(block.timestamp);
+        }
+
+        tapOFT.extractTAP(address(this), emissionForEpoch);
+    }
 }
