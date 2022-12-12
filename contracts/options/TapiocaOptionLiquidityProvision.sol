@@ -65,8 +65,16 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         return _isApprovedOrOwner(spender, tokenId);
     }
 
-    function getLock(uint256 tokenId) external view returns (LockPosition memory) {
-        return lockPositions[tokenId];
+    function getTotalPoolWeight(uint256 _sglAssetId) external view returns (uint256) {
+        return yieldBox.totalSupply(_sglAssetId);
+    }
+
+    /// @notice Returns the lock position of a given tOLP NFT and if it's active
+    /// @param tokenId tOLP NFT ID
+    function getLock(uint256 tokenId) external view returns (bool, LockPosition memory) {
+        LockPosition memory lockPosition = lockPositions[tokenId];
+
+        return (_isPositionActive(tokenId), lockPosition);
     }
 
     // ==========
@@ -126,6 +134,17 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         // Transfer the tOLR tokens back to the owner
         (amountOut, ) = yieldBox.withdraw(lockPosition.sglAssetID, address(this), _to, lockPosition.amount, 0);
         emit Burn(_to, lockPosition.sglAssetID, lockPosition);
+    }
+
+    // =========
+    //  INTERNAL
+    // =========
+
+    /// @notice Checks if the lock position is still active
+    function _isPositionActive(uint256 tokenId) internal view returns (bool) {
+        LockPosition memory lockPosition = lockPositions[tokenId];
+
+        return (lockPosition.lockTime + lockPosition.lockDuration) >= block.timestamp;
     }
 
     // =========
