@@ -28,25 +28,25 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 struct TapOption {
     uint128 expiry; // timestamp, as once one wise man said, the sun will go dark before this overflows
-    uint128 amount; // amount of entitled TAP. Tap has a max supply of 100*10^24, so this should be fine
-    bool exercised;
+    uint128 discount; // discount in basis points
 }
 
 contract OTAP is ERC721 {
-    address public immutable minter; // address of the minter
+    address public immutable broker; // address of the onlyBroker
     IERC20 public immutable TAP; // address of the TAP token
     uint256 public mintedOTAP; // total number of OTAP minted
     uint256 public mintedTAP; // total number of TAP minted
 
     mapping(uint256 => TapOption) public options; // tokenId => Option
+    mapping(uint256 => string) public tokenURIs; // tokenId => tokenURI
 
-    constructor(address _minter, address _TAP) ERC721('Option TAP', 'oTAP') {
-        minter = _minter;
+    constructor(address _broker, address _TAP) ERC721('Option TAP', 'oTAP') {
+        broker = _broker;
         TAP = IERC20(_TAP);
     }
 
-    modifier onlyMinter() {
-        require(msg.sender == minter, 'OTAP: only minter');
+    modifier onlyBroker() {
+        require(msg.sender == broker, 'OTAP: only onlyBroker');
         _;
     }
 
@@ -54,11 +54,14 @@ contract OTAP is ERC721 {
     //   EVENTS
     // ==========
     event Mint(address indexed to, uint256 indexed tokenId, TapOption option);
-    event Exercise(address indexed to, uint256 indexed tokenId);
 
     // =========
     //    READ
     // =========
+
+    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
+        return tokenURIs[_tokenId];
+    }
 
     function isApprovedOrOwner(address spender, uint256 tokenId) external view returns (bool) {
         return _isApprovedOrOwner(spender, tokenId);
@@ -72,38 +75,27 @@ contract OTAP is ERC721 {
     // ==========
     //    WRITE
     // ==========
+    function setTokenURI(uint256 _tokenId, string calldata _tokenURI) external {
+        require(_isApprovedOrOwner(msg.sender, _tokenId), 'OTAP: only approved or owner');
+        tokenURIs[_tokenId] = _tokenURI;
+    }
 
     /// @notice mints an OTAP
     /// @param _to address to mint to
     /// @param _expiry timestamp
-    /// @param _amount amount of entitled TAP
+    /// @param _discount TAP discount in basis points
     function mint(
         address _to,
         uint128 _expiry,
-        uint128 _amount
-    ) external onlyMinter {
-        uint256 tokenId = mintedOTAP++;
+        uint128 _discount
+    ) external onlyBroker returns (uint256 tokenId) {
+        tokenId = mintedOTAP++;
         _safeMint(_to, tokenId);
 
         TapOption storage option = options[tokenId];
         option.expiry = _expiry;
-        option.amount = _amount;
+        option.discount = _discount;
 
         emit Mint(_to, tokenId, option);
-    }
-
-    /// @notice exercises an oTAP call
-    /// @param _tokenId tokenId of the oTAP
-    function exercise(uint256 _tokenId) external onlyMinter {
-        TapOption memory option = options[_tokenId];
-        require(option.expiry >= block.timestamp, 'OTAP: option expired');
-        require(!option.exercised, 'OTAP: option already exercised');
-        address owner = ownerOf(_tokenId);
-
-        mintedTAP += uint256(option.amount);
-        options[_tokenId].exercised = true;
-        TAP.transfer(owner, uint256(option.amount));
-
-        emit Exercise(owner, _tokenId);
     }
 }
