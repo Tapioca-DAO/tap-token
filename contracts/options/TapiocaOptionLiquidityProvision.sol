@@ -44,6 +44,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
 
     IYieldBox public immutable yieldBox;
     mapping(IERC20 => uint256) public activeSingularities; // Singularity market address => YieldBox Asset ID (0 if not active)
+    address[] public singularities; // Array of active singularities
 
     constructor(address _yieldBox) ERC721('TapiocaOptionLiquidityProvision', 'tOLP') {
         yieldBox = IYieldBox(_yieldBox);
@@ -65,6 +66,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         return _isApprovedOrOwner(spender, tokenId);
     }
 
+    /// @notice Returns the total amount of locked tokens for a given singularity market
     function getTotalPoolWeight(uint256 _sglAssetId) external view returns (uint256) {
         return yieldBox.totalSupply(_sglAssetId);
     }
@@ -75,6 +77,11 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         LockPosition memory lockPosition = lockPositions[tokenId];
 
         return (_isPositionActive(tokenId), lockPosition);
+    }
+
+    /// @notice Returns the active singularity markets
+    function getSingularities() external view returns (address[] memory) {
+        return singularities;
     }
 
     // ==========
@@ -152,14 +159,30 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     // =========
     function registerSingularity(IERC20 singularity, uint256 assetID) external onlyOwner {
         require(activeSingularities[singularity] == 0, 'TapiocaOptions: already registered');
+
         activeSingularities[singularity] = assetID;
+        singularities.push(address(singularity));
+
         emit RegisterSingularity(address(singularity), assetID);
     }
 
     function unregisterSingularity(IERC20 singularity) external onlyOwner {
         uint256 sglAssetID = activeSingularities[singularity];
         require(sglAssetID > 0, 'TapiocaOptions: not registered');
+
         activeSingularities[singularity] = 0;
+        unchecked {
+            for (uint256 i = 0; i < singularities.length; i++) {
+                if (singularities[i] == address(singularity) && i < singularities.length - 1) {
+                    singularities[i] = singularities[singularities.length - 1];
+                    singularities.pop();
+                    break;
+                } else {
+                    singularities.pop();
+                }
+            }
+        }
+
         emit UnregisterSingularity(address(singularity), sglAssetID);
     }
 }
