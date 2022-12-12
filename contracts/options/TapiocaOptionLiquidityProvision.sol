@@ -44,7 +44,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
 
     IYieldBox public immutable yieldBox;
     mapping(IERC20 => uint256) public activeSingularities; // Singularity market address => YieldBox Asset ID (0 if not active)
-    address[] public singularities; // Array of active singularities
+    uint256[] public singularities; // Array of active singularity asset IDs
 
     constructor(address _yieldBox) ERC721('TapiocaOptionLiquidityProvision', 'tOLP') {
         yieldBox = IYieldBox(_yieldBox);
@@ -80,7 +80,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     }
 
     /// @notice Returns the active singularity markets
-    function getSingularities() external view returns (address[] memory) {
+    function getSingularities() external view returns (uint256[] memory) {
         return singularities;
     }
 
@@ -161,7 +161,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         require(activeSingularities[singularity] == 0, 'TapiocaOptions: already registered');
 
         activeSingularities[singularity] = assetID;
-        singularities.push(address(singularity));
+        singularities.push(assetID);
 
         emit RegisterSingularity(address(singularity), assetID);
     }
@@ -173,7 +173,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         activeSingularities[singularity] = 0;
         unchecked {
             for (uint256 i = 0; i < singularities.length; i++) {
-                if (singularities[i] == address(singularity) && i < singularities.length - 1) {
+                if (singularities[i] == sglAssetID && i < singularities.length - 1) {
                     singularities[i] = singularities[singularities.length - 1];
                     singularities.pop();
                     break;
