@@ -20,6 +20,8 @@ enum TokenType {
 interface IYieldBox {
     function wrappedNative() external view returns (address wrappedNative);
 
+    function balanceOf(address to, uint256 assetId) external view returns (uint256 balance);
+
     function deposit(
         TokenType tokenType,
         address contractAddress,
