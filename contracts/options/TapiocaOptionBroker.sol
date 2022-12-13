@@ -5,6 +5,7 @@ import '@boringcrypto/boring-solidity/contracts/BoringOwnable.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
 
 import './TapiocaOptionLiquidityProvision.sol';
+import '../interfaces/IOracle.sol';
 import '../tokens/TapOFT.sol';
 import './twAML.sol';
 import './oTAP.sol';
@@ -80,6 +81,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     event EpochUpdate(uint256 indexed epoch, uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 totalParticipants);
     event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 amount);
     event NewEpoch();
+    event ExerciseOption(uint256 indexed epoch, uint256 indexed to, uint256 indexed tapTokenID, uint256 amount);
 
     // ==========
     //    READ
@@ -126,7 +128,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
         // Mint oTAP position
         participants[participant][lock.sglAssetID] = Participation(true, true, magnitude);
-        oTAPTokenID = oTAP.mint(participant, lock.lockTime + lock.lockDuration, uint128(target));
+        oTAPTokenID = oTAP.mint(participant, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
         emit Participate(epoch, lock.sglAssetID, cachedTotalWeight, lock, target);
     }
 
@@ -135,6 +137,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         (, LockPosition memory lock) = tOLP.getLock(_tOLPTokenID);
         address participant = tOLP.ownerOf(_tOLPTokenID);
         require(tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID), 'TapiocaOptionBroker: Not approved or owner');
+        require(block.timestamp > lock.lockTime + lock.lockDuration, 'TapiocaOptionBroker: Lock not expired');
 
         Participation memory participation = participants[participant][lock.sglAssetID];
         require(participation.hasParticipated == true, 'TapiocaOptionBroker: Not participating');
@@ -152,10 +155,22 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
     function exerciseOption(uint256 _oTAPTokenID) external {
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
-        require(oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID), 'TapiocaOptionBroker: Not approved or owner');
-        require(oTAPPosition.expiry > block.timestamp, 'TapiocaOptionBroker: Option expired');
+        (bool isPositionActive, LockPosition memory tOLPLockPosition) = tOLP.getLock(oTAPPosition.tOLP);
 
-        oTAPCalls[_oTAPTokenID][epoch] = true;
+        require(oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID), 'TapiocaOptionBroker: Not approved or owner');
+        require(isPositionActive, 'TapiocaOptionBroker: Option expired');
+        require(oTAPCalls[_oTAPTokenID][cachedEpoch] == false, 'TapiocaOptionBroker: Already exercised');
+
+        uint256 cachedEpoch = epoch;
+        oTAPCalls[_oTAPTokenID][cachedEpoch] = true; // Save exercise call of the option for this epoch
+
+        uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];
+        uint256 otcAmount = muldiv(tOLPLockPosition.amount, gaugeTotalForEpoch, tOLP.getTotalPoolWeight(tOLPLockPosition.sglAssetID));
+
+        _processOTCDeal(otcAmount, oTAPPosition.discount);
+
+        tapOFT.transfer(msg.sender, uint256(otcAmount));
+        emit ExerciseOption(cachedEpoch, msg.sender, _oTAPTokenID, otcAmount);
     }
 
     /// @notice Start a new epoch, extract TAP from the TapOFT contract and emit it to the active singularities
@@ -179,6 +194,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     // ============
     //   INTERNAL
     // ============
+
+    function _processOTCDeal(uint256 tapAmount, uint256 discount) internal {}
 
     /// @notice Emit TAP to the gauges equitably
     function _emitToGauges(uint256 _epochTAP) internal {
