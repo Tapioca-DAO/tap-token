@@ -29,6 +29,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 struct TapOption {
     uint128 expiry; // timestamp, as once one wise man said, the sun will go dark before this overflows
     uint128 discount; // discount in basis points
+    uint256 tOLP; // tOLP token ID
 }
 
 contract OTAP is ERC721 {
@@ -84,10 +85,12 @@ contract OTAP is ERC721 {
     /// @param _to address to mint to
     /// @param _expiry timestamp
     /// @param _discount TAP discount in basis points
+    /// @param _tOLP tOLP token ID
     function mint(
         address _to,
         uint128 _expiry,
-        uint128 _discount
+        uint128 _discount,
+        uint256 _tOLP
     ) external onlyBroker returns (uint256 tokenId) {
         tokenId = mintedOTAP++;
         _safeMint(_to, tokenId);
@@ -95,6 +98,7 @@ contract OTAP is ERC721 {
         TapOption storage option = options[tokenId];
         option.expiry = _expiry;
         option.discount = _discount;
+        option.tOLP = _tOLP;
 
         emit Mint(_to, tokenId, option);
     }
