@@ -8,6 +8,7 @@ import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
 import '../interfaces/IYieldBox.sol';
+import '../interfaces/IOracle.sol';
 
 //
 //                 .(%%%%%%%%%%%%*       *
@@ -38,12 +39,20 @@ struct LockPosition {
     uint128 lockDuration; // duration of the lock
 }
 
+struct SingularityPool {
+    uint256 sglAssetID; // Singularity market YieldBox asset ID
+    IOracle oracle; // oracle for the Singularity market
+    uint256 totalDeposited; // total amount of tOLR tokens deposited
+}
+
 contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     uint256 public tokenCounter; // Counter for token IDs
     mapping(uint256 => LockPosition) public lockPositions; // TokenID => LockPosition
 
     IYieldBox public immutable yieldBox;
-    mapping(IERC20 => uint256) public activeSingularities; // Singularity market address => YieldBox Asset ID (0 if not active)
+
+    // Singularity market address => SingularityPool (YieldBox Asset ID is 0 if not active)
+    mapping(IERC20 => SingularityPool) public activeSingularities;
     uint256[] public singularities; // Array of active singularity asset IDs
 
     constructor(address _yieldBox) ERC721('TapiocaOptionLiquidityProvision', 'tOLP') {
@@ -62,8 +71,8 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     //    READ
     // =========
 
-    function isApprovedOrOwner(address spender, uint256 tokenId) external view returns (bool) {
-        return _isApprovedOrOwner(spender, tokenId);
+    function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool) {
+        return _isApprovedOrOwner(_spender, _tokenId);
     }
 
     /// @notice Returns the total amount of locked tokens for a given singularity market
@@ -72,11 +81,11 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     }
 
     /// @notice Returns the lock position of a given tOLP NFT and if it's active
-    /// @param tokenId tOLP NFT ID
-    function getLock(uint256 tokenId) external view returns (bool, LockPosition memory) {
-        LockPosition memory lockPosition = lockPositions[tokenId];
+    /// @param _tokenId tOLP NFT ID
+    function getLock(uint256 _tokenId) external view returns (bool, LockPosition memory) {
+        LockPosition memory lockPosition = lockPositions[_tokenId];
 
-        return (_isPositionActive(tokenId), lockPosition);
+        return (_isPositionActive(_tokenId), lockPosition);
     }
 
     /// @notice Returns the active singularity markets
@@ -98,18 +107,19 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     function lock(
         address _from,
         address _to,
-        address _singularity,
+        IERC20 _singularity,
         uint128 _lockDuration,
         uint128 _amount
     ) external returns (uint256 tokenId) {
         require(_lockDuration > 0, 'tOLP: lock duration must be > 0');
         require(_amount > 0, 'tOLP: amount must be > 0');
 
-        uint256 sglAssetID = activeSingularities[IERC20(_singularity)];
+        uint256 sglAssetID = activeSingularities[_singularity].sglAssetID;
         require(sglAssetID > 0, 'tOLP: singularity not active');
 
         // Transfer the Singularity position to this contract
         yieldBox.depositAsset(sglAssetID, _from, address(this), _amount, 0);
+        activeSingularities[_singularity].totalDeposited += _amount;
 
         // Mint the tOLP NFT position
         tokenId = tokenCounter++;
@@ -127,19 +137,24 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
 
     /// @notice Unlocks tOLP tokens
     /// @param _tokenId ID of the position to unlock
+    /// @param _singularity Singularity market address
     /// @param _to Address to send the tokens to
-    function unlock(uint256 _tokenId, address _to) external returns (uint256 amountOut) {
+    function unlock(
+        uint256 _tokenId,
+        IERC20 _singularity,
+        address _to
+    ) external returns (uint256 amountOut) {
         LockPosition memory lockPosition = lockPositions[_tokenId];
         require(block.timestamp >= lockPosition.lockTime + lockPosition.lockDuration, 'tOLP: Lock not expired');
 
         require(_isApprovedOrOwner(msg.sender, _tokenId), 'tOLP: not owner nor approved');
         _burn(_tokenId);
-
-        // Refund for freeing up chain space
         delete lockPositions[_tokenId];
 
         // Transfer the tOLR tokens back to the owner
         (amountOut, ) = yieldBox.withdraw(lockPosition.sglAssetID, address(this), _to, lockPosition.amount, 0);
+        activeSingularities[_singularity].totalDeposited -= lockPosition.amount;
+
         emit Burn(_to, lockPosition.sglAssetID, lockPosition);
     }
 
@@ -157,27 +172,39 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     // =========
     //   OWNER
     // =========
-    function registerSingularity(IERC20 singularity, uint256 assetID) external onlyOwner {
-        require(activeSingularities[singularity] == 0, 'TapiocaOptions: already registered');
+    function registerSingularity(
+        IERC20 singularity,
+        uint256 assetID,
+        IOracle oracle
+    ) external onlyOwner {
+        require(activeSingularities[singularity].sglAssetID == 0, 'TapiocaOptions: already registered');
 
-        activeSingularities[singularity] = assetID;
+        activeSingularities[singularity].sglAssetID = assetID;
+        activeSingularities[singularity].oracle = oracle;
         singularities.push(assetID);
 
         emit RegisterSingularity(address(singularity), assetID);
     }
 
     function unregisterSingularity(IERC20 singularity) external onlyOwner {
-        uint256 sglAssetID = activeSingularities[singularity];
+        uint256 sglAssetID = activeSingularities[singularity].sglAssetID;
         require(sglAssetID > 0, 'TapiocaOptions: not registered');
 
-        activeSingularities[singularity] = 0;
         unchecked {
-            for (uint256 i = 0; i < singularities.length; i++) {
-                if (singularities[i] == sglAssetID && i < singularities.length - 1) {
-                    singularities[i] = singularities[singularities.length - 1];
+            uint256 sglLength = singularities.length;
+            uint256 sglLastIndex = sglLength - 1;
+            for (uint256 i = 0; i < sglLength; i++) {
+                // If in the middle, delete data and move last element to the deleted position, then pop
+                if (singularities[i] == sglAssetID && i < sglLastIndex) {
+                    delete singularities[i];
+
+                    singularities[i] = singularities[sglLastIndex];
                     singularities.pop();
+
                     break;
                 } else {
+                    // If last element, just pop
+                    delete singularities[sglLastIndex];
                     singularities.pop();
                 }
             }
