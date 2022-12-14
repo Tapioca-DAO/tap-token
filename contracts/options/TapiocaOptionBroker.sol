@@ -10,27 +10,35 @@ import '../tokens/TapOFT.sol';
 import './twAML.sol';
 import './oTAP.sol';
 
-//
-//                 .(%%%%%%%%%%%%*       *
-//             #%%%%%%%%%%%%%%%%%%%%*  ####*
-//          #%%%%%%%%%%%%%%%%%%%%%#  /####
-//       ,%%%%%%%%%%%%%%%%%%%%%%%   ####.  %
-//                                #####
-//                              #####
-//   #####%#####              *####*  ####%#####*
-//  (#########(              #####     ##########.
-//  ##########             #####.      .##########
-//                       ,####/
-//                      #####
-//  %%%%%%%%%%        (####.           *%%%%%%%%%#
-//  .%%%%%%%%%%     *####(            .%%%%%%%%%%
-//   *%%%%%%%%%%   #####             #%%%%%%%%%%
-//               (####.
-//      ,((((  ,####(          /(((((((((((((
-//        *,  #####  ,(((((((((((((((((((((
-//          (####   ((((((((((((((((((((/
-//         ####*  (((((((((((((((((((
-//                     ,**//*,.
+// ********************************************************************************
+// *******************************,                 ,******************************
+// *************************                               ************************
+// *********************                                       ********************
+// *****************,                     @@@                     ,****************
+// ***************                        @@@                        **************
+// *************                    (@@@@@@@@@@@@@(                    ************
+// ***********                   @@@@@@@@#@@@#@@@@@@@@                   **********
+// **********                 .@@@@@      @@@      @@@@@.                 *********
+// *********                 @@@@@        @@@        @@@@@                 ********
+// ********                 @@@@@&        @@@         /@@@@                 *******
+// *******                 &@@@@@@        @@@          #@@@&                 ******
+// ******,                 @@@@@@@@,      @@@           @@@@                 ,*****
+// ******                 #@@@&@@@@@@@@#  @@@           &@@@(                 *****
+// ******                 %@@@%   @@@@@@@@@@@@@@@(      (@@@%                 *****
+// ******                 %@@@%          %@@@@@@@@@@@@. %@@@#                 *****
+// ******.                /@@@@           @@@    *@@@@@@@@@@*                .*****
+// *******                 @@@@           @@@       &@@@@@@@                 ******
+// *******                 /@@@@          @@@        @@@@@@/                .******
+// ********                 %&&&&         @@@        &&&&&#                 *******
+// *********                 *&&&&#       @@@       &&&&&,                 ********
+// **********.                 %&&&&&,    &&&    ,&&&&&%                 .*********
+// ************                   &&&&&&&&&&&&&&&&&&&                   ***********
+// **************                     .#&&&&&&&%.                     *************
+// ****************                       %%%                       ***************
+// *******************                    %%%                    ******************
+// **********************                                    .*********************
+// ***************************                           **************************
+// ************************************..     ..***********************************
 
 struct Participation {
     bool hasParticipated;
@@ -81,7 +89,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     event EpochUpdate(uint256 indexed epoch, uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 totalParticipants);
     event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 amount);
     event NewEpoch();
-    event ExerciseOption(uint256 indexed epoch, uint256 indexed to, uint256 indexed tapTokenID, uint256 amount);
+    event ExerciseOption(uint256 indexed epoch, address indexed to, uint256 indexed tapTokenID, uint256 amount);
 
     // ==========
     //    READ
@@ -157,11 +165,12 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
         (bool isPositionActive, LockPosition memory tOLPLockPosition) = tOLP.getLock(oTAPPosition.tOLP);
 
+        uint256 cachedEpoch = epoch;
+
         require(oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID), 'TapiocaOptionBroker: Not approved or owner');
         require(isPositionActive, 'TapiocaOptionBroker: Option expired');
         require(oTAPCalls[_oTAPTokenID][cachedEpoch] == false, 'TapiocaOptionBroker: Already exercised');
 
-        uint256 cachedEpoch = epoch;
         oTAPCalls[_oTAPTokenID][cachedEpoch] = true; // Save exercise call of the option for this epoch
 
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];

@@ -43,8 +43,11 @@ abstract contract TWAML {
     }
 
     // https://xn--2-umb.com/21/muldiv/
-     function muldiv(uint256 a, uint256 b, uint256 denominator) internal pure returns (uint256 result)
-    {
+    function muldiv(
+        uint256 a,
+        uint256 b,
+        uint256 denominator
+    ) internal pure returns (uint256 result) {
         // Handle division by zero
         require(denominator > 0);
 
@@ -60,7 +63,7 @@ abstract contract TWAML {
             prod0 := mul(a, b)
             prod1 := sub(sub(mm, prod0), lt(mm, prod0))
         }
-        
+
         // Short circuit 256 by 256 division
         // This saves gas when a * b is small, at the cost of making the
         // large case a bit more expensive. Depending on your use case you
@@ -72,11 +75,11 @@ abstract contract TWAML {
             }
             return result;
         }
-        
+
         ///////////////////////////////////////////////
         // 512 by 256 division.
         ///////////////////////////////////////////////
-        
+
         // Handle overflow, the result must be < 2**256
         require(prod1 < denominator);
 
@@ -92,16 +95,16 @@ abstract contract TWAML {
             prod1 := sub(prod1, gt(remainder, prod0))
             prod0 := sub(prod0, remainder)
         }
-        
+
         // Factor powers of two out of denominator
         // Compute largest power of two divisor of denominator.
         // Always >= 1 unless denominator is zero, then twos is zero.
-        uint256 twos = -denominator & denominator;
+        uint256 twos = denominator & (~denominator + 1);
         // Divide denominator by power of two
         assembly {
             denominator := div(denominator, twos)
         }
-        
+
         // Divide [prod1 prod0] by the factors of two
         assembly {
             prod0 := div(prod0, twos)
@@ -113,14 +116,14 @@ abstract contract TWAML {
             twos := add(div(sub(0, twos), twos), 1)
         }
         prod0 |= prod1 * twos;
-        
+
         // Invert denominator mod 2**256
         // Now that denominator is an odd number, it has an inverse
         // modulo 2**256 such that denominator * inv = 1 mod 2**256.
         // Compute the inverse by starting with a seed that is correct
         // correct for four bits. That is, denominator * inv = 1 mod 2**4
         // If denominator is zero the inverse starts with 2
-        uint256 inv = 3 * denominator ^ 2;
+        uint256 inv = (3 * denominator) ^ 2;
         // Now use Newton-Raphson itteration to improve the precision.
         // Thanks to Hensel's lifting lemma, this also works in modular
         // arithmetic, doubling the correct bits in each step.
@@ -131,7 +134,7 @@ abstract contract TWAML {
         inv *= 2 - denominator * inv; // inverse mod 2**128
         inv *= 2 - denominator * inv; // inverse mod 2**256
         // If denominator is zero, inv is now 128
-        
+
         // Because the division is now exact we can divide by multiplying
         // with the modular inverse of denominator. This will give us the
         // correct result modulo 2**256. Since the precoditions guarantee
@@ -141,5 +144,4 @@ abstract contract TWAML {
         result = prod0 * inv;
         return result;
     }
-}
 }
