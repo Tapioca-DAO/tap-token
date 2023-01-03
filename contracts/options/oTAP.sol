@@ -33,18 +33,14 @@ struct TapOption {
 }
 
 contract OTAP is ERC721 {
-    address public immutable broker; // address of the onlyBroker
-    IERC20 public immutable TAP; // address of the TAP token
     uint256 public mintedOTAP; // total number of OTAP minted
     uint256 public mintedTAP; // total number of TAP minted
+    address public broker; // address of the onlyBroker
 
     mapping(uint256 => TapOption) public options; // tokenId => Option
     mapping(uint256 => string) public tokenURIs; // tokenId => tokenURI
 
-    constructor(address _broker, address _TAP) ERC721('Option TAP', 'oTAP') {
-        broker = _broker;
-        TAP = IERC20(_TAP);
-    }
+    constructor() ERC721('Option TAP', 'oTAP') {}
 
     modifier onlyBroker() {
         require(msg.sender == broker, 'OTAP: only onlyBroker');
@@ -76,6 +72,7 @@ contract OTAP is ERC721 {
     // ==========
     //    WRITE
     // ==========
+
     function setTokenURI(uint256 _tokenId, string calldata _tokenURI) external {
         require(_isApprovedOrOwner(msg.sender, _tokenId), 'OTAP: only approved or owner');
         tokenURIs[_tokenId] = _tokenURI;
@@ -101,5 +98,10 @@ contract OTAP is ERC721 {
         option.tOLP = _tOLP;
 
         emit Mint(_to, tokenId, option);
+    }
+
+    function brokerClaim() external {
+        require(broker == address(0), 'OTAP: only once');
+        broker = msg.sender;
     }
 }

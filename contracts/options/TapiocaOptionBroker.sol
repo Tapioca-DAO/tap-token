@@ -200,6 +200,11 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     //   OWNER
     // =========
 
+    /// @notice Claim the Broker role of the oTAP contract
+    function oTAPBrokerClaim() external {
+        oTAP.brokerClaim();
+    }
+
     // ============
     //   INTERNAL
     // ============
