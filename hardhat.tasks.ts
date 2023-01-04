@@ -1,8 +1,6 @@
-import { task } from 'hardhat/config';
 import '@nomiclabs/hardhat-ethers';
+import { task } from 'hardhat/config';
 import { exportSDK__task } from './tasks/exportSDK';
-import { getGaugesInfo__task } from './tasks/getGaugesInfo';
-import { deployGauge__task } from './tasks/deployLiquidityGauge';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -16,9 +14,3 @@ task('exportSDK', 'Generate and export the typings and/or addresses for the SDK.
     'mainnet',
     'Using the current chain ID deployments.',
 );
-
-task('getGaugesInfo', 'Returns gauge details', getGaugesInfo__task)
-    .addParam('user', 'User address')
-    .addOptionalParam('gauge', 'Gauge address');
-
-task('deployGauge', 'Deploy a new gauge', deployGauge__task).addParam('name', 'Market type');

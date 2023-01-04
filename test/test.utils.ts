@@ -36,21 +36,6 @@ export const LZ_ENDPOINTS: TLZ_Endpoint = {
         lzChainId: '10009',
     },
 };
-
-export async function deployGaugeFactory(gauge: string) {
-    const gaugeFactory = await (await ethers.getContractFactory('GaugeFactory')).deploy(gauge);
-    await gaugeFactory.deployed();
-
-    return gaugeFactory;
-}
-export async function deployTimedGauge(depositToken: string, rewardToken: string, owner: string, distributor: string) {
-    const timedGaugeContract = await (await ethers.getContractFactory('TimedGauge')).deploy();
-    await timedGaugeContract.deployed();
-
-    await timedGaugeContract.init(depositToken, rewardToken, owner, distributor);
-    return timedGaugeContract;
-}
-
 export async function deployLZEndpointMock(chainId: number) {
     const lzEndpointContract = await (await ethers.getContractFactory('LZEndpointMock')).deploy(chainId);
     await lzEndpointContract.deployed();
@@ -66,67 +51,8 @@ export async function deployUsd0(lzEndpoint: string) {
 export async function deployTapiocaOFT(lzEndpoint: string, to: string, chainId_?: number) {
     let { chainId } = await ethers.provider.getNetwork();
     chainId = chainId_ ?? chainId;
-    const oftContract = await (await ethers.getContractFactory('TapOFT')).deploy(lzEndpoint, to, to, to, to, to, to, chainId);
+    const oftContract = await (await ethers.getContractFactory('TapOFT')).deploy(lzEndpoint, to, to, to, to, chainId);
     await oftContract.deployed();
 
     return oftContract;
-}
-
-export async function deployAuraIntegrator(auraLocker: string, delegateTo: string) {
-    const integrator = await (await ethers.getContractFactory('AuraIntegrator')).deploy(auraLocker, delegateTo);
-    await integrator.deployed();
-
-    return integrator;
-}
-export async function deployOmniAura(lzEndpoint: string, auraIntegrator: string) {
-    const oftContract = await (await ethers.getContractFactory('omniAura')).deploy(lzEndpoint, auraIntegrator);
-    await oftContract.deployed();
-
-    return oftContract;
-}
-
-export async function deployveTapiocaNFT(tapiocaOFT: string, veTapiocaName: string, veTapiocaSymbol: string, veTapiocaVersion: string) {
-    const veTapiocaOFTContract = await (
-        await ethers.getContractFactory('VeTap')
-    ).deploy(tapiocaOFT, veTapiocaName, veTapiocaSymbol, veTapiocaVersion);
-    await veTapiocaOFTContract.deployed();
-    return veTapiocaOFTContract;
-}
-
-export async function deployGaugeController(tapToken: string, veTapToken: string) {
-    const gaugeControllerContract = await (await ethers.getContractFactory('GaugeController')).deploy(tapToken, veTapToken);
-    await gaugeControllerContract.deployed();
-    return gaugeControllerContract;
-}
-
-export async function deployFeeDistributor(
-    veTapToken: string,
-    startTime: number,
-    tapToken: string,
-    admin: string,
-    emergencyReturn: string,
-) {
-    const feeDistributorContract = await (
-        await ethers.getContractFactory('FeeDistributor')
-    ).deploy(veTapToken, startTime, tapToken, admin, emergencyReturn);
-    await feeDistributorContract.deployed();
-    return feeDistributorContract;
-}
-
-export async function deployGaugeDistributor(tapToken: string, gaugeController: string) {
-    const gaugeDistributorContract = await (await ethers.getContractFactory('GaugeDistributor')).deploy(tapToken, gaugeController);
-    await gaugeDistributorContract.deployed();
-    return gaugeDistributorContract;
-}
-
-export async function deployBoostV2(veToken: string) {
-    const boostv2Contract = await (await ethers.getContractFactory('BoostV2')).deploy(veToken);
-    await boostv2Contract.deployed();
-    return boostv2Contract;
-}
-
-export async function deployVotingEscrowDelegation(name: string, symbol: string, baseUri: string, veToken: string) {
-    const votingDelegation = await (await ethers.getContractFactory('VotingEscrowDelegation')).deploy(name, symbol, baseUri, veToken);
-    await votingDelegation.deployed();
-    return votingDelegation;
 }
