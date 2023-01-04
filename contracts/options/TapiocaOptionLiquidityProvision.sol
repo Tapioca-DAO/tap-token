@@ -8,7 +8,6 @@ import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
 import '../interfaces/IYieldBox.sol';
-import '../interfaces/IOracle.sol';
 
 //
 //                 .(%%%%%%%%%%%%*       *
@@ -41,7 +40,6 @@ struct LockPosition {
 
 struct SingularityPool {
     uint256 sglAssetID; // Singularity market YieldBox asset ID
-    IOracle oracle; // oracle for the Singularity market
     uint256 totalDeposited; // total amount of tOLR tokens deposited
 }
 
@@ -172,15 +170,10 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     // =========
     //   OWNER
     // =========
-    function registerSingularity(
-        IERC20 singularity,
-        uint256 assetID,
-        IOracle oracle
-    ) external onlyOwner {
+    function registerSingularity(IERC20 singularity, uint256 assetID) external onlyOwner {
         require(activeSingularities[singularity].sglAssetID == 0, 'TapiocaOptions: already registered');
 
         activeSingularities[singularity].sglAssetID = assetID;
-        activeSingularities[singularity].oracle = oracle;
         singularities.push(assetID);
 
         emit RegisterSingularity(address(singularity), assetID);
@@ -191,19 +184,23 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         require(sglAssetID > 0, 'TapiocaOptions: not registered');
 
         unchecked {
-            uint256 sglLength = singularities.length;
+            uint256[] memory _singularities = singularities;
+            uint256 sglLength = _singularities.length;
             uint256 sglLastIndex = sglLength - 1;
+
             for (uint256 i = 0; i < sglLength; i++) {
                 // If in the middle, delete data and move last element to the deleted position, then pop
-                if (singularities[i] == sglAssetID && i < sglLastIndex) {
+                if (_singularities[i] == sglAssetID && i < sglLastIndex) {
+                    delete activeSingularities[singularity];
                     delete singularities[i];
 
-                    singularities[i] = singularities[sglLastIndex];
+                    singularities[i] = _singularities[sglLastIndex];
                     singularities.pop();
 
                     break;
                 } else {
                     // If last element, just pop
+                    delete activeSingularities[singularity];
                     delete singularities[sglLastIndex];
                     singularities.pop();
                 }
