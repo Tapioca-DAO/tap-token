@@ -232,6 +232,6 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
             tapOFT.emitForWeek(block.timestamp);
         }
 
-        tapOFT.extractTAP(address(this), emissionForEpoch);
+        tapOFT.extractTAP(emissionForEpoch);
     }
 }
