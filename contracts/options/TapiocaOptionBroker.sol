@@ -110,7 +110,9 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     /// @param _tOLPTokenID The tokenId of the tOLP position
     function participate(uint256 _tOLPTokenID) external returns (uint256 oTAPTokenID) {
         // Compute option parameters
-        (, LockPosition memory lock) = tOLP.getLock(_tOLPTokenID);
+        (bool isPositionActive, LockPosition memory lock) = tOLP.getLock(_tOLPTokenID);
+        require(isPositionActive, 'TapiocaOptionBroker: Position is not active');
+
         address participant = tOLP.ownerOf(_tOLPTokenID);
         TWAMLPool memory pool = twAML[lock.sglAssetID];
 
