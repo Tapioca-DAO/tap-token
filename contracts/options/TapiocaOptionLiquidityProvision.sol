@@ -40,7 +40,7 @@ struct LockPosition {
 
 struct SingularityPool {
     uint256 sglAssetID; // Singularity market YieldBox asset ID
-    uint256 totalDeposited; // total amount of tOLR tokens deposited
+    uint256 totalDeposited; // total amount of tOLR tokens deposited, used for pool share calculation
 }
 
 contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
@@ -116,7 +116,9 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         require(sglAssetID > 0, 'tOLP: singularity not active');
 
         // Transfer the Singularity position to this contract
-        yieldBox.depositAsset(sglAssetID, _from, address(this), _amount, 0);
+        uint256 sharesIn = yieldBox.toShare(sglAssetID, _amount, false);
+
+        yieldBox.transfer(_from, address(this), sglAssetID, sharesIn);
         activeSingularities[_singularity].totalDeposited += _amount;
 
         // Mint the tOLP NFT position
@@ -141,16 +143,20 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         uint256 _tokenId,
         IERC20 _singularity,
         address _to
-    ) external returns (uint256 amountOut) {
+    ) external returns (uint256 sharesOut) {
         LockPosition memory lockPosition = lockPositions[_tokenId];
         require(block.timestamp >= lockPosition.lockTime + lockPosition.lockDuration, 'tOLP: Lock not expired');
+        require(activeSingularities[_singularity].sglAssetID == lockPosition.sglAssetID, 'tOLP: Invalid singularity');
 
         require(_isApprovedOrOwner(msg.sender, _tokenId), 'tOLP: not owner nor approved');
+
         _burn(_tokenId);
         delete lockPositions[_tokenId];
 
         // Transfer the tOLR tokens back to the owner
-        (amountOut, ) = yieldBox.withdraw(lockPosition.sglAssetID, address(this), _to, lockPosition.amount, 0);
+        sharesOut = yieldBox.toShare(lockPosition.sglAssetID, lockPosition.amount, false);
+
+        yieldBox.transfer(address(this), _to, lockPosition.sglAssetID, sharesOut);
         activeSingularities[_singularity].totalDeposited -= lockPosition.amount;
 
         emit Burn(_to, lockPosition.sglAssetID, lockPosition);
@@ -165,6 +171,17 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         LockPosition memory lockPosition = lockPositions[tokenId];
 
         return (lockPosition.lockTime + lockPosition.lockDuration) >= block.timestamp;
+    }
+
+    /// @notice ERC1155 compliance
+    function onERC1155Received(
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes calldata
+    ) external pure returns (bytes4) {
+        return bytes4(keccak256('onERC1155Received(address,address,uint256,uint256,bytes)'));
     }
 
     // =========
