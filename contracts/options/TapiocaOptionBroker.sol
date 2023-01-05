@@ -46,15 +46,22 @@ struct Participation {
     uint256 magnitude;
 }
 
+struct TWAMLPool {
+    uint256 totalParticipants;
+    uint256 averageMagnitude;
+    uint256 totalWeight;
+    uint256 cumulative;
+}
+
 contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     TapiocaOptionLiquidityProvision public immutable tOLP;
-    OTAP public immutable oTAP;
+    IOracle public immutable tapOracle;
     TapOFT public immutable tapOFT;
+    OTAP public immutable oTAP;
 
     uint256 public immutable start = block.timestamp; // timestamp of the start of the contract
     uint256 public lastEpochUpdate; // timestamp of the last epoch update
     uint256 public epoch; // Represents the number of weeks since the start of the contract
-    uint256 constant WEEK = 7 days;
 
     mapping(address => mapping(uint256 => Participation)) public participants; // user => sglAssetId => Participation
     mapping(uint256 => mapping(uint256 => bool)) public oTAPCalls; // oTAPTokenID => epoch => hasExercised
@@ -62,23 +69,23 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     mapping(uint256 => mapping(uint256 => uint256)) public singularityGauges; // epoch => sglAssetId => availableTAP
 
     /// ===== TWAML ======
-    uint256 constant dMIN = 5 * 1e4;
-    uint256 constant dMAX = 50 * 1e4; // 5% - 50% discount
-    uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
+    mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
 
-    uint256 public cumulative;
-    uint256 public averageMagnitude;
-    uint256 public totalParticipants;
-    uint256 public totalWeight;
+    uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
+    uint256 constant dMAX = 50 * 1e4; // 5% - 50% discount
+    uint256 constant dMIN = 5 * 1e4;
+    uint256 constant WEEK = 7 days;
 
     /// =====-------======
     constructor(
         address _tOLP,
         address _oTAP,
-        address _tapOFT
+        address _tapOFT,
+        IOracle _oracle
     ) {
         tOLP = TapiocaOptionLiquidityProvision(_tOLP);
         tapOFT = TapOFT(_tapOFT);
+        tapOracle = _oracle;
         oTAP = OTAP(_oTAP);
     }
 
@@ -105,39 +112,36 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         // Compute option parameters
         (, LockPosition memory lock) = tOLP.getLock(_tOLPTokenID);
         address participant = tOLP.ownerOf(_tOLPTokenID);
+        TWAMLPool memory pool = twAML[lock.sglAssetID];
 
         require(tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID), 'TapiocaOptionBroker: Not approved or owner');
         require(participants[participant][lock.sglAssetID].hasParticipated == false, 'TapiocaOptionBroker: Already participating');
 
-        uint256 cachedCumulative = cumulative;
-        uint256 magnitude = computeMagnitude(uint256(lock.lockTime), cachedCumulative);
-        uint256 target = computeTarget(dMIN, dMAX, magnitude, cachedCumulative);
+        uint256 magnitude = computeMagnitude(uint256(lock.lockTime), pool.cumulative);
+        uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Participate in twAMl voting
-        uint256 cachedTotalWeight = totalWeight;
-        if (lock.amount >= computeMinWeight(cachedTotalWeight, MIN_WEIGHT_FACTOR)) {
-            totalParticipants++; // Save participation
-
-            uint256 aM = averageMagnitude; // Load average magnitude
-            aM = (aM + magnitude) / totalParticipants; // compute new average magnitude
-            averageMagnitude = aM; // Save new average magnitude
+        if (lock.amount >= computeMinWeight(pool.totalWeight, MIN_WEIGHT_FACTOR)) {
+            pool.totalParticipants++; // Save participation
+            pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
 
             // Compute and save new cumulative
-            if (lock.amount > cachedCumulative) {
-                cumulative += aM;
+            if (lock.amount > pool.cumulative) {
+                pool.cumulative += pool.averageMagnitude;
             } else {
-                cumulative -= aM;
+                pool.cumulative -= pool.averageMagnitude;
             }
             // Save new weight
-            totalWeight += lock.amount;
+            pool.totalWeight += lock.amount;
 
-            emit EpochUpdate(epoch, cumulative, averageMagnitude, totalParticipants); // Register new voting power event
+            twAML[lock.sglAssetID] = pool; // Save twAML participation
+            emit EpochUpdate(epoch, pool.cumulative, pool.averageMagnitude, pool.totalParticipants); // Register new voting power event
         }
 
         // Mint oTAP position
         participants[participant][lock.sglAssetID] = Participation(true, true, magnitude);
         oTAPTokenID = oTAP.mint(participant, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
-        emit Participate(epoch, lock.sglAssetID, cachedTotalWeight, lock, target);
+        emit Participate(epoch, lock.sglAssetID, pool.totalWeight, lock, target);
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
@@ -152,8 +156,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
         // Remove participation
         if (participation.hasVotingPower) {
-            totalParticipants--;
-            totalWeight -= lock.amount;
+            twAML[lock.sglAssetID].totalParticipants--;
+            twAML[lock.sglAssetID].totalWeight -= lock.amount;
         }
 
         delete participants[participant][lock.sglAssetID];
