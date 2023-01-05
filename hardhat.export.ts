@@ -10,12 +10,14 @@ import 'hardhat-contract-sizer';
 import '@primitivefi/hardhat-dodoc';
 import 'typechain';
 import '@typechain/hardhat';
+import 'hardhat-tracer';
+
 import SDK from 'tapioca-sdk';
 import { HttpNetworkConfig } from 'hardhat/types';
 
 dotenv.config();
 
-let supportedChains: { [key: string]: HttpNetworkConfig } = SDK.API.utils.getSupportedChains().reduce(
+const supportedChains: { [key: string]: HttpNetworkConfig } = SDK.API.utils.getSupportedChains().reduce(
     (sdkChains, chain) => ({
         ...sdkChains,
         [chain.name]: <HttpNetworkConfig>{
