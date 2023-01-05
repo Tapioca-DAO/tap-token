@@ -51,6 +51,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
 
     // Singularity market address => SingularityPool (YieldBox Asset ID is 0 if not active)
     mapping(IERC20 => SingularityPool) public activeSingularities;
+    mapping(uint256 => IERC20) public sglAssetIDToAddress; // Singularity market YieldBox asset ID => Singularity market address
     uint256[] public singularities; // Array of active singularity asset IDs
 
     constructor(address _yieldBox) ERC721('TapiocaOptionLiquidityProvision', 'tOLP') {
@@ -75,7 +76,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
 
     /// @notice Returns the total amount of locked tokens for a given singularity market
     function getTotalPoolWeight(uint256 _sglAssetId) external view returns (uint256) {
-        return yieldBox.totalSupply(_sglAssetId);
+        return activeSingularities[sglAssetIDToAddress[_sglAssetId]].totalDeposited;
     }
 
     /// @notice Returns the lock position of a given tOLP NFT and if it's active
@@ -191,6 +192,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         require(activeSingularities[singularity].sglAssetID == 0, 'TapiocaOptions: already registered');
 
         activeSingularities[singularity].sglAssetID = assetID;
+        sglAssetIDToAddress[assetID] = singularity;
         singularities.push(assetID);
 
         emit RegisterSingularity(address(singularity), assetID);
@@ -209,6 +211,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
                 // If in the middle, delete data and move last element to the deleted position, then pop
                 if (_singularities[i] == sglAssetID && i < sglLastIndex) {
                     delete activeSingularities[singularity];
+                    delete sglAssetIDToAddress[sglAssetID];
                     delete singularities[i];
 
                     singularities[i] = _singularities[sglLastIndex];
@@ -218,6 +221,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
                 } else {
                     // If last element, just pop
                     delete activeSingularities[singularity];
+                    delete sglAssetIDToAddress[sglAssetID];
                     delete singularities[sglLastIndex];
                     singularities.pop();
                 }

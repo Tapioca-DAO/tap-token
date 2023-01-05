@@ -26,18 +26,23 @@ describe.only('TapiocaOptionLiquidityProvision', () => {
             .to.emit(tOLP, 'RegisterSingularity')
             .withArgs(sglTokenMock.address, sglTokenMockAsset);
 
-        expect(await tOLP.getSingularities()).to.be.deep.eq([sglTokenMockAsset]);
         expect((await tOLP.activeSingularities(sglTokenMock.address)).sglAssetID).to.be.eq(sglTokenMockAsset);
+        expect(await tOLP.sglAssetIDToAddress(sglTokenMockAsset)).to.be.equal(sglTokenMock.address);
+        expect(await tOLP.getSingularities()).to.be.deep.eq([sglTokenMockAsset]);
 
         await expect(tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset))
             .to.emit(tOLP, 'RegisterSingularity')
             .withArgs(sglTokenMock2.address, sglTokenMock2Asset);
 
-        expect(await tOLP.getSingularities()).to.be.deep.eq([sglTokenMockAsset, sglTokenMock2Asset]);
         expect((await tOLP.activeSingularities(sglTokenMock2.address)).sglAssetID).to.be.eq(sglTokenMock2Asset);
+        expect(await tOLP.sglAssetIDToAddress(sglTokenMock2Asset)).to.be.equal(sglTokenMock2.address);
+        expect(await tOLP.getSingularities()).to.be.deep.eq([sglTokenMockAsset, sglTokenMock2Asset]);
 
         // Already registered
         await expect(tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset)).to.revertedWith(
+            'TapiocaOptions: already registered',
+        );
+        await expect(tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset)).to.revertedWith(
             'TapiocaOptions: already registered',
         );
     });
@@ -58,17 +63,21 @@ describe.only('TapiocaOptionLiquidityProvision', () => {
             .to.emit(tOLP, 'UnregisterSingularity')
             .withArgs(sglTokenMock.address, sglTokenMockAsset);
 
+        expect((await tOLP.activeSingularities(sglTokenMock.address)).sglAssetID).to.be.eq(0);
+        expect(await tOLP.sglAssetIDToAddress(sglTokenMockAsset)).to.be.equal(hre.ethers.constants.AddressZero);
         expect(await tOLP.getSingularities()).to.be.deep.eq([sglTokenMock2Asset]);
 
         await expect(tOLP.unregisterSingularity(sglTokenMock2.address))
             .to.emit(tOLP, 'UnregisterSingularity')
             .withArgs(sglTokenMock2.address, sglTokenMock2Asset);
 
-        expect((await tOLP.activeSingularities(sglTokenMock.address)).sglAssetID).to.be.eq(0);
         expect((await tOLP.activeSingularities(sglTokenMock2.address)).sglAssetID).to.be.eq(0);
+        expect(await tOLP.sglAssetIDToAddress(sglTokenMock2Asset)).to.be.equal(hre.ethers.constants.AddressZero);
+        expect(await tOLP.getSingularities()).to.be.deep.eq([]);
 
         // Not registered
         await expect(tOLP.unregisterSingularity(sglTokenMock.address)).to.revertedWith('TapiocaOptions: not registered');
+        await expect(tOLP.unregisterSingularity(sglTokenMock2.address)).to.revertedWith('TapiocaOptions: not registered');
     });
 
     it('should create a lock', async () => {
