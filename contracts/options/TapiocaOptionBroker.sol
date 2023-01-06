@@ -53,8 +53,14 @@ struct TWAMLPool {
     uint256 cumulative;
 }
 
+struct PaymentTokenOracle {
+    IOracle oracle;
+    bytes oracleData;
+}
+
 contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     TapiocaOptionLiquidityProvision public immutable tOLP;
+    bytes public tapOracleData;
     IOracle public immutable tapOracle;
     TapOFT public immutable tapOFT;
     OTAP public immutable oTAP;
@@ -67,6 +73,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     mapping(uint256 => mapping(uint256 => bool)) public oTAPCalls; // oTAPTokenID => epoch => hasExercised
 
     mapping(uint256 => mapping(uint256 => uint256)) public singularityGauges; // epoch => sglAssetId => availableTAP
+
+    mapping(IERC20 => PaymentTokenOracle) public paymentTokens; // Token address => PaymentTokenOracle
 
     /// ===== TWAML ======
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
@@ -96,7 +104,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     event EpochUpdate(uint256 indexed epoch, uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 totalParticipants);
     event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 amount);
     event NewEpoch();
-    event ExerciseOption(uint256 indexed epoch, address indexed to, uint256 indexed tapTokenID, uint256 amount);
+    event ExerciseOption(uint256 indexed epoch, address indexed to, IERC20 indexed paymentToken, uint256 oTapTokenID, uint256 amount);
 
     // ==========
     //    READ
@@ -167,25 +175,31 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         emit ExitPosition(epoch, _tOLPTokenID, lock.amount);
     }
 
-    function exerciseOption(uint256 _oTAPTokenID) external {
+    function exerciseOption(uint256 _oTAPTokenID, IERC20 _paymentToken) external {
+        // Load data
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
         (bool isPositionActive, LockPosition memory tOLPLockPosition) = tOLP.getLock(oTAPPosition.tOLP);
 
         uint256 cachedEpoch = epoch;
 
+        PaymentTokenOracle memory paymentTokenOracle = paymentTokens[_paymentToken];
+
+        // Check requirements
         require(oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID), 'TapiocaOptionBroker: Not approved or owner');
-        require(isPositionActive, 'TapiocaOptionBroker: Option expired');
+        require(paymentTokenOracle.oracle != IOracle(address(0)), 'TapiocaOptionBroker: Payment token not supported');
         require(oTAPCalls[_oTAPTokenID][cachedEpoch] == false, 'TapiocaOptionBroker: Already exercised');
+        require(isPositionActive, 'TapiocaOptionBroker: Option expired');
 
         oTAPCalls[_oTAPTokenID][cachedEpoch] = true; // Save exercise call of the option for this epoch
 
+        // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];
         uint256 otcAmount = muldiv(tOLPLockPosition.amount, gaugeTotalForEpoch, tOLP.getTotalPoolWeight(tOLPLockPosition.sglAssetID));
 
-        _processOTCDeal(otcAmount, oTAPPosition.discount);
+        // Finalize the deal
+        _processOTCDeal(_paymentToken, paymentTokenOracle, otcAmount, oTAPPosition.discount);
 
-        tapOFT.transfer(msg.sender, uint256(otcAmount));
-        emit ExerciseOption(cachedEpoch, msg.sender, _oTAPTokenID, otcAmount);
+        emit ExerciseOption(cachedEpoch, msg.sender, _paymentToken, _oTAPTokenID, otcAmount);
     }
 
     /// @notice Start a new epoch, extract TAP from the TapOFT contract and emit it to the active singularities
@@ -202,20 +216,53 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         emit NewEpoch();
     }
 
+    /// @notice Claim the Broker role of the oTAP contract
+    function oTAPBrokerClaim() external {
+        oTAP.brokerClaim();
+    }
+
     // =========
     //   OWNER
     // =========
 
-    /// @notice Claim the Broker role of the oTAP contract
-    function oTAPBrokerClaim() external {
-        oTAP.brokerClaim();
+    /// @notice Activate or deactivate a payment token
+    /// @dev set the oracle to address(0) to deactivate
+    function setPaymentToken(
+        IERC20 _paymentToken,
+        IOracle _oracle,
+        bytes calldata _oracleData
+    ) external onlyOwner {
+        paymentTokens[_paymentToken].oracle = _oracle;
+        paymentTokens[_paymentToken].oracleData = _oracleData;
     }
 
     // ============
     //   INTERNAL
     // ============
 
-    function _processOTCDeal(uint256 tapAmount, uint256 discount) internal {}
+    /// @notice Process the OTC deal, transfer the payment token to the broker and the TAP amount to the user
+    /// @param _paymentToken The payment token
+    /// @param _paymentTokenOracle The oracle of the payment token
+    /// @param tapAmount The amount of TAP that the user has to receive
+    /// @param discount The discount that the user has to apply to the OTC deal
+    function _processOTCDeal(
+        IERC20 _paymentToken,
+        PaymentTokenOracle memory _paymentTokenOracle,
+        uint256 tapAmount,
+        uint256 discount
+    ) internal {
+        // Get TAP valuation
+        (, uint256 tapValuation) = tapOracle.get(tapOracleData);
+        uint256 otcAmountInUSD = (tapAmount * tapValuation) / 1e18; // Divided by TAP decimals
+
+        // Get payment token valuation
+        (, uint256 paymentTokenValuation) = _paymentTokenOracle.oracle.get(_paymentTokenOracle.oracleData);
+
+        // Calculate payment amount and initiate the transfers
+        uint256 paymentAmount = (otcAmountInUSD * paymentTokenValuation * discount) / 1e5;
+        _paymentToken.transferFrom(msg.sender, address(this), paymentAmount);
+        tapOFT.transfer(msg.sender, uint256(tapAmount));
+    }
 
     /// @notice Emit TAP to the gauges equitably
     function _emitToGauges(uint256 _epochTAP) internal {
