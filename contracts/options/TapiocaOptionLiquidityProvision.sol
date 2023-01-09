@@ -123,7 +123,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         activeSingularities[_singularity].totalDeposited += _amount;
 
         // Mint the tOLP NFT position
-        tokenId = tokenCounter++;
+        tokenId = ++tokenCounter;
         _safeMint(_to, tokenId);
 
         // Create the lock position

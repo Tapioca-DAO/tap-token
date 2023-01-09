@@ -4,7 +4,7 @@ import { setupFixture } from './fixtures';
 import hre from 'hardhat';
 import { time_travel } from '../test.utils';
 
-describe.only('TapiocaOptionLiquidityProvision', () => {
+describe('TapiocaOptionLiquidityProvision', () => {
     it('should check initial state', async () => {
         const { tOLP, signer } = await loadFixture(setupFixture);
 
@@ -107,9 +107,10 @@ describe.only('TapiocaOptionLiquidityProvision', () => {
         await expect(tOLP.lock(signer.address, signer.address, sglTokenMock.address, lockDuration, 1e8))
             .to.emit(tOLP, 'Mint')
             .withArgs(signer.address, sglTokenMockAsset, []);
+        const tokenID = await tOLP.tokenCounter();
 
         expect(await tOLP.tokenCounter()).to.be.eq(1);
-        expect(await tOLP.ownerOf(0)).to.be.eq(signer.address);
+        expect(await tOLP.ownerOf(1)).to.be.eq(signer.address);
 
         // Validate YieldBox transfers
         expect(await yieldBox.balanceOf(tOLP.address, sglTokenMockAsset)).to.be.eq(
@@ -117,7 +118,7 @@ describe.only('TapiocaOptionLiquidityProvision', () => {
         );
 
         // Validate position
-        const lockPosition = await tOLP.lockPositions(0);
+        const lockPosition = await tOLP.lockPositions(tokenID);
         expect(lockPosition.amount).to.be.eq(lockAmount);
         expect(lockPosition.lockDuration).to.be.eq(lockDuration);
         expect(lockPosition.lockTime).to.be.eq((await hre.ethers.provider.getBlock('latest')).timestamp);
@@ -136,23 +137,23 @@ describe.only('TapiocaOptionLiquidityProvision', () => {
         await yieldBox.depositAsset(sglTokenMockAsset, signer.address, signer.address, lockAmount, 0);
         await yieldBox.setApprovalForAll(tOLP.address, true);
         await tOLP.lock(signer.address, signer.address, sglTokenMock.address, lockDuration, 1e8);
+        const tokenID = await tOLP.tokenCounter();
 
         // Requirements
-        await expect(tOLP.unlock(0, sglTokenMock.address, signer.address)).to.be.revertedWith('tOLP: Lock not expired');
+        await expect(tOLP.unlock(tokenID, sglTokenMock.address, signer.address)).to.be.revertedWith('tOLP: Lock not expired');
         await time_travel(10);
-        await expect(tOLP.unlock(0, sglTokenMock2.address, signer.address)).to.be.revertedWith('tOLP: Invalid singularity');
-        await expect(tOLP.unlock(1, sglTokenMock.address, signer.address)).to.be.revertedWith('tOLP: Invalid singularity');
-        await expect(tOLP.connect(users[0]).unlock(0, sglTokenMock.address, users[0].address)).to.be.revertedWith(
+        await expect(tOLP.unlock(tokenID, sglTokenMock2.address, signer.address)).to.be.revertedWith('tOLP: Invalid singularity');
+        await expect(tOLP.connect(users[0]).unlock(tokenID, sglTokenMock.address, users[0].address)).to.be.revertedWith(
             'tOLP: not owner nor approved',
         );
 
         // Unlock
-        await expect(tOLP.unlock(0, sglTokenMock.address, signer.address))
+        await expect(tOLP.unlock(tokenID, sglTokenMock.address, signer.address))
             .to.emit(tOLP, 'Burn')
             .withArgs(signer.address, sglTokenMockAsset, []);
 
         // Check cleanups
-        await expect(tOLP.ownerOf(0)).to.be.revertedWith('ERC721: invalid token ID');
+        await expect(tOLP.ownerOf(tokenID)).to.be.revertedWith('ERC721: invalid token ID');
         const lockPosition = await tOLP.lockPositions(0);
         expect(lockPosition.amount).to.be.eq(0);
         expect(lockPosition.lockDuration).to.be.eq(0);
