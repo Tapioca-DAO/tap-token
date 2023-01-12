@@ -6667,10 +6667,10 @@ table@^6.0.9, table@^6.8.0:
     string-width "^4.2.3"
     strip-ansi "^6.0.1"
 
-tapioca-sdk@^1.1.12:
-  version "1.1.12"
-  resolved "https://registry.npmjs.org/tapioca-sdk/-/tapioca-sdk-1.1.12.tgz#1fecc4b5f1ce32b06e6a847d615a68e14aff3fb4"
-  integrity sha512-o1D1cXK69kAcOTgCMGnV+vwhj5cQafOHbZiyhTOnVXuubEuE6w6+Px1U7FKnYenfOnr/eGTpuKbQZNjymUhnuA==
+tapioca-sdk@^1.1.14:
+  version "1.1.14"
+  resolved "https://registry.npmjs.org/tapioca-sdk/-/tapioca-sdk-1.1.14.tgz#168d3acf1fc60435fdb79fae1301c5d67ee41959"
+  integrity sha512-lqaMB9HHzmPXMQXNAvOBxGeOLj3l++5WpyhYYy1g66Ba0lkRKalQJM14Xw4gS/VLjff7kiFKftaZly00yvi6eA==
   dependencies:
     ethers "^5.6.9"
     lodash "^4.17.21"

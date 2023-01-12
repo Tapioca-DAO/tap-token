@@ -1,15 +1,14 @@
 import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { API } from 'tapioca-sdk';
+import SDK from 'tapioca-sdk';
 import { TContract } from 'tapioca-sdk/dist/shared';
 
-export const getDeployments = async (_hre: HardhatRuntimeEnvironment, local?: boolean): Promise<TContract[]> => {
+export const getDeployments = async (hre: HardhatRuntimeEnvironment, local?: boolean): Promise<TContract[]> => {
     if (local) {
-        return JSON.parse(fs.readFileSync(API.utils.PROJECT_RELATIVE_DEPLOYMENT_PATH, 'utf8'))[await _hre.getChainId()];
+        return JSON.parse(fs.readFileSync(SDK.API.utils.PROJECT_RELATIVE_DEPLOYMENT_PATH, 'utf8'))[await hre.getChainId()];
     }
-    return API.utils.getDeployment('Tapioca-Bar', await _hre.getChainId());
+    return SDK.API.utils.getDeployment('Tapioca-Bar', await hre.getChainId());
 };
-
 export const getLocalDeployments__task = async function (taskArgs: any, hre: HardhatRuntimeEnvironment) {
     try {
         console.log(await getDeployments(hre, true));

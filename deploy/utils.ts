@@ -14,22 +14,31 @@ let supportedChains: { [key: string]: any } = SDK.API.utils.getSupportedChains()
 );
 
 export const constants: { [key: string]: any } = {
-    teamAddress: process.env.PUBLIC_KEY,
-    advisorAddress: process.env.PUBLIC_KEY,
-    daoAddress: process.env.PUBLIC_KEY,
-    otcAddress: process.env.PUBLIC_KEY,
-    seedAddress: process.env.PUBLIC_KEY,
-    lbpAddress: process.env.PUBLIC_KEY,
-    airdropAddress: process.env.PUBLIC_KEY,
+    teamAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
+    advisorAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
+    daoAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
+    otcAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
+    seedAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
+    lbpAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
+    airdropAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
     governanceChainId: 5,
     feeDistributorStartTimestamp: '1677187670', //random
-    feeDistributorAdminAddress: process.env.PUBLIC_KEY,
-    feeDistributorEmergencyReturn: process.env.PUBLIC_KEY,
+    feeDistributorAdminAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
+    feeDistributorEmergencyReturn: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
 
     //------------- TESTNETS --------------
     //goerli
     '5': {
         ...supportedChains['goerli'],
+        mx_ETH: '0xADCea8173CA63CFeB047Ccedd53045271A6C268b', //mock
+    },
+    '43113':{
+        ...supportedChains['fuji_avalanche'],
+
+    },
+    //fantom_testnet
+    '4002': {
+        ...supportedChains['fantom_testnet'],
         mx_ETH: '0xADCea8173CA63CFeB047Ccedd53045271A6C268b', //mock
     },
     //------------- MAINNETS --------------
