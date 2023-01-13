@@ -58,22 +58,24 @@ describe.only('TapiocaOptionBroker', () => {
 
         expect(participation.hasParticipated).to.be.true;
         expect(participation.hasVotingPower).to.be.true;
-        expect(participation.magnitude).to.be.equal(computedAML.magnitude);
+        expect(participation.averageMagnitude).to.be.equal(computedAML.averageMagnitude);
 
         // Check AML state
         const newPoolState = await tOB.twAML(sglTokenMockAsset);
+
         expect(newPoolState.totalParticipants).to.be.equal(prevPoolState.totalParticipants.add(1));
         expect(newPoolState.totalWeight).to.be.equal(prevPoolState.totalWeight.add(amount));
-
         expect(newPoolState.cumulative).to.be.equal(computedAML.magnitude);
         expect(newPoolState.averageMagnitude).to.be.equal(computedAML.averageMagnitude);
 
         // Check oTAP minting
         const oTAPTokenID = await oTAP.mintedOTAP();
+
         expect(oTAPTokenID).to.be.equal(1);
         expect(await oTAP.ownerOf(oTAPTokenID)).to.be.equal(signer.address);
 
         const [, oTAPToken] = await oTAP.attributes(oTAPTokenID);
+
         expect(oTAPToken.discount).to.be.equal(computedAML.discount);
         expect(oTAPToken.tOLP).to.be.equal(tokenID);
         expect(oTAPToken.expiry).to.be.equal((await hre.ethers.provider.getBlock(lockTx.blockNumber!)).timestamp + lockDuration);

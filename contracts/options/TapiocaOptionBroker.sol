@@ -43,7 +43,7 @@ import './oTAP.sol';
 struct Participation {
     bool hasParticipated;
     bool hasVotingPower;
-    uint256 magnitude;
+    uint256 averageMagnitude;
 }
 
 struct TWAMLPool {
@@ -148,7 +148,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         }
 
         // Mint oTAP position
-        participants[participant][lock.sglAssetID] = Participation(true, true, magnitude);
+        participants[participant][lock.sglAssetID] = Participation(true, true, pool.averageMagnitude);
         oTAPTokenID = oTAP.mint(participant, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
         emit Participate(epoch, lock.sglAssetID, pool.totalWeight, lock, target);
     }
@@ -165,7 +165,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
         // Remove participation
         if (participation.hasVotingPower) {
-            twAML[lock.sglAssetID].cumulative -= participation.magnitude;
+            twAML[lock.sglAssetID].cumulative -= participation.averageMagnitude;
             twAML[lock.sglAssetID].totalWeight -= lock.amount;
             twAML[lock.sglAssetID].totalParticipants--;
         }
