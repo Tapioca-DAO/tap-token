@@ -2,6 +2,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumberish } from 'ethers';
 import hre, { ethers } from 'hardhat';
 import { ERC20Mock, YieldBox } from '../../typechain';
+import { BN } from '../test.utils';
 
 export const setupFixture = async () => {
     const signer = (await hre.ethers.getSigners())[0];
@@ -24,21 +25,31 @@ export const setupFixture = async () => {
     const _uriBuilder = await (await ethers.getContractFactory('YieldBoxURIBuilder')).deploy();
     const yieldBox = await (await ethers.getContractFactory('YieldBox')).deploy(_wrappedNative.address, _uriBuilder.address);
 
-    // tOLP
-
     // oTAP
+    const tapOracleMock = await (await ethers.getContractFactory('OracleMock')).deploy();
     const tOLP = await (await ethers.getContractFactory('TapiocaOptionLiquidityProvision')).deploy(yieldBox.address);
     const oTAP = await (await ethers.getContractFactory('OTAP')).deploy();
-    const tOB = await (await ethers.getContractFactory('TapiocaOptionBroker')).deploy(tOLP.address, oTAP.address, tapOFT.address);
+    const tOB = await (
+        await ethers.getContractFactory('TapiocaOptionBroker')
+    ).deploy(tOLP.address, oTAP.address, tapOFT.address, tapOracleMock.address);
 
     // Deploy a "virtual" market
-    const sglTokenMock = await (await ethers.getContractFactory('ERC20Mock')).deploy(0);
+    const sglTokenMock = await (await ethers.getContractFactory('ERC20Mock')).deploy(0, 18);
     const sglTokenMockAsset = await yieldBox.assetCount();
-    const sglTokenMock2 = await (await ethers.getContractFactory('ERC20Mock')).deploy(0);
+    const sglTokenMock2 = await (await ethers.getContractFactory('ERC20Mock')).deploy(0, 18);
     const sglTokenMock2Asset = sglTokenMockAsset.add(1);
 
     await deployNewMarket(yieldBox, sglTokenMock);
     await deployNewMarket(yieldBox, sglTokenMock2);
+
+    // Deploy payment tokens
+    const stableMock = await (await ethers.getContractFactory('ERC20Mock')).deploy(0, 6);
+    const ethMock = await (await ethers.getContractFactory('ERC20Mock')).deploy(0, 18);
+    const stableMockOracle = await (await ethers.getContractFactory('OracleMock')).deploy();
+    const ethMockOracle = await (await ethers.getContractFactory('OracleMock')).deploy();
+
+    await stableMockOracle.setRate(1e6);
+    await ethMockOracle.setRate(BN(1e18).mul(1200));
 
     return {
         // signers
@@ -59,6 +70,13 @@ export const setupFixture = async () => {
         sglTokenMockAsset,
         sglTokenMock2,
         sglTokenMock2Asset,
+        tapOracleMock,
+
+        // Payment tokens
+        stableMock,
+        ethMock,
+        stableMockOracle,
+        ethMockOracle,
 
         // funcs
         deployNewMarket,
