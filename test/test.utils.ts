@@ -1,6 +1,7 @@
-import { BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { ethers } from 'hardhat';
+import BigNumberJs from 'bignumber.js';
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
 
@@ -55,4 +56,33 @@ export async function deployTapiocaOFT(lzEndpoint: string, to: string, chainId_?
     await oftContract.deployed();
 
     return oftContract;
+}
+
+export function aml_computeMinWeight(totalWeights: BigNumber, minWeightFactor: BigNumber) {
+    return totalWeights.mul(minWeightFactor);
+}
+
+export function aml_computeDiscount(magnitude: BigNumber, cumulative: BigNumber, dmin: BigNumber, dmax: BigNumber) {
+    if (cumulative.lte(0)) {
+        return dmax;
+    }
+    let target = magnitude.mul(dmax).div(cumulative);
+    target = target > dmax ? dmax : target < dmin ? dmin : target;
+    return target;
+}
+
+export function aml_computeMagnitude(t: BigNumber, cumulative: BigNumber) {
+    return sqrt(t.pow(2).add(cumulative.pow(2))).sub(cumulative);
+}
+
+export function aml_computeAverageMagnitude(magnitude: BigNumber, averageMagnitude: BigNumber, totalParticipants: BigNumber) {
+    return magnitude.add(averageMagnitude).div(totalParticipants);
+}
+
+export function aml_computeCumulative(t: BigNumber, cumulative: BigNumber, averageMagnitude: BigNumber) {
+    return t > cumulative ? cumulative.add(averageMagnitude) : cumulative.sub(averageMagnitude);
+}
+
+function sqrt(value: BigNumber): BigNumber {
+    return BigNumber.from(new BigNumberJs(value.toString()).sqrt().toFixed().split('.')[0]);
 }
