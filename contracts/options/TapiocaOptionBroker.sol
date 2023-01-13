@@ -127,7 +127,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         require(tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID), 'TapiocaOptionBroker: Not approved or owner');
         require(participants[participant][lock.sglAssetID].hasParticipated == false, 'TapiocaOptionBroker: Already participating');
 
-        uint256 magnitude = computeMagnitude(uint256(lock.lockTime), pool.cumulative);
+        uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Participate in twAMl voting
@@ -136,11 +136,10 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
             pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
 
             // Compute and save new cumulative
-            if (lock.amount > pool.cumulative) {
-                pool.cumulative += pool.averageMagnitude;
-            } else {
-                pool.cumulative -= pool.averageMagnitude;
-            }
+            pool.cumulative = lock.lockDuration > pool.cumulative
+                ? pool.cumulative + pool.averageMagnitude
+                : pool.cumulative - pool.averageMagnitude;
+
             // Save new weight
             pool.totalWeight += lock.amount;
 
@@ -159,15 +158,16 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         (, LockPosition memory lock) = tOLP.getLock(_tOLPTokenID);
         address participant = tOLP.ownerOf(_tOLPTokenID);
         require(tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID), 'TapiocaOptionBroker: Not approved or owner');
-        require(block.timestamp > lock.lockTime + lock.lockDuration, 'TapiocaOptionBroker: Lock not expired');
+        require(block.timestamp >= lock.lockTime + lock.lockDuration, 'TapiocaOptionBroker: Lock not expired');
 
         Participation memory participation = participants[participant][lock.sglAssetID];
         require(participation.hasParticipated == true, 'TapiocaOptionBroker: Not participating');
 
         // Remove participation
         if (participation.hasVotingPower) {
-            twAML[lock.sglAssetID].totalParticipants--;
+            twAML[lock.sglAssetID].cumulative -= participation.magnitude;
             twAML[lock.sglAssetID].totalWeight -= lock.amount;
+            twAML[lock.sglAssetID].totalParticipants--;
         }
 
         delete participants[participant][lock.sglAssetID];
@@ -259,7 +259,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         (, uint256 paymentTokenValuation) = _paymentTokenOracle.oracle.get(_paymentTokenOracle.oracleData);
 
         // Calculate payment amount and initiate the transfers
-        uint256 paymentAmount = (otcAmountInUSD * paymentTokenValuation * discount) / 1e5;
+        uint256 paymentAmount = (otcAmountInUSD * paymentTokenValuation * discount) / 1e5; // 1e5 is discount decimals
         _paymentToken.transferFrom(msg.sender, address(this), paymentAmount);
         tapOFT.transfer(msg.sender, uint256(tapAmount));
     }

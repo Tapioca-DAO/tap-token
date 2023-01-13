@@ -89,7 +89,7 @@ contract OTAP is ERC721 {
         uint128 _discount,
         uint256 _tOLP
     ) external onlyBroker returns (uint256 tokenId) {
-        tokenId = mintedOTAP++;
+        tokenId = ++mintedOTAP;
         _safeMint(_to, tokenId);
 
         TapOption storage option = options[tokenId];
