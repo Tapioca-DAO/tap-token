@@ -7,7 +7,7 @@ abstract contract TWAML {
     /// @param _minWeightFactor The minimum weight factor in BPS
     function computeMinWeight(uint256 _totalWeight, uint256 _minWeightFactor) internal pure returns (uint256) {
         uint256 mul = (_totalWeight * _minWeightFactor);
-        return mul >= 1e4 ? _totalWeight : mul / 1e4;
+        return mul >= 1e4 ? mul / 1e4 : _totalWeight;
     }
 
     function computeMagnitude(uint256 _timeWeight, uint256 _cumulative) internal pure returns (uint256) {
