@@ -1,7 +1,7 @@
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+import { loadFixture, takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import { setupFixture } from './fixtures';
-import hre from 'hardhat';
+import hre, { network } from 'hardhat';
 import { aml_computeAverageMagnitude, aml_computeDiscount, aml_computeMagnitude, BN, time_travel } from '../test.utils';
 
 describe.only('TapiocaOptionBroker', () => {
@@ -81,5 +81,90 @@ describe.only('TapiocaOptionBroker', () => {
         expect(oTAPToken.expiry).to.be.equal((await hre.ethers.provider.getBlock(lockTx.blockNumber!)).timestamp + lockDuration);
 
         await expect(tOB.participate(tokenID)).to.be.revertedWith('TapiocaOptionBroker: Already participating');
+
+        // Check participation without enough voting power
+        const user = users[0];
+        const _amount = amount * 0.001 - 1; // < 0.1% of total weights
+        await sglTokenMock.connect(user).freeMint(_amount);
+        await sglTokenMock.connect(user).approve(yieldBox.address, _amount);
+        await yieldBox.connect(user).depositAsset(sglTokenMockAsset, user.address, user.address, _amount, 0);
+        const _ybAmount = await yieldBox
+            .connect(user)
+            .toAmount(sglTokenMockAsset, await yieldBox.balanceOf(user.address, sglTokenMockAsset), false);
+        await yieldBox.connect(user).setApprovalForAll(tOLP.address, true);
+        await tOLP.connect(user).lock(user.address, user.address, sglTokenMock.address, lockDuration, _ybAmount);
+        const _tokenID = await tOLP.tokenCounter();
+        await tOB.connect(user).participate(_tokenID);
+
+        expect(await tOB.twAML(sglTokenMockAsset)).to.be.deep.equal(newPoolState); // No change in AML state
+    });
+
+    it('should exit position', async () => {
+        const { signer, users, tOLP, tOB, tapOFT, oTAP, sglTokenMock, sglTokenMockAsset, sglTokenMock2, sglTokenMock2Asset, yieldBox } =
+            await loadFixture(setupFixture);
+
+        // Setup tOB
+        await tOB.oTAPBrokerClaim();
+        await tapOFT.setMinter(tOB.address);
+
+        // Setup - register a singularity, mint and deposit in YB, lock in tOLP
+        const amount = 1e8;
+        const lockDuration = 10;
+        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset);
+
+        await sglTokenMock.freeMint(amount);
+        await sglTokenMock.approve(yieldBox.address, amount);
+        await yieldBox.depositAsset(sglTokenMockAsset, signer.address, signer.address, amount, 0);
+
+        const ybAmount = await yieldBox.toAmount(sglTokenMockAsset, await yieldBox.balanceOf(signer.address, sglTokenMockAsset), false);
+        await yieldBox.setApprovalForAll(tOLP.address, true);
+        const lockTx = await tOLP.lock(signer.address, signer.address, sglTokenMock.address, lockDuration, ybAmount);
+        const tokenID = await tOLP.tokenCounter();
+
+        // Check exit before participation
+        const snapshot = await takeSnapshot();
+        await time.increase(lockDuration);
+        await expect(tOB.exitPosition(tokenID)).to.be.revertedWith('TapiocaOptionBroker: Not participating');
+        await snapshot.restore();
+
+        // Participate
+        await tOB.participate(tokenID);
+        const participation = await tOB.participants(signer.address, sglTokenMockAsset);
+        const prevPoolState = await tOB.twAML(sglTokenMockAsset);
+
+        // Test exit
+        await expect(tOB.connect(users[0]).exitPosition(tokenID)).to.be.revertedWith('TapiocaOptionBroker: Not approved or owner');
+        await expect(tOB.exitPosition(tokenID)).to.be.revertedWith('TapiocaOptionBroker: Lock not expired');
+
+        await time.increase(lockDuration);
+        await tOB.exitPosition(tokenID);
+
+        // Check AML update
+        const newPoolState = await tOB.twAML(sglTokenMockAsset);
+
+        expect(newPoolState.totalParticipants).to.be.equal(prevPoolState.totalParticipants.sub(1));
+        expect(newPoolState.totalWeight).to.be.equal(prevPoolState.totalWeight.sub(amount));
+        expect(newPoolState.cumulative).to.be.equal(prevPoolState.cumulative.sub(participation.averageMagnitude));
+
+        // Do not remove participation if not participating
+        await snapshot.restore();
+
+        const user = users[0];
+        const _amount = amount * 0.001 - 1; // < 0.1% of total weights
+        await sglTokenMock.connect(user).freeMint(_amount);
+        await sglTokenMock.connect(user).approve(yieldBox.address, _amount);
+        await yieldBox.connect(user).depositAsset(sglTokenMockAsset, user.address, user.address, _amount, 0);
+        const _ybAmount = await yieldBox
+            .connect(user)
+            .toAmount(sglTokenMockAsset, await yieldBox.balanceOf(user.address, sglTokenMockAsset), false);
+        await yieldBox.connect(user).setApprovalForAll(tOLP.address, true);
+        await tOLP.connect(user).lock(user.address, user.address, sglTokenMock.address, lockDuration, _ybAmount);
+        const _tokenID = await tOLP.tokenCounter();
+        await tOB.connect(user).participate(_tokenID);
+
+        await time.increase(lockDuration);
+        await tOB.connect(user).exitPosition(_tokenID);
+
+        expect(await tOB.twAML(sglTokenMockAsset)).to.be.deep.equal(newPoolState); // No change in AML state
     });
 });
