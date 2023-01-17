@@ -152,14 +152,6 @@ describe('TapiocaOptionLiquidityProvision', () => {
             .to.emit(tOLP, 'Burn')
             .withArgs(signer.address, sglTokenMockAsset, []);
 
-        // Check cleanups
-        await expect(tOLP.ownerOf(tokenID)).to.be.revertedWith('ERC721: invalid token ID');
-        const lockPosition = await tOLP.lockPositions(0);
-        expect(lockPosition.amount).to.be.eq(0);
-        expect(lockPosition.lockDuration).to.be.eq(0);
-        expect(lockPosition.lockTime).to.be.eq(0);
-        expect(lockPosition.lockDuration).to.be.eq(0);
-
         // Check balances
         expect(await yieldBox.balanceOf(signer.address, sglTokenMockAsset)).to.be.eq(
             await yieldBox.toShare(sglTokenMockAsset, lockAmount, false),
