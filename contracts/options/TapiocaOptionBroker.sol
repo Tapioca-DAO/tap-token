@@ -241,6 +241,16 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         paymentTokens[_paymentToken].oracleData = _oracleData;
     }
 
+    /// @notice Collect unused TAP from a finished epoch
+    /// @param _epoch The epoch to collect the TAP from
+    /// @param _sglAssetID The asset ID of the singularity to collect the TAP from
+    function collectUnusedTAP(uint256 _epoch, uint256 _sglAssetID) external onlyOwner returns (uint256 unusedTAP) {
+        require(_epoch < epoch, 'TapiocaOptionBroker: Epoch not finished');
+
+        (unusedTAP, singularityGauges[_epoch][_sglAssetID]) = (singularityGauges[_epoch][_sglAssetID], 0);
+        tapOFT.transfer(msg.sender, unusedTAP);
+    }
+
     // ============
     //   INTERNAL
     // ============
