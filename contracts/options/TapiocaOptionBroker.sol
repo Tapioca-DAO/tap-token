@@ -67,6 +67,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
     uint256 public immutable start = block.timestamp; // timestamp of the start of the contract
     uint256 public lastEpochUpdate; // timestamp of the last epoch update
+    uint256 public epochTAPValuation; // TAP price for the current epoch
     uint256 public epoch; // Represents the number of weeks since the start of the contract
 
     mapping(address => mapping(uint256 => Participation)) public participants; // user => sglAssetId => Participation
@@ -101,7 +102,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     //   EVENTS
     // ==========
     event Participate(uint256 indexed epoch, uint256 indexed sglAssetID, uint256 totalWeight, LockPosition lock, uint256 discount);
-    event EpochUpdate(uint256 indexed epoch, uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 totalParticipants);
+    event AMLDivergence(uint256 indexed epoch, uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 totalParticipants);
     event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 amount);
     event NewEpoch();
     event ExerciseOption(uint256 indexed epoch, address indexed to, IERC20 indexed paymentToken, uint256 oTapTokenID, uint256 amount);
@@ -144,7 +145,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
             pool.totalWeight += lock.amount;
 
             twAML[lock.sglAssetID] = pool; // Save twAML participation
-            emit EpochUpdate(epoch, pool.cumulative, pool.averageMagnitude, pool.totalParticipants); // Register new voting power event
+            emit AMLDivergence(epoch, pool.cumulative, pool.averageMagnitude, pool.totalParticipants); // Register new voting power event
         }
 
         // Mint oTAP position
@@ -168,6 +169,9 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
             twAML[lock.sglAssetID].cumulative -= participation.averageMagnitude;
             twAML[lock.sglAssetID].totalWeight -= lock.amount;
             twAML[lock.sglAssetID].totalParticipants--;
+
+            TWAMLPool memory pool = twAML[lock.sglAssetID];
+            emit AMLDivergence(epoch, pool.cumulative, pool.averageMagnitude, pool.totalParticipants); // Register new voting power event
         }
 
         delete participants[participant][lock.sglAssetID];
@@ -202,7 +206,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         emit ExerciseOption(cachedEpoch, msg.sender, _paymentToken, _oTAPTokenID, otcAmount);
     }
 
-    /// @notice Start a new epoch, extract TAP from the TapOFT contract and emit it to the active singularities
+    /// @notice Start a new epoch, extract TAP from the TapOFT contract, emit it to the active singularities and get the price of TAP for the epoch
     function newEpoch() external {
         require(block.timestamp >= lastEpochUpdate + WEEK, 'TapiocaOptionBroker: too soon');
 
@@ -212,6 +216,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
         uint256 epochTAP = _extractTap();
         _emitToGauges(epochTAP);
+        (, epochTAPValuation) = tapOracle.get(tapOracleData);
 
         emit NewEpoch();
     }
@@ -252,14 +257,13 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         uint256 discount
     ) internal {
         // Get TAP valuation
-        (, uint256 tapValuation) = tapOracle.get(tapOracleData);
-        uint256 otcAmountInUSD = (tapAmount * tapValuation) / 1e18; // Divided by TAP decimals
+        uint256 otcAmountInUSD = (tapAmount * epochTAPValuation) / 1e18; // Divided by TAP decimals
 
         // Get payment token valuation
         (, uint256 paymentTokenValuation) = _paymentTokenOracle.oracle.get(_paymentTokenOracle.oracleData);
 
         // Calculate payment amount and initiate the transfers
-        uint256 paymentAmount = (otcAmountInUSD * paymentTokenValuation * discount) / 1e5; // 1e5 is discount decimals
+        uint256 paymentAmount = (otcAmountInUSD * paymentTokenValuation * discount) / 1e4; // 1e4 is discount decimals
         _paymentToken.transferFrom(msg.sender, address(this), paymentAmount);
         tapOFT.transfer(msg.sender, uint256(tapAmount));
     }
