@@ -67,12 +67,22 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
             },
         },
         //testnets
+        arbitrum_goerli: {
+            url: `https://arb-goerli.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`,
+            accounts: [process.env.PRIVATE_KEY!],
+            chainId: 421613,
+            lzChainId: '10143',
+        },
+        mumbai: {
+            url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`,
+            accounts: [process.env.PRIVATE_KEY!],
+        },
         goerli: supportedChains['goerli'],
         bnb_testnet: supportedChains['bnb_testnet'],
         fuji_avalanche: supportedChains['fuji_avalanche'],
-        mumbai: supportedChains['mumbai'],
+        //mumbai: supportedChains['mumbai'],
         fantom_testnet: supportedChains['fantom_testnet'],
-        arbitrum_goerli: supportedChains['arbitrum_goerli'],
+        // arbitrum_goerli: supportedChains['arbitrum_goerli'],
         optimism_goerli: supportedChains['optimism_goerli'],
         harmony_testnet: supportedChains['harmony_testnet'],
 
@@ -87,17 +97,8 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
         harmony: supportedChains['harmony'],
     },
     etherscan: {
-        apiKey: process.env.ETHERSCAN_KEY ?? '',
-        customChains: [
-            {
-                network: 'rinkeby',
-                chainId: 4,
-                urls: {
-                    apiURL: 'https://api-rinkeby.etherscan.io/api',
-                    browserURL: 'https://rinkeby.etherscan.io',
-                },
-            },
-        ],
+        apiKey: process.env.ETHERSCAN_KEY,
+        customChains: [],
     },
     mocha: {
         timeout: 4000000,
