@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import './interfaces/IVeTap.sol';
 import 'tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol';
 import 'tapioca-sdk/dist/contracts/token/oft/extension/PausableOFT.sol';
 import 'tapioca-sdk/dist/contracts/libraries/LzLib.sol';
@@ -53,7 +52,7 @@ contract TapOFT is PausableOFT {
 
     /// @notice the b parameter used in the emission function; can be changed by governance
     /// @dev formula: b(xe^(c-f(x))) where f(x)=x/a
-    int256 public b_param = 2500;
+    int256 public b_param = 2883;
 
     /// @notice the c parameter used in the emission function; can be changed by governance
     /// @dev formula: b(xe^(c-f(x))) where f(x)=x/a
@@ -73,12 +72,8 @@ contract TapOFT is PausableOFT {
     /// @notice returns the minter address
     address public minter;
 
-    /// @notice returns the voting escrow address
-    /// @dev veTap is deployed only on Optimism
-    address public veTap;
-
     /// @notice LayerZero governance chain identifier
-    uint16 public governanceChainIdentifier;
+    uint256 public governanceChainIdentifier;
 
     // ==========
     // *EVENTS*
@@ -97,14 +92,8 @@ contract TapOFT is PausableOFT {
     event BParamUpdated(int256 _old, int256 _new);
     /// @notice event emitted when the C parameter of the emission formula is updated
     event CParamUpdated(int256 _old, int256 _new);
-    /// @notice event emitted when veTap address is updated
-    event VeTapUpdated(address indexed _old, address indexed _new);
-    /// @notice event emitted when TAP is locked for voting
-    event VeLockedFor(address indexed forAddr, uint256 amount, uint256 time);
-    /// @notice event emitted when TAP amount from veTap is increased
-    event IncreasedVeAmount(address indexed forAddr, uint256 amount);
     /// @notice event emitted when the governance chain identifier is updated
-    event GovernanceChainIdentifierUpdated(uint16 _old, uint16 _new);
+    event GovernanceChainIdentifierUpdated(uint256 _old, uint256 _new);
 
     // ==========
     // * METHODS *
@@ -118,7 +107,7 @@ contract TapOFT is PausableOFT {
     /// @param _seed address for the seed tokens
     /// @param _otc address for the OTC tokens
     /// @param _lbp address for the LBP tokens
-    /// @param _governanceChainId LayerZero governance chain identifier
+    /// @param _governanceChainId Chain id
     constructor(
         address _lzEndpoint,
         address _team,
@@ -127,7 +116,7 @@ contract TapOFT is PausableOFT {
         address _seed,
         address _otc,
         address _lbp,
-        uint16 _governanceChainId
+        uint256 _governanceChainId
     ) PausableOFT('Tapioca', 'TAP', _lzEndpoint) {
         require(_lzEndpoint != address(0), 'LZ endpoint not valid');
         governanceChainIdentifier = _governanceChainId;
@@ -146,16 +135,9 @@ contract TapOFT is PausableOFT {
     ///-- Owner methods --
     /// @notice sets the governance chain identifier
     /// @param _identifier LayerZero chain identifier
-    function setGovernanceChainIdentifier(uint16 _identifier) external onlyOwner {
+    function setGovernanceChainIdentifier(uint256 _identifier) external onlyOwner {
         emit GovernanceChainIdentifierUpdated(governanceChainIdentifier, _identifier);
         governanceChainIdentifier = _identifier;
-    }
-
-    /// @notice sets the VotingEscrow address
-    /// @param addr the VotingEscrow address
-    function setVeTap(address addr) external onlyOwner {
-        emit VeTapUpdated(veTap, addr);
-        veTap = addr;
     }
 
     /// @notice sets a new value for parameter
@@ -253,65 +235,11 @@ contract TapOFT is PausableOFT {
         emit Burned(msg.sender, _from, _amount);
     }
 
-    /// @notice lock TapOFT and get veTap on Optimism
-    /// @dev cannot be called on Optimism; use VeTap directly
-    /// @param _amount the amount of TAP to lock for voting power
-    /// @param _time lock duration
-    function getVotingPower(
-        uint256 _amount,
-        uint256 _time,
-        uint256 _action,
-        uint256 _extraGasLimit
-    ) external payable {
-        require(_getChainId() != governanceChainIdentifier, 'use VeTap directly');
-        require(_action == LOCK || _action == INCREASE_AMOUNT, 'action not valid');
-
-        bytes memory toAddress = abi.encodePacked(msg.sender);
-
-        _debitFrom(msg.sender, _getChainId(), toAddress, _amount);
-        bytes memory lzPayload = abi.encode(PT_SEND, abi.encodePacked(msg.sender), toAddress, _amount, _action, _time);
-        bytes memory adapterParam = LzLib.buildDefaultAdapterParams(_extraGasLimit);
-        _lzSend(governanceChainIdentifier, lzPayload, payable(msg.sender), address(0x0), adapterParam, msg.value);
-
-        emit SendToChain(governanceChainIdentifier, msg.sender, toAddress, _amount);
-    }
-
-    ///-- Internal methods --
-    function _sendAck(
-        uint16 _srcChainId,
-        bytes memory,
-        uint64,
-        bytes memory _payload
-    ) internal virtual override {
-        (, bytes memory from, bytes memory toAddressBytes, uint256 amount, uint256 action, uint256 time) = abi.decode(
-            _payload,
-            (uint16, bytes, bytes, uint256, uint256, uint256)
-        );
-
-        address toAddress = toAddressBytes.toAddress(0);
-        if (action == LOCK) {
-            _creditTo(_srcChainId, address(this), amount);
-            _approve(address(this), veTap, amount);
-            IVeTap(veTap).create_lock_for(toAddress, amount, time);
-            emit VeLockedFor(toAddress, amount, time);
-        } else if (action == INCREASE_AMOUNT) {
-            _creditTo(_srcChainId, address(this), amount);
-            _approve(address(this), veTap, amount);
-            IVeTap(veTap).increase_amount_for(toAddress, amount);
-            emit IncreasedVeAmount(toAddress, amount);
-        } else {
-            //credit TAP to sender, on current chain
-            _creditTo(_srcChainId, toAddress, amount);
-        }
-
-        emit ReceiveFromChain(_srcChainId, from, toAddress, amount);
-    }
-
     ///-- Private methods --
     /// @notice Return the current chain ID.
     /// @dev Useful for testing.
-    function _getChainId() private view returns (uint16) {
-        return uint16(ILayerZeroEndpoint(lzEndpoint).getChainId());
+    function _getChainId() private view returns (uint256) {
+        return block.chainid;
     }
 
     /// @notice returns the available emissions for a specific week

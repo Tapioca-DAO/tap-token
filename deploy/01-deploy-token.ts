@@ -26,6 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         from: deployer,
         log: true,
         args,
+        // gasPrice: '20000000000',
     });
     await verify(hre, 'TapOFT', args);
     const tapOFTDeployment = await deployments.get('TapOFT');
