@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import 'tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol';
 import 'tapioca-sdk/dist/contracts/token/oft/extension/PausableOFT.sol';
 import 'tapioca-sdk/dist/contracts/libraries/LzLib.sol';
-import 'prb-math/contracts/PRBMathSD59x18.sol';
 
 /*
 
@@ -23,10 +22,9 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 /// @title Tapioca OFT token
 /// @notice OFT compatible TAP token
 /// @dev Latest size: 17.663  KiB
-/// @dev Emissions calculator for DSO: https://www.desmos.com/calculator/1fa0zen2ut
+/// @dev Emissions E(x)= E(x-1) - E(x-1) * D with E being total supply a x week, and D the initial decay rate
 contract TapOFT is PausableOFT {
     using ExcessivelySafeCall for address;
-    using PRBMathSD59x18 for int256;
     using BytesLib for bytes;
 
     // ==========
@@ -41,19 +39,12 @@ contract TapOFT is PausableOFT {
     // * LBP: 5m
     // * Airdrop: 2.5m
     // == 100M ==
-    uint256 public constant INITIAL_SUPPLY = 1e18 * 33_500_000; // Everything minus DSO
+    uint256 public constant INITIAL_SUPPLY = 33_500_000 * 1e18; // Everything minus DSO
+    uint256 public dso_supply = 66_500_000 * 1e18;
 
-    /// @notice the a parameter used in the emission function; can be changed by governance
-    /// @dev formula: b(xe^(c-f(x))) where f(x)=x/a
-    int256 public a_param = 25 * 10e17; // 29
-
-    /// @notice the b parameter used in the emission function; can be changed by governance
-    /// @dev formula: b(xe^(c-f(x))) where f(x)=x/a
-    int256 public b_param = 3561;
-
-    /// @notice the c parameter used in the emission function; can be changed by governance
-    /// @dev formula: b(xe^(c-f(x))) where f(x)=x/a
-    int256 public c_param = 34 * 10e16; // 3.4
+    /// @notice the a parameter used in the emission function; can be changed by governance/channels/@me/1058881760689131682
+    uint256 constant decay_rate = 8800000000000000; // 0.88%
+    uint256 constant DECAY_RATE_DECIMAL = 1e18;
 
     /// @notice seconds in a week
     uint256 public constant WEEK = 604800;
@@ -64,7 +55,7 @@ contract TapOFT is PausableOFT {
 
     /// @notice returns the amount minted for a specific week
     /// @dev week is computed using (timestamp - emissionStartTime) / WEEK
-    mapping(int256 => uint256) public mintedInWeek;
+    mapping(uint256 => uint256) public mintedInWeek;
 
     /// @notice returns the minter address
     address public minter;
@@ -81,14 +72,6 @@ contract TapOFT is PausableOFT {
     event Minted(address indexed _by, address indexed _to, uint256 _amount);
     /// @notice event emitted when new TAP is burned
     event Burned(address indexed _from, uint256 _amount);
-    /// @notice event emitted when mining parameters are updated
-    event UpdateMiningParameters(uint256 _blockTimestmap, uint256 _rate, uint256 _startEpochSupply);
-    /// @notice event emitted when the A parameter of the emission formula is updated
-    event AParamUpdated(int256 _old, int256 _new);
-    /// @notice event emitted when the B parameter of the emission formula is updated
-    event BParamUpdated(int256 _old, int256 _new);
-    /// @notice event emitted when the C parameter of the emission formula is updated
-    event CParamUpdated(int256 _old, int256 _new);
     /// @notice event emitted when the governance chain identifier is updated
     event GovernanceChainIdentifierUpdated(uint16 _old, uint16 _new);
 
@@ -131,27 +114,6 @@ contract TapOFT is PausableOFT {
         governanceChainIdentifier = _identifier;
     }
 
-    /// @notice sets a new value for parameter
-    /// @param val the new value
-    function setAParam(int256 val) external onlyOwner {
-        emit AParamUpdated(a_param, val);
-        a_param = val;
-    }
-
-    /// @notice sets a new value for parameter
-    /// @param val the new value
-    function setBParam(int256 val) external onlyOwner {
-        emit BParamUpdated(b_param, val);
-        b_param = val;
-    }
-
-    /// @notice sets a new value for parameter
-    /// @param val the new value
-    function setCParam(int256 val) external onlyOwner {
-        emit CParamUpdated(c_param, val);
-        c_param = val;
-    }
-
     /// @notice sets a new minter address
     /// @param _minter the new address
     function setMinter(address _minter) external onlyOwner {
@@ -167,7 +129,7 @@ contract TapOFT is PausableOFT {
     }
 
     /// @notice Returns the current week given a timestamp
-    function timestampToWeek(uint256 timestamp) external view returns (int256) {
+    function timestampToWeek(uint256 timestamp) external view returns (uint256) {
         if (timestamp > block.timestamp) return 0;
         if (timestamp == 0) {
             timestamp = block.timestamp;
@@ -177,38 +139,30 @@ contract TapOFT is PausableOFT {
         return _timestampToWeek(timestamp);
     }
 
-    /// @notice returns available emissions for a specific timestamp
-    /// @param timestamp the moment in time to emit for
-    function availableForWeek(uint256 timestamp) external view returns (uint256) {
-        if (timestamp > block.timestamp) return 0;
-        if (timestamp == 0) {
-            timestamp = block.timestamp;
-        }
-        if (timestamp < emissionsStartTime) return 0;
-
-        int256 x = _timestampToWeek(timestamp);
-        if (mintedInWeek[x] > 0) return 0;
-
-        return uint256(_computeEmissionPerWeek(x));
+    /// @notice Returns the current week emission
+    function computeCurrentWeekEmission() external view returns (uint256) {
+        return mintedInWeek[_timestampToWeek(block.timestamp)];
     }
 
     ///-- Write methods --
-    /// @notice returns the available emissions for a specific week
-    /// @param timestamp the moment in time to emit for
-    /// @dev formula: b(xe^(c-f(x))) where f(x)=x/a
-    function emitForWeek(uint256 timestamp) external whenNotPaused returns (uint256) {
-        if (timestamp != 0) {
-            require(emissionsStartTime < timestamp && timestamp <= block.timestamp, 'timestamp not valid');
-        } else {
-            timestamp = block.timestamp;
-        }
+    /// @notice Emit the TAP for the current week
+    function emitForWeek() external whenNotPaused returns (uint256) {
         require(_getChainId() == governanceChainIdentifier, 'chain not valid');
 
-        int256 x = _timestampToWeek(timestamp);
-        if (mintedInWeek[x] > 0) return 0;
+        uint256 week = _timestampToWeek(block.timestamp);
+        if (mintedInWeek[week] > 0) return 0;
 
-        uint256 emission = uint256(_computeEmissionPerWeek(x));
-        mintedInWeek[x] = emission;
+        uint256 emission = 0;
+        // Last week unclaimed emission goes to the DSO
+        uint256 unclaimed = balanceOf(address(this));
+        if (unclaimed > 0) {
+            mintedInWeek[week - 1] -= unclaimed; // Update last week emission
+            emission += unclaimed; // Last week unclaimed emission goes to the DSO/current week emission
+        }
+
+        dso_supply -= mintedInWeek[week - 1];
+        emission += uint256(_computeEmission());
+        mintedInWeek[week] = emission;
 
         _mint(address(this), emission);
         emit Minted(msg.sender, address(this), emission);
@@ -217,15 +171,15 @@ contract TapOFT is PausableOFT {
     }
 
     /// @notice extracts from the minted TAP
+    /// @param _to Address to send the minted TAP to
     /// @param _amount TAP amount
-    function extractTAP(uint256 _amount) external whenNotPaused {
-        address _minter = minter;
-        require(msg.sender == _minter || msg.sender == owner(), 'unauthorized');
+    function extractTAP(address _to, uint256 _amount) external whenNotPaused {
+        require(msg.sender == minter, 'unauthorized');
         require(_amount > 0, 'amount not valid');
 
         uint256 unclaimed = balanceOf(address(this));
         require(unclaimed >= _amount, 'exceeds allowable amount');
-        _transfer(address(this), _minter, _amount);
+        _transfer(address(this), _to, _amount);
     }
 
     /// @notice burns TAP
@@ -236,9 +190,8 @@ contract TapOFT is PausableOFT {
     }
 
     ///-- Internal methods --
-
-    function _timestampToWeek(uint256 timestamp) internal view returns (int256) {
-        return int256((timestamp - emissionsStartTime) / WEEK);
+    function _timestampToWeek(uint256 timestamp) internal view returns (uint256) {
+        return ((timestamp - emissionsStartTime) / WEEK) + 1; // Starts at week 1
     }
 
     ///-- Private methods --
@@ -248,13 +201,8 @@ contract TapOFT is PausableOFT {
         return uint16(ILayerZeroEndpoint(lzEndpoint).getChainId());
     }
 
-    /// @notice returns the available emissions for a specific week
-    /// @dev formula: b(xe^(c-f(x))) where f(x)=x/a
-    /// @dev constants: a = 25, b = 3561, c = 3.4
-    /// @param x week number
-    function _computeEmissionPerWeek(int256 x) private view returns (int256 result) {
-        int256 fx = PRBMathSD59x18.fromInt(x).div(a_param);
-        int256 pow = c_param - fx;
-        result = ((b_param * x) * (PRBMathSD59x18.e().pow(pow)));
+    /// @notice returns the available emissions for a given supply
+    function _computeEmission() internal view returns (uint256 result) {
+        result = (dso_supply * decay_rate) / DECAY_RATE_DECIMAL;
     }
 }
