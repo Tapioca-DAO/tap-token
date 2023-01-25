@@ -65,7 +65,6 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     TapOFT public immutable tapOFT;
     OTAP public immutable oTAP;
 
-    uint256 public immutable start = block.timestamp; // timestamp of the start of the contract
     uint256 public lastEpochUpdate; // timestamp of the last epoch update
     uint256 public epochTAPValuation; // TAP price for the current epoch
     uint256 public epoch; // Represents the number of weeks since the start of the contract
@@ -104,7 +103,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     event Participate(uint256 indexed epoch, uint256 indexed sglAssetID, uint256 totalWeight, LockPosition lock, uint256 discount);
     event AMLDivergence(uint256 indexed epoch, uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 totalParticipants);
     event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 amount);
-    event NewEpoch();
+    event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValuation);
     event ExerciseOption(uint256 indexed epoch, address indexed to, IERC20 indexed paymentToken, uint256 oTapTokenID, uint256 amount);
 
     // ==========
@@ -206,19 +205,25 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         emit ExerciseOption(cachedEpoch, msg.sender, _paymentToken, _oTAPTokenID, otcAmount);
     }
 
-    /// @notice Start a new epoch, extract TAP from the TapOFT contract, emit it to the active singularities and get the price of TAP for the epoch
+    /// @notice Start a new epoch, extract TAP from the TapOFT contract,
+    ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
         require(block.timestamp >= lastEpochUpdate + WEEK, 'TapiocaOptionBroker: too soon');
+        uint256[] memory singularities = tOLP.getSingularities();
+        require(singularities.length > 0, 'TapiocaOptionBroker: No active singularities');
 
         // Update epoch info
         lastEpochUpdate = block.timestamp;
         epoch++;
 
-        uint256 epochTAP = _extractTap();
+        // Extract TAP
+        tapOFT.emitForWeek();
+        uint256 epochTAP = tapOFT.balanceOf(address(tapOFT));
         _emitToGauges(epochTAP);
-        (, epochTAPValuation) = tapOracle.get(tapOracleData);
 
-        emit NewEpoch();
+        // Get epoch TAP valuation
+        (, epochTAPValuation) = tapOracle.get(tapOracleData);
+        emit NewEpoch(epoch, epochTAP, epochTAPValuation);
     }
 
     /// @notice Claim the Broker role of the oTAP contract
@@ -241,14 +246,17 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         paymentTokens[_paymentToken].oracleData = _oracleData;
     }
 
-    /// @notice Collect unused TAP from a finished epoch
-    /// @param _epoch The epoch to collect the TAP from
-    /// @param _sglAssetID The asset ID of the singularity to collect the TAP from
-    function collectUnusedTAP(uint256 _epoch, uint256 _sglAssetID) external onlyOwner returns (uint256 unusedTAP) {
-        require(_epoch < epoch, 'TapiocaOptionBroker: Epoch not finished');
+    /// @notice Collect the payment tokens from the OTC deals
+    /// @param _paymentTokens The payment tokens to collect
+    function collectPaymentTokens(address[] calldata _paymentTokens) external onlyOwner {
+        uint256 len = _paymentTokens.length;
 
-        (unusedTAP, singularityGauges[_epoch][_sglAssetID]) = (singularityGauges[_epoch][_sglAssetID], 0);
-        tapOFT.transfer(msg.sender, unusedTAP);
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                IERC20 paymentToken = IERC20(_paymentTokens[i]);
+                paymentToken.transfer(msg.sender, paymentToken.balanceOf(address(this)));
+            }
+        }
     }
 
     // ============
@@ -275,7 +283,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         // Calculate payment amount and initiate the transfers
         uint256 paymentAmount = (otcAmountInUSD * paymentTokenValuation * discount) / 1e4; // 1e4 is discount decimals
         _paymentToken.transferFrom(msg.sender, address(this), paymentAmount);
-        tapOFT.transfer(msg.sender, uint256(tapAmount));
+        tapOFT.extractTAP(msg.sender, tapAmount);
     }
 
     /// @notice Emit TAP to the gauges equitably
@@ -288,17 +296,5 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
                 singularityGauges[epoch][singularities[i]] = quotaPerSingularity;
             }
         }
-    }
-
-    /// @notice Extract TAP from the TapOFT contract for the current epoch
-    function _extractTap() internal returns (uint256 emissionForEpoch) {
-        emissionForEpoch = tapOFT.availableForWeek(block.timestamp);
-        if (emissionForEpoch == 0) {
-            emissionForEpoch = tapOFT.mintedInWeek(tapOFT.timestampToWeek(block.timestamp));
-        } else {
-            tapOFT.emitForWeek(block.timestamp);
-        }
-
-        tapOFT.extractTAP(emissionForEpoch);
     }
 }

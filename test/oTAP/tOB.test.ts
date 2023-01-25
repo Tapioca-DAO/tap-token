@@ -16,8 +16,7 @@ describe.only('TapiocaOptionBroker', () => {
     });
 
     it('should participate', async () => {
-        const { signer, users, tOLP, tOB, tapOFT, oTAP, sglTokenMock, sglTokenMockAsset, sglTokenMock2, sglTokenMock2Asset, yieldBox } =
-            await loadFixture(setupFixture);
+        const { signer, users, tOLP, tOB, tapOFT, oTAP, sglTokenMock, sglTokenMockAsset, yieldBox } = await loadFixture(setupFixture);
 
         // Setup tOB
         await tOB.oTAPBrokerClaim();
@@ -100,8 +99,7 @@ describe.only('TapiocaOptionBroker', () => {
     });
 
     it('should exit position', async () => {
-        const { signer, users, tOLP, tOB, tapOFT, oTAP, sglTokenMock, sglTokenMockAsset, sglTokenMock2, sglTokenMock2Asset, yieldBox } =
-            await loadFixture(setupFixture);
+        const { signer, users, tOLP, tOB, tapOFT, sglTokenMock, sglTokenMockAsset, yieldBox } = await loadFixture(setupFixture);
 
         // Setup tOB
         await tOB.oTAPBrokerClaim();
@@ -118,7 +116,7 @@ describe.only('TapiocaOptionBroker', () => {
 
         const ybAmount = await yieldBox.toAmount(sglTokenMockAsset, await yieldBox.balanceOf(signer.address, sglTokenMockAsset), false);
         await yieldBox.setApprovalForAll(tOLP.address, true);
-        const lockTx = await tOLP.lock(signer.address, signer.address, sglTokenMock.address, lockDuration, ybAmount);
+        await tOLP.lock(signer.address, signer.address, sglTokenMock.address, lockDuration, ybAmount);
         const tokenID = await tOLP.tokenCounter();
 
         // Check exit before participation
@@ -166,5 +164,26 @@ describe.only('TapiocaOptionBroker', () => {
         await tOB.connect(user).exitPosition(_tokenID);
 
         expect(await tOB.twAML(sglTokenMockAsset)).to.be.deep.equal(newPoolState); // No change in AML state
+    });
+
+    it('should increment the epoch', async () => {
+        const { tOB, tapOFT, tOLP, sglTokenMock, sglTokenMockAsset, tapOracleMock } = await loadFixture(setupFixture);
+
+        // Setup tOB
+        await tOB.oTAPBrokerClaim();
+        await tapOFT.setMinter(tOB.address);
+
+        // No singularities
+        await expect(tOB.newEpoch()).to.be.revertedWith('TapiocaOptionBroker: No active singularities');
+
+        // New epoch test
+        const tapPrice = BN(1e18).mul(2);
+        await tapOracleMock.setRate(tapPrice);
+        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset);
+
+        const txNewEpoch = await tOB.newEpoch();
+        expect(await tOB.epoch()).to.be.equal(1);
+        expect(await tOB.lastEpochUpdate()).to.be.equal((await hre.ethers.provider.getBlock(txNewEpoch.blockNumber!)).timestamp);
+        expect(await tOB.epochTAPValuation()).to.be.equal(tapPrice);
     });
 });

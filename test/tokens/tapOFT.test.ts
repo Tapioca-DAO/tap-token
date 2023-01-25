@@ -8,7 +8,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { BigNumberish } from 'ethers';
 import { BN, deployLZEndpointMock, deployTapiocaOFT, time_travel } from '../test.utils';
 
-describe.only('tapOFT', () => {
+describe('tapOFT', () => {
     let signer: SignerWithAddress;
     let minter: SignerWithAddress;
     let normalUser: SignerWithAddress;
@@ -147,7 +147,7 @@ describe.only('tapOFT', () => {
         await expect(tapiocaOFT0.connect(signer).removeTAP(amount)).to.emit(tapiocaOFT0, 'Burned');
     });
 
-    it.only('should test weekly emissions', async () => {
+    it('should test weekly emissions', async () => {
         const noOfWeeks = 200;
         const supplyJsonContent: any = {};
         const emissionJsonContent: any = {};
