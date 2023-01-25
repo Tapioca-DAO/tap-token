@@ -42,7 +42,7 @@ contract TapOFT is PausableOFT {
     uint256 public constant INITIAL_SUPPLY = 33_500_000 * 1e18; // Everything minus DSO
     uint256 public dso_supply = 66_500_000 * 1e18;
 
-    /// @notice the a parameter used in the emission function; can be changed by governance/channels/@me/1058881760689131682
+    /// @notice the a parameter used in the emission function;
     uint256 constant decay_rate = 8800000000000000; // 0.88%
     uint256 constant DECAY_RATE_DECIMAL = 1e18;
 
@@ -130,7 +130,6 @@ contract TapOFT is PausableOFT {
 
     /// @notice Returns the current week given a timestamp
     function timestampToWeek(uint256 timestamp) external view returns (uint256) {
-        if (timestamp > block.timestamp) return 0;
         if (timestamp == 0) {
             timestamp = block.timestamp;
         }
@@ -140,7 +139,7 @@ contract TapOFT is PausableOFT {
     }
 
     /// @notice Returns the current week emission
-    function computeCurrentWeekEmission() external view returns (uint256) {
+    function getCurrentWeekEmission() external view returns (uint256) {
         return mintedInWeek[_timestampToWeek(block.timestamp)];
     }
 
