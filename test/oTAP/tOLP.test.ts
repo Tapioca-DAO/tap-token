@@ -170,4 +170,22 @@ describe('TapiocaOptionLiquidityProvision', () => {
         );
         expect((await tOLP.activeSingularities(sglTokenMock.address)).totalDeposited).to.be.eq(0);
     });
+
+    it('Should should set an SGL pool weight', async () => {
+        const { users, tOLP, sglTokenMock, sglTokenMockAsset, sglTokenMock2, sglTokenMock2Asset } = await loadFixture(setupFixture);
+
+        // Setup
+        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0);
+        await tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 0);
+        expect(await tOLP.totalSingularityPoolWeights()).to.be.eq(2);
+
+        await expect(tOLP.connect(users[0]).setSGLPoolWEight(sglTokenMock.address, 1)).to.be.revertedWith(
+            'Ownable: caller is not the owner',
+        );
+
+        await expect(tOLP.setSGLPoolWEight(sglTokenMock.address, 4)).to.emit(tOLP, 'SetSGLPoolWeight').withArgs(sglTokenMock.address, 4);
+
+        expect((await tOLP.activeSingularities(sglTokenMock.address)).poolWeight).to.be.eq(4);
+        expect(await tOLP.totalSingularityPoolWeights()).to.be.eq(5);
+    });
 });
