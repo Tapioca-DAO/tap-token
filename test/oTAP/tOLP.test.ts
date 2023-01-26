@@ -17,60 +17,72 @@ describe('TapiocaOptionLiquidityProvision', () => {
         const { users, tOLP, sglTokenMock, sglTokenMockAsset, sglTokenMock2, sglTokenMock2Asset } = await loadFixture(setupFixture);
 
         // Only owner can register a singularity
-        await expect(tOLP.connect(users[0]).registerSingularity(sglTokenMock.address, sglTokenMockAsset)).to.be.revertedWith(
+        await expect(tOLP.connect(users[0]).registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0)).to.be.revertedWith(
             'Ownable: caller is not the owner',
         );
 
         // Register a singularity
-        await expect(tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset))
+        await expect(tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0))
             .to.emit(tOLP, 'RegisterSingularity')
-            .withArgs(sglTokenMock.address, sglTokenMockAsset);
+            .withArgs(sglTokenMock.address, sglTokenMockAsset)
+            .and.to.emit(tOLP, 'UpdateTotalSingularityPoolWeights')
+            .withArgs(1);
 
+        expect(await tOLP.totalSingularityPoolWeights()).to.be.eq(1);
         expect((await tOLP.activeSingularities(sglTokenMock.address)).sglAssetID).to.be.eq(sglTokenMockAsset);
         expect(await tOLP.sglAssetIDToAddress(sglTokenMockAsset)).to.be.equal(sglTokenMock.address);
         expect(await tOLP.getSingularities()).to.be.deep.eq([sglTokenMockAsset]);
 
-        await expect(tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset))
+        await expect(tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 0))
             .to.emit(tOLP, 'RegisterSingularity')
-            .withArgs(sglTokenMock2.address, sglTokenMock2Asset);
+            .withArgs(sglTokenMock2.address, sglTokenMock2Asset)
+            .and.to.emit(tOLP, 'UpdateTotalSingularityPoolWeights')
+            .withArgs(2);
 
+        expect(await tOLP.totalSingularityPoolWeights()).to.be.eq(2);
         expect((await tOLP.activeSingularities(sglTokenMock2.address)).sglAssetID).to.be.eq(sglTokenMock2Asset);
         expect(await tOLP.sglAssetIDToAddress(sglTokenMock2Asset)).to.be.equal(sglTokenMock2.address);
         expect(await tOLP.getSingularities()).to.be.deep.eq([sglTokenMockAsset, sglTokenMock2Asset]);
 
         // Already registered
-        await expect(tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset)).to.revertedWith(
+        await expect(tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0)).to.revertedWith(
             'TapiocaOptions: already registered',
         );
-        await expect(tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset)).to.revertedWith(
+        await expect(tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 0)).to.revertedWith(
             'TapiocaOptions: already registered',
         );
     });
 
     it('should unregister a singularity', async () => {
         const { users, tOLP, sglTokenMock, sglTokenMockAsset, sglTokenMock2, sglTokenMock2Asset } = await loadFixture(setupFixture);
-        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset);
-        await tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset);
+        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0);
+        await tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 0);
         expect(await tOLP.getSingularities()).to.be.deep.eq([sglTokenMockAsset, sglTokenMock2Asset]);
 
         // Only owner can unregister a singularity
-        await expect(tOLP.connect(users[0]).registerSingularity(sglTokenMock.address, sglTokenMockAsset)).to.be.revertedWith(
+        await expect(tOLP.connect(users[0]).registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0)).to.be.revertedWith(
             'Ownable: caller is not the owner',
         );
 
         // Unregister a singularity
         await expect(tOLP.unregisterSingularity(sglTokenMock.address))
             .to.emit(tOLP, 'UnregisterSingularity')
-            .withArgs(sglTokenMock.address, sglTokenMockAsset);
+            .withArgs(sglTokenMock.address, sglTokenMockAsset)
+            .and.to.emit(tOLP, 'UpdateTotalSingularityPoolWeights')
+            .withArgs(1);
 
+        expect(await tOLP.totalSingularityPoolWeights()).to.be.eq(1);
         expect((await tOLP.activeSingularities(sglTokenMock.address)).sglAssetID).to.be.eq(0);
         expect(await tOLP.sglAssetIDToAddress(sglTokenMockAsset)).to.be.equal(hre.ethers.constants.AddressZero);
         expect(await tOLP.getSingularities()).to.be.deep.eq([sglTokenMock2Asset]);
 
         await expect(tOLP.unregisterSingularity(sglTokenMock2.address))
             .to.emit(tOLP, 'UnregisterSingularity')
-            .withArgs(sglTokenMock2.address, sglTokenMock2Asset);
+            .withArgs(sglTokenMock2.address, sglTokenMock2Asset)
+            .and.to.emit(tOLP, 'UpdateTotalSingularityPoolWeights')
+            .withArgs(0);
 
+        expect(await tOLP.totalSingularityPoolWeights()).to.be.eq(0);
         expect((await tOLP.activeSingularities(sglTokenMock2.address)).sglAssetID).to.be.eq(0);
         expect(await tOLP.sglAssetIDToAddress(sglTokenMock2Asset)).to.be.equal(hre.ethers.constants.AddressZero);
         expect(await tOLP.getSingularities()).to.be.deep.eq([]);
@@ -86,7 +98,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
         // Setup
         const lockDuration = 1;
         const lockAmount = 1e8;
-        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset);
+        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0);
         await sglTokenMock.freeMint(lockAmount);
         await sglTokenMock.approve(yieldBox.address, lockAmount);
         await yieldBox.depositAsset(sglTokenMockAsset, signer.address, signer.address, lockAmount, 0);
@@ -131,7 +143,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
         // Setup
         const lockDuration = 10;
         const lockAmount = 1e8;
-        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset);
+        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0);
         await sglTokenMock.freeMint(lockAmount);
         await sglTokenMock.approve(yieldBox.address, lockAmount);
         await yieldBox.depositAsset(sglTokenMockAsset, signer.address, signer.address, lockAmount, 0);

@@ -41,6 +41,7 @@ struct LockPosition {
 struct SingularityPool {
     uint256 sglAssetID; // Singularity market YieldBox asset ID
     uint256 totalDeposited; // total amount of tOLR tokens deposited, used for pool share calculation
+    uint256 poolWeight; // Pool weight to calculate emission
 }
 
 contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
@@ -54,6 +55,8 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     mapping(uint256 => IERC20) public sglAssetIDToAddress; // Singularity market YieldBox asset ID => Singularity market address
     uint256[] public singularities; // Array of active singularity asset IDs
 
+    uint256 public totalSingularityPoolWeights; // Total weight of all active singularity pools
+
     constructor(address _yieldBox) ERC721('TapiocaOptionLiquidityProvision', 'tOLP') {
         yieldBox = IYieldBox(_yieldBox);
     }
@@ -63,22 +66,23 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     // ==========
     event Mint(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition);
     event Burn(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition);
+    event UpdateTotalSingularityPoolWeights(uint256 totalSingularityPoolWeights);
+    event SetSGLPoolWeight(address sgl, uint256 poolWeight);
     event RegisterSingularity(address sgl, uint256 assetID);
     event UnregisterSingularity(address sgl, uint256 assetID);
+
+    // ===============
+    //    MODIFIERS
+    // ===============
+    modifier updateTotalSGLPoolWeights() {
+        _;
+        totalSingularityPoolWeights = _computeSGLPoolWeights();
+        emit UpdateTotalSingularityPoolWeights(totalSingularityPoolWeights);
+    }
 
     // =========
     //    READ
     // =========
-
-    function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool) {
-        return _isApprovedOrOwner(_spender, _tokenId);
-    }
-
-    /// @notice Returns the total amount of locked tokens for a given singularity market
-    function getTotalPoolWeight(uint256 _sglAssetId) external view returns (uint256) {
-        return activeSingularities[sglAssetIDToAddress[_sglAssetId]].totalDeposited;
-    }
-
     /// @notice Returns the lock position of a given tOLP NFT and if it's active
     /// @param _tokenId tOLP NFT ID
     function getLock(uint256 _tokenId) external view returns (bool, LockPosition memory) {
@@ -90,6 +94,15 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     /// @notice Returns the active singularity markets
     function getSingularities() external view returns (uint256[] memory) {
         return singularities;
+    }
+
+    /// @notice Returns the total amount of locked tokens for a given singularity market
+    function getTotalPoolDeposited(uint256 _sglAssetId) external view returns (uint256) {
+        return activeSingularities[sglAssetIDToAddress[_sglAssetId]].totalDeposited;
+    }
+
+    function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool) {
+        return _isApprovedOrOwner(_spender, _tokenId);
     }
 
     // ==========
@@ -166,41 +179,41 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     }
 
     // =========
-    //  INTERNAL
-    // =========
-
-    /// @notice Checks if the lock position is still active
-    function _isPositionActive(uint256 tokenId) internal view returns (bool) {
-        LockPosition memory lockPosition = lockPositions[tokenId];
-
-        return (lockPosition.lockTime + lockPosition.lockDuration) >= block.timestamp;
-    }
-
-    /// @notice ERC1155 compliance
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata
-    ) external pure returns (bytes4) {
-        return bytes4(keccak256('onERC1155Received(address,address,uint256,uint256,bytes)'));
-    }
-
-    // =========
     //   OWNER
     // =========
-    function registerSingularity(IERC20 singularity, uint256 assetID) external onlyOwner {
+
+    /// @notice Sets the pool weight of a given singularity market
+    /// @param singularity Singularity market address
+    /// @param weight Weight of the pool
+    function setSGLPoolWEight(IERC20 singularity, uint256 weight) external onlyOwner updateTotalSGLPoolWeights {
+        require(activeSingularities[singularity].sglAssetID > 0, 'TapiocaOptions: not registered');
+        activeSingularities[singularity].poolWeight = weight;
+
+        emit SetSGLPoolWeight(address(singularity), weight);
+    }
+
+    /// @notice Registers a new singularity market
+    /// @param singularity Singularity market address
+    /// @param assetID YieldBox asset ID of the singularity market
+    /// @param weight Weight of the pool
+    function registerSingularity(
+        IERC20 singularity,
+        uint256 assetID,
+        uint256 weight
+    ) external onlyOwner updateTotalSGLPoolWeights {
         require(activeSingularities[singularity].sglAssetID == 0, 'TapiocaOptions: already registered');
 
         activeSingularities[singularity].sglAssetID = assetID;
+        activeSingularities[singularity].poolWeight = weight > 0 ? weight : 1;
         sglAssetIDToAddress[assetID] = singularity;
         singularities.push(assetID);
 
         emit RegisterSingularity(address(singularity), assetID);
     }
 
-    function unregisterSingularity(IERC20 singularity) external onlyOwner {
+    /// @notice Un-registers a singularity market
+    /// @param singularity Singularity market address
+    function unregisterSingularity(IERC20 singularity) external onlyOwner updateTotalSGLPoolWeights {
         uint256 sglAssetID = activeSingularities[singularity].sglAssetID;
         require(sglAssetID > 0, 'TapiocaOptions: not registered');
 
@@ -231,5 +244,38 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         }
 
         emit UnregisterSingularity(address(singularity), sglAssetID);
+    }
+
+    // =========
+    //  INTERNAL
+    // =========
+
+    /// @notice Compute the total pool weight of all active singularity markets
+    function _computeSGLPoolWeights() internal view returns (uint256) {
+        uint256 total;
+        uint256 len = singularities.length;
+        for (uint256 i = 0; i < len; i++) {
+            total += activeSingularities[sglAssetIDToAddress[singularities[i]]].poolWeight;
+        }
+
+        return total;
+    }
+
+    /// @notice Checks if the lock position is still active
+    function _isPositionActive(uint256 tokenId) internal view returns (bool) {
+        LockPosition memory lockPosition = lockPositions[tokenId];
+
+        return (lockPosition.lockTime + lockPosition.lockDuration) >= block.timestamp;
+    }
+
+    /// @notice ERC1155 compliance
+    function onERC1155Received(
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes calldata
+    ) external pure returns (bytes4) {
+        return bytes4(keccak256('onERC1155Received(address,address,uint256,uint256,bytes)'));
     }
 }

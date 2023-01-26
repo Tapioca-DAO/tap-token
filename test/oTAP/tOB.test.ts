@@ -25,7 +25,7 @@ describe.only('TapiocaOptionBroker', () => {
         // Setup - register a singularity, mint and deposit in YB, lock in tOLP
         const amount = 1e8;
         const lockDuration = 10;
-        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset);
+        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0);
 
         await sglTokenMock.freeMint(amount);
         await sglTokenMock.approve(yieldBox.address, amount);
@@ -108,7 +108,7 @@ describe.only('TapiocaOptionBroker', () => {
         // Setup - register a singularity, mint and deposit in YB, lock in tOLP
         const amount = 1e8;
         const lockDuration = 10;
-        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset);
+        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0);
 
         await sglTokenMock.freeMint(amount);
         await sglTokenMock.approve(yieldBox.address, amount);
@@ -179,7 +179,7 @@ describe.only('TapiocaOptionBroker', () => {
         // New epoch test
         const tapPrice = BN(1e18).mul(2);
         await tapOracleMock.setRate(tapPrice);
-        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset);
+        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0);
 
         const txNewEpoch = await tOB.newEpoch();
         expect(await tOB.epoch()).to.be.equal(1);

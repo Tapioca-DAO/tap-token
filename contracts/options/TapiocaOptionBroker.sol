@@ -197,7 +197,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];
-        uint256 otcAmount = muldiv(tOLPLockPosition.amount, gaugeTotalForEpoch, tOLP.getTotalPoolWeight(tOLPLockPosition.sglAssetID));
+        uint256 otcAmount = muldiv(tOLPLockPosition.amount, gaugeTotalForEpoch, tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID));
 
         // Finalize the deal
         _processOTCDeal(_paymentToken, paymentTokenOracle, otcAmount, oTAPPosition.discount);
