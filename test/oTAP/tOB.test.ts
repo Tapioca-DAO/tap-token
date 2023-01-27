@@ -63,7 +63,7 @@ describe.only('TapiocaOptionBroker', () => {
         const newPoolState = await tOB.twAML(sglTokenMockAsset);
 
         expect(newPoolState.totalParticipants).to.be.equal(prevPoolState.totalParticipants.add(1));
-        expect(newPoolState.totalWeight).to.be.equal(prevPoolState.totalWeight.add(amount));
+        expect(newPoolState.totalDeposited).to.be.equal(prevPoolState.totalDeposited.add(amount));
         expect(newPoolState.cumulative).to.be.equal(computedAML.magnitude);
         expect(newPoolState.averageMagnitude).to.be.equal(computedAML.averageMagnitude);
 
@@ -141,7 +141,7 @@ describe.only('TapiocaOptionBroker', () => {
         const newPoolState = await tOB.twAML(sglTokenMockAsset);
 
         expect(newPoolState.totalParticipants).to.be.equal(prevPoolState.totalParticipants.sub(1));
-        expect(newPoolState.totalWeight).to.be.equal(prevPoolState.totalWeight.sub(amount));
+        expect(newPoolState.totalDeposited).to.be.equal(prevPoolState.totalDeposited.sub(amount));
         expect(newPoolState.cumulative).to.be.equal(prevPoolState.cumulative.sub(participation.averageMagnitude));
 
         // Do not remove participation if not participating
@@ -166,8 +166,32 @@ describe.only('TapiocaOptionBroker', () => {
         expect(await tOB.twAML(sglTokenMockAsset)).to.be.deep.equal(newPoolState); // No change in AML state
     });
 
+    it('should set a payment token', async () => {
+        const { tOB, users, stableMock, stableMockOracle } = await loadFixture(setupFixture);
+
+        await expect(tOB.connect(users[0]).setPaymentToken(stableMock.address, stableMockOracle.address, '0x00')).to.be.revertedWith(
+            'Ownable: caller is not the owner',
+        );
+
+        await expect(tOB.setPaymentToken(stableMock.address, stableMockOracle.address, '0x00'))
+            .to.emit(tOB, 'SetPaymentToken')
+            .withArgs(stableMock.address, stableMockOracle.address, '0x00');
+
+        const paymentToken = await tOB.paymentTokens(stableMock.address);
+        expect(paymentToken.oracle).to.be.equal(stableMockOracle.address);
+        expect(paymentToken.oracleData).to.be.equal('0x00');
+
+        await expect(tOB.setPaymentToken(stableMock.address, hre.ethers.constants.AddressZero, '0x00'))
+            .to.emit(tOB, 'SetPaymentToken')
+            .withArgs(stableMock.address, hre.ethers.constants.AddressZero, '0x00');
+
+        expect((await tOB.paymentTokens(stableMock.address)).oracle).to.be.equal(hre.ethers.constants.AddressZero);
+    });
+
     it('should increment the epoch', async () => {
-        const { tOB, tapOFT, tOLP, sglTokenMock, sglTokenMockAsset, tapOracleMock } = await loadFixture(setupFixture);
+        const { tOB, tapOFT, tOLP, sglTokenMock, sglTokenMockAsset, tapOracleMock, sglTokenMock2, sglTokenMock2Asset } = await loadFixture(
+            setupFixture,
+        );
 
         // Setup tOB
         await tOB.oTAPBrokerClaim();
@@ -176,14 +200,36 @@ describe.only('TapiocaOptionBroker', () => {
         // No singularities
         await expect(tOB.newEpoch()).to.be.revertedWith('TapiocaOptionBroker: No active singularities');
 
-        // New epoch test
+        // Register sgl
         const tapPrice = BN(1e18).mul(2);
         await tapOracleMock.setRate(tapPrice);
         await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0);
 
+        const snapshot = await takeSnapshot();
+        // Check epoch update
         const txNewEpoch = await tOB.newEpoch();
         expect(await tOB.epoch()).to.be.equal(1);
         expect(await tOB.lastEpochUpdate()).to.be.equal((await hre.ethers.provider.getBlock(txNewEpoch.blockNumber!)).timestamp);
         expect(await tOB.epochTAPValuation()).to.be.equal(tapPrice);
+
+        const tapOFTBalance = await tapOFT.balanceOf(tapOFT.address);
+
+        // Check TAP minting for 1 SGL asset
+        expect(tapOFTBalance.gt(0)).to.be.true;
+        expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(tapOFTBalance);
+
+        // Check TAP minting for 2 SGL assets with equal weights
+        await snapshot.restore();
+        await tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 0);
+        await tOB.newEpoch();
+        expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(tapOFTBalance.div(2));
+        expect(await tOB.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(tapOFTBalance.div(2));
+
+        // Check TAP minting for 2 SGL assets with different weights
+        await snapshot.restore();
+        await tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 2);
+        await tOB.newEpoch();
+        expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(tapOFTBalance.div(3));
+        expect(await tOB.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(tapOFTBalance.mul(2).div(3));
     });
 });

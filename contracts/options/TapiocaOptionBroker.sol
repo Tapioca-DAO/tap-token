@@ -49,7 +49,7 @@ struct Participation {
 struct TWAMLPool {
     uint256 totalParticipants;
     uint256 averageMagnitude;
-    uint256 totalWeight;
+    uint256 totalDeposited;
     uint256 cumulative;
 }
 
@@ -61,9 +61,9 @@ struct PaymentTokenOracle {
 contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     TapiocaOptionLiquidityProvision public immutable tOLP;
     bytes public tapOracleData;
-    IOracle public immutable tapOracle;
     TapOFT public immutable tapOFT;
     OTAP public immutable oTAP;
+    IOracle public tapOracle;
 
     uint256 public lastEpochUpdate; // timestamp of the last epoch update
     uint256 public epochTAPValuation; // TAP price for the current epoch
@@ -100,11 +100,12 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     // ==========
     //   EVENTS
     // ==========
-    event Participate(uint256 indexed epoch, uint256 indexed sglAssetID, uint256 totalWeight, LockPosition lock, uint256 discount);
+    event Participate(uint256 indexed epoch, uint256 indexed sglAssetID, uint256 totalDeposited, LockPosition lock, uint256 discount);
     event AMLDivergence(uint256 indexed epoch, uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 totalParticipants);
-    event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 amount);
-    event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValuation);
     event ExerciseOption(uint256 indexed epoch, address indexed to, IERC20 indexed paymentToken, uint256 oTapTokenID, uint256 amount);
+    event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValuation);
+    event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 amount);
+    event SetPaymentToken(IERC20 paymentToken, IOracle oracle, bytes oracleData);
 
     // ==========
     //    READ
@@ -131,7 +132,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Participate in twAMl voting
-        if (lock.amount >= computeMinWeight(pool.totalWeight, MIN_WEIGHT_FACTOR)) {
+        if (lock.amount >= computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR)) {
             pool.totalParticipants++; // Save participation
             pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
 
@@ -141,7 +142,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
                 : pool.cumulative - pool.averageMagnitude;
 
             // Save new weight
-            pool.totalWeight += lock.amount;
+            pool.totalDeposited += lock.amount;
 
             twAML[lock.sglAssetID] = pool; // Save twAML participation
             emit AMLDivergence(epoch, pool.cumulative, pool.averageMagnitude, pool.totalParticipants); // Register new voting power event
@@ -150,7 +151,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         // Mint oTAP position
         participants[participant][lock.sglAssetID] = Participation(true, true, pool.averageMagnitude);
         oTAPTokenID = oTAP.mint(participant, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
-        emit Participate(epoch, lock.sglAssetID, pool.totalWeight, lock, target);
+        emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, lock, target);
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
@@ -166,7 +167,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         // Remove participation
         if (participation.hasVotingPower) {
             twAML[lock.sglAssetID].cumulative -= participation.averageMagnitude;
-            twAML[lock.sglAssetID].totalWeight -= lock.amount;
+            twAML[lock.sglAssetID].totalDeposited -= lock.amount;
             twAML[lock.sglAssetID].totalParticipants--;
 
             TWAMLPool memory pool = twAML[lock.sglAssetID];
@@ -244,6 +245,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     ) external onlyOwner {
         paymentTokens[_paymentToken].oracle = _oracle;
         paymentTokens[_paymentToken].oracleData = _oracleData;
+
+        emit SetPaymentToken(_paymentToken, _oracle, _oracleData);
     }
 
     /// @notice Collect the payment tokens from the OTC deals
@@ -288,12 +291,15 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
     /// @notice Emit TAP to the gauges equitably
     function _emitToGauges(uint256 _epochTAP) internal {
-        uint256[] memory singularities = tOLP.getSingularities();
-        uint256 quotaPerSingularity = _epochTAP / singularities.length;
+        SingularityPool[] memory sglPools = tOLP.getSingularityPools();
+        uint256 totalWeights = tOLP.totalSingularityPoolWeights();
 
+        uint256 len = sglPools.length;
         unchecked {
-            for (uint256 i = 0; i < singularities.length; i++) {
-                singularityGauges[epoch][singularities[i]] = quotaPerSingularity;
+            for (uint256 i = 0; i < len; ++i) {
+                uint256 currentPoolWeight = sglPools[i].poolWeight;
+                uint256 quotaPerSingularity = (currentPoolWeight * _epochTAP) / totalWeights;
+                singularityGauges[epoch][sglPools[i].sglAssetID] = quotaPerSingularity;
             }
         }
     }

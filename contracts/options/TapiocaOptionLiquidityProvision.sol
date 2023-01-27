@@ -91,9 +91,22 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         return (_isPositionActive(_tokenId), lockPosition);
     }
 
-    /// @notice Returns the active singularity markets
+    /// @notice Returns the active singularity YieldBox ID markets
     function getSingularities() external view returns (uint256[] memory) {
         return singularities;
+    }
+
+    /// @notice Returns the active singularity pool data
+    function getSingularityPools() external view returns (SingularityPool[] memory) {
+        uint256 len = singularities.length;
+
+        SingularityPool[] memory pools = new SingularityPool[](len);
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                pools[i] = activeSingularities[sglAssetIDToAddress[singularities[i]]];
+            }
+        }
+        return pools;
     }
 
     /// @notice Returns the total amount of locked tokens for a given singularity market
