@@ -27,6 +27,7 @@ export const setupFixture = async () => {
 
     // oTAP
     const tapOracleMock = await (await ethers.getContractFactory('OracleMock')).deploy();
+    await tapOracleMock.setRate(BN(33e17));
     const tOLP = await (await ethers.getContractFactory('TapiocaOptionLiquidityProvision')).deploy(yieldBox.address);
     const oTAP = await (await ethers.getContractFactory('OTAP')).deploy();
     const tOB = await (

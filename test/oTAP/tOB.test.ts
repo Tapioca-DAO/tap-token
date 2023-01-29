@@ -3,8 +3,55 @@ import { expect } from 'chai';
 import { setupFixture } from './fixtures';
 import hre, { network } from 'hardhat';
 import { aml_computeAverageMagnitude, aml_computeDiscount, aml_computeMagnitude, BN, time_travel } from '../test.utils';
+import { OTAP, TapiocaOptionBroker, TapiocaOptionLiquidityProvision, TapOFT, YieldBox } from '../../typechain';
+import { ERC20Mock } from '../../typechain/ERC20Mock';
+import { BigNumber } from 'ethers';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-describe.only('TapiocaOptionBroker', () => {
+describe('TapiocaOptionBroker', () => {
+    const setupEnv = async (
+        tOB: TapiocaOptionBroker,
+        tOLP: TapiocaOptionLiquidityProvision,
+        tapOFT: TapOFT,
+        sglTokenMock: ERC20Mock,
+        sglTokenMockAsset: BigNumber,
+        sglTokenMock2: ERC20Mock,
+        sglTokenMock2Asset: BigNumber,
+    ) => {
+        await tOB.oTAPBrokerClaim();
+        await tapOFT.setMinter(tOB.address);
+        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0);
+        await tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 0);
+    };
+
+    const lockAndParticipate = async (
+        signer: SignerWithAddress,
+        amount: number,
+        lockDuration: number,
+        tOLP: TapiocaOptionLiquidityProvision,
+        tOB: TapiocaOptionBroker,
+        oTAP: OTAP,
+        yieldBox: YieldBox,
+        sglTokenMock: ERC20Mock,
+        sglTokenMockAsset: BigNumber,
+    ) => {
+        await sglTokenMock.connect(signer).freeMint(amount);
+        await sglTokenMock.connect(signer).approve(yieldBox.address, amount);
+        await yieldBox.connect(signer).depositAsset(sglTokenMockAsset, signer.address, signer.address, amount, 0);
+
+        const ybAmount = await yieldBox.toAmount(sglTokenMockAsset, await yieldBox.balanceOf(signer.address, sglTokenMockAsset), false);
+        await yieldBox.connect(signer).setApprovalForAll(tOLP.address, true);
+        const lockTx = await tOLP.connect(signer).lock(signer.address, signer.address, sglTokenMock.address, lockDuration, ybAmount);
+        const tOLPTokenID = await tOLP.tokenCounter();
+
+        await tOB.connect(signer).participate(tOLPTokenID);
+        const oTAPTokenID = await oTAP.mintedOTAP();
+
+        const oTAPOption = await oTAP.options(oTAPTokenID);
+
+        return { tOLPTokenID, lockTx, ybAmount, amount, lockDuration, oTAPTokenID, oTAPOption };
+    };
+
     it('should claim oTAP and TAP', async () => {
         const { tOB, oTAP, tapOFT } = await loadFixture(setupFixture);
 
@@ -231,5 +278,170 @@ describe.only('TapiocaOptionBroker', () => {
         await tOB.newEpoch();
         expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(tapOFTBalance.div(3));
         expect(await tOB.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(tapOFTBalance.mul(2).div(3));
+    });
+
+    it('should exercise an option', async () => {
+        const {
+            users,
+            yieldBox,
+            tOB,
+            tapOFT,
+            tOLP,
+            oTAP,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+            stableMock,
+            stableMockOracle,
+        } = await loadFixture(setupFixture);
+
+        await setupEnv(tOB, tOLP, tapOFT, sglTokenMock, sglTokenMockAsset, sglTokenMock2, sglTokenMock2Asset);
+        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await tOB.newEpoch();
+
+        await tOB.setPaymentToken(stableMock.address, stableMockOracle.address, '0x00');
+        const userLock1 = await lockAndParticipate(users[0], 3e8, 3600, tOLP, tOB, oTAP, yieldBox, sglTokenMock, sglTokenMockAsset);
+        const userLock2 = await lockAndParticipate(users[1], 1e8, 3600, tOLP, tOB, oTAP, yieldBox, sglTokenMock, sglTokenMockAsset);
+
+        // Check requirements
+        await expect(tOB.connect(users[1]).exerciseOption(userLock1.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+            'TapiocaOptionBroker: Not approved or owner',
+        );
+        const snapshot = await takeSnapshot();
+        await tOB.setPaymentToken(stableMock.address, hre.ethers.constants.AddressZero, '0x00');
+        await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+            'TapiocaOptionBroker: Payment token not supported',
+        );
+        await snapshot.restore();
+        await time.increase(userLock1.lockDuration);
+        await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+            'TapiocaOptionBroker: Option expired',
+        );
+        await snapshot.restore();
+
+        // Gauge emission check
+        const epoch = await tOB.epoch();
+        const sglGaugeTokenMock1 = (await tapOFT.balanceOf(tapOFT.address)).mul(2).div(3);
+        const sglGaugeTokenMock2 = (await tapOFT.balanceOf(tapOFT.address)).mul(1).div(3);
+        expect(await tOB.singularityGauges(epoch, sglTokenMockAsset)).to.equal(sglGaugeTokenMock1);
+        expect(await tOB.singularityGauges(epoch, sglTokenMock2Asset)).to.equal(sglGaugeTokenMock2);
+
+        // Exercise option for user 1
+        let user1EligibleTapAmount = userLock1.ybAmount;
+        let user1PaymentAmount;
+        {
+            const eligibleTapAmount = userLock1.ybAmount
+                .mul(await tOB.singularityGauges(epoch, sglTokenMockAsset))
+                .div(userLock1.ybAmount.add(userLock2.ybAmount));
+            user1EligibleTapAmount = eligibleTapAmount;
+            const otcDealAmountInUSD = eligibleTapAmount.mul(await tOB.epochTAPValuation()).div((1e18).toString());
+            const paymentTokenToSend = otcDealAmountInUSD
+                .mul((await stableMockOracle.get('0x00'))._rate)
+                .mul(userLock1.oTAPOption.discount)
+                .div(1e4);
+            user1PaymentAmount = paymentTokenToSend;
+
+            // ERC20 checks
+            await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+                'ERC20: balance too low',
+            );
+            await stableMock.connect(users[0]).freeMint(paymentTokenToSend);
+            await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+                'ERC20: allowance too low',
+            );
+            await stableMock.connect(users[0]).approve(tOB.address, paymentTokenToSend);
+
+            // Exercise option checks
+            await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address))
+                .to.emit(tOB, 'ExerciseOption')
+                .withArgs(epoch, users[0].address, stableMock.address, userLock1.oTAPTokenID, eligibleTapAmount); // Successful exercise
+
+            expect(await tapOFT.balanceOf(users[0].address)).to.be.equal(eligibleTapAmount); // Check TAP transfer to user
+            expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal((await tapOFT.mintedInWeek(epoch)).sub(eligibleTapAmount)); // Check TAP subtraction from TAP contract
+            expect(await stableMock.balanceOf(tOB.address)).to.be.equal(paymentTokenToSend); // Check payment token transfer to TOB contract
+
+            // end
+            await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+                'TapiocaOptionBroker: Already exercised',
+            );
+        }
+
+        // Exercise option for user 2
+        {
+            const eligibleTapAmount = userLock2.ybAmount
+                .mul(await tOB.singularityGauges(epoch, sglTokenMockAsset))
+                .div(userLock2.ybAmount.add(userLock1.ybAmount));
+            const otcDealAmountInUSD = eligibleTapAmount.mul(await tOB.epochTAPValuation()).div((1e18).toString());
+            const paymentTokenToSend = otcDealAmountInUSD
+                .mul((await stableMockOracle.get('0x00'))._rate)
+                .mul(userLock2.oTAPOption.discount)
+                .div(1e4);
+
+            // ERC20 checks
+            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+                'ERC20: balance too low',
+            );
+            await stableMock.connect(users[1]).freeMint(paymentTokenToSend);
+            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+                'ERC20: allowance too low',
+            );
+            await stableMock.connect(users[1]).approve(tOB.address, paymentTokenToSend);
+
+            // Exercise option checks
+            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address))
+                .to.emit(tOB, 'ExerciseOption')
+                .withArgs(epoch, users[1].address, stableMock.address, userLock2.oTAPTokenID, eligibleTapAmount); // Successful exercise
+
+            expect(await tapOFT.balanceOf(users[1].address)).to.be.equal(eligibleTapAmount); // Check TAP transfer to user
+            expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
+                (await tapOFT.mintedInWeek(epoch)).sub(eligibleTapAmount).sub(user1EligibleTapAmount),
+            ); // Check TAP subtraction from TAP contract
+            expect(await stableMock.balanceOf(tOB.address)).to.be.equal(paymentTokenToSend.add(user1PaymentAmount)); // Check payment token transfer to TOB contract
+
+            // end
+            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+                'TapiocaOptionBroker: Already exercised',
+            );
+        }
+    });
+
+    it('should collect payment token', async () => {
+        const {
+            signer,
+            users,
+            yieldBox,
+            tOB,
+            tapOFT,
+            tOLP,
+            oTAP,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+            stableMock,
+            stableMockOracle,
+        } = await loadFixture(setupFixture);
+
+        await setupEnv(tOB, tOLP, tapOFT, sglTokenMock, sglTokenMockAsset, sglTokenMock2, sglTokenMock2Asset);
+        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await tOB.newEpoch();
+
+        await tOB.setPaymentToken(stableMock.address, stableMockOracle.address, '0x00');
+        const userLock1 = await lockAndParticipate(users[0], 3e8, 3600, tOLP, tOB, oTAP, yieldBox, sglTokenMock, sglTokenMockAsset);
+        const otcDetails = await tOB.getOTCDealDetails(userLock1.oTAPTokenID, stableMock.address);
+
+        // Exercise
+        await stableMock.connect(users[0]).freeMint(otcDetails.paymentTokenAmount);
+        await stableMock.connect(users[0]).approve(tOB.address, otcDetails.paymentTokenAmount);
+        await tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address);
+
+        // Collect
+        await expect(tOB.connect(users[0]).collectPaymentTokens([stableMock.address])).to.be.rejectedWith(
+            'Ownable: caller is not the owner',
+        );
+        await tOB.collectPaymentTokens([stableMock.address]);
+        expect(await stableMock.balanceOf(tOB.address)).to.be.equal(0);
+        expect(await stableMock.balanceOf(signer.address)).to.be.equal(otcDetails.paymentTokenAmount);
     });
 });

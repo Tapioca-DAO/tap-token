@@ -111,6 +111,43 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     //    READ
     // ==========
 
+    /// @notice Returns the details of an OTC deal for a given oTAP token ID and a payment token.
+    ///         The oracle uses the last peeked value, and not the latest one, so the payment amount may be different.
+    /// @param _oTAPTokenID The oTAP token ID
+    /// @param _paymentToken The payment token
+    /// @return eligibleTapAmount The amount of TAP eligible for the deal
+    /// @return paymentTokenAmount The amount of payment tokens required for the deal
+    function getOTCDealDetails(uint256 _oTAPTokenID, IERC20 _paymentToken)
+        external
+        view
+        returns (uint256 eligibleTapAmount, uint256 paymentTokenAmount)
+    {
+        // Load data
+        (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
+        (bool isPositionActive, LockPosition memory tOLPLockPosition) = tOLP.getLock(oTAPPosition.tOLP);
+
+        uint256 cachedEpoch = epoch;
+
+        PaymentTokenOracle memory paymentTokenOracle = paymentTokens[_paymentToken];
+
+        // Check requirements
+        require(paymentTokenOracle.oracle != IOracle(address(0)), 'TapiocaOptionBroker: Payment token not supported');
+        require(oTAPCalls[_oTAPTokenID][cachedEpoch] == false, 'TapiocaOptionBroker: Already exercised');
+        require(isPositionActive, 'TapiocaOptionBroker: Option expired');
+
+        // Get eligible OTC amount
+        uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];
+        eligibleTapAmount = muldiv(tOLPLockPosition.amount, gaugeTotalForEpoch, tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID));
+
+        // Get TAP valuation
+        uint256 otcAmountInUSD = muldiv(eligibleTapAmount, epochTAPValuation, 1e18); // Divided by TAP decimals
+        // Get payment token valuation
+        (, uint256 paymentTokenValuation) = paymentTokenOracle.oracle.peek(paymentTokenOracle.oracleData);
+
+        // Calculate payment amount and initiate the transfers
+        paymentTokenAmount = muldiv(otcAmountInUSD * oTAPPosition.discount, paymentTokenValuation, 1e4); // 1e4 is discount decimals
+    }
+
     // ===========
     //    WRITE
     // ===========
@@ -189,8 +226,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         PaymentTokenOracle memory paymentTokenOracle = paymentTokens[_paymentToken];
 
         // Check requirements
-        require(oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID), 'TapiocaOptionBroker: Not approved or owner');
         require(paymentTokenOracle.oracle != IOracle(address(0)), 'TapiocaOptionBroker: Payment token not supported');
+        require(oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID), 'TapiocaOptionBroker: Not approved or owner');
         require(oTAPCalls[_oTAPTokenID][cachedEpoch] == false, 'TapiocaOptionBroker: Already exercised');
         require(isPositionActive, 'TapiocaOptionBroker: Option expired');
 
@@ -198,12 +235,12 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];
-        uint256 otcAmount = muldiv(tOLPLockPosition.amount, gaugeTotalForEpoch, tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID));
+        uint256 otcTapAmount = muldiv(tOLPLockPosition.amount, gaugeTotalForEpoch, tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID));
 
         // Finalize the deal
-        _processOTCDeal(_paymentToken, paymentTokenOracle, otcAmount, oTAPPosition.discount);
+        _processOTCDeal(_paymentToken, paymentTokenOracle, otcTapAmount, oTAPPosition.discount);
 
-        emit ExerciseOption(cachedEpoch, msg.sender, _paymentToken, _oTAPTokenID, otcAmount);
+        emit ExerciseOption(cachedEpoch, msg.sender, _paymentToken, _oTAPTokenID, otcTapAmount);
     }
 
     /// @notice Start a new epoch, extract TAP from the TapOFT contract,
@@ -278,13 +315,12 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         uint256 discount
     ) internal {
         // Get TAP valuation
-        uint256 otcAmountInUSD = (tapAmount * epochTAPValuation) / 1e18; // Divided by TAP decimals
-
+        uint256 otcAmountInUSD = muldiv(tapAmount, epochTAPValuation, 1e18); // Divided by TAP decimals
         // Get payment token valuation
         (, uint256 paymentTokenValuation) = _paymentTokenOracle.oracle.get(_paymentTokenOracle.oracleData);
 
         // Calculate payment amount and initiate the transfers
-        uint256 paymentAmount = (otcAmountInUSD * paymentTokenValuation * discount) / 1e4; // 1e4 is discount decimals
+        uint256 paymentAmount = muldiv(otcAmountInUSD * discount, paymentTokenValuation, 1e4); // 1e4 is discount decimals
         _paymentToken.transferFrom(msg.sender, address(this), paymentAmount);
         tapOFT.extractTAP(msg.sender, tapAmount);
     }
@@ -298,7 +334,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         unchecked {
             for (uint256 i = 0; i < len; ++i) {
                 uint256 currentPoolWeight = sglPools[i].poolWeight;
-                uint256 quotaPerSingularity = (currentPoolWeight * _epochTAP) / totalWeights;
+                uint256 quotaPerSingularity = muldiv(currentPoolWeight, _epochTAP, totalWeights);
                 singularityGauges[epoch][sglPools[i].sglAssetID] = quotaPerSingularity;
             }
         }
