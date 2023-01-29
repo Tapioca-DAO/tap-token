@@ -156,7 +156,8 @@ contract TapOFT is PausableOFT {
         uint256 unclaimed = balanceOf(address(this));
         if (unclaimed > 0) {
             mintedInWeek[week - 1] -= unclaimed; // Update last week emission
-            emission += unclaimed; // Last week unclaimed emission goes to the DSO/current week emission
+            emission = unclaimed; // Last week unclaimed emission goes to the DSO/current week emission
+            _burn(address(this), unclaimed); // Remove unclaimed emission from the supply
         }
 
         dso_supply -= mintedInWeek[week - 1];

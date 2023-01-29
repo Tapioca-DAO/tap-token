@@ -97,6 +97,20 @@ describe('tapOFT', () => {
         expect(await tapiocaOFT0.balanceOf(tapiocaOFT0.address)).to.be.gt(balAfter); // Can mint after 7 days
     });
 
+    it('should transfer unused TAP for next week', async () => {
+        await tapiocaOFT0.connect(normalUser).emitForWeek();
+        const balAfter = await tapiocaOFT0.balanceOf(tapiocaOFT0.address);
+        await tapiocaOFT0.setMinter(minter.address);
+        await tapiocaOFT0.connect(minter).extractTAP(minter.address, balAfter.div(2));
+
+        const dso_supply = await tapiocaOFT0.dso_supply();
+        const toBeEmitted = dso_supply.sub(balAfter.div(2)).mul(BN(8800000000000000)).div(BN((1e18).toString()));
+
+        await time_travel(7 * 86400);
+        await tapiocaOFT0.connect(normalUser).emitForWeek();
+        expect(await tapiocaOFT0.balanceOf(tapiocaOFT0.address)).to.be.equal(toBeEmitted.add(balAfter.div(2)));
+    });
+
     it('should extract minted from minter', async () => {
         const bigAmount = BN(33_500_000).mul((1e18).toString());
         await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.emit(tapiocaOFT0, 'Minted');
