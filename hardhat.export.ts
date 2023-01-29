@@ -35,6 +35,15 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
     solidity: {
         compilers: [
             {
+                version: '0.4.24',
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 100,
+                    },
+                },
+            },
+            {
                 version: '0.8.9',
                 settings: {
                     optimizer: {
@@ -80,17 +89,8 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
         harmony: supportedChains['harmony'],
     },
     etherscan: {
-        apiKey: process.env.ETHERSCAN_KEY ?? '',
-        customChains: [
-            {
-                network: 'rinkeby',
-                chainId: 4,
-                urls: {
-                    apiURL: 'https://api-rinkeby.etherscan.io/api',
-                    browserURL: 'https://rinkeby.etherscan.io',
-                },
-            },
-        ],
+        apiKey: process.env.ETHERSCAN_KEY,
+        customChains: [],
     },
     mocha: {
         timeout: 4000000,

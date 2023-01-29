@@ -61,7 +61,7 @@ contract TapOFT is PausableOFT {
     address public minter;
 
     /// @notice LayerZero governance chain identifier
-    uint16 public governanceChainIdentifier;
+    uint256 public governanceChainIdentifier;
 
     // ==========
     // *EVENTS*
@@ -73,7 +73,7 @@ contract TapOFT is PausableOFT {
     /// @notice event emitted when new TAP is burned
     event Burned(address indexed _from, uint256 _amount);
     /// @notice event emitted when the governance chain identifier is updated
-    event GovernanceChainIdentifierUpdated(uint16 _old, uint16 _new);
+    event GovernanceChainIdentifierUpdated(uint256 _old, uint256 _new);
 
     // ==========
     // * METHODS *
@@ -109,7 +109,7 @@ contract TapOFT is PausableOFT {
     ///-- Owner methods --
     /// @notice sets the governance chain identifier
     /// @param _identifier LayerZero chain identifier
-    function setGovernanceChainIdentifier(uint16 _identifier) external onlyOwner {
+    function setGovernanceChainIdentifier(uint256 _identifier) external onlyOwner {
         emit GovernanceChainIdentifierUpdated(governanceChainIdentifier, _identifier);
         governanceChainIdentifier = _identifier;
     }
@@ -197,8 +197,8 @@ contract TapOFT is PausableOFT {
     ///-- Private methods --
     /// @notice Return the current chain ID.
     /// @dev Useful for testing.
-    function _getChainId() private view returns (uint16) {
-        return uint16(ILayerZeroEndpoint(lzEndpoint).getChainId());
+    function _getChainId() private view returns (uint256) {
+        return block.chainid;
     }
 
     /// @notice returns the available emissions for a given supply

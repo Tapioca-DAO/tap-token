@@ -3,19 +3,21 @@ import _ from 'lodash';
 import { TContract } from 'tapioca-sdk/dist/shared';
 import { getDeployments } from './getDeployments';
 
-export const getTapContract = async (hre: HardhatRuntimeEnvironment) => {
+export const getDeployment = async (hre: HardhatRuntimeEnvironment, name: string) => {
     let deployments: TContract[] = [];
+
     try {
         deployments = await getDeployments(hre, true);
     } catch (e) {
         deployments = await getDeployments(hre);
     }
 
-    const tapOft = _.find(deployments, { name: 'tapOFT' });
-    if (!tapOft) {
-        throw new Error('[-] TapOFT not found');
+    const deployment = _.find(deployments, { name: name });
+    if (!deployment) {
+        throw new Error('[-] Contract not found');
     }
 
-    const tapOFTContract = await hre.ethers.getContractAt('TapOFT', tapOft.address);
-    return { tapOFTContract };
+    const contract = await hre.ethers.getContractAt(name, deployment.address);
+
+    return contract;
 };

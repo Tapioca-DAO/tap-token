@@ -3,9 +3,8 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import writeJsonFile from 'write-json-file';
 import { LZEndpointMock, TapOFT } from '../../typechain/';
-
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { BigNumberish } from 'ethers';
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { BN, deployLZEndpointMock, deployTapiocaOFT, time_travel } from '../test.utils';
 
 describe('tapOFT', () => {

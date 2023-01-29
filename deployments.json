@@ -1,86 +1,56 @@
 {
-    "5": [
+    "5": [],
+    "4002": [],
+    "43113": [
         {
             "name": "TapOFT",
-            "address": "0x306547aa4B4241D73ae1e7A5465D277d06C40cbC",
+            "address": "0xBEb739E11742D7015B807012894bDA8b0fe6b141",
             "meta": {
                 "constructorArguments": [
-                    "0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23",
+                    "0x93f54D755A063cE7bB9e6Ac47Eccc8e33411d706",
                     "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                     "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                     "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                     "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                     "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                     "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "5"
+                    "421613"
                 ]
             }
-        },
-        {
-            "name": "VeTap",
-            "address": "0x0E1503A1Df910263A09a97916b65451CE4c438a7",
-            "meta": {
-                "constructorArguments": ["0x306547aa4B4241D73ae1e7A5465D277d06C40cbC", "veTap Token", "veTap", "1"]
-            }
-        },
-        {
-            "name": "GaugeController",
-            "address": "0x4e6cb0b38cFAEF4e4E4a64259Cf320a67463Fe87",
-            "meta": {
-                "constructorArguments": ["0x306547aa4B4241D73ae1e7A5465D277d06C40cbC", "0x0E1503A1Df910263A09a97916b65451CE4c438a7"]
-            }
-        },
-        {
-            "name": "GaugeDistributor",
-            "address": "0x29E459B9b6921919374b8f093301AC01Cd70D00d",
-            "meta": {
-                "constructorArguments": ["0x306547aa4B4241D73ae1e7A5465D277d06C40cbC", "0x4e6cb0b38cFAEF4e4E4a64259Cf320a67463Fe87"]
-            }
-        },
-        {
-            "name": "FeeDistributor",
-            "address": "0x92114BBb3460c1846FEE2cDbD2E8e3c8CA199f15",
+        }
+    ],
+    "80001": {
+        "0": {
+            "name": "TapOFT",
+            "address": "0x78Ab2649fd6682e5c3CCFABb87ed6FcED0843cE4",
             "meta": {
                 "constructorArguments": [
-                    "0x0E1503A1Df910263A09a97916b65451CE4c438a7",
-                    "1677187670",
-                    "0x306547aa4B4241D73ae1e7A5465D277d06C40cbC",
+                    "0xf69186dfBa60DdB133E91E9A4B5673624293d8F8",
                     "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "421613"
                 ]
             }
-        },
+        }
+    },
+    "421613": [
         {
-            "name": "BoostV2",
-            "address": "0xf6c024A4d1231F41Dd50e4F6F84Ce10C3008C092",
-            "meta": {
-                "constructorArguments": ["0x0E1503A1Df910263A09a97916b65451CE4c438a7"]
-            }
-        },
-        {
-            "name": "DelegationProxy",
-            "address": "0xBEACb814524d730054a709A7755870307C1720c8",
+            "name": "TapOFT",
+            "address": "0xC27F48670cDae9Eee92156209642d47Ea1B85a35",
             "meta": {
                 "constructorArguments": [
-                    "0xf6c024A4d1231F41Dd50e4F6F84Ce10C3008C092",
+                    "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
                     "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
-                ]
-            }
-        },
-        { "name": "TimedGauge", "address": "0xFD85D457De0532a7241abb34bee35b3Ee1e2c61c", "meta": {} },
-        {
-            "name": "GaugeFactory",
-            "address": "0x1797B1cD13ef35BD92Ef14Ca4dFa8f54B63e06fe",
-            "meta": { "constructorArguments": ["0xFD85D457De0532a7241abb34bee35b3Ee1e2c61c"] }
-        },
-        {
-            "name": "gauge_ETH",
-            "meta": {
-                "constructorArguments": [
-                    "0xADCea8173CA63CFeB047Ccedd53045271A6C268b",
-                    "0x306547aa4B4241D73ae1e7A5465D277d06C40cbC",
-                    "0x29E459B9b6921919374b8f093301AC01Cd70D00d"
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "421613"
                 ]
             }
         }
