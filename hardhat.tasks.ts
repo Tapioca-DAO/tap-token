@@ -1,5 +1,5 @@
-import { task } from 'hardhat/config';
 import '@nomiclabs/hardhat-ethers';
+import { task } from 'hardhat/config';
 import { exportSDK__task } from './tasks/exportSDK';
 import { setTrustedRemote__task } from './tasks/setTrustedRemote';
 

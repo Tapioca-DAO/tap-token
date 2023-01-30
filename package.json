@@ -66,6 +66,8 @@
     },
     "dependencies": {
         "@prb/math": "^2.5.0",
+        "bignumber.js": "^9.1.1",
+        "hardhat-tracer": "^1.2.1",
         "husky": "^8.0.1",
         "lodash": "^4.17.21",
         "tapioca-sdk": "^1.1.15"

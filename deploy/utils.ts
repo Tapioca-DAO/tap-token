@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TContract } from 'tapioca-sdk/dist/shared';
 
-let supportedChains: { [key: string]: any } = SDK.API.utils.getSupportedChains().reduce(
+const supportedChains: { [key: string]: any } = SDK.API.utils.getSupportedChains().reduce(
     (sdkChains, chain) => ({
         ...sdkChains,
         [chain.name]: {
@@ -69,34 +69,4 @@ export const updateDeployments = async (contracts: TContract[], chainId: string)
     await SDK.API.utils.saveDeploymentOnDisk({
         [chainId]: contracts,
     });
-};
-
-export const deployGauge = async (hre: HardhatRuntimeEnvironment, taskArgs: any): Promise<TContract> => {
-    const { deployments } = hre;
-    const chainId = await hre.getChainId();
-
-    console.log('\nDeploying LiquidityGauge');
-
-    const marketName = taskArgs.name.toUpperCase();
-    const gaugeFactory = await deployments.get('GaugeFactory');
-    const gaugeDistributor = await deployments.get('GaugeDistributor');
-    const tapToken = await deployments.get('TapOFT');
-    const mxToken = constants[chainId][`mx_${marketName}`];
-    const gaugeFactoryContract = await hre.ethers.getContractAt('GaugeFactory', gaugeFactory.address);
-
-    const args = [mxToken, tapToken.address, gaugeDistributor.address];
-
-    const createGaugeTx = await gaugeFactoryContract.createGauge(mxToken, tapToken.address, gaugeDistributor.address);
-    const createGaugeRc = await createGaugeTx.wait();
-
-    const createdGauge = createGaugeRc.events!.filter((a: any) => a.event == 'GaugeCreated')[0].args![1];
-    console.log(`Done. Deployed on ${createdGauge.address} with args ${args}`);
-
-    return new Promise(async (resolve) =>
-        resolve({
-            name: `gauge_${marketName}`,
-            address: createdGauge.address,
-            meta: { constructorArguments: args },
-        }),
-    );
 };
