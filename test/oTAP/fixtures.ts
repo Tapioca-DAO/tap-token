@@ -7,6 +7,7 @@ import { BN } from '../test.utils';
 export const setupFixture = async () => {
     const signer = (await hre.ethers.getSigners())[0];
     const users = (await hre.ethers.getSigners()).splice(1);
+    const paymentTokenBeneficiary = new hre.ethers.Wallet(hre.ethers.Wallet.createRandom().privateKey, hre.ethers.provider);
 
     const chainId = (await ethers.provider.getNetwork()).chainId;
 
@@ -32,7 +33,7 @@ export const setupFixture = async () => {
     const oTAP = await (await ethers.getContractFactory('OTAP')).deploy();
     const tOB = await (
         await ethers.getContractFactory('TapiocaOptionBroker')
-    ).deploy(tOLP.address, oTAP.address, tapOFT.address, tapOracleMock.address);
+    ).deploy(tOLP.address, oTAP.address, tapOFT.address, tapOracleMock.address, paymentTokenBeneficiary.address);
 
     // Deploy a "virtual" market
     const sglTokenMock = await (await ethers.getContractFactory('ERC20Mock')).deploy(0, 18);
@@ -56,6 +57,7 @@ export const setupFixture = async () => {
         // signers
         signer,
         users,
+        paymentTokenBeneficiary,
 
         // vars
         LZEndpointMockCurrentChain,

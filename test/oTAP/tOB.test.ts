@@ -406,10 +406,21 @@ describe('TapiocaOptionBroker', () => {
         }
     });
 
+    it('should set payment beneficiary', async () => {
+        const { users, tOB } = await loadFixture(setupFixture);
+
+        await expect(tOB.connect(users[0]).setPaymentTokenBeneficiary(users[0].address)).to.be.revertedWith(
+            'Ownable: caller is not the owner',
+        );
+        await tOB.setPaymentTokenBeneficiary(users[0].address);
+        expect(await tOB.paymentTokenBeneficiary()).to.be.equal(users[0].address);
+    });
+
     it('should collect payment token', async () => {
         const {
             signer,
             users,
+            paymentTokenBeneficiary,
             yieldBox,
             tOB,
             tapOFT,
@@ -442,6 +453,6 @@ describe('TapiocaOptionBroker', () => {
         );
         await tOB.collectPaymentTokens([stableMock.address]);
         expect(await stableMock.balanceOf(tOB.address)).to.be.equal(0);
-        expect(await stableMock.balanceOf(signer.address)).to.be.equal(otcDetails.paymentTokenAmount);
+        expect(await stableMock.balanceOf(paymentTokenBeneficiary.address)).to.be.equal(otcDetails.paymentTokenAmount);
     });
 });
