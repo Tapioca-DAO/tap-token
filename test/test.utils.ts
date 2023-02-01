@@ -9,6 +9,26 @@ ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
 // exports
 // ---
 
+export async function registerVesting(token: string, cliff: BigNumberish, duration: BigNumberish, staging?: boolean) {
+    const vesting = await (await ethers.getContractFactory('Vesting')).deploy(token, cliff, duration);
+    await vesting.deployed();
+
+    return { vesting };
+}
+
+export const randomSigners = async (amount: number): Wallet[] => {
+    const signers: Wallet[] = [];
+    for (let i = 0; i < amount; i++) {
+        const signer = new ethers.Wallet(ethers.Wallet.createRandom().privateKey, hre.ethers.provider);
+        signers.push(signer);
+        await ethers.provider.send('hardhat_setBalance', [
+            signer.address,
+            ethers.utils.hexStripZeros(ethers.utils.parseEther(String(100000))._hex),
+        ]);
+    }
+    return signers;
+};
+
 export function BN(n: BigNumberish) {
     return ethers.BigNumber.from(n.toString());
 }
@@ -37,6 +57,12 @@ export const LZ_ENDPOINTS: TLZ_Endpoint = {
         lzChainId: '10009',
     },
 };
+export async function deployUSDC(amount: BigNumberish, decimals: number) {
+    const usdc = await (await ethers.getContractFactory('ERC20Mock')).deploy(amount, decimals);
+    await usdc.deployed();
+
+    return usdc;
+}
 export async function deployLZEndpointMock(chainId: number) {
     const lzEndpointContract = await (await ethers.getContractFactory('LZEndpointMock')).deploy(chainId);
     await lzEndpointContract.deployed();

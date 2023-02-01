@@ -2,6 +2,7 @@ import '@nomiclabs/hardhat-ethers';
 import { task } from 'hardhat/config';
 import { exportSDK__task } from './tasks/exportSDK';
 import { setTrustedRemote__task } from './tasks/setTrustedRemote';
+import { deployVesting__task } from './tasks/deployVesting';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -20,3 +21,8 @@ task('setTrustedRemote', 'Calls setTrustedRemote on TapOFT contract', setTrusted
     .addParam('chain', 'LZ destination chain id for trusted remotes')
     .addParam('dst', 'TapOFT destination address')
     .addParam('src', 'TapOFT source address');
+
+task('deployVesting', 'Deploys a new Vesting contract', deployVesting__task)
+    .addParam('token', 'Vested token')
+    .addParam('cliff', 'Cliff duration in seconds')
+    .addParam('duration', 'Vesting duration in seconds');
