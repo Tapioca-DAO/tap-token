@@ -37,6 +37,7 @@
         "@typechain/ethers-v5": "^10.1.0",
         "@typechain/hardhat": "^6.1.2",
         "@types/chai": "^4.2.22",
+        "@types/lodash": "^4.14.191",
         "@types/mocha": "^9.0.0",
         "@types/node": "^16.11.11",
         "@typescript-eslint/eslint-plugin": "^5.11.0",
