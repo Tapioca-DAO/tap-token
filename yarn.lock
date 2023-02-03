@@ -6801,10 +6801,10 @@
     "typical" "^5.2.0"
     "wordwrapjs" "^4.0.0"
 
-tapioca-sdk@^1.1.15:
-  version "1.1.15"
-  resolved "https://registry.npmjs.org/tapioca-sdk/-/tapioca-sdk-1.1.15.tgz#3a48f318bb158dcccf4550188d9849f6469cfc2d"
-  integrity sha512-+iNPsYgibmI1TLsUIpF8+3STQtZD7W2jmfLjQ0cMFyBFP2kAl841Xh07DzknbJYHL4v85F5f2gOlk476ro4qfQ==
+"table@^5.2.3":
+  "integrity" "sha512-wmEc8m4fjnob4gt5riFRtTu/6+4rSe12TpAELNSqHMfF3IqnA+CH37USM6/YR3qRZv7e56kAEAtd6nKZaxe0Ug=="
+  "resolved" "https://registry.npmjs.org/table/-/table-5.4.6.tgz"
+  "version" "5.4.6"
   dependencies:
     "ajv" "^6.10.2"
     "lodash" "^4.17.14"
@@ -6822,10 +6822,10 @@ tapioca-sdk@^1.1.15:
     "string-width" "^4.2.3"
     "strip-ansi" "^6.0.1"
 
-"tapioca-sdk@^1.1.13":
-  "integrity" "sha512-ah95FqU14zkHJCkcNtMQfy4mXpPxOG9SAQtX8CWFZDUnNX7UOT3+G4xEtBG0TD0fy2wME+I1n8JhLArs8hVQhQ=="
-  "resolved" "https://registry.npmjs.org/tapioca-sdk/-/tapioca-sdk-1.1.13.tgz"
-  "version" "1.1.13"
+"tapioca-sdk@^1.1.15":
+  "integrity" "sha512-+iNPsYgibmI1TLsUIpF8+3STQtZD7W2jmfLjQ0cMFyBFP2kAl841Xh07DzknbJYHL4v85F5f2gOlk476ro4qfQ=="
+  "resolved" "https://registry.npmjs.org/tapioca-sdk/-/tapioca-sdk-1.1.15.tgz"
+  "version" "1.1.15"
   dependencies:
     "ethers" "^5.6.9"
     "lodash" "^4.17.21"
