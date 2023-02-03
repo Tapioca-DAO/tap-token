@@ -71,7 +71,6 @@ export const updateDeployments = async (contracts: TContract[], chainId: string)
     });
 };
 
-
 export const registerVesting = async (
     hre: HardhatRuntimeEnvironment,
     token: string,
@@ -101,4 +100,3 @@ export const registerVesting = async (
         }),
     );
 };
-
