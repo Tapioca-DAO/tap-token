@@ -5,6 +5,7 @@ import { setTrustedRemote__task } from './tasks/setTrustedRemote';
 import { deployERC20Mock__task, deployOracleMock__task, deployVesting__task } from './tasks/contractDeployment';
 import { setOracleMockRate__task } from './tasks/setterTasks';
 import { getLocalDeployments__task, getSDKDeployments__task } from './tasks/getDeployments';
+import { glob } from 'typechain';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -23,6 +24,10 @@ task('getLocalDeployment', 'Try to load a local deployment.', getLocalDeployment
     'contractName',
     'The name of the contract to load',
 );
+
+task('getContractNames', 'Get the names of all contracts deployed on the current chain ID.', async (taskArgs, hre) => {
+    console.log(glob(process.cwd(), [`${hre.config.paths.artifacts}/**/!(*.dbg).json`]).map((e) => e.split('/').slice(-1)[0]));
+});
 
 task('getSDKDeployment', 'Try to load an SDK deployment.', getSDKDeployments__task)
     .addParam('repo', 'The name of the repo to load the deployment from')
