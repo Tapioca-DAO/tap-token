@@ -5,6 +5,11 @@ import '../../interfaces/IOracle.sol';
 
 contract OracleMock is IOracle {
     uint256 public mockValue;
+    string public _name;
+
+    constructor(string memory __name) {
+        _name = __name;
+    }
 
     function setRate(uint256 _rate) external {
         mockValue = _rate;
@@ -54,6 +59,6 @@ contract OracleMock is IOracle {
     /// (string memory collateralSymbol, string memory assetSymbol, uint256 division) = abi.decode(data, (string, string, uint256));
     /// @return (string) A human readable name about this oracle.
     function name(bytes calldata data) external view returns (string memory) {
-        return 'Oracle Mock';
+        return _name;
     }
 }

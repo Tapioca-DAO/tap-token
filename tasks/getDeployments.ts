@@ -1,13 +1,9 @@
-import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TContract } from 'tapioca-sdk/dist/shared';
 
 export const getDeployments = async (hre: HardhatRuntimeEnvironment, local?: boolean): Promise<TContract[]> => {
-    if (local) {
-        return JSON.parse(fs.readFileSync(SDK.API.utils.PROJECT_RELATIVE_DEPLOYMENT_PATH, 'utf8'))[await hre.getChainId()];
-    }
-    return SDK.API.utils.getDeployment('Tapioca-Bar', await hre.getChainId());
+    return SDK.API.utils.getDeployments('Tap-Token', await hre.getChainId(), Boolean(local)) ?? [];
 };
 export const getLocalDeployments__task = async function (taskArgs: any, hre: HardhatRuntimeEnvironment) {
     try {

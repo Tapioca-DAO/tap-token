@@ -71,32 +71,33 @@ export const updateDeployments = async (contracts: TContract[], chainId: string)
     });
 };
 
-export const registerVesting = async (
+export const registerContract = async (
     hre: HardhatRuntimeEnvironment,
-    token: string,
-    cliff: string,
-    duration: string,
+    contractName: string,
+    deploymentName: string,
+    args: any[],
 ): Promise<TContract> => {
     const { deployments, getNamedAccounts } = hre;
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    console.log('\n Deploying Vesting');
-    const args = [token, cliff, duration];
-    await deploy('Vesting', {
+    console.log(`\n Deploying ${contractName} as ${deploymentName}`);
+    await deploy(deploymentName, {
+        contract: contractName,
         from: deployer,
         log: true,
         args,
     });
-    await verify(hre, 'Vesting', args);
-    const vestingContract = await deployments.get('Vesting');
+    await verify(hre, deploymentName, args);
+    const contract = await deployments.get(deploymentName);
     console.log('Done');
 
-    return new Promise(async (resolve) =>
-        resolve({
-            name: 'Vesting',
-            address: vestingContract.address,
-            meta: { constructorArguments: args },
-        }),
-    );
+    const deploymentMeta = {
+        name: deploymentName,
+        address: contract.address,
+        meta: { constructorArguments: args },
+    };
+    await updateDeployments([deploymentMeta], await hre.getChainId());
+
+    return deploymentMeta;
 };

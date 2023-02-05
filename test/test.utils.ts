@@ -58,7 +58,7 @@ export const LZ_ENDPOINTS: TLZ_Endpoint = {
     },
 };
 export async function deployUSDC(amount: BigNumberish, decimals: number) {
-    const usdc = await (await ethers.getContractFactory('ERC20Mock')).deploy(amount, decimals);
+    const usdc = await (await ethers.getContractFactory('ERC20Mock')).deploy('USDCMock', 'USDCM', amount, decimals);
     await usdc.deployed();
 
     return usdc;
