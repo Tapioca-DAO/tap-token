@@ -49,19 +49,16 @@ export const constants: { [key: string]: any } = {
     //------------- MAINNETS --------------
 };
 
-export const verify = async (hre: HardhatRuntimeEnvironment, artifact: string, args: any[]) => {
-    const { deployments } = hre;
-
-    const deployed = await deployments.get(artifact);
-    console.log(`[+] Verifying ${artifact}`);
+export const verify = async (hre: HardhatRuntimeEnvironment, address: string, args: any[]) => {
+    console.log(`[+] Verifying ${address}`);
     try {
         await hre.run('verify', {
-            address: deployed.address,
+            address: address,
             constructorArgsParams: args,
         });
         console.log('[+] Verified');
     } catch (err: any) {
-        console.log(`[-] failed to verify ${artifact}; error: ${err.message}\n`);
+        console.log(`[-] failed to verify ${address}; error: ${err.message}\n`);
     }
 };
 
