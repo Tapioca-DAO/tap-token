@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TContract } from 'tapioca-sdk/dist/shared';
 import { TapiocaOptionBroker__factory, TapiocaOptionLiquidityProvision__factory } from '../typechain';
-import { updateDeployments, verify } from './utils';
+import { updateDeployments, verify } from '../scripts/deployment.utils';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -17,7 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const tOLP = (await SDK.API.utils.getDeployment('Tap-Token', 'TapiocaOptionLiquidityProvision', chainId)).address;
 
     const paymentTokenBeneficiary = deployer;
-    const tapOracle = (await SDK.API.utils.getDeployment('Tap-Token', 'TaptapOracle', chainId)).address;
+    const tapOracle = '0xBaC59400ED43d56ea9b74C79D633d8FBC3FA43A4'; // Goerli Oracle Mock
 
     //all of these should be constants
     const args: Parameters<TapiocaOptionBroker__factory['deploy']> = [tOLP, oTAP, tapOFT, tapOracle, paymentTokenBeneficiary];
@@ -29,13 +29,27 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args,
         // gasPrice: '20000000000',
     });
-    await verify(hre, 'TapiocaOptionBroker', args);
     const tOBDeployment = await deployments.get('TapiocaOptionBroker');
+    await verify(hre, tOBDeployment.address, args);
     contracts.push({
         name: 'TapiocaOptionBroker',
         address: tOBDeployment.address,
         meta: { constructorArguments: args },
     });
+
+    const tap = await hre.ethers.getContractAt('TapOFT', (await SDK.API.utils.getDeployment('Tap-Token', 'TapOFT', chainId)).address);
+    if ((await tap.minter()) !== tOBDeployment.address) {
+        console.log('[+] Setting tOB as minter for TapOFT');
+        await tap.setMinter(tOBDeployment.address);
+    }
+
+    const tOB = await hre.ethers.getContractAt('TapiocaOptionBroker', tOBDeployment.address);
+    const oTAPcontract = await hre.ethers.getContractAt('OTAP', oTAP);
+    if ((await oTAPcontract.broker()) !== tOBDeployment.address) {
+        console.log('[+] Claiming oTAP broker role on tOB');
+        await tOB.oTAPBrokerClaim();
+    }
+
     console.log(`Done. Deployed on ${tOBDeployment.address} with args ${args}`);
 
     await updateDeployments(contracts, chainId);

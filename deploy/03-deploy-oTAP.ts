@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TContract } from 'tapioca-sdk/dist/shared';
 import { OTAP__factory } from '../typechain';
-import { updateDeployments, verify } from './utils';
+import { updateDeployments, verify } from '../scripts/deployment.utils';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -22,8 +22,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args,
         // gasPrice: '20000000000',
     });
-    await verify(hre, 'OTAP', args);
     const oTAPDeployment = await deployments.get('OTAP');
+    await verify(hre, oTAPDeployment.address, args);
     contracts.push({
         name: 'OTAP',
         address: oTAPDeployment.address,

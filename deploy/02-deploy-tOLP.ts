@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TContract } from 'tapioca-sdk/dist/shared';
 import { TapiocaOptionLiquidityProvision__factory } from '../typechain';
-import { updateDeployments, verify } from './utils';
+import { updateDeployments, verify } from '../scripts/deployment.utils';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -25,8 +25,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args,
         // gasPrice: '20000000000',
     });
-    await verify(hre, 'TapiocaOptionLiquidityProvision', args);
     const tOLPDeployment = await deployments.get('TapiocaOptionLiquidityProvision');
+    await verify(hre, tOLPDeployment.address, args);
     contracts.push({
         name: 'TapiocaOptionLiquidityProvision',
         address: tOLPDeployment.address,

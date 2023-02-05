@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { constants, verify, updateDeployments } from './utils';
+import { constants, verify, updateDeployments } from '../scripts/deployment.utils';
 import { TContract } from 'tapioca-sdk/dist/shared';
 import { TapOFT, TapOFT__factory } from '../typechain';
 
@@ -34,8 +34,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args,
         // gasPrice: '20000000000',
     });
-    await verify(hre, 'TapOFT', args);
     const tapOFTDeployment = await deployments.get('TapOFT');
+    await verify(hre, tapOFTDeployment.address, args);
     contracts.push({
         name: 'TapOFT',
         address: tapOFTDeployment.address,
