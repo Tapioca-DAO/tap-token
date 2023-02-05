@@ -1,7 +1,8 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { constants, verify, updateDeployments } from './utils';
+import { constants, verify, updateDeployments } from '../scripts/deployment.utils';
 import { TContract } from 'tapioca-sdk/dist/shared';
+import { TapOFT, TapOFT__factory } from '../typechain';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -11,15 +12,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const contracts: TContract[] = [];
 
     //all of these should be constants
-    const lzEndpoint = constants[chainId].address;
-    const teamAddress = constants.teamAddress;
-    const advisorAddress = constants.advisorAddress;
-    const daoAddress = constants.daoAddress;
-    const seedAddress = constants.seedAddress;
-    const otcAddress = constants.otcAddress;
-    const lbpAddress = constants.lbpAddress;
+    const lzEndpoint = constants[chainId as '5'].address as string;
+    const contributorAddress = constants.teamAddress;
+    const investorAddress = constants.advisorAddress;
+    const lbpAddress = constants.daoAddress;
+    const airdropAddress = constants.seedAddress;
     const governanceChainId = constants.governanceChainId.toString();
-    const args = [lzEndpoint, teamAddress, advisorAddress, daoAddress, seedAddress, otcAddress, lbpAddress, governanceChainId];
+    const args: Parameters<TapOFT__factory['deploy']> = [
+        lzEndpoint,
+        contributorAddress,
+        investorAddress,
+        lbpAddress,
+        airdropAddress,
+        governanceChainId,
+    ];
 
     console.log('\nDeploying TapOFT');
     await deploy('TapOFT', {
@@ -28,8 +34,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args,
         // gasPrice: '20000000000',
     });
-    await verify(hre, 'TapOFT', args);
     const tapOFTDeployment = await deployments.get('TapOFT');
+    await verify(hre, tapOFTDeployment.address, args);
     contracts.push({
         name: 'TapOFT',
         address: tapOFTDeployment.address,

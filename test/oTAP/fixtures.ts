@@ -7,6 +7,7 @@ import { BN } from '../test.utils';
 export const setupFixture = async () => {
     const signer = (await hre.ethers.getSigners())[0];
     const users = (await hre.ethers.getSigners()).splice(1);
+    const paymentTokenBeneficiary = new hre.ethers.Wallet(hre.ethers.Wallet.createRandom().privateKey, hre.ethers.provider);
 
     const chainId = (await ethers.provider.getNetwork()).chainId;
 
@@ -26,28 +27,28 @@ export const setupFixture = async () => {
     const yieldBox = await (await ethers.getContractFactory('YieldBox')).deploy(_wrappedNative.address, _uriBuilder.address);
 
     // oTAP
-    const tapOracleMock = await (await ethers.getContractFactory('OracleMock')).deploy();
+    const tapOracleMock = await (await ethers.getContractFactory('OracleMock')).deploy('TAP');
     await tapOracleMock.setRate(BN(33e17));
     const tOLP = await (await ethers.getContractFactory('TapiocaOptionLiquidityProvision')).deploy(yieldBox.address);
     const oTAP = await (await ethers.getContractFactory('OTAP')).deploy();
     const tOB = await (
         await ethers.getContractFactory('TapiocaOptionBroker')
-    ).deploy(tOLP.address, oTAP.address, tapOFT.address, tapOracleMock.address);
+    ).deploy(tOLP.address, oTAP.address, tapOFT.address, tapOracleMock.address, paymentTokenBeneficiary.address);
 
     // Deploy a "virtual" market
-    const sglTokenMock = await (await ethers.getContractFactory('ERC20Mock')).deploy(0, 18);
+    const sglTokenMock = await (await ethers.getContractFactory('ERC20Mock')).deploy('sglTokenMock', 'STM', 0, 18);
     const sglTokenMockAsset = await yieldBox.assetCount();
-    const sglTokenMock2 = await (await ethers.getContractFactory('ERC20Mock')).deploy(0, 18);
+    const sglTokenMock2 = await (await ethers.getContractFactory('ERC20Mock')).deploy('sglTokenMock', 'STM', 0, 18);
     const sglTokenMock2Asset = sglTokenMockAsset.add(1);
 
     await deployNewMarket(yieldBox, sglTokenMock);
     await deployNewMarket(yieldBox, sglTokenMock2);
 
     // Deploy payment tokens
-    const stableMock = await (await ethers.getContractFactory('ERC20Mock')).deploy(0, 6);
-    const ethMock = await (await ethers.getContractFactory('ERC20Mock')).deploy(0, 18);
-    const stableMockOracle = await (await ethers.getContractFactory('OracleMock')).deploy();
-    const ethMockOracle = await (await ethers.getContractFactory('OracleMock')).deploy();
+    const stableMock = await (await ethers.getContractFactory('ERC20Mock')).deploy('StableMock', 'STBLM', 0, 6);
+    const ethMock = await (await ethers.getContractFactory('ERC20Mock')).deploy('wethMock', 'WETHM', 0, 18);
+    const stableMockOracle = await (await ethers.getContractFactory('OracleMock')).deploy('StableMockOracle');
+    const ethMockOracle = await (await ethers.getContractFactory('OracleMock')).deploy('WETHMockOracle');
 
     await stableMockOracle.setRate(1e6);
     await ethMockOracle.setRate(BN(1e18).mul(1200));
@@ -56,6 +57,7 @@ export const setupFixture = async () => {
         // signers
         signer,
         users,
+        paymentTokenBeneficiary,
 
         // vars
         LZEndpointMockCurrentChain,

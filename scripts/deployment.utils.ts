@@ -21,7 +21,7 @@ export const constants: { [key: string]: any } = {
     seedAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
     lbpAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
     airdropAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
-    governanceChainId: 421613,
+    governanceChainId: 5,
     feeDistributorStartTimestamp: '1677187670', //random
     feeDistributorAdminAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
     feeDistributorEmergencyReturn: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
@@ -49,19 +49,16 @@ export const constants: { [key: string]: any } = {
     //------------- MAINNETS --------------
 };
 
-export const verify = async (hre: HardhatRuntimeEnvironment, artifact: string, args: any[]) => {
-    const { deployments } = hre;
-
-    const deployed = await deployments.get(artifact);
-    console.log(`[+] Verifying ${artifact}`);
+export const verify = async (hre: HardhatRuntimeEnvironment, address: string, args: any[]) => {
+    console.log(`[+] Verifying ${address}`);
     try {
         await hre.run('verify', {
-            address: deployed.address,
+            address: address,
             constructorArgsParams: args,
         });
         console.log('[+] Verified');
     } catch (err: any) {
-        console.log(`[-] failed to verify ${artifact}; error: ${err.message}\n`);
+        console.log(`[-] failed to verify ${address}; error: ${err.message}\n`);
     }
 };
 
@@ -71,34 +68,33 @@ export const updateDeployments = async (contracts: TContract[], chainId: string)
     });
 };
 
-
-export const registerVesting = async (
+export const registerContract = async (
     hre: HardhatRuntimeEnvironment,
-    token: string,
-    cliff: string,
-    duration: string,
+    contractName: string,
+    deploymentName: string,
+    args: any[],
 ): Promise<TContract> => {
     const { deployments, getNamedAccounts } = hre;
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    console.log('\n Deploying Vesting');
-    const args = [token, cliff, duration];
-    await deploy('Vesting', {
+    console.log(`\n Deploying ${contractName} as ${deploymentName}`);
+    await deploy(deploymentName, {
+        contract: contractName,
         from: deployer,
         log: true,
         args,
     });
-    await verify(hre, 'Vesting', args);
-    const vestingContract = await deployments.get('Vesting');
+    await verify(hre, deploymentName, args);
+    const contract = await deployments.get(deploymentName);
     console.log('Done');
 
-    return new Promise(async (resolve) =>
-        resolve({
-            name: 'Vesting',
-            address: vestingContract.address,
-            meta: { constructorArguments: args },
-        }),
-    );
-};
+    const deploymentMeta = {
+        name: deploymentName,
+        address: contract.address,
+        meta: { constructorArguments: args },
+    };
+    await updateDeployments([deploymentMeta], await hre.getChainId());
 
+    return deploymentMeta;
+};

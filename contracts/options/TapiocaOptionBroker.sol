@@ -75,6 +75,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     mapping(uint256 => mapping(uint256 => uint256)) public singularityGauges; // epoch => sglAssetId => availableTAP
 
     mapping(IERC20 => PaymentTokenOracle) public paymentTokens; // Token address => PaymentTokenOracle
+    address public paymentTokenBeneficiary; // Where to collect the payment tokens
 
     /// ===== TWAML ======
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
@@ -89,8 +90,10 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         address _tOLP,
         address _oTAP,
         address _tapOFT,
-        IOracle _oracle
+        IOracle _oracle,
+        address _paymentTokenBeneficiary
     ) {
+        paymentTokenBeneficiary = _paymentTokenBeneficiary;
         tOLP = TapiocaOptionLiquidityProvision(_tOLP);
         tapOFT = TapOFT(_tapOFT);
         tapOracle = _oracle;
@@ -286,15 +289,22 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         emit SetPaymentToken(_paymentToken, _oracle, _oracleData);
     }
 
+    /// @notice Set the payment token beneficiary
+    /// @param _paymentTokenBeneficiary The new payment token beneficiary
+    function setPaymentTokenBeneficiary(address _paymentTokenBeneficiary) external onlyOwner {
+        paymentTokenBeneficiary = _paymentTokenBeneficiary;
+    }
+
     /// @notice Collect the payment tokens from the OTC deals
     /// @param _paymentTokens The payment tokens to collect
     function collectPaymentTokens(address[] calldata _paymentTokens) external onlyOwner {
+        require(paymentTokenBeneficiary != address(0), 'TapiocaOptionBroker: Payment token beneficiary not set');
         uint256 len = _paymentTokens.length;
 
         unchecked {
             for (uint256 i = 0; i < len; ++i) {
                 IERC20 paymentToken = IERC20(_paymentTokens[i]);
-                paymentToken.transfer(msg.sender, paymentToken.balanceOf(address(this)));
+                paymentToken.transfer(paymentTokenBeneficiary, paymentToken.balanceOf(address(this)));
             }
         }
     }

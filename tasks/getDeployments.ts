@@ -1,25 +1,32 @@
-import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
-import { TContract } from 'tapioca-sdk/dist/shared';
+import { TContract, TProjectCaller } from 'tapioca-sdk/dist/shared';
 
-export const getDeployments = async (hre: HardhatRuntimeEnvironment, local?: boolean): Promise<TContract[]> => {
-    if (local) {
-        return JSON.parse(fs.readFileSync(SDK.API.utils.PROJECT_RELATIVE_DEPLOYMENT_PATH, 'utf8'))[await hre.getChainId()];
-    }
-    return SDK.API.utils.getDeployment('Tapioca-Bar', await hre.getChainId());
+export const getDeployments = async (hre: HardhatRuntimeEnvironment, local?: boolean, repo?: TProjectCaller): Promise<TContract[]> => {
+    return SDK.API.utils.getDeployments(repo ?? 'Tap-Token', await hre.getChainId(), Boolean(local)) ?? [];
 };
-export const getLocalDeployments__task = async function (taskArgs: any, hre: HardhatRuntimeEnvironment) {
+export const getLocalDeployments__task = async function (taskArgs: { contractName?: string }, hre: HardhatRuntimeEnvironment) {
     try {
-        console.log(await getDeployments(hre, true));
+        if (taskArgs.contractName) {
+            console.log(await SDK.API.utils.getDeployment('Tap-Token', taskArgs.contractName, await hre.getChainId()));
+        } else {
+            console.log(await getDeployments(hre, true));
+        }
     } catch (e) {
         console.log('[-] No local deployments found on chain id', await hre.getChainId());
     }
 };
 
-export const getSDKDeployments__task = async function (taskArgs: any, hre: HardhatRuntimeEnvironment) {
+export const getSDKDeployments__task = async function (
+    taskArgs: { repo: TProjectCaller; contractName?: string },
+    hre: HardhatRuntimeEnvironment,
+) {
     try {
-        console.log(await getDeployments(hre));
+        if (taskArgs.contractName) {
+            console.log(await SDK.API.utils.getDeployment(taskArgs.repo, taskArgs.contractName, await hre.getChainId()));
+        } else {
+            console.log(await getDeployments(hre, false, taskArgs.repo));
+        }
     } catch (e) {
         console.log('[-] No SDK deployments found on chain id', await hre.getChainId());
     }

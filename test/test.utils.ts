@@ -1,6 +1,6 @@
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish, Wallet } from 'ethers';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
-import { ethers } from 'hardhat';
+import hre, { ethers } from 'hardhat';
 import BigNumberJs from 'bignumber.js';
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
@@ -16,7 +16,7 @@ export async function registerVesting(token: string, cliff: BigNumberish, durati
     return { vesting };
 }
 
-export const randomSigners = async (amount: number): Wallet[] => {
+export const randomSigners = async (amount: number) => {
     const signers: Wallet[] = [];
     for (let i = 0; i < amount; i++) {
         const signer = new ethers.Wallet(ethers.Wallet.createRandom().privateKey, hre.ethers.provider);
@@ -58,7 +58,7 @@ export const LZ_ENDPOINTS: TLZ_Endpoint = {
     },
 };
 export async function deployUSDC(amount: BigNumberish, decimals: number) {
-    const usdc = await (await ethers.getContractFactory('ERC20Mock')).deploy(amount, decimals);
+    const usdc = await (await ethers.getContractFactory('ERC20Mock')).deploy('USDCMock', 'USDCM', amount, decimals);
     await usdc.deployed();
 
     return usdc;
