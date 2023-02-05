@@ -1,1 +1,111 @@
-{"5":[],"4002":[],"43113":[{"name":"TapOFT","address":"0xBEb739E11742D7015B807012894bDA8b0fe6b141","meta":{"constructorArguments":["0x93f54D755A063cE7bB9e6Ac47Eccc8e33411d706","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","421613"]}}],"80001":{"0":{"name":"TapOFT","address":"0x78Ab2649fd6682e5c3CCFABb87ed6FcED0843cE4","meta":{"constructorArguments":["0xf69186dfBa60DdB133E91E9A4B5673624293d8F8","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","421613"]}}},"421613":[{"name":"TapOFT","address":"0xC27F48670cDae9Eee92156209642d47Ea1B85a35","meta":{"constructorArguments":["0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","0x40282d3Cf4890D9806BC1853e97a59C93D813653","421613"]}}]}
+{
+    "5": [
+        {
+            "name": "TapOFT",
+            "address": "0xA4D1077F9A5bc94ddE22B3d01807329De9543607",
+            "meta": {
+                "constructorArguments": [
+                    "0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "5"
+                ]
+            }
+        },
+        {
+            "name": "TapiocaOptionLiquidityProvision",
+            "address": "0x7363df7f81f041008D7b723835d07de12e0AcA43",
+            "meta": {
+                "constructorArguments": [
+                    "0xCA3604D7Df34a785D20Cbe7A0Bbd0AF54E9FeF9e"
+                ]
+            }
+        },
+        {
+            "name": "OTAP",
+            "address": "0xC41A2B66E7B598f907Ed948733AC75462d81b66e",
+            "meta": {
+                "constructorArguments": []
+            }
+        },
+        {
+            "name": "TapOracleMock",
+            "address": "0xBaC59400ED43d56ea9b74C79D633d8FBC3FA43A4",
+            "meta": {
+                "constructorArguments": [
+                    "TapOFTTestnet"
+                ]
+            }
+        },
+        {
+            "name": "TapiocaOptionBroker",
+            "address": "0x3D38200d198183ef4B7Ba483b9EE932551d747D1",
+            "meta": {
+                "constructorArguments": [
+                    "0x7363df7f81f041008D7b723835d07de12e0AcA43",
+                    "0xC41A2B66E7B598f907Ed948733AC75462d81b66e",
+                    "0xA4D1077F9A5bc94ddE22B3d01807329De9543607",
+                    "0xBaC59400ED43d56ea9b74C79D633d8FBC3FA43A4",
+                    "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                ]
+            }
+        }
+    ],
+    "4002": [],
+    "43113": [
+        {
+            "name": "TapOFT",
+            "address": "0xBEb739E11742D7015B807012894bDA8b0fe6b141",
+            "meta": {
+                "constructorArguments": [
+                    "0x93f54D755A063cE7bB9e6Ac47Eccc8e33411d706",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "421613"
+                ]
+            }
+        }
+    ],
+    "80001": {
+        "0": {
+            "name": "TapOFT",
+            "address": "0x78Ab2649fd6682e5c3CCFABb87ed6FcED0843cE4",
+            "meta": {
+                "constructorArguments": [
+                    "0xf69186dfBa60DdB133E91E9A4B5673624293d8F8",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "421613"
+                ]
+            }
+        }
+    },
+    "421613": [
+        {
+            "name": "TapOFT",
+            "address": "0xC27F48670cDae9Eee92156209642d47Ea1B85a35",
+            "meta": {
+                "constructorArguments": [
+                    "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "421613"
+                ]
+            }
+        }
+    ]
+}
