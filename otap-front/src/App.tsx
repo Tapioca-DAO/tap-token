@@ -1,15 +1,30 @@
+import { Grid, Typography } from '@mui/material';
 import { ConnectKitButton } from 'connectkit';
-import { useAccount } from 'wagmi';
+import { useChainId } from 'wagmi';
 
-import { Account } from './components';
+import MainContainer from './components/MainContainer';
+import TapOFTOverview from './components/TapOFTOverview';
 
 export function App() {
-    const { isConnected } = useAccount();
     return (
         <>
-            <h1>oTAP protoype</h1>
-            <ConnectKitButton />
-            {isConnected && <Account />}
+            <Grid container justifyContent="center" direction={'column'}>
+                <Grid item container justifyContent="flex-end">
+                    <div style={{ marginRight: 24 }}>
+                        <ConnectKitButton showAvatar />
+                    </div>
+                </Grid>
+                <Grid item xs>
+                    <MainContainer>
+                        <TapOFTOverview />
+                        <Grid container justifyContent="center">
+                            <Grid item>
+                                <Typography>Whitelisted tOLP tokens</Typography>
+                            </Grid>
+                        </Grid>
+                    </MainContainer>
+                </Grid>
+            </Grid>
         </>
     );
 }
