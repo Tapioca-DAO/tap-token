@@ -10,7 +10,7 @@ ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
 // ---
 
 export async function registerVesting(token: string, cliff: BigNumberish, duration: BigNumberish, staging?: boolean) {
-    const vesting = await (await ethers.getContractFactory('Vesting')).deploy(token, cliff, duration);
+    const vesting = await (await ethers.getContractFactory('Vesting')).deploy(cliff, duration);
     await vesting.deployed();
 
     return { vesting };
