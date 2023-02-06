@@ -1,8 +1,17 @@
 {
     "5": [
         {
+            "name": "TapOracleMock",
+            "address": "0xBaC59400ED43d56ea9b74C79D633d8FBC3FA43A4",
+            "meta": {
+                "constructorArguments": [
+                    "TapOFTTestnet"
+                ]
+            }
+        },
+        {
             "name": "TapOFT",
-            "address": "0xA4D1077F9A5bc94ddE22B3d01807329De9543607",
+            "address": "0x00c3Dc5ce0f473Ef32EF4BD540442B8E8192F255",
             "meta": {
                 "constructorArguments": [
                     "0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23",
@@ -16,7 +25,7 @@
         },
         {
             "name": "TapiocaOptionLiquidityProvision",
-            "address": "0x7363df7f81f041008D7b723835d07de12e0AcA43",
+            "address": "0x8514f907386C4dd6bf214d7c3178c15C9954877f",
             "meta": {
                 "constructorArguments": [
                     "0xCA3604D7Df34a785D20Cbe7A0Bbd0AF54E9FeF9e"
@@ -25,31 +34,9 @@
         },
         {
             "name": "OTAP",
-            "address": "0xC41A2B66E7B598f907Ed948733AC75462d81b66e",
+            "address": "0x25AbB9181241e91aaD9cc8e3E70F3Fc8527aF677",
             "meta": {
                 "constructorArguments": []
-            }
-        },
-        {
-            "name": "TapOracleMock",
-            "address": "0xBaC59400ED43d56ea9b74C79D633d8FBC3FA43A4",
-            "meta": {
-                "constructorArguments": [
-                    "TapOFTTestnet"
-                ]
-            }
-        },
-        {
-            "name": "TapiocaOptionBroker",
-            "address": "0x3D38200d198183ef4B7Ba483b9EE932551d747D1",
-            "meta": {
-                "constructorArguments": [
-                    "0x7363df7f81f041008D7b723835d07de12e0AcA43",
-                    "0xC41A2B66E7B598f907Ed948733AC75462d81b66e",
-                    "0xA4D1077F9A5bc94ddE22B3d01807329De9543607",
-                    "0xBaC59400ED43d56ea9b74C79D633d8FBC3FA43A4",
-                    "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
-                ]
             }
         }
     ],
