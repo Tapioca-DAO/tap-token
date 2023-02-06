@@ -45,7 +45,9 @@ task('deployVesting', 'Deploys a new Vesting contract', deployVesting__task)
     .addParam('duration', 'Vesting duration in seconds');
 
 task('deployERC20Mock', 'Deploys a new ERC20 Mock contract', deployERC20Mock__task)
-    .addParam('deploymentName', 'The name of the deployment')
+    .addParam('deploymentName', 'Name of the deployment')
+    .addParam('name', 'Name of the token')
+    .addParam('symbol', 'Symbol of the token')
     .addParam('initialAmount', 'Initial amount of tokens')
     .addParam('decimals', 'Number of decimals');
 

@@ -38,6 +38,94 @@
             "meta": {
                 "constructorArguments": []
             }
+        },
+        {
+            "name": "TapiocaOptionBrokerMock",
+            "address": "0xf77d418B10642d497755a42F7EBD5578d7041bC9",
+            "meta": {
+                "constructorArguments": [
+                    "0x8514f907386C4dd6bf214d7c3178c15C9954877f",
+                    "0x25AbB9181241e91aaD9cc8e3E70F3Fc8527aF677",
+                    "0x00c3Dc5ce0f473Ef32EF4BD540442B8E8192F255",
+                    "0xBaC59400ED43d56ea9b74C79D633d8FBC3FA43A4",
+                    "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                ]
+            }
+        },
+        {
+            "name": "sglTokenMock1",
+            "address": "0x8147313b6469B53fF8c6ac089DcC9F54729aEaaf",
+            "meta": {
+                "constructorArguments": [
+                    "sglTokenMock1",
+                    "sglTM1",
+                    "0",
+                    "18"
+                ]
+            }
+        },
+        {
+            "name": "sglTokenMock2",
+            "address": "0xcDA0B9B26F2c009beDd0Bd1510BA15343889Ba64",
+            "meta": {
+                "constructorArguments": [
+                    "sglTokenMock2",
+                    "sglTM2",
+                    "0",
+                    "18"
+                ]
+            }
+        },
+        {
+            "name": "sglTM1OracleMock",
+            "address": "0x49BB9bc63d369bFE846d134A66B3C6724F2B9616",
+            "meta": {
+                "constructorArguments": [
+                    "sglTokenMock1"
+                ]
+            }
+        },
+        {
+            "name": "WETHMock",
+            "address": "0xbe18816f1E4A4b35F81fa6Ac2E89f82957772d88",
+            "meta": {
+                "constructorArguments": [
+                    "WETHMock",
+                    "WETHMock",
+                    "0",
+                    "18"
+                ]
+            }
+        },
+        {
+            "name": "USDCMock",
+            "address": "0x3022494EFafC433b64B704dCbAD69ec0cf54B941",
+            "meta": {
+                "constructorArguments": [
+                    "USDCMock",
+                    "USDCM",
+                    "0",
+                    "18"
+                ]
+            }
+        },
+        {
+            "name": "WETHOracleMock",
+            "address": "0x64f9B92D83A415DABd997f9FE348408D7bD8201e",
+            "meta": {
+                "constructorArguments": [
+                    "WETHMock"
+                ]
+            }
+        },
+        {
+            "name": "USDCOracleMock",
+            "address": "0xB8cb5B5407232651DF5ef67331F45A3313f222A7",
+            "meta": {
+                "constructorArguments": [
+                    "USDCMock"
+                ]
+            }
         }
     ],
     "4002": [],
