@@ -2,7 +2,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TContract } from 'tapioca-sdk/dist/shared';
-import { TapiocaOptionBroker__factory, TapiocaOptionLiquidityProvision__factory } from '../typechain';
+import { TapiocaOptionBroker__factory } from '../typechain';
 import { updateDeployments, verify } from '../scripts/deployment.utils';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -10,6 +10,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
     const chainId = await hre.getChainId();
+
     const contracts: TContract[] = [];
 
     const tapOFT = (await SDK.API.utils.getDeployment('Tap-Token', 'TapOFT', chainId)).address;
@@ -23,27 +24,28 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const args: Parameters<TapiocaOptionBroker__factory['deploy']> = [tOLP, oTAP, tapOFT, tapOracle, paymentTokenBeneficiary];
 
     console.log('\nDeploying tOB');
-    await deploy('TapiocaOptionBroker', {
+    const deploymentName = hre.network.tags['testnet'] ? 'TapiocaOptionBrokerMock' : 'TapiocaOptionBroker';
+    await deploy(deploymentName, {
         from: deployer,
         log: true,
         args,
         // gasPrice: '20000000000',
     });
-    const tOBDeployment = await deployments.get('TapiocaOptionBroker');
+    const tOBDeployment = await deployments.get(deploymentName);
     await verify(hre, tOBDeployment.address, args);
     contracts.push({
-        name: 'TapiocaOptionBroker',
+        name: deploymentName,
         address: tOBDeployment.address,
         meta: { constructorArguments: args },
     });
 
-    const tap = await hre.ethers.getContractAt('TapOFT', (await SDK.API.utils.getDeployment('Tap-Token', 'TapOFT', chainId)).address);
+    const tap = await hre.ethers.getContractAt('TapOFT', tapOFT);
     if ((await tap.minter()) !== tOBDeployment.address) {
         console.log('[+] Setting tOB as minter for TapOFT');
         await tap.setMinter(tOBDeployment.address);
     }
 
-    const tOB = await hre.ethers.getContractAt('TapiocaOptionBroker', tOBDeployment.address);
+    const tOB = await hre.ethers.getContractAt(deploymentName, tOBDeployment.address);
     const oTAPcontract = await hre.ethers.getContractAt('OTAP', oTAP);
     if ((await oTAPcontract.broker()) !== tOBDeployment.address) {
         console.log('[+] Claiming oTAP broker role on tOB');

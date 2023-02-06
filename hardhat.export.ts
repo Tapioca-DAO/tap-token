@@ -27,6 +27,7 @@ const supportedChains = SDK.API.utils.getSupportedChains().reduce(
             url: chain.rpc.replace('<api_key>', process.env.ALCHEMY_API_KEY),
             gasMultiplier: chain.tags.includes('testnet') ? 2 : 1,
             chainId: Number(chain.chainId),
+            tags: [...chain.tags],
         },
     }),
     {} as { [key in TNetwork]: HttpNetworkConfig },
