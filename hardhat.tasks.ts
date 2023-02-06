@@ -3,7 +3,7 @@ import { task } from 'hardhat/config';
 import { exportSDK__task } from './tasks/exportSDK';
 import { setTrustedRemote__task } from './tasks/setTrustedRemote';
 import { deployERC20Mock__task, deployOracleMock__task, deployVesting__task } from './tasks/contractDeployment';
-import { setOracleMockRate__task, setTOBPaymentToken__task } from './tasks/setterTasks';
+import { setOracleMockRate__task, setTOBPaymentToken__task, setTOLPRegisterSingularity__task } from './tasks/setterTasks';
 import { getLocalDeployments__task, getSDKDeployments__task } from './tasks/getDeployments';
 import { glob } from 'typechain';
 
@@ -59,7 +59,12 @@ task('setOracleMockRate', 'Set exchange rate for a mock oracle', setOracleMockRa
     .addParam('oracleAddress', 'Address of the oracle')
     .addParam('rate', 'Exchange rate');
 
-task('setTOBPaymentToken', 'Set exchange rate for a mock oracle', setTOBPaymentToken__task)
+task('setTOBPaymentToken', 'Set a payment token on tOB', setTOBPaymentToken__task)
     .addParam('tknAddress', 'Address of the payment token')
     .addParam('oracleAddress', 'Address of the oracle')
     .addParam('oracleData', 'Oracle data');
+
+task('setTOLPRegisterSingularity', 'Register an SGL on tOLP ', setTOLPRegisterSingularity__task)
+    .addParam('sglAddress', 'Address of the SGL receipt token')
+    .addParam('assetID', 'YieldBox asset ID of the SGL receipt token')
+    .addParam('weight', 'Weight of the gauge');

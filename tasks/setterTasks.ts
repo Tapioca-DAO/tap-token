@@ -17,3 +17,13 @@ export const setTOBPaymentToken__task = async (
 
     await tOB.setPaymentToken(taskArgs.tknAddress, taskArgs.oracleAddress, taskArgs.oracleData);
 };
+
+export const setTOLPRegisterSingularity__task = async (
+    taskArgs: { sglAddress: string; assetID: string; weight: string },
+    hre: HardhatRuntimeEnvironment,
+) => {
+    const tOLPAdress = (await SDK.API.utils.getDeployment('Tap-Token', 'TapiocaOptionLiquidityProvision', await hre.getChainId()))?.address;
+    const tOLP = await hre.ethers.getContractAt('TapiocaOptionLiquidityProvision', tOLPAdress);
+
+    await tOLP.registerSingularity(taskArgs.sglAddress, taskArgs.assetID, taskArgs.weight);
+};
