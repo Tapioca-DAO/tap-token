@@ -7,7 +7,7 @@ export function App() {
     const { isConnected } = useAccount();
     return (
         <>
-            <h1>wagmi + ConnectKit + Vite</h1>
+            <h1>oTAP protoype</h1>
             <ConnectKitButton />
             {isConnected && <Account />}
         </>

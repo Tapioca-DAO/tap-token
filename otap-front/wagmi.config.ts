@@ -5,7 +5,16 @@ export default defineConfig({
     out: 'src/generated.ts',
     contracts: [],
     plugins: [
-        react(),
+        react({
+            useContractEvent: false,
+            useContractFunctionRead: false,
+            useContractFunctionWrite: false,
+            useContractItemEvent: false,
+            useContractRead: false,
+            useContractWrite: false,
+            usePrepareContractFunctionWrite: false,
+            usePrepareContractWrite: false,
+        }),
         hardhat({
             project: '../../tap-token',
             commands: {
@@ -18,6 +27,7 @@ export default defineConfig({
                 'OracleMock',
                 'OTAP',
                 'TapiocaOptionBroker',
+                'TapiocaOptionBrokerMock',
                 'TapiocaOptionLiquidityProvision',
                 'Vesting',
             ].map((e) => `${e}.json`),
