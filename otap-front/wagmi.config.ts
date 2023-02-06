@@ -7,7 +7,7 @@ export default defineConfig({
     plugins: [
         react({
             useContractEvent: false,
-            useContractFunctionRead: false,
+            useContractFunctionRead: true,
             useContractFunctionWrite: false,
             useContractItemEvent: false,
             useContractRead: false,

@@ -1,0 +1,3 @@
+export const ADDRESSES = {
+    tapOFT: '0x00c3Dc5ce0f473Ef32EF4BD540442B8E8192F255',
+};
