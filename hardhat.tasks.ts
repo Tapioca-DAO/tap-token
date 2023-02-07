@@ -3,7 +3,12 @@ import { task } from 'hardhat/config';
 import { exportSDK__task } from './tasks/exportSDK';
 import { setTrustedRemote__task } from './tasks/setTrustedRemote';
 import { deployERC20Mock__task, deployOracleMock__task, deployVesting__task } from './tasks/contractDeployment';
-import { setOracleMockRate__task, setTOBPaymentToken__task, setTOLPRegisterSingularity__task } from './tasks/setterTasks';
+import {
+    setOracleMockRate__task,
+    setTOBPaymentToken__task,
+    setTOLPRegisterSingularity__task,
+    setYieldBoxRegisterAsset__task,
+} from './tasks/setterTasks';
 import { getLocalDeployments__task, getSDKDeployments__task } from './tasks/getDeployments';
 import { glob } from 'typechain';
 
@@ -66,5 +71,11 @@ task('setTOBPaymentToken', 'Set a payment token on tOB', setTOBPaymentToken__tas
 
 task('setTOLPRegisterSingularity', 'Register an SGL on tOLP ', setTOLPRegisterSingularity__task)
     .addParam('sglAddress', 'Address of the SGL receipt token')
-    .addParam('assetID', 'YieldBox asset ID of the SGL receipt token')
+    .addParam('assetId', 'YieldBox asset ID of the SGL receipt token')
     .addParam('weight', 'Weight of the gauge');
+
+task('setYieldBoxRegisterAsset', 'Register an SGL on tOLP ', setYieldBoxRegisterAsset__task)
+    .addParam('tknAddress', 'Address of the SGL receipt token')
+    .addOptionalParam('tknType', 'YieldBox type of the token. 0 for natives, 1 for ERC20, 2 for ERC721, 3 for ERC1155, 4 for none')
+    .addOptionalParam('tknId', 'ID of the token, 0 if ERC20, others if ERC721')
+    .addOptionalParam('strategy', 'Address of the strategy contract');
