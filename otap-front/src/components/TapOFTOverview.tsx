@@ -2,6 +2,7 @@ import { Typography } from '@mui/material';
 import { useAccount } from 'wagmi';
 import { ADDRESSES } from '../addresses';
 import { useTapOftBalanceOf, useTapOftTotalSupply } from '../generated';
+import { formatBigNumber } from '../utils';
 
 function TapOFTOverview() {
     const { address } = useAccount();
@@ -16,12 +17,8 @@ function TapOFTOverview() {
         <>
             <Typography variant="h4">TapOFT</Typography>
             <span>
-                <Typography>
-                    Total supply: {new Intl.NumberFormat().format(tapOftTotalSupply.data?.div((1e18).toString()).toNumber())}
-                </Typography>
-                <Typography>
-                    My tap balance: {new Intl.NumberFormat().format(tapOftBalance.data?.div((1e18).toString()).toNumber())}
-                </Typography>
+                <Typography>Total supply: {formatBigNumber(tapOftTotalSupply.data)}</Typography>
+                <Typography>My tap balance: {formatBigNumber(tapOftBalance.data)}</Typography>
             </span>
         </>
     );
