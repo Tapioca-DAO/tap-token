@@ -37,6 +37,7 @@ export default defineConfig({
                 'TapiocaOptionBrokerMock',
                 'TapiocaOptionLiquidityProvision',
                 'Vesting',
+                'YieldBox',
             ].map((e) => `${e}.json`),
         }),
     ],

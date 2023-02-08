@@ -7,7 +7,6 @@ export default function MainContainer(props: React.PropsWithChildren) {
             elevation={24}
             style={{
                 margin: 24,
-                height: 300,
                 color: 'gainsboro',
                 padding: 16,
 

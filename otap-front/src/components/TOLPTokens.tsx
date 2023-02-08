@@ -6,13 +6,21 @@ import { ADDRESSES } from '../addresses';
 import {
     readTapiocaOptionLiquidityProvision,
     useErc20Mock,
+    useErc20MockAllowance,
     useErc20MockBalanceOf,
     useErc20MockName,
     useErc20MockSymbol,
+    useTapiocaOptionLiquidityProvision,
     useTapiocaOptionLiquidityProvisionGetSingularities,
+    useTapiocaOptionLiquidityProvisionLockPositions,
+    useTapiocaOptionLiquidityProvisionSglAssetIdToAddress,
+    useYieldBox,
+    useYieldBoxBalanceOf,
+    useYieldBoxIsApprovedForAll,
+    useYieldBoxToAmount,
 } from '../generated';
 import { formatBigNumber } from '../utils';
-import { BigNumber } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 
 function useGetTOLPAddress(assetIds: []) {
     const [tOLPs, setTOLPs] = useState<`0x${string}`[]>([]);
@@ -38,12 +46,17 @@ function useGetTOLPAddress(assetIds: []) {
     return tOLPs;
 }
 
-function TOLPToken(props: { tkn: `0x${string}` }) {
+function TOLPToken(props: { id: BigNumber }) {
     const { address } = useAccount();
     const { data: signer } = useSigner();
-    const tknSymbol = useErc20MockSymbol({ address: props.tkn });
-    const tknData = useErc20MockBalanceOf({ address: props.tkn, args: [address ?? ''] });
-    const tknMint = useErc20Mock({ address: props.tkn, signerOrProvider: signer });
+
+    const { data: tknAddress } = useTapiocaOptionLiquidityProvisionSglAssetIdToAddress({
+        address: ADDRESSES.tOLP as any,
+        args: [props.id],
+    });
+    const tknSymbol = useErc20MockSymbol({ address: tknAddress });
+    const tknData = useErc20MockBalanceOf({ address: tknAddress, args: [address ?? ''] });
+    const tknMint = useErc20Mock({ address: tknAddress, signerOrProvider: signer });
 
     const [mintAmount, setMintAmount] = useState<string>('0');
 
@@ -90,18 +103,187 @@ function TOLPToken(props: { tkn: `0x${string}` }) {
     );
 }
 
+function TOLPYBDeposit(props: { id: BigNumber }) {
+    const { address } = useAccount();
+    const { data: signer } = useSigner();
+
+    const { data: tknAddress } = useTapiocaOptionLiquidityProvisionSglAssetIdToAddress({
+        address: ADDRESSES.tOLP as any,
+        args: [props.id],
+    });
+    const tknSymbol = useErc20MockSymbol({ address: tknAddress });
+    const tknData = useErc20MockBalanceOf({ address: tknAddress, args: [address ?? ''] });
+    const tkn = useErc20Mock({ address: tknAddress, signerOrProvider: signer });
+    const allowance = useErc20MockAllowance({ address: tknAddress, args: [address ?? '', ADDRESSES.yieldBox] });
+
+    const yb = useYieldBox({ address: ADDRESSES.yieldBox as any, signerOrProvider: signer });
+    const { data: shareBalanceOf } = useYieldBoxBalanceOf({ address: ADDRESSES.yieldBox as any, args: [address ?? '', props.id] });
+    const balanceOf = useYieldBoxToAmount({ address: ADDRESSES.yieldBox as any, args: [props.id, shareBalanceOf, false] });
+
+    const [depositAmount, setDepositAmount] = useState<string>('0');
+
+    const onApprove = () => {
+        tkn?.approve(ADDRESSES.yieldBox as any, ethers.constants.MaxUint256).then(async (tx) => {
+            await tx.wait();
+            tknData.refetch();
+        });
+    };
+
+    const onDeposit = () => {
+        yb?.depositAsset(props.id, address, address, BigNumber.from(depositAmount).mul((1e18).toString()), 0).then(async (tx) => {
+            await tx.wait();
+            balanceOf.refetch();
+        });
+    };
+
+    const onWithdraw = () => {
+        yb?.withdraw(props.id, address, address, BigNumber.from(depositAmount).mul((1e18).toString()), 0).then(async (tx) => {
+            await tx.wait();
+            balanceOf.refetch();
+        });
+    };
+
+    return (
+        <Typography>
+            <Button variant="text" onClick={onApprove} disabled={allowance.data?.gt(0)}>
+                Approve
+            </Button>
+            <Button variant="text" disabled={Number(depositAmount) === 0 || allowance.data?.eq(0)} onClick={onDeposit}>
+                Deposit
+            </Button>
+            <Button variant="text" disabled={balanceOf.data?.eq(0) || allowance.data?.eq(0)} onClick={onWithdraw}>
+                Withdraw
+            </Button>
+            <TextField
+                value={depositAmount}
+                style={{ margin: '0px 10px 0px 10px' }}
+                onChange={(e) => {
+                    const value = Number(e.target.value);
+                    if (value > tknData.data!.div((1e18).toString()).toNumber())
+                        setDepositAmount(tknData.data!.div((1e18).toString()).toString());
+                    else if (value < 0) setDepositAmount('0');
+                    else setDepositAmount(String(value ?? 0));
+                }}
+                size="small"
+                variant="standard"
+                InputProps={{ style: { color: 'white' } }}
+                disabled={tknData.data?.eq(0)}
+            />
+            {tknSymbol.data} to/from YieldBox. Balance: {formatBigNumber(balanceOf.data)}
+        </Typography>
+    );
+}
+
+function TOLPLock(props: { id: BigNumber }) {
+    const { address } = useAccount();
+    const { data: signer } = useSigner();
+    const { data: tknAddress } = useTapiocaOptionLiquidityProvisionSglAssetIdToAddress({
+        address: ADDRESSES.tOLP as any,
+        args: [props.id],
+    });
+    const { data: tknSymbol } = useErc20MockSymbol({ address: tknAddress });
+
+    const tOLP = useTapiocaOptionLiquidityProvision({ address: ADDRESSES.tOLP as any, signerOrProvider: signer });
+
+    const { data: shareBalanceOf } = useYieldBoxBalanceOf({ address: ADDRESSES.yieldBox as any, args: [address ?? '', props.id] });
+    const { data: balanceOf } = useYieldBoxToAmount({ address: ADDRESSES.yieldBox as any, args: [props.id, shareBalanceOf, false] });
+
+    const yb = useYieldBox({ address: ADDRESSES.yieldBox as any, signerOrProvider: signer });
+    const ybApproval = useYieldBoxIsApprovedForAll({ address: ADDRESSES.yieldBox as any, args: [address ?? '', ADDRESSES.tOLP] });
+
+    const [depositAmount, setDepositAmount] = useState<string>('0');
+    const [durationAmount, setDurationAmount] = useState<string>('0');
+
+    const onApprove = () => {
+        yb?.setApprovalForAll(ADDRESSES.tOLP as any, true).then(async (tx) => {
+            await tx.wait();
+            await ybApproval.refetch();
+        });
+    };
+
+    const onLock = () => {
+        tOLP?.lock(address, address, tknAddress, Number(durationAmount) * 60, BigNumber.from(depositAmount).mul((1e18).toString())).then(
+            async (tx) => {
+                await tx.wait();
+            },
+        );
+    };
+
+    return (
+        <Typography>
+            <Button variant="text" onClick={onApprove} disabled={!!ybApproval.data}>
+                Approve
+            </Button>
+            <Button variant="text" onClick={onLock} disabled={Number(depositAmount) === 0 || Number(durationAmount) === 0}>
+                Lock
+            </Button>
+            <TextField
+                value={depositAmount}
+                style={{ margin: '0px 10px 0px 10px' }}
+                onChange={(e) => {
+                    const value = Number(e.target.value);
+                    if (value > balanceOf!.div((1e18).toString()).toNumber())
+                        setDepositAmount(balanceOf!.div((1e18).toString()).toString());
+                    else if (value < 0) setDepositAmount('0');
+                    else setDepositAmount(String(value ?? 0));
+                }}
+                size="small"
+                variant="standard"
+                InputProps={{ style: { color: 'white' } }}
+                disabled={balanceOf?.eq(0)}
+            />
+            {tknSymbol} for a duration of
+            <TextField
+                value={durationAmount}
+                style={{ margin: '0px 10px 0px 10px' }}
+                onChange={(e) => {
+                    const value = Number(e.target.value);
+                    if (value < 0) setDurationAmount('0');
+                    else setDurationAmount(String(value ?? 0));
+                }}
+                size="small"
+                variant="standard"
+                InputProps={{ style: { color: 'white' } }}
+                disabled={balanceOf?.eq(0)}
+            />
+            minutes to tOLP.
+        </Typography>
+    );
+}
+
 function TOLPTokens() {
     const assetIds = useTapiocaOptionLiquidityProvisionGetSingularities({ address: ADDRESSES.tOLP as any });
-    const tOLPs = useGetTOLPAddress((assetIds.data ?? []) as any);
 
     return (
         <div>
-            <Typography variant="h5">Whitelisted tOLP tokens</Typography>
+            <Typography variant="h5">Mint tOLP tokens</Typography>
 
             <Grid container justifyContent="space-evenly">
-                {tOLPs.map((tOLP, i) => (
+                {assetIds.data?.map((id, i) => (
                     <Grid item key={i}>
-                        <TOLPToken tkn={tOLP} />
+                        <TOLPToken id={id} />
+                    </Grid>
+                ))}
+            </Grid>
+
+            <Grid container direction="column">
+                <Grid item>
+                    <Typography variant="h5">Deposit/Withdraw tOLP tokens</Typography>
+                </Grid>
+                {assetIds.data?.map((id, i) => (
+                    <Grid item key={i} marginTop="12px">
+                        <TOLPYBDeposit id={id} />
+                    </Grid>
+                ))}
+            </Grid>
+
+            <Grid container direction="column">
+                <Grid item>
+                    <Typography variant="h5">Lock tOLP tokens</Typography>
+                </Grid>
+                {assetIds.data?.map((id, i) => (
+                    <Grid item key={i} marginTop="12px">
+                        <TOLPLock id={id} />
                     </Grid>
                 ))}
             </Grid>
