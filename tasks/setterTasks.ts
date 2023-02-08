@@ -41,5 +41,5 @@ export const setYieldBoxRegisterAsset__task = async (
         taskArgs.strategy ?? hre.ethers.constants.AddressZero,
         taskArgs.tknId ?? 0,
     );
-    console.log('[+] Asset ID: ', (await yb.assetCount()).sub(1));
+    console.log('[+] Asset ID: ', await yb.assetCount());
 };
