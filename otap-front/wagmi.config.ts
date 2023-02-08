@@ -1,16 +1,23 @@
 import { defineConfig } from '@wagmi/cli';
-import { hardhat, react } from '@wagmi/cli/plugins';
+import { hardhat, react, actions } from '@wagmi/cli/plugins';
 
 export default defineConfig({
     out: 'src/generated.ts',
     contracts: [],
     plugins: [
+        actions({
+            readContract: true,
+            writeContract: true,
+            getContract: false,
+            prepareWriteContract: false,
+            watchContractEvent: false,
+        }),
         react({
             useContractEvent: false,
             useContractFunctionRead: true,
             useContractFunctionWrite: false,
             useContractItemEvent: false,
-            useContractRead: false,
+            useContractRead: true,
             useContractWrite: false,
             usePrepareContractFunctionWrite: false,
             usePrepareContractWrite: false,
