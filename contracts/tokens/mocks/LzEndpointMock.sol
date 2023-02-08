@@ -3,8 +3,8 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-import 'tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol';
 import 'tapioca-sdk/dist/contracts/interfaces/ILayerZeroReceiver.sol';
+import 'tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol';
 import 'tapioca-sdk/dist/contracts/libraries/LzLib.sol';
 
 /*
@@ -118,7 +118,7 @@ contract LZEndpointMock is ILayerZeroEndpoint {
         address _zroPaymentAddress,
         bytes memory _adapterParams
     ) external payable override sendNonReentrant {
-        // require(_path.length == 40, 'LayerZeroMock: incorrect remote address size'); // only support evm chains
+        require(_path.length == 40, 'LayerZeroMock: incorrect remote address size'); // only support evm chains
 
         address dstAddr;
         assembly {
@@ -222,7 +222,7 @@ contract LZEndpointMock is ILayerZeroEndpoint {
         bytes memory _payload,
         bool _payInZRO,
         bytes memory _adapterParams
-    ) public view returns (uint256 nativeFee, uint256 zroFee) {
+    ) public view override returns (uint256 nativeFee, uint256 zroFee) {
         bytes memory adapterParams = _adapterParams.length > 0 ? _adapterParams : defaultAdapterParams;
 
         // Relayer Fee

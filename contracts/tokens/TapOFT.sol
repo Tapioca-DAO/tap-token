@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import 'tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol';
-import 'tapioca-sdk/dist/contracts/token/oft/extension/PausableOFT.sol';
+import 'tapioca-sdk/dist/contracts/token/oft/v2/OFTV2.sol';
 import 'tapioca-sdk/dist/contracts/libraries/LzLib.sol';
 
 /*
@@ -23,7 +23,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 /// @notice OFT compatible TAP token
 /// @dev Latest size: 17.663  KiB
 /// @dev Emissions E(x)= E(x-1) - E(x-1) * D with E being total supply a x week, and D the initial decay rate
-contract TapOFT is PausableOFT {
+contract TapOFT is OFTV2 {
     using ExcessivelySafeCall for address;
     using BytesLib for bytes;
 
@@ -63,6 +63,11 @@ contract TapOFT is PausableOFT {
     /// @notice LayerZero governance chain identifier
     uint256 public governanceChainIdentifier;
 
+    /// @notice returns the pause state of the contract
+    bool public paused;
+
+    /// @notice returns the Conservator address
+    address public conservator;
     // ==========
     // *EVENTS*
     // ==========
@@ -74,6 +79,15 @@ contract TapOFT is PausableOFT {
     event Burned(address indexed _from, uint256 _amount);
     /// @notice event emitted when the governance chain identifier is updated
     event GovernanceChainIdentifierUpdated(uint256 _old, uint256 _new);
+    /// @notice event emitted when pause state is changed
+    event PausedUpdated(bool oldState, bool newState);
+    /// @notice event emitted when Conservator is changed
+    event ConservatorUpdated(address indexed old, address indexed _new);
+
+    modifier notPaused() {
+        require(!paused, 'TAP: paused');
+        _;
+    }
 
     // ==========
     // * METHODS *
@@ -93,7 +107,7 @@ contract TapOFT is PausableOFT {
         address _lbp,
         address _airdrop,
         uint16 _governanceChainId
-    ) PausableOFT('Tapioca', 'TAP', _lzEndpoint) {
+    ) OFTV2('Tapioca', 'TAP', 8, _lzEndpoint) {
         require(_lzEndpoint != address(0), 'LZ endpoint not valid');
         governanceChainIdentifier = _governanceChainId;
         if (_getChainId() == governanceChainIdentifier) {
@@ -104,6 +118,8 @@ contract TapOFT is PausableOFT {
             require(totalSupply() == INITIAL_SUPPLY, 'initial supply not valid');
         }
         emissionsStartTime = block.timestamp;
+
+        conservator = msg.sender;
     }
 
     ///-- Owner methods --
@@ -112,6 +128,24 @@ contract TapOFT is PausableOFT {
     function setGovernanceChainIdentifier(uint256 _identifier) external onlyOwner {
         emit GovernanceChainIdentifierUpdated(governanceChainIdentifier, _identifier);
         governanceChainIdentifier = _identifier;
+    }
+
+    /// @notice Set the Conservator address
+    /// @dev Conservator can pause the contract
+    /// @param _conservator The new address
+    function setConservator(address _conservator) external onlyOwner {
+        require(_conservator != address(0), 'TAP: address not valid');
+        emit ConservatorUpdated(conservator, _conservator);
+        conservator = _conservator;
+    }
+
+    /// @notice updates the pause state of the contract
+    /// @param val the new value
+    function updatePause(bool val) external {
+        require(msg.sender == conservator, 'TAP: unauthorized');
+        require(val != paused, 'TAP: same state');
+        emit PausedUpdated(paused, val);
+        paused = val;
     }
 
     /// @notice sets a new minter address
@@ -145,7 +179,7 @@ contract TapOFT is PausableOFT {
 
     ///-- Write methods --
     /// @notice Emit the TAP for the current week
-    function emitForWeek() external whenNotPaused returns (uint256) {
+    function emitForWeek() external notPaused returns (uint256) {
         require(_getChainId() == governanceChainIdentifier, 'chain not valid');
 
         uint256 week = _timestampToWeek(block.timestamp);
@@ -173,7 +207,7 @@ contract TapOFT is PausableOFT {
     /// @notice extracts from the minted TAP
     /// @param _to Address to send the minted TAP to
     /// @param _amount TAP amount
-    function extractTAP(address _to, uint256 _amount) external whenNotPaused {
+    function extractTAP(address _to, uint256 _amount) external notPaused {
         require(msg.sender == minter, 'unauthorized');
         require(_amount > 0, 'amount not valid');
 
@@ -184,7 +218,7 @@ contract TapOFT is PausableOFT {
 
     /// @notice burns TAP
     /// @param _amount TAP amount
-    function removeTAP(uint256 _amount) external whenNotPaused {
+    function removeTAP(uint256 _amount) external notPaused {
         _burn(msg.sender, _amount);
         emit Burned(msg.sender, _amount);
     }
