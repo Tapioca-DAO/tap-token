@@ -71,6 +71,6 @@
         "hardhat-tracer": "^1.2.1",
         "husky": "^8.0.1",
         "lodash": "^4.17.21",
-        "tapioca-sdk": "^1.1.18"
+        "tapioca-sdk": "^1.1.20"
     }
 }
