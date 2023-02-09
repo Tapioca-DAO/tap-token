@@ -2,7 +2,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TContract } from 'tapioca-sdk/dist/shared';
-import { TapiocaOptionBroker__factory } from '../typechain';
+import { TapiocaOptionBroker, TapiocaOptionBrokerMock, TapiocaOptionBroker__factory } from '../typechain';
 import { updateDeployments, verify } from '../scripts/deployment.utils';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -42,14 +42,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const tap = await hre.ethers.getContractAt('TapOFT', tapOFT);
     if ((await tap.minter()) !== tOBDeployment.address) {
         console.log('[+] Setting tOB as minter for TapOFT');
-        await tap.setMinter(tOBDeployment.address);
+        await (await tap.setMinter(tOBDeployment.address)).wait();
     }
 
-    const tOB = await hre.ethers.getContractAt(deploymentName, tOBDeployment.address);
+    const tOB = (await hre.ethers.getContractAt(deploymentName, tOBDeployment.address)) as TapiocaOptionBroker | TapiocaOptionBrokerMock;
     const oTAPcontract = await hre.ethers.getContractAt('OTAP', oTAP);
     if ((await oTAPcontract.broker()) !== tOBDeployment.address) {
         console.log('[+] Claiming oTAP broker role on tOB');
-        await tOB.oTAPBrokerClaim();
+        await (await tOB.oTAPBrokerClaim()).wait();
     }
 
     console.log(`Done. Deployed on ${tOBDeployment.address} with args ${args}`);
