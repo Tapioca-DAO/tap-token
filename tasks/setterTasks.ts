@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TapiocaOptionBroker } from '../typechain';
 
-export const setOracleMockRate__task = async (taskArgs: any, hre: HardhatRuntimeEnvironment) => {
+export const setOracleMockRate__task = async (taskArgs: { rate: string; oracleAddress: string }, hre: HardhatRuntimeEnvironment) => {
     const oracleMock = await hre.ethers.getContractAt('OracleMock', taskArgs.oracleAddress);
     await oracleMock.setRate(taskArgs.rate);
 };

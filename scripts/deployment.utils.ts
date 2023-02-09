@@ -87,7 +87,7 @@ export const registerContract = async (
     });
     await verify(hre, deploymentName, args);
     const contract = await deployments.get(deploymentName);
-    console.log('Done');
+    console.log('[+] Deployed', contractName, 'at', contract.address);
 
     const deploymentMeta = {
         name: deploymentName,

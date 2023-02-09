@@ -13,9 +13,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const contracts: TContract[] = [];
 
-    const tapOFT = (await SDK.API.utils.getDeployment('Tap-Token', 'TapOFT', chainId)).address;
-    const oTAP = (await SDK.API.utils.getDeployment('Tap-Token', 'OTAP', chainId)).address;
-    const tOLP = (await SDK.API.utils.getDeployment('Tap-Token', 'TapiocaOptionLiquidityProvision', chainId)).address;
+    const tapOFT = SDK.API.utils.getDeployment('Tap-Token', 'TapOFT', chainId).address;
+    const oTAP = SDK.API.utils.getDeployment('Tap-Token', 'OTAP', chainId).address;
+    const tOLP = SDK.API.utils.getDeployment('Tap-Token', 'TapiocaOptionLiquidityProvision', chainId).address;
 
     const paymentTokenBeneficiary = deployer;
     const tapOracle = '0xBaC59400ED43d56ea9b74C79D633d8FBC3FA43A4'; // Goerli Oracle Mock
