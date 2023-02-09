@@ -4,6 +4,7 @@ import { useChainId } from 'wagmi';
 
 import MainContainer from './components/MainContainer';
 import TapOFTOverview from './components/TapOFTOverview';
+import TOLPPositions from './components/TOLP';
 import TOLPTokens from './components/TOLPTokens';
 
 export function App() {
@@ -17,13 +18,12 @@ export function App() {
                 </Grid>
                 <Grid item xs>
                     <MainContainer>
+                        <Divider style={{ height: 2, margin: '10px 0px 10px 0px' }} color="white" />
                         <TapOFTOverview />
                         <Divider style={{ height: 2, margin: '10px 0px 10px 0px' }} color="white" />
-                        <Grid container justifyContent="center">
-                            <Grid item width={'100%'}>
-                                <TOLPTokens />
-                            </Grid>
-                        </Grid>
+                        <Typography variant="h4">tOLP</Typography>
+                        <TOLPTokens />
+                        <Divider style={{ height: 2, margin: '10px 0px 10px 0px' }} color="white" />
                     </MainContainer>
                 </Grid>
             </Grid>

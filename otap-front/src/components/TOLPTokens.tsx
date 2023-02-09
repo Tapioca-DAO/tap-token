@@ -21,6 +21,7 @@ import {
 } from '../generated';
 import { formatBigNumber } from '../utils';
 import { BigNumber, ethers } from 'ethers';
+import TOLPPositions from './TOLP';
 
 function useGetTOLPAddress(assetIds: []) {
     const [tOLPs, setTOLPs] = useState<`0x${string}`[]>([]);
@@ -122,25 +123,22 @@ function TOLPYBDeposit(props: { id: BigNumber }) {
 
     const [depositAmount, setDepositAmount] = useState<string>('0');
 
-    const onApprove = () => {
-        tkn?.approve(ADDRESSES.yieldBox as any, ethers.constants.MaxUint256).then(async (tx) => {
-            await tx.wait();
-            tknData.refetch();
-        });
+    const onApprove = async () => {
+        await (await tkn?.approve(ADDRESSES.yieldBox as any, ethers.constants.MaxUint256))?.wait();
+        await tknData.refetch();
+        await allowance.refetch();
     };
 
-    const onDeposit = () => {
-        yb?.depositAsset(props.id, address, address, BigNumber.from(depositAmount).mul((1e18).toString()), 0).then(async (tx) => {
-            await tx.wait();
-            balanceOf.refetch();
-        });
+    const onDeposit = async () => {
+        await (await yb?.depositAsset(props.id, address, address, BigNumber.from(depositAmount).mul((1e18).toString()), 0))?.wait();
+        await balanceOf.refetch();
+        await tknData.refetch();
     };
 
-    const onWithdraw = () => {
-        yb?.withdraw(props.id, address, address, BigNumber.from(depositAmount).mul((1e18).toString()), 0).then(async (tx) => {
-            await tx.wait();
-            balanceOf.refetch();
-        });
+    const onWithdraw = async () => {
+        await (await yb?.withdraw(props.id, address, address, BigNumber.from(depositAmount).mul((1e18).toString()), 0)).wait();
+        await balanceOf.refetch();
+        await tknData.refetch();
     };
 
     return (
@@ -194,11 +192,9 @@ function TOLPLock(props: { id: BigNumber }) {
     const [depositAmount, setDepositAmount] = useState<string>('0');
     const [durationAmount, setDurationAmount] = useState<string>('0');
 
-    const onApprove = () => {
-        yb?.setApprovalForAll(ADDRESSES.tOLP as any, true).then(async (tx) => {
-            await tx.wait();
-            await ybApproval.refetch();
-        });
+    const onApprove = async () => {
+        await (await yb?.setApprovalForAll(ADDRESSES.tOLP as any, true))?.wait();
+        await ybApproval.refetch();
     };
 
     const onLock = () => {
@@ -256,6 +252,10 @@ function TOLPTokens() {
 
     return (
         <div>
+            <Typography variant="h5">tOLP positions</Typography>
+            <div style={{ marginBottom: 12 }}>
+                <TOLPPositions />
+            </div>
             <Typography variant="h5">Mint tOLP tokens</Typography>
 
             <Grid container justifyContent="space-evenly">
