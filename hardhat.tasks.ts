@@ -7,6 +7,7 @@ import {
     setOracleMockRate__task,
     setTOBPaymentToken__task,
     setTOLPRegisterSingularity__task,
+    setTOLPUnregisterSingularity__task,
     setYieldBoxRegisterAsset__task,
 } from './tasks/setterTasks';
 import { getLocalDeployments__task, getSDKDeployments__task } from './tasks/getDeployments';
@@ -73,6 +74,11 @@ task('setTOLPRegisterSingularity', 'Register an SGL on tOLP ', setTOLPRegisterSi
     .addParam('sglAddress', 'Address of the SGL receipt token')
     .addParam('assetId', 'YieldBox asset ID of the SGL receipt token')
     .addParam('weight', 'Weight of the gauge');
+
+task('setTOLPUnregisterSingularity', 'Unregister an SGL on tOLP ', setTOLPUnregisterSingularity__task).addParam(
+    'sglAddress',
+    'Address of the SGL receipt token',
+);
 
 task('setYieldBoxRegisterAsset', 'Register an SGL on tOLP ', setYieldBoxRegisterAsset__task)
     .addParam('tknAddress', 'Address of the SGL receipt token')
