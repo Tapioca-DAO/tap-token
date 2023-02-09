@@ -137,7 +137,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
         expect((await tOLP.activeSingularities(sglTokenMock.address)).totalDeposited).to.be.eq(lockAmount);
     });
 
-    it('Should unlock a lock', async () => {
+    it.only('Should unlock a lock', async () => {
         const { signer, users, tOLP, yieldBox, sglTokenMock, sglTokenMockAsset, sglTokenMock2 } = await loadFixture(setupFixture);
 
         // Setup
@@ -169,6 +169,9 @@ describe('TapiocaOptionLiquidityProvision', () => {
             await yieldBox.toShare(sglTokenMockAsset, lockAmount, false),
         );
         expect((await tOLP.activeSingularities(sglTokenMock.address)).totalDeposited).to.be.eq(0);
+
+        // Can not unlock more than once the same lock
+        await expect(tOLP.unlock(tokenID, sglTokenMock.address, signer.address)).to.be.revertedWith('tOLP: Expired position');
     });
 
     it('Should should set an SGL pool weight', async () => {

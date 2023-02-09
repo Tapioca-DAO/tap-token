@@ -163,8 +163,6 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     }
 
     /// @notice Unlocks tOLP tokens
-    /// @dev We purposefully don't burn the `tokenID` and `lockPosition`, α.
-    ///      We can rely on lockPosition.time and lockPosition.duration to check if the lock is expired.
     /// @param _tokenId ID of the position to unlock
     /// @param _singularity Singularity market address
     /// @param _to Address to send the tokens to
@@ -173,14 +171,16 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         IERC20 _singularity,
         address _to
     ) external returns (uint256 sharesOut) {
+        require(_exists(_tokenId), 'tOLP: Expired position');
+
         LockPosition memory lockPosition = lockPositions[_tokenId];
         require(block.timestamp >= lockPosition.lockTime + lockPosition.lockDuration, 'tOLP: Lock not expired');
         require(activeSingularities[_singularity].sglAssetID == lockPosition.sglAssetID, 'tOLP: Invalid singularity');
 
         require(_isApprovedOrOwner(msg.sender, _tokenId), 'tOLP: not owner nor approved');
 
-        // _burn(_tokenId);
-        // delete lockPositions[_tokenId];
+        _burn(_tokenId);
+        delete lockPositions[_tokenId];
 
         // Transfer the tOLR tokens back to the owner
         sharesOut = yieldBox.toShare(lockPosition.sglAssetID, lockPosition.amount, false);
