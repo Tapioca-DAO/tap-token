@@ -1,4 +1,6 @@
 import { Button, Grid, Typography } from '@mui/material';
+import { Alchemy, Network } from 'alchemy-sdk';
+import { useEffect, useState } from 'react';
 import { useAccount, useBlockNumber, useProvider, useSigner } from 'wagmi';
 import { ADDRESSES } from '../addresses';
 import {
@@ -8,37 +10,32 @@ import {
     useTapiocaOptionLiquidityProvisionSglAssetIdToAddress,
     useTapOftBalanceOf,
     useTapOftTotalSupply,
-    useYieldBox,
 } from '../generated';
 import { formatBigNumber } from '../utils';
-import { Network, Alchemy } from 'alchemy-sdk';
-import { useEffect, useState } from 'react';
-import { BigNumber } from 'ethers';
 
 const useGetNFts = () => {
     const { address } = useAccount();
-    const { data: signer } = useSigner();
 
-    const tOLP = useTapiocaOptionLiquidityProvision({ address: ADDRESSES.tOLP as any, signerOrProvider: signer });
-    const { data: blockNumber } = useBlockNumber({ watch: true });
+    const block = useBlockNumber({
+        onBlock: (e) => {
+            setTimeout(() => block.refetch(), 5000);
+        },
+    });
     const [tokens, setTokens] = useState<string[]>([]);
 
     useEffect(() => {
-        (async () => {
-            const alchemy = new Alchemy({
-                network: Network.ETH_GOERLI,
-                apiKey: '631U-TWNMURg0u4lIqrjat0LraWguV6p',
-            });
-            const nfts = await alchemy.nft.getNftsForOwner(address, { contractAddresses: [ADDRESSES.tOLP as any] });
-            const filtered = nfts.ownedNfts
-                .map((e) => e.tokenId)
-                .filter(async (e) => {
-                    const lock = await tOLP?.getLock(e);
-                    return lock?.[0];
+        if (address) {
+            (async () => {
+                const alchemy = new Alchemy({
+                    network: Network.ETH_GOERLI,
+                    apiKey: '631U-TWNMURg0u4lIqrjat0LraWguV6p',
                 });
-            setTokens(filtered);
-        })();
-    }, [blockNumber]);
+                const nfts = await alchemy.nft.getNftsForOwner(address, { contractAddresses: [ADDRESSES.tOLP as any] });
+                const filtered = nfts.ownedNfts.map((e) => e.tokenId);
+                setTokens(filtered);
+            })();
+        }
+    }, [block.data]);
 
     return tokens;
 };
