@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 import { ADDRESSES } from '../addresses';
 import { useTapOftBalanceOf, useTapOftTotalSupply } from '../generated';
 import { formatBigNumber } from '../utils';
-import TOLPPositions from './TOLP';
+import TOLPPositions from './TOLPPositions';
 
 function TapOFTOverview() {
     const { address } = useAccount();
