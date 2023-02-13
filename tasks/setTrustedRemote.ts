@@ -5,16 +5,16 @@ import writeJsonFile from 'write-json-file';
 import { getDeployment } from './utils';
 
 //to mumbai
-//  npx hardhat setTrustedRemote --network arbitrum_goerli --chain 10109 --dst 0x78Ab2649fd6682e5c3CCFABb87ed6FcED0843cE4 --src 0xC27F48670cDae9Eee92156209642d47Ea1B85a35
-//  npx hardhat setTrustedRemote --network fuji_avalanche --chain 10109 --dst 0x78Ab2649fd6682e5c3CCFABb87ed6FcED0843cE4 --src 0xBEb739E11742D7015B807012894bDA8b0fe6b141
+//  npx hardhat setTrustedRemote --network arbitrum_goerli --chain 10109 --dst 0xd621150f4BE5b6E537f61dB2A59499F648F1B6e2 --src 0x31dA039c8Cf6eDC95fAFECb7B3E70a308128b7E0
+//  npx hardhat setTrustedRemote --network fuji_avalanche --chain 10109 --dst 0xd621150f4BE5b6E537f61dB2A59499F648F1B6e2 --src 0xc6B03Ba05Fb5E693D8b3533aa676FB4AFDd7DDc7
 
 //to fuji
-//  npx hardhat setTrustedRemote --network arbitrum_goerli --chain 10106 --dst 0xBEb739E11742D7015B807012894bDA8b0fe6b141 --src 0xC27F48670cDae9Eee92156209642d47Ea1B85a35
-//  npx hardhat setTrustedRemote --network mumbai --chain 10106 --dst 0xBEb739E11742D7015B807012894bDA8b0fe6b141 --src 0x78Ab2649fd6682e5c3CCFABb87ed6FcED0843cE4
+//  npx hardhat setTrustedRemote --network arbitrum_goerli --chain 10106 --dst 0xc6B03Ba05Fb5E693D8b3533aa676FB4AFDd7DDc7 --src 0x31dA039c8Cf6eDC95fAFECb7B3E70a308128b7E0
+//  npx hardhat setTrustedRemote --network mumbai --chain 10106 --dst 0xc6B03Ba05Fb5E693D8b3533aa676FB4AFDd7DDc7 --src 0xd621150f4BE5b6E537f61dB2A59499F648F1B6e2
 
 //to arb_goerli
-//  npx hardhat setTrustedRemote --network fuji_avalanche --chain 10143 --dst 0xC27F48670cDae9Eee92156209642d47Ea1B85a35 --src 0xBEb739E11742D7015B807012894bDA8b0fe6b141
-//  npx hardhat setTrustedRemote --network mumbai --chain 10143 --dst 0xC27F48670cDae9Eee92156209642d47Ea1B85a35 --src 0x78Ab2649fd6682e5c3CCFABb87ed6FcED0843cE4
+//  npx hardhat setTrustedRemote --network fuji_avalanche --chain 10143 --dst 0x31dA039c8Cf6eDC95fAFECb7B3E70a308128b7E0 --src 0xc6B03Ba05Fb5E693D8b3533aa676FB4AFDd7DDc7
+//  npx hardhat setTrustedRemote --network mumbai --chain 10143 --dst 0x31dA039c8Cf6eDC95fAFECb7B3E70a308128b7E0 --src 0xd621150f4BE5b6E537f61dB2A59499F648F1B6e2
 
 export const setTrustedRemote__task = async (taskArgs: { chain: string; dst: string; src: string }, hre: HardhatRuntimeEnvironment) => {
     console.log('\nRetrieving TapOFT');

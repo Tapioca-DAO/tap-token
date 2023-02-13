@@ -129,9 +129,9 @@ describe('tapOFT', () => {
     });
 
     it('should not mint when paused', async () => {
-        await tapiocaOFT0.pauseSendTokens(true);
+        await tapiocaOFT0.updatePause(true);
         await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.be.reverted;
-        await tapiocaOFT0.pauseSendTokens(false);
+        await tapiocaOFT0.updatePause(false);
         await time_travel(86400);
         await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.emit(tapiocaOFT0, 'Minted');
     });
@@ -154,9 +154,9 @@ describe('tapOFT', () => {
 
     it('should not burn when paused', async () => {
         const amount = BN(33_500_000).mul((1e18).toString());
-        await tapiocaOFT0.pauseSendTokens(true);
+        await tapiocaOFT0.updatePause(true);
         await expect(tapiocaOFT0.connect(signer).removeTAP(amount)).to.be.reverted;
-        await tapiocaOFT0.pauseSendTokens(false);
+        await tapiocaOFT0.updatePause(false);
         await expect(tapiocaOFT0.connect(signer).removeTAP(amount)).to.emit(tapiocaOFT0, 'Burned');
     });
 

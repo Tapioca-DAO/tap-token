@@ -5,8 +5,6 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@boringcrypto/boring-solidity/contracts/BoringOwnable.sol';
 
-import 'hardhat/console.sol';
-
 contract Vesting is BoringOwnable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 

@@ -38,11 +38,18 @@ export const setupFixture = async () => {
     // Deploy a "virtual" market
     const sglTokenMock = await (await ethers.getContractFactory('ERC20Mock')).deploy('sglTokenMock', 'STM', 0, 18);
     const sglTokenMockAsset = await yieldBox.assetCount();
+    const sglTokenMockStrategy = await (
+        await ethers.getContractFactory('ERC20WithoutStrategy')
+    ).deploy(yieldBox.address, sglTokenMock.address);
+
     const sglTokenMock2 = await (await ethers.getContractFactory('ERC20Mock')).deploy('sglTokenMock', 'STM', 0, 18);
     const sglTokenMock2Asset = sglTokenMockAsset.add(1);
+    const sglTokenMock2Strategy = await (
+        await ethers.getContractFactory('ERC20WithoutStrategy')
+    ).deploy(yieldBox.address, sglTokenMock2.address);
 
-    await deployNewMarket(yieldBox, sglTokenMock);
-    await deployNewMarket(yieldBox, sglTokenMock2);
+    await deployNewMarket(yieldBox, sglTokenMock, sglTokenMockStrategy.address);
+    await deployNewMarket(yieldBox, sglTokenMock2, sglTokenMock2Strategy.address);
 
     // Deploy payment tokens
     const stableMock = await (await ethers.getContractFactory('ERC20Mock')).deploy('StableMock', 'STBLM', 0, 6);
@@ -86,6 +93,6 @@ export const setupFixture = async () => {
     };
 };
 
-async function deployNewMarket(yieldBox: YieldBox, tkn: ERC20Mock) {
-    await yieldBox.registerAsset(1, tkn.address, ethers.constants.AddressZero, 0);
+async function deployNewMarket(yieldBox: YieldBox, tkn: ERC20Mock, strategyAddress: string) {
+    await yieldBox.registerAsset(1, tkn.address, strategyAddress, 0);
 }
