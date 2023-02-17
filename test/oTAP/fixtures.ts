@@ -86,6 +86,7 @@ export const setupFixture = async () => {
     };
 };
 
-async function deployNewMarket(yieldBox: YieldBox, tkn: ERC20Mock) {
-    await yieldBox.registerAsset(1, tkn.address, ethers.constants.AddressZero, 0);
+async function deployNewMarket(yieldBox: YieldBox, tkn: ERC20Mock, name = 'test', desc = 'test') {
+    const strat = await (await ethers.getContractFactory('YieldBoxVaultStrat')).deploy(yieldBox.address, tkn.address, name, desc);
+    await yieldBox.registerAsset(1, tkn.address, strat.address, 0);
 }
