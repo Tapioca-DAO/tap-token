@@ -41,7 +41,6 @@ import './oTAP.sol';
 // ************************************..     ..***********************************
 
 struct Participation {
-    bool hasParticipated;
     bool hasVotingPower;
     uint256 averageMagnitude;
 }
@@ -69,7 +68,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     uint256 public epochTAPValuation; // TAP price for the current epoch
     uint256 public epoch; // Represents the number of weeks since the start of the contract
 
-    mapping(address => mapping(uint256 => Participation)) public participants; // user => sglAssetId => Participation
+    mapping(uint256 => Participation) public participants; // tOLPTokenID => Participation
     mapping(uint256 => mapping(uint256 => bool)) public oTAPCalls; // oTAPTokenID => epoch => hasExercised
 
     mapping(uint256 => mapping(uint256 => uint256)) public singularityGauges; // epoch => sglAssetId => availableTAP
@@ -162,17 +161,19 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         (bool isPositionActive, LockPosition memory lock) = tOLP.getLock(_tOLPTokenID);
         require(isPositionActive, 'TapiocaOptionBroker: Position is not active');
 
-        address participant = tOLP.ownerOf(_tOLPTokenID);
         TWAMLPool memory pool = twAML[lock.sglAssetID];
 
         require(tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID), 'TapiocaOptionBroker: Not approved or owner');
-        require(participants[participant][lock.sglAssetID].hasParticipated == false, 'TapiocaOptionBroker: Already participating');
+
+        // Transfer tOLP position to this contract
+        tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
 
         uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Participate in twAMl voting
-        if (lock.amount >= computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR)) {
+        bool isTwAMLParticipant = lock.amount >= computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
+        if (isTwAMLParticipant) {
             pool.totalParticipants++; // Save participation
             pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
 
@@ -187,38 +188,51 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
             twAML[lock.sglAssetID] = pool; // Save twAML participation
             emit AMLDivergence(epoch, pool.cumulative, pool.averageMagnitude, pool.totalParticipants); // Register new voting power event
         }
+        // Save twAML participation
+        participants[_tOLPTokenID] = Participation(isTwAMLParticipant, pool.averageMagnitude);
 
         // Mint oTAP position
-        participants[participant][lock.sglAssetID] = Participation(true, true, pool.averageMagnitude);
-        oTAPTokenID = oTAP.mint(participant, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
+        oTAPTokenID = oTAP.mint(msg.sender, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
         emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, lock, target);
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
-    function exitPosition(uint256 _tOLPTokenID) external {
-        (, LockPosition memory lock) = tOLP.getLock(_tOLPTokenID);
-        address participant = tOLP.ownerOf(_tOLPTokenID);
-        require(tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID), 'TapiocaOptionBroker: Not approved or owner');
+    /// @param _oTAPTokenID The tokenId of the oTAP position
+    function exitPosition(uint256 _oTAPTokenID) external {
+        // Load data
+        (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
+        (, LockPosition memory lock) = tOLP.getLock(oTAPPosition.tOLP);
+
+        require(oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID), 'TapiocaOptionBroker: Not approved or owner');
         require(block.timestamp >= lock.lockTime + lock.lockDuration, 'TapiocaOptionBroker: Lock not expired');
 
-        Participation memory participation = participants[participant][lock.sglAssetID];
-        require(participation.hasParticipated == true, 'TapiocaOptionBroker: Not participating');
+        Participation memory participation = participants[oTAPPosition.tOLP];
 
         // Remove participation
         if (participation.hasVotingPower) {
-            twAML[lock.sglAssetID].cumulative -= participation.averageMagnitude;
-            twAML[lock.sglAssetID].totalDeposited -= lock.amount;
-            twAML[lock.sglAssetID].totalParticipants--;
-
             TWAMLPool memory pool = twAML[lock.sglAssetID];
+
+            pool.cumulative -= participation.averageMagnitude;
+            pool.totalDeposited -= lock.amount;
+            pool.totalParticipants--;
+
+            twAML[lock.sglAssetID] = pool; // Save twAML exit
             emit AMLDivergence(epoch, pool.cumulative, pool.averageMagnitude, pool.totalParticipants); // Register new voting power event
         }
 
-        delete participants[participant][lock.sglAssetID];
+        // Delete participation and burn oTAP position
+        delete participants[oTAPPosition.tOLP];
+        oTAP.burn(_oTAPTokenID);
 
-        emit ExitPosition(epoch, _tOLPTokenID, lock.amount);
+        // Transfer position back to user
+        tOLP.transferFrom(address(this), msg.sender, oTAPPosition.tOLP);
+
+        emit ExitPosition(epoch, oTAPPosition.tOLP, lock.amount);
     }
 
+    /// @notice Exercise an oTAP position
+    /// @param _oTAPTokenID tokenId of the oTAP position, position must be active
+    /// @param _paymentToken Address of the payment token to use, must be whitelisted
     function exerciseOption(uint256 _oTAPTokenID, IERC20 _paymentToken) external {
         // Load data
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
