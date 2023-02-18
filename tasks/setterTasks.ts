@@ -36,19 +36,19 @@ export const setTOLPUnregisterSingularity__task = async (taskArgs: { sglAddress:
 };
 
 export const setYieldBoxRegisterAsset__task = async (
-    taskArgs: { tknAddress: string; tknId?: string; tknType?: string; strategy?: string },
+    taskArgs: { tknAddress: string; tknId?: string; tknType?: string; strategy?: string; strategyName?: string; strategyDesc?: string },
     hre: HardhatRuntimeEnvironment,
 ) => {
     const yieldBoxAddress = SDK.API.utils.getDeployment('Tapioca-Bar', 'YieldBox', await hre.getChainId())?.address;
     const yb = await hre.ethers.getContractAt('YieldBox', yieldBoxAddress);
 
+    const strat = await (
+        await hre.ethers.getContractFactory('YieldBoxVaultStrat')
+    ).deploy(yb.address, taskArgs.tknAddress, taskArgs.strategyName ?? 'YBVaultStrat', taskArgs.strategyDesc ?? 'YBVaultStrat');
+    await strat.deployed();
     await (
-        await yb.registerAsset(
-            taskArgs.tknType ?? 1,
-            taskArgs.tknAddress,
-            taskArgs.strategy ?? hre.ethers.constants.AddressZero,
-            taskArgs.tknId ?? 0,
-        )
+        await yb.registerAsset(taskArgs.tknType ?? 1, taskArgs.tknAddress, taskArgs.strategy ?? strat.address, taskArgs.tknId ?? 0)
     ).wait();
     console.log('[+] Asset ID: ', await yb.assetCount());
+    return await yb.assetCount();
 };

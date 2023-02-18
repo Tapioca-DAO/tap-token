@@ -27,10 +27,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
         const sglTokenMock1Meta = SDK.API.utils.getDeployment('Tap-Token', 'sglTokenMock1', chainId);
         const sglTokenMock2Meta = SDK.API.utils.getDeployment('Tap-Token', 'sglTokenMock2', chainId);
-        await setYieldBoxRegisterAsset__task({ tknAddress: sglTokenMock1Meta.address }, hre);
-        await setYieldBoxRegisterAsset__task({ tknAddress: sglTokenMock2Meta.address }, hre);
-        const sgl1AssetID = await yieldBox.ids(1, sglTokenMock1Meta.address, hre.ethers.constants.AddressZero, 0);
-        const sgl2AssetID = await yieldBox.ids(1, sglTokenMock2Meta.address, hre.ethers.constants.AddressZero, 0);
+        const sgl1AssetID = await setYieldBoxRegisterAsset__task(
+            { tknAddress: sglTokenMock1Meta.address, strategyName: 'STM1-Vault', strategyDesc: 'sglTokenMock1 vault' },
+            hre,
+        );
+        const sgl2AssetID = await setYieldBoxRegisterAsset__task(
+            { tknAddress: sglTokenMock1Meta.address, strategyName: 'STM2-Vault', strategyDesc: 'sglTokenMock2 vault' },
+            hre,
+        );
 
         await setTOLPRegisterSingularity__task(
             { assetId: sgl1AssetID.toString(), sglAddress: sglTokenMock1Meta.address, weight: '0' },
