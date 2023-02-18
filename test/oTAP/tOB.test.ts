@@ -44,6 +44,7 @@ describe('TapiocaOptionBroker', () => {
         const lockTx = await tOLP.connect(signer).lock(signer.address, signer.address, sglTokenMock.address, lockDuration, ybAmount);
         const tOLPTokenID = await tOLP.tokenCounter();
 
+        await tOLP.connect(signer).approve(tOB.address, tOLPTokenID);
         await tOB.connect(signer).participate(tOLPTokenID);
         const oTAPTokenID = await oTAP.mintedOTAP();
 
@@ -89,8 +90,9 @@ describe('TapiocaOptionBroker', () => {
 
         const prevPoolState = await tOB.twAML(sglTokenMockAsset);
 
+        await tOLP.approve(tOB.address, tokenID);
         await tOB.participate(tokenID);
-        const participation = await tOB.participants(signer.address, sglTokenMockAsset);
+        const participation = await tOB.participants(tokenID);
 
         // Check participation
         const computedAML = {
@@ -102,7 +104,6 @@ describe('TapiocaOptionBroker', () => {
         computedAML.averageMagnitude = aml_computeAverageMagnitude(computedAML.magnitude, BN(0), prevPoolState.totalParticipants.add(1));
         computedAML.discount = aml_computeDiscount(computedAML.magnitude, BN(0), BN(5e4), BN(50e4));
 
-        expect(participation.hasParticipated).to.be.true;
         expect(participation.hasVotingPower).to.be.true;
         expect(participation.averageMagnitude).to.be.equal(computedAML.averageMagnitude);
 
@@ -126,12 +127,14 @@ describe('TapiocaOptionBroker', () => {
         expect(oTAPToken.tOLP).to.be.equal(tokenID);
         expect(oTAPToken.expiry).to.be.equal((await hre.ethers.provider.getBlock(lockTx.blockNumber!)).timestamp + lockDuration);
 
-        await expect(tOB.participate(tokenID)).to.be.revertedWith('TapiocaOptionBroker: Already participating');
+        /// Check transfer of tOLP
+        await expect(tOB.participate(tokenID)).to.be.revertedWith('TapiocaOptionBroker: Not approved or owner');
+        expect(await tOLP.ownerOf(tokenID)).to.be.equal(tOB.address);
 
         // Check participation without enough voting power
         const user = users[0];
         const _amount = amount * 0.001 - 1; // < 0.1% of total weights
-        await sglTokenMock.connect(user).freeMint(_amount);
+        await sglTokenMock.mintTo(user.address, _amount);
         await sglTokenMock.connect(user).approve(yieldBox.address, _amount);
         await yieldBox.connect(user).depositAsset(sglTokenMockAsset, user.address, user.address, _amount, 0);
         const _ybAmount = await yieldBox
@@ -140,13 +143,14 @@ describe('TapiocaOptionBroker', () => {
         await yieldBox.connect(user).setApprovalForAll(tOLP.address, true);
         await tOLP.connect(user).lock(user.address, user.address, sglTokenMock.address, lockDuration, _ybAmount);
         const _tokenID = await tOLP.tokenCounter();
+        await tOLP.connect(user).approve(tOB.address, _tokenID);
         await tOB.connect(user).participate(_tokenID);
 
         expect(await tOB.twAML(sglTokenMockAsset)).to.be.deep.equal(newPoolState); // No change in AML state
     });
 
     it('should exit position', async () => {
-        const { signer, users, tOLP, tOB, tapOFT, sglTokenMock, sglTokenMockAsset, yieldBox } = await loadFixture(setupFixture);
+        const { signer, users, tOLP, tOB, tapOFT, sglTokenMock, sglTokenMockAsset, yieldBox, oTAP } = await loadFixture(setupFixture);
 
         // Setup tOB
         await tOB.oTAPBrokerClaim();
@@ -169,20 +173,30 @@ describe('TapiocaOptionBroker', () => {
         // Check exit before participation
         const snapshot = await takeSnapshot();
         await time.increase(lockDuration);
-        await expect(tOB.exitPosition(tokenID)).to.be.revertedWith('TapiocaOptionBroker: Not participating');
+        await expect(tOB.exitPosition((await oTAP.mintedOTAP()).add(1))).to.be.revertedWith(
+            'TapiocaOptionBroker: oTAP position does not exist',
+        );
         await snapshot.restore();
 
         // Participate
+        await tOLP.approve(tOB.address, tokenID);
         await tOB.participate(tokenID);
-        const participation = await tOB.participants(signer.address, sglTokenMockAsset);
+        const oTAPTknID = await oTAP.mintedOTAP();
+        const participation = await tOB.participants(tokenID);
         const prevPoolState = await tOB.twAML(sglTokenMockAsset);
 
         // Test exit
-        await expect(tOB.connect(users[0]).exitPosition(tokenID)).to.be.revertedWith('TapiocaOptionBroker: Not approved or owner');
-        await expect(tOB.exitPosition(tokenID)).to.be.revertedWith('TapiocaOptionBroker: Lock not expired');
+        await expect(tOB.connect(users[0]).exitPosition(oTAPTknID)).to.be.revertedWith('TapiocaOptionBroker: Not approved or owner');
+        await expect(tOB.exitPosition(oTAPTknID)).to.be.revertedWith('TapiocaOptionBroker: Lock not expired');
+        expect(await tOLP.ownerOf(tokenID)).to.be.equal(tOB.address);
 
         await time.increase(lockDuration);
-        await tOB.exitPosition(tokenID);
+        await oTAP.approve(tOB.address, oTAPTknID);
+        await tOB.exitPosition(oTAPTknID);
+
+        // Check tokens transfer
+        expect(await tOLP.ownerOf(tokenID)).to.be.equal(signer.address);
+        expect(await oTAP.exists(oTAPTknID)).to.be.false;
 
         // Check AML update
         const newPoolState = await tOB.twAML(sglTokenMockAsset);
@@ -196,7 +210,7 @@ describe('TapiocaOptionBroker', () => {
 
         const user = users[0];
         const _amount = amount * 0.001 - 1; // < 0.1% of total weights
-        await sglTokenMock.connect(user).freeMint(_amount);
+        await sglTokenMock.mintTo(user.address, _amount);
         await sglTokenMock.connect(user).approve(yieldBox.address, _amount);
         await yieldBox.connect(user).depositAsset(sglTokenMockAsset, user.address, user.address, _amount, 0);
         const _ybAmount = await yieldBox
@@ -205,10 +219,14 @@ describe('TapiocaOptionBroker', () => {
         await yieldBox.connect(user).setApprovalForAll(tOLP.address, true);
         await tOLP.connect(user).lock(user.address, user.address, sglTokenMock.address, lockDuration, _ybAmount);
         const _tokenID = await tOLP.tokenCounter();
+        await tOLP.connect(user).approve(tOB.address, _tokenID);
         await tOB.connect(user).participate(_tokenID);
 
         await time.increase(lockDuration);
-        await tOB.connect(user).exitPosition(_tokenID);
+
+        const _oTAPTknID = await oTAP.mintedOTAP();
+        await oTAP.connect(user).approve(tOB.address, _oTAPTknID);
+        await tOB.connect(user).exitPosition(_oTAPTknID);
 
         expect(await tOB.twAML(sglTokenMockAsset)).to.be.deep.equal(newPoolState); // No change in AML state
     });
@@ -305,17 +323,17 @@ describe('TapiocaOptionBroker', () => {
         const userLock2 = await lockAndParticipate(users[1], 1e8, 3600, tOLP, tOB, oTAP, yieldBox, sglTokenMock, sglTokenMockAsset);
 
         // Check requirements
-        await expect(tOB.connect(users[1]).exerciseOption(userLock1.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+        await expect(tOB.connect(users[1]).exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0)).to.be.rejectedWith(
             'TapiocaOptionBroker: Not approved or owner',
         );
         const snapshot = await takeSnapshot();
         await tOB.setPaymentToken(stableMock.address, hre.ethers.constants.AddressZero, '0x00');
-        await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+        await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0)).to.be.rejectedWith(
             'TapiocaOptionBroker: Payment token not supported',
         );
         await snapshot.restore();
         await time.increase(userLock1.lockDuration);
-        await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+        await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0)).to.be.rejectedWith(
             'TapiocaOptionBroker: Option expired',
         );
         await snapshot.restore();
@@ -343,17 +361,18 @@ describe('TapiocaOptionBroker', () => {
             user1PaymentAmount = paymentTokenToSend;
 
             // ERC20 checks
-            await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+            await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0)).to.be.rejectedWith(
                 'ERC20: balance too low',
             );
-            await stableMock.connect(users[0]).freeMint(paymentTokenToSend);
-            await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+            await stableMock.mintTo(users[0].address, paymentTokenToSend);
+
+            await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0)).to.be.rejectedWith(
                 'ERC20: allowance too low',
             );
             await stableMock.connect(users[0]).approve(tOB.address, paymentTokenToSend);
 
             // Exercise option checks
-            await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address))
+            await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address, eligibleTapAmount))
                 .to.emit(tOB, 'ExerciseOption')
                 .withArgs(epoch, users[0].address, stableMock.address, userLock1.oTAPTokenID, eligibleTapAmount); // Successful exercise
 
@@ -362,9 +381,9 @@ describe('TapiocaOptionBroker', () => {
             expect(await stableMock.balanceOf(tOB.address)).to.be.equal(paymentTokenToSend); // Check payment token transfer to TOB contract
 
             // end
-            await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
-                'TapiocaOptionBroker: Already exercised',
-            );
+            await expect(
+                tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address, eligibleTapAmount),
+            ).to.be.rejectedWith('TapiocaOptionBroker: Already exercised');
         }
 
         // Exercise option for user 2
@@ -379,17 +398,18 @@ describe('TapiocaOptionBroker', () => {
                 .div(1e4);
 
             // ERC20 checks
-            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address, 0)).to.be.rejectedWith(
                 'ERC20: balance too low',
             );
-            await stableMock.connect(users[1]).freeMint(paymentTokenToSend);
-            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
+            await stableMock.mintTo(users[1].address, paymentTokenToSend);
+
+            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address, 0)).to.be.rejectedWith(
                 'ERC20: allowance too low',
             );
             await stableMock.connect(users[1]).approve(tOB.address, paymentTokenToSend);
 
             // Exercise option checks
-            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address))
+            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address, eligibleTapAmount))
                 .to.emit(tOB, 'ExerciseOption')
                 .withArgs(epoch, users[1].address, stableMock.address, userLock2.oTAPTokenID, eligibleTapAmount); // Successful exercise
 
@@ -400,9 +420,9 @@ describe('TapiocaOptionBroker', () => {
             expect(await stableMock.balanceOf(tOB.address)).to.be.equal(paymentTokenToSend.add(user1PaymentAmount)); // Check payment token transfer to TOB contract
 
             // end
-            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address)).to.be.rejectedWith(
-                'TapiocaOptionBroker: Already exercised',
-            );
+            await expect(
+                tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address, eligibleTapAmount),
+            ).to.be.rejectedWith('TapiocaOptionBroker: Already exercised');
         }
     });
 
@@ -440,12 +460,13 @@ describe('TapiocaOptionBroker', () => {
 
         await tOB.setPaymentToken(stableMock.address, stableMockOracle.address, '0x00');
         const userLock1 = await lockAndParticipate(users[0], 3e8, 3600, tOLP, tOB, oTAP, yieldBox, sglTokenMock, sglTokenMockAsset);
-        const otcDetails = await tOB.getOTCDealDetails(userLock1.oTAPTokenID, stableMock.address);
+        const otcDetails = await tOB.getOTCDealDetails(userLock1.oTAPTokenID, stableMock.address, 0);
 
         // Exercise
-        await stableMock.connect(users[0]).freeMint(otcDetails.paymentTokenAmount);
+        await stableMock.mintTo(users[0].address, otcDetails.paymentTokenAmount);
+
         await stableMock.connect(users[0]).approve(tOB.address, otcDetails.paymentTokenAmount);
-        await tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address);
+        await tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address, otcDetails.eligibleTapAmount);
 
         // Collect
         await expect(tOB.connect(users[0]).collectPaymentTokens([stableMock.address])).to.be.rejectedWith(

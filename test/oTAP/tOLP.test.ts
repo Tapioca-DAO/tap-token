@@ -45,12 +45,8 @@ describe('TapiocaOptionLiquidityProvision', () => {
         expect(await tOLP.getSingularities()).to.be.deep.eq([sglTokenMockAsset, sglTokenMock2Asset]);
 
         // Already registered
-        await expect(tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0)).to.revertedWith(
-            'TapiocaOptions: already registered',
-        );
-        await expect(tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 0)).to.revertedWith(
-            'TapiocaOptions: already registered',
-        );
+        await expect(tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0)).to.revertedWith('tOLP: already registered');
+        await expect(tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 0)).to.revertedWith('tOLP: already registered');
     });
 
     it('should unregister a singularity', async () => {
@@ -88,8 +84,8 @@ describe('TapiocaOptionLiquidityProvision', () => {
         expect(await tOLP.getSingularities()).to.be.deep.eq([]);
 
         // Not registered
-        await expect(tOLP.unregisterSingularity(sglTokenMock.address)).to.revertedWith('TapiocaOptions: not registered');
-        await expect(tOLP.unregisterSingularity(sglTokenMock2.address)).to.revertedWith('TapiocaOptions: not registered');
+        await expect(tOLP.unregisterSingularity(sglTokenMock.address)).to.revertedWith('tOLP: not registered');
+        await expect(tOLP.unregisterSingularity(sglTokenMock2.address)).to.revertedWith('tOLP: not registered');
     });
 
     it('should create a lock', async () => {
@@ -137,7 +133,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
         expect((await tOLP.activeSingularities(sglTokenMock.address)).totalDeposited).to.be.eq(lockAmount);
     });
 
-    it.only('Should unlock a lock', async () => {
+    it('Should unlock a lock', async () => {
         const { signer, users, tOLP, yieldBox, sglTokenMock, sglTokenMockAsset, sglTokenMock2 } = await loadFixture(setupFixture);
 
         // Setup
