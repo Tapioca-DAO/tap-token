@@ -70,6 +70,11 @@ contract OTAP is ERC721 {
         return (ownerOf(_tokenId), options[_tokenId]);
     }
 
+    /// @notice Check if a token exists
+    function exists(uint256 _tokenId) external view returns (bool) {
+        return _exists(_tokenId);
+    }
+
     // ==========
     //    WRITE
     // ==========
