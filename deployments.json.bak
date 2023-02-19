@@ -11,7 +11,7 @@
         },
         {
             "name": "TapOFT",
-            "address": "0x2627DD16098EFA52B92D5c665Ad789faDA12fC9e",
+            "address": "0x03ae2c12caF7Dc6A8f53869B3377cc6E13769449",
             "meta": {
                 "constructorArguments": [
                     "0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23",
@@ -25,7 +25,7 @@
         },
         {
             "name": "TapiocaOptionLiquidityProvision",
-            "address": "0x76174d787894C091AF447EA5f299E9DB5c7f9664",
+            "address": "0x61dAbF1fccCA5b1B7D02C373Bda7013218bad051",
             "meta": {
                 "constructorArguments": [
                     "0xCA3604D7Df34a785D20Cbe7A0Bbd0AF54E9FeF9e"
@@ -34,19 +34,19 @@
         },
         {
             "name": "OTAP",
-            "address": "0x897bd9D560c4E7398F7e06CD24aaB91693314A14",
+            "address": "0x3ED0F513073F7dc47987D5FF6eb9c47228939B8B",
             "meta": {
                 "constructorArguments": []
             }
         },
         {
             "name": "TapiocaOptionBrokerMock",
-            "address": "0xd93F65e5Ee424891dBCDEAFE347a553C43d266b7",
+            "address": "0xcc9DbC4326d5F526e27e0a3A6661D5b89A2c850F",
             "meta": {
                 "constructorArguments": [
-                    "0x76174d787894C091AF447EA5f299E9DB5c7f9664",
-                    "0x897bd9D560c4E7398F7e06CD24aaB91693314A14",
-                    "0x2627DD16098EFA52B92D5c665Ad789faDA12fC9e",
+                    "0x61dAbF1fccCA5b1B7D02C373Bda7013218bad051",
+                    "0x3ED0F513073F7dc47987D5FF6eb9c47228939B8B",
+                    "0x03ae2c12caF7Dc6A8f53869B3377cc6E13769449",
                     "0xBaC59400ED43d56ea9b74C79D633d8FBC3FA43A4",
                     "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                 ]
@@ -54,7 +54,7 @@
         },
         {
             "name": "sglTokenMock1",
-            "address": "0xDae5BFc89b7feA8F9747d55EA68622A189656fb9",
+            "address": "0x3E7F7A2530B77cb2268Cd0679208964D1A6064A9",
             "meta": {
                 "constructorArguments": [
                     "sglTokenMock1",
@@ -66,7 +66,7 @@
         },
         {
             "name": "sglTokenMock2",
-            "address": "0xB345B67A0eFabfbd00143Fc8b38A3154a90294cA",
+            "address": "0x595bcCa99Dca3701571a8098892DdcF1Cebe2ee6",
             "meta": {
                 "constructorArguments": [
                     "sglTokenMock2",
@@ -78,7 +78,7 @@
         },
         {
             "name": "WETHMock",
-            "address": "0xD36a26CB8E9A47f735fdDF015e6d752F1cC3524c",
+            "address": "0xBb2b7057D34154BF5D312CC82632f9e225C53445",
             "meta": {
                 "constructorArguments": [
                     "wethMock",
@@ -90,7 +90,7 @@
         },
         {
             "name": "USDCMock",
-            "address": "0xD8ea3099D567142c7a87612d75a0D760158AbaCB",
+            "address": "0x54dfF8d101E41E44C2344CdF348eaDeFdE19D327",
             "meta": {
                 "constructorArguments": [
                     "usdcMock",
@@ -102,7 +102,7 @@
         },
         {
             "name": "WETHMOracleMock",
-            "address": "0xc1Eb15Edb6264651dE88028d36DC01B30EA08e99",
+            "address": "0xE923758D9DF2bf89CD9fd1767de55EC9F5439F63",
             "meta": {
                 "constructorArguments": [
                     "WETHMOracle"
