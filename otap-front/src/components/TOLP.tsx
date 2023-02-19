@@ -127,9 +127,9 @@ function TOLPYBDeposit(props: { id: BigNumber }) {
     const [depositAmount, setDepositAmount] = useState<string>('0');
 
     useEffect(() => {
-        const timeOut = setTimeout(async () => await refetchBalance(), 10_000);
+        const timeOut = setInterval(async () => await refetchBalance(), 10_000);
 
-        return () => clearTimeout(timeOut);
+        return () => clearInterval(timeOut);
     }, []);
 
     const onApprove = async () => {
@@ -176,7 +176,7 @@ function TOLPYBDeposit(props: { id: BigNumber }) {
                 InputProps={{ style: { color: 'white' } }}
                 disabled={tknData.data?.eq(0)}
             />
-            {tknSymbol.data} to/from YieldBox. Balance: {formatBigNumber(balanceOf.data)}
+            {tknSymbol.data} to/from YieldBox. Balance: {formatBigNumber(balanceOf?.data ?? BigNumber.from(0))}
         </Typography>
     );
 }
@@ -261,10 +261,6 @@ function TOLP() {
 
     return (
         <div>
-            <Typography variant="h5">tOLP positions</Typography>
-            <div style={{ marginBottom: 12 }}>
-                <TOLPPositions />
-            </div>
             <Typography variant="h5">Mint tOLP tokens</Typography>
 
             <Grid container justifyContent="space-evenly">
@@ -296,6 +292,11 @@ function TOLP() {
                     </Grid>
                 ))}
             </Grid>
+
+            <Typography variant="h5">tOLP positions</Typography>
+            <div style={{ marginBottom: 12 }}>
+                <TOLPPositions />
+            </div>
         </div>
     );
 }

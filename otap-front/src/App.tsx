@@ -22,7 +22,9 @@ export function App() {
                         <Divider style={{ height: 2, margin: '10px 0px 10px 0px' }} color="white" />
                         <TapOFTOverview />
                         <Divider style={{ height: 2, margin: '10px 0px 10px 0px' }} color="white" />
-                        <Typography variant="h4">tOLP</Typography>
+                        <Typography variant="h4" style={{ textDecoration: 'underline' }}>
+                            tOLP
+                        </Typography>
                         <TOLP />
                         <Divider style={{ height: 2, margin: '10px 0px 10px 0px' }} color="white" />
                         <TOB />
