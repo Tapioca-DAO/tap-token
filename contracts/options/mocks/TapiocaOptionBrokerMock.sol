@@ -41,7 +41,6 @@ import '../oTAP.sol';
 // ************************************..     ..***********************************
 
 struct Participation {
-    bool hasParticipated;
     bool hasVotingPower;
     uint256 averageMagnitude;
 }
@@ -69,7 +68,7 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
     uint256 public epochTAPValuation; // TAP price for the current epoch
     uint256 public epoch; // Represents the number of weeks since the start of the contract
 
-    mapping(address => mapping(uint256 => Participation)) public participants; // user => sglAssetId => Participation
+    mapping(uint256 => Participation) public participants; // tOLPTokenID => Participation
     mapping(uint256 => mapping(uint256 => bool)) public oTAPCalls; // oTAPTokenID => epoch => hasExercised
 
     mapping(uint256 => mapping(uint256 => uint256)) public singularityGauges; // epoch => sglAssetId => availableTAP
@@ -83,7 +82,6 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
     uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
     uint256 constant dMAX = 50 * 1e4; // 5% - 50% discount
     uint256 constant dMIN = 5 * 1e4;
-    // uint256 constant WEEK = 7 days;
     uint256 constant WEEK = 12 hours;
 
     /// =====-------======
@@ -119,13 +117,14 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
     ///         The oracle uses the last peeked value, and not the latest one, so the payment amount may be different.
     /// @param _oTAPTokenID The oTAP token ID
     /// @param _paymentToken The payment token
+    /// @param _tapAmount The amount of TAP to be exchanged. If 0 it will use the full amount of TAP eligible for the deal
     /// @return eligibleTapAmount The amount of TAP eligible for the deal
     /// @return paymentTokenAmount The amount of payment tokens required for the deal
-    function getOTCDealDetails(uint256 _oTAPTokenID, IERC20 _paymentToken)
-        external
-        view
-        returns (uint256 eligibleTapAmount, uint256 paymentTokenAmount)
-    {
+    function getOTCDealDetails(
+        uint256 _oTAPTokenID,
+        IERC20 _paymentToken,
+        uint256 _tapAmount
+    ) external view returns (uint256 eligibleTapAmount, uint256 paymentTokenAmount) {
         // Load data
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
         (bool isPositionActive, LockPosition memory tOLPLockPosition) = tOLP.getLock(oTAPPosition.tOLP);
@@ -144,7 +143,7 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
         eligibleTapAmount = muldiv(tOLPLockPosition.amount, gaugeTotalForEpoch, tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID));
 
         // Get TAP valuation
-        uint256 otcAmountInUSD = muldiv(eligibleTapAmount, epochTAPValuation, 1e18); // Divided by TAP decimals
+        uint256 otcAmountInUSD = muldiv(_tapAmount == 0 ? eligibleTapAmount : _tapAmount, epochTAPValuation, 1e18); // Divided by TAP decimals
         // Get payment token valuation
         (, uint256 paymentTokenValuation) = paymentTokenOracle.oracle.peek(paymentTokenOracle.oracleData);
 
@@ -163,17 +162,19 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
         (bool isPositionActive, LockPosition memory lock) = tOLP.getLock(_tOLPTokenID);
         require(isPositionActive, 'TapiocaOptionBroker: Position is not active');
 
-        address participant = tOLP.ownerOf(_tOLPTokenID);
         TWAMLPool memory pool = twAML[lock.sglAssetID];
 
         require(tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID), 'TapiocaOptionBroker: Not approved or owner');
-        require(participants[participant][lock.sglAssetID].hasParticipated == false, 'TapiocaOptionBroker: Already participating');
+
+        // Transfer tOLP position to this contract
+        tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
 
         uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Participate in twAMl voting
-        if (lock.amount >= computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR)) {
+        bool hasVotingPower = lock.amount >= computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
+        if (hasVotingPower) {
             pool.totalParticipants++; // Save participation
             pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
 
@@ -188,39 +189,59 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
             twAML[lock.sglAssetID] = pool; // Save twAML participation
             emit AMLDivergence(epoch, pool.cumulative, pool.averageMagnitude, pool.totalParticipants); // Register new voting power event
         }
+        // Save twAML participation
+        participants[_tOLPTokenID] = Participation(hasVotingPower, pool.averageMagnitude);
 
         // Mint oTAP position
-        participants[participant][lock.sglAssetID] = Participation(true, true, pool.averageMagnitude);
-        oTAPTokenID = oTAP.mint(participant, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
+        oTAPTokenID = oTAP.mint(msg.sender, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
         emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, lock, target);
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
-    function exitPosition(uint256 _tOLPTokenID) external {
-        (, LockPosition memory lock) = tOLP.getLock(_tOLPTokenID);
-        address participant = tOLP.ownerOf(_tOLPTokenID);
-        require(tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID), 'TapiocaOptionBroker: Not approved or owner');
+    /// @param _oTAPTokenID The tokenId of the oTAP position
+    function exitPosition(uint256 _oTAPTokenID) external {
+        require(oTAP.exists(_oTAPTokenID), 'TapiocaOptionBroker: oTAP position does not exist');
+
+        // Load data
+        (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
+        (, LockPosition memory lock) = tOLP.getLock(oTAPPosition.tOLP);
+
+        require(oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID), 'TapiocaOptionBroker: Not approved or owner');
         require(block.timestamp >= lock.lockTime + lock.lockDuration, 'TapiocaOptionBroker: Lock not expired');
 
-        Participation memory participation = participants[participant][lock.sglAssetID];
-        require(participation.hasParticipated == true, 'TapiocaOptionBroker: Not participating');
+        Participation memory participation = participants[oTAPPosition.tOLP];
 
         // Remove participation
         if (participation.hasVotingPower) {
-            twAML[lock.sglAssetID].cumulative -= participation.averageMagnitude;
-            twAML[lock.sglAssetID].totalDeposited -= lock.amount;
-            twAML[lock.sglAssetID].totalParticipants--;
-
             TWAMLPool memory pool = twAML[lock.sglAssetID];
+
+            pool.cumulative -= participation.averageMagnitude;
+            pool.totalDeposited -= lock.amount;
+            pool.totalParticipants--;
+
+            twAML[lock.sglAssetID] = pool; // Save twAML exit
             emit AMLDivergence(epoch, pool.cumulative, pool.averageMagnitude, pool.totalParticipants); // Register new voting power event
         }
 
-        delete participants[participant][lock.sglAssetID];
+        // Delete participation and burn oTAP position
+        delete participants[oTAPPosition.tOLP];
+        oTAP.burn(_oTAPTokenID);
 
-        emit ExitPosition(epoch, _tOLPTokenID, lock.amount);
+        // Transfer position back to user
+        tOLP.transferFrom(address(this), msg.sender, oTAPPosition.tOLP);
+
+        emit ExitPosition(epoch, oTAPPosition.tOLP, lock.amount);
     }
 
-    function exerciseOption(uint256 _oTAPTokenID, IERC20 _paymentToken) external {
+    /// @notice Exercise an oTAP position
+    /// @param _oTAPTokenID tokenId of the oTAP position, position must be active
+    /// @param _paymentToken Address of the payment token to use, must be whitelisted
+    /// @param _tapAmount Amount of TAP to exercise. If 0, the full amount is exercised
+    function exerciseOption(
+        uint256 _oTAPTokenID,
+        IERC20 _paymentToken,
+        uint256 _tapAmount
+    ) external {
         // Load data
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
         (bool isPositionActive, LockPosition memory tOLPLockPosition) = tOLP.getLock(oTAPPosition.tOLP);
@@ -240,11 +261,13 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];
         uint256 otcTapAmount = muldiv(tOLPLockPosition.amount, gaugeTotalForEpoch, tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID));
+        require(_tapAmount <= otcTapAmount, 'TapiocaOptionBroker: Amount exceeds eligible TAP');
+        uint256 chosenAmount = _tapAmount == 0 ? otcTapAmount : _tapAmount;
 
         // Finalize the deal
-        _processOTCDeal(_paymentToken, paymentTokenOracle, otcTapAmount, oTAPPosition.discount);
+        _processOTCDeal(_paymentToken, paymentTokenOracle, chosenAmount, oTAPPosition.discount);
 
-        emit ExerciseOption(cachedEpoch, msg.sender, _paymentToken, _oTAPTokenID, otcTapAmount);
+        emit ExerciseOption(cachedEpoch, msg.sender, _paymentToken, _oTAPTokenID, chosenAmount);
     }
 
     /// @notice Start a new epoch, extract TAP from the TapOFT contract,
