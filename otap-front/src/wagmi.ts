@@ -11,8 +11,8 @@ const GOERLI_CHAIN: Chain = {
     },
     network: 'Goerli',
     rpcUrls: {
-        default: { http: ['https://eth-goerli.g.alchemy.com/v2/631U-TWNMURg0u4lIqrjat0LraWguV6p'] },
-        public: { http: ['https://eth-goerli.alchemyapi.io/v2/631U-TWNMURg0u4lIqrjat0LraWguV6p'] },
+        default: { http: ['https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161'] },
+        public: { http: ['https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161'] },
     },
     testnet: true,
 };
