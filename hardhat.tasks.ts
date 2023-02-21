@@ -5,6 +5,7 @@ import { setTrustedRemote__task } from './tasks/setTrustedRemote';
 import { deployERC20Mock__task, deployOracleMock__task, deployVesting__task } from './tasks/contractDeployment';
 import { setOracleMockRate__task } from './tasks/setterTasks';
 import { getLocalDeployments__task, getSDKDeployments__task } from './tasks/getDeployments';
+import { configurePacketTypes__task } from './tasks/configurePacketTypes';
 import { glob } from 'typechain';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
@@ -56,3 +57,7 @@ task('deployOracleMock', 'Deploys a new Oracle mock contract', deployOracleMock_
 task('setOracleMockRate', 'Set exchange rate for a mock oracle', setOracleMockRate__task)
     .addParam('oracleAddress', 'Address of the oracle')
     .addParam('rate', 'Exchange rate');
+
+task('configurePacketTypes', 'Cofigures min destination gas and the usage of custom adapters', configurePacketTypes__task)
+    .addParam('dstLzChainId', 'LZ destination chain id for trusted remotes')
+    .addParam('src', 'TAP address');
