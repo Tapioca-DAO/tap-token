@@ -81,25 +81,28 @@ contract TapOFT is PausableOFT {
     /// @notice Creates a new TAP OFT type token
     /// @dev The initial supply of 100M is not minted here as we have the wrap method
     /// @param _lzEndpoint the layer zero address endpoint deployed on the current chain
-    /// @param _contributors address for the contributors
-    /// @param _investors address for the investors
-    /// @param _lbp address for the LBP
-    /// @param _airdrop address for the airdrop
+    /// @param _contributors address of the  contributors
+    /// @param _investors address of investors
+    /// @param _lbp address of the LBP
+    /// @param _dao address of the DAO
+    /// @param _airdrop address of the airdrop contract
     /// @param _governanceChainId LayerZero governance chain identifier
     constructor(
         address _lzEndpoint,
         address _contributors,
         address _investors,
         address _lbp,
+        address _dao,
         address _airdrop,
         uint16 _governanceChainId
     ) PausableOFT('Tapioca', 'TAP', _lzEndpoint) {
         require(_lzEndpoint != address(0), 'LZ endpoint not valid');
         governanceChainIdentifier = _governanceChainId;
         if (_getChainId() == governanceChainIdentifier) {
-            _mint(_contributors, 1e18 * 15_000_000);
+            _mint(_contributors, 1e18 * 12_000_000);
             _mint(_investors, 1e18 * 11_000_000);
             _mint(_lbp, 1e18 * 5_000_000);
+            _mint(_dao, 1e18 * 3_000_000);
             _mint(_airdrop, 1e18 * 2_500_000);
             require(totalSupply() == INITIAL_SUPPLY, 'initial supply not valid');
         }
