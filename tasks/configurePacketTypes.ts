@@ -4,7 +4,7 @@ import { glob, runTypeChain } from 'typechain';
 import writeJsonFile from 'write-json-file';
 
 export const configurePacketTypes__task = async (taskArgs: { src: string; dstLzChainId: string }, hre: HardhatRuntimeEnvironment) => {
-    const packetTypes = [1, 2];
+    const packetTypes = [0, 1, 2];
 
     const tapContract = await hre.ethers.getContractAt('TapOFT', taskArgs.src);
 
