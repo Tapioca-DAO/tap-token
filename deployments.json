@@ -53,7 +53,22 @@
             }
         }
     ],
-    "4002": [],
+    "4002": [
+        {
+            "name": "TapOFT",
+            "address": "0xFCdE8366705e8A9c1eDE4C56D716c9e7564CE50D",
+            "meta": {
+                "constructorArguments": [
+                    "0x7dcAD72640F835B0FA36EFD3D6d3ec902C7E5acf",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                    "5"
+                ]
+            }
+        }
+    ],
     "43113": [
         {
             "name": "TapOFT",
