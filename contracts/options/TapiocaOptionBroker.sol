@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import '@boringcrypto/boring-solidity/contracts/BoringOwnable.sol';
+import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
-
 import './TapiocaOptionLiquidityProvision.sol';
 import '../interfaces/IOracle.sol';
 import '../tokens/TapOFT.sol';
@@ -73,7 +73,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
     mapping(uint256 => mapping(uint256 => uint256)) public singularityGauges; // epoch => sglAssetId => availableTAP
 
-    mapping(IERC20 => PaymentTokenOracle) public paymentTokens; // Token address => PaymentTokenOracle
+    mapping(ERC20 => PaymentTokenOracle) public paymentTokens; // Token address => PaymentTokenOracle
     address public paymentTokenBeneficiary; // Where to collect the payment tokens
 
     /// ===== TWAML ======
@@ -104,10 +104,10 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     // ==========
     event Participate(uint256 indexed epoch, uint256 indexed sglAssetID, uint256 totalDeposited, LockPosition lock, uint256 discount);
     event AMLDivergence(uint256 indexed epoch, uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 totalParticipants);
-    event ExerciseOption(uint256 indexed epoch, address indexed to, IERC20 indexed paymentToken, uint256 oTapTokenID, uint256 amount);
+    event ExerciseOption(uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 oTapTokenID, uint256 amount);
     event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValuation);
     event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 amount);
-    event SetPaymentToken(IERC20 paymentToken, IOracle oracle, bytes oracleData);
+    event SetPaymentToken(ERC20 paymentToken, IOracle oracle, bytes oracleData);
 
     // ==========
     //    READ
@@ -122,7 +122,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     /// @return paymentTokenAmount The amount of payment tokens required for the deal
     function getOTCDealDetails(
         uint256 _oTAPTokenID,
-        IERC20 _paymentToken,
+        ERC20 _paymentToken,
         uint256 _tapAmount
     ) external view returns (uint256 eligibleTapAmount, uint256 paymentTokenAmount) {
         // Load data
@@ -143,12 +143,16 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         eligibleTapAmount = muldiv(tOLPLockPosition.amount, gaugeTotalForEpoch, tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID));
 
         // Get TAP valuation
-        uint256 otcAmountInUSD = muldiv(_tapAmount == 0 ? eligibleTapAmount : _tapAmount, epochTAPValuation, 1e18); // Divided by TAP decimals
+        uint256 otcAmountInUSD = (_tapAmount == 0 ? eligibleTapAmount : _tapAmount) * epochTAPValuation; // Divided by TAP decimals
         // Get payment token valuation
         (, uint256 paymentTokenValuation) = paymentTokenOracle.oracle.peek(paymentTokenOracle.oracleData);
-
-        // Calculate payment amount and initiate the transfers
-        paymentTokenAmount = muldiv(otcAmountInUSD * oTAPPosition.discount, paymentTokenValuation, 1e4); // 1e4 is discount decimals
+        // Get payment token amount
+        paymentTokenAmount = _getDiscountedPaymentAmount(
+            otcAmountInUSD,
+            paymentTokenValuation,
+            oTAPPosition.discount,
+            _paymentToken.decimals()
+        );
     }
 
     // ===========
@@ -239,7 +243,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     /// @param _tapAmount Amount of TAP to exercise. If 0, the full amount is exercised
     function exerciseOption(
         uint256 _oTAPTokenID,
-        IERC20 _paymentToken,
+        ERC20 _paymentToken,
         uint256 _tapAmount
     ) external {
         // Load data
@@ -301,9 +305,9 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     // =========
 
     /// @notice Activate or deactivate a payment token
-    /// @dev set the oracle to address(0) to deactivate
+    /// @dev set the oracle to address(0) to deactivate, expect the same decimal precision as TAP oracle
     function setPaymentToken(
-        IERC20 _paymentToken,
+        ERC20 _paymentToken,
         IOracle _oracle,
         bytes calldata _oracleData
     ) external onlyOwner {
@@ -327,7 +331,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
         unchecked {
             for (uint256 i = 0; i < len; ++i) {
-                IERC20 paymentToken = IERC20(_paymentTokens[i]);
+                ERC20 paymentToken = ERC20(_paymentTokens[i]);
                 paymentToken.transfer(paymentTokenBeneficiary, paymentToken.balanceOf(address(this)));
             }
         }
@@ -343,20 +347,45 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     /// @param tapAmount The amount of TAP that the user has to receive
     /// @param discount The discount that the user has to apply to the OTC deal
     function _processOTCDeal(
-        IERC20 _paymentToken,
+        ERC20 _paymentToken,
         PaymentTokenOracle memory _paymentTokenOracle,
         uint256 tapAmount,
         uint256 discount
     ) internal {
         // Get TAP valuation
-        uint256 otcAmountInUSD = muldiv(tapAmount, epochTAPValuation, 1e18); // Divided by TAP decimals
+        uint256 otcAmountInUSD = tapAmount * epochTAPValuation;
+
         // Get payment token valuation
         (, uint256 paymentTokenValuation) = _paymentTokenOracle.oracle.get(_paymentTokenOracle.oracleData);
 
         // Calculate payment amount and initiate the transfers
-        uint256 paymentAmount = muldiv(otcAmountInUSD * discount, paymentTokenValuation, 1e4); // 1e4 is discount decimals
-        _paymentToken.transferFrom(msg.sender, address(this), paymentAmount);
+        uint256 discountedPaymentAmount = _getDiscountedPaymentAmount(
+            otcAmountInUSD,
+            paymentTokenValuation,
+            discount,
+            _paymentToken.decimals()
+        );
+
+        _paymentToken.transferFrom(msg.sender, address(this), discountedPaymentAmount);
         tapOFT.extractTAP(msg.sender, tapAmount);
+    }
+
+    /// @notice Computes the discounted payment amount for a given OTC amount in USD
+    /// @param _otcAmountInUSD The OTC amount in USD, 8 decimals
+    /// @param _paymentTokenValuation The payment token valuation in USD, 8 decimals
+    /// @param _discount The discount in BPS
+    /// @param _paymentTokenDecimals The payment token decimals
+    /// @return paymentAmount The discounted payment amount
+    function _getDiscountedPaymentAmount(
+        uint256 _otcAmountInUSD,
+        uint256 _paymentTokenValuation,
+        uint256 _discount,
+        uint256 _paymentTokenDecimals
+    ) internal pure returns (uint256 paymentAmount) {
+        // Calculate payment amount
+        uint256 rawPaymentAmount = _otcAmountInUSD / _paymentTokenValuation;
+        paymentAmount = rawPaymentAmount - muldiv(rawPaymentAmount, _discount, 1e6); // 1e4 is discount decimals, 100 is discount percentage
+        paymentAmount = paymentAmount / (10**(18 - _paymentTokenDecimals));
     }
 
     /// @notice Emit TAP to the gauges equitably
