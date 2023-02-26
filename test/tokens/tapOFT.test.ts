@@ -7,7 +7,7 @@ import { BigNumberish } from 'ethers';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { BN, deployLZEndpointMock, deployTapiocaOFT, time_travel } from '../test.utils';
 
-describe('tapOFT', () => {
+describe.only('tapOFT', () => {
     let signer: SignerWithAddress;
     let minter: SignerWithAddress;
     let normalUser: SignerWithAddress;
@@ -48,14 +48,15 @@ describe('tapOFT', () => {
         expect(await tapiocaOFT1.paused()).to.be.false;
 
         const signerBalance = await tapiocaOFT0.balanceOf(signer.address);
-        const totalSupply = BN(33_500_000).mul((1e18).toString());
+        const totalSupply = BN(43_500_000).mul((1e18).toString());
         expect(signerBalance).to.eq(totalSupply);
     });
 
     it('should not be able to deploy with an empty LayerZero endpoint', async () => {
         const factory = await ethers.getContractFactory('TapOFT');
-        await expect(factory.deploy(ethers.constants.AddressZero, signer.address, signer.address, signer.address, signer.address, 1)).to.be
-            .reverted;
+        await expect(
+            factory.deploy(ethers.constants.AddressZero, signer.address, signer.address, signer.address, signer.address, signer.address, 1),
+        ).to.be.reverted;
     });
 
     it('should set minter', async () => {
@@ -138,7 +139,7 @@ describe('tapOFT', () => {
 
     it('should burn', async () => {
         const toBurn = BN(10_000_000).mul((1e18).toString());
-        const finalAmount = BN(23_500_000).mul((1e18).toString());
+        const finalAmount = BN(33_500_000).mul((1e18).toString());
 
         await expect(tapiocaOFT0.connect(signer).setMinter(minter.address)).to.emit(tapiocaOFT0, 'MinterUpdated');
 

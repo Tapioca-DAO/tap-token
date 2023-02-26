@@ -33,14 +33,15 @@ contract TapOFT is PausableOFT {
 
     //  Allocation:
     // =========
-    // * DSO: 66.5m
+    // * DSO: 56.5m
+    // * DAO: 10m
     // * Contributors: 15m
     // * Investors: 11m
     // * LBP: 5m
     // * Airdrop: 2.5m
     // == 100M ==
-    uint256 public constant INITIAL_SUPPLY = 33_500_000 * 1e18; // Everything minus DSO
-    uint256 public dso_supply = 66_500_000 * 1e18;
+    uint256 public constant INITIAL_SUPPLY = 43_500_000 * 1e18; // Everything minus DSO
+    uint256 public dso_supply = 56_500_000 * 1e18;
 
     /// @notice the a parameter used in the emission function;
     uint256 constant decay_rate = 8800000000000000; // 0.88%
@@ -99,10 +100,10 @@ contract TapOFT is PausableOFT {
         require(_lzEndpoint != address(0), 'LZ endpoint not valid');
         governanceChainIdentifier = _governanceChainId;
         if (_getChainId() == governanceChainIdentifier) {
-            _mint(_contributors, 1e18 * 12_000_000);
+            _mint(_contributors, 1e18 * 15_000_000);
             _mint(_investors, 1e18 * 11_000_000);
             _mint(_lbp, 1e18 * 5_000_000);
-            _mint(_dao, 1e18 * 3_000_000);
+            _mint(_dao, 1e18 * 10_000_000);
             _mint(_airdrop, 1e18 * 2_500_000);
             require(totalSupply() == INITIAL_SUPPLY, 'initial supply not valid');
         }
