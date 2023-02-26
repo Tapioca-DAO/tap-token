@@ -298,6 +298,155 @@ describe('TapiocaOptionBroker', () => {
         expect(await tOB.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(tapOFTBalance.mul(2).div(3));
     });
 
+    it('should return correct OTC details', async () => {
+        const {
+            users,
+            yieldBox,
+            tOB,
+            tapOFT,
+            tOLP,
+            oTAP,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+            stableMock,
+            stableMockOracle,
+            ethMock,
+            ethMockOracle,
+        } = await loadFixture(setupFixture);
+
+        await setupEnv(tOB, tOLP, tapOFT, sglTokenMock, sglTokenMockAsset, sglTokenMock2, sglTokenMock2Asset);
+        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await tOB.newEpoch();
+
+        await tOB.setPaymentToken(stableMock.address, stableMockOracle.address, '0x00');
+        await tOB.setPaymentToken(ethMock.address, ethMockOracle.address, '0x00');
+        const userLock1 = await lockAndParticipate(users[0], 3e8, 3600, tOLP, tOB, oTAP, yieldBox, sglTokenMock, sglTokenMockAsset);
+        const userLock2 = await lockAndParticipate(users[1], 1e8, 3600, tOLP, tOB, oTAP, yieldBox, sglTokenMock, sglTokenMockAsset);
+
+        const epoch = await tOB.epoch();
+
+        const snapshot = await takeSnapshot();
+
+        /// FULL ELIGIBLE STABLE
+
+        // Exercise for full eligible TAP with 1e6 decimals stable, 50% discount
+        {
+            const eligibleTapAmount = userLock1.ybAmount
+                .mul(await tOB.singularityGauges(epoch, sglTokenMockAsset))
+                .div(userLock1.ybAmount.add(userLock2.ybAmount));
+            const otcDealAmountInUSD = BN(33e7).mul(eligibleTapAmount);
+            const rawPayment = otcDealAmountInUSD.div((await stableMockOracle.get('0x00'))._rate); // USDC price at 1
+            const discount = rawPayment.mul(50).div(100);
+            const paymentTokenToSend = rawPayment.sub(discount).div(1e12);
+
+            const otcDetails = await tOB.connect(users[0]).getOTCDealDetails(userLock1.oTAPTokenID, stableMock.address, 0);
+            expect(otcDetails.eligibleTapAmount).to.be.equal(eligibleTapAmount);
+            expect(otcDetails.paymentTokenAmount).to.be.equal(paymentTokenToSend);
+        }
+
+        // Exercise for full eligible TAP with 1e6 decimals stable, 20.7083% discount
+        {
+            const eligibleTapAmount = userLock2.ybAmount
+                .mul(await tOB.singularityGauges(epoch, sglTokenMockAsset))
+                .div(userLock1.ybAmount.add(userLock2.ybAmount));
+            const otcDealAmountInUSD = BN(33e7).mul(eligibleTapAmount);
+            const rawPayment = otcDealAmountInUSD.div((await stableMockOracle.get('0x00'))._rate); // USDC price at 1
+            const discount = rawPayment.mul(userLock2.oTAPOption.discount).div(1e6);
+            const paymentTokenToSend = rawPayment.sub(discount).div(1e12);
+
+            const otcDetails = await tOB.connect(users[1]).getOTCDealDetails(userLock2.oTAPTokenID, stableMock.address, 0);
+            expect(otcDetails.eligibleTapAmount).to.be.equal(eligibleTapAmount);
+            expect(otcDetails.paymentTokenAmount).to.be.equal(paymentTokenToSend);
+        }
+
+        await snapshot.restore();
+
+        /// FULL ELIGIBLE WETH
+
+        // Exercise for full eligible TAP with 1e18 decimals ETH, 50% discount
+        {
+            const eligibleTapAmount = userLock1.ybAmount
+                .mul(await tOB.singularityGauges(epoch, sglTokenMockAsset))
+                .div(userLock1.ybAmount.add(userLock2.ybAmount));
+            const otcDealAmountInUSD = BN(33e7).mul(eligibleTapAmount);
+            const rawPayment = otcDealAmountInUSD.div((await ethMockOracle.get('0x00'))._rate); // USDC price at 1
+            const discount = rawPayment.mul(50).div(100);
+            const paymentTokenToSend = rawPayment.sub(discount);
+
+            const otcDetails = await tOB.connect(users[0]).getOTCDealDetails(userLock1.oTAPTokenID, ethMock.address, 0);
+            expect(otcDetails.eligibleTapAmount).to.be.equal(eligibleTapAmount);
+            expect(otcDetails.paymentTokenAmount).to.be.equal(paymentTokenToSend);
+        }
+
+        // Exercise for full eligible TAP with 1e18 decimals token, 20.7083% discount
+        {
+            const eligibleTapAmount = userLock2.ybAmount
+                .mul(await tOB.singularityGauges(epoch, sglTokenMockAsset))
+                .div(userLock1.ybAmount.add(userLock2.ybAmount));
+            const otcDealAmountInUSD = BN(33e7).mul(eligibleTapAmount);
+            const rawPayment = otcDealAmountInUSD.div((await ethMockOracle.get('0x00'))._rate); // USDC price at 1
+            const discount = rawPayment.mul(userLock2.oTAPOption.discount).div(1e6);
+            const paymentTokenToSend = rawPayment.sub(discount);
+
+            const otcDetails = await tOB.connect(users[1]).getOTCDealDetails(userLock2.oTAPTokenID, ethMock.address, 0);
+            expect(otcDetails.eligibleTapAmount).to.be.equal(eligibleTapAmount);
+            expect(otcDetails.paymentTokenAmount).to.be.equal(paymentTokenToSend);
+        }
+
+        await snapshot.restore();
+
+        /// 1 TAP STABLE
+
+        // Exercise for 1 TAP with 1e6 decimals stable, 50% discount
+        {
+            const otcDealAmountInUSD = BN(33e7).mul((1e18).toString());
+            const rawPayment = otcDealAmountInUSD.div((await stableMockOracle.get('0x00'))._rate); // USDC price at 1
+            const discount = rawPayment.mul(50).div(100);
+            const paymentTokenToSend = rawPayment.sub(discount).div(1e12);
+
+            const otcDetails = await tOB.connect(users[0]).getOTCDealDetails(userLock1.oTAPTokenID, stableMock.address, (1e18).toString());
+            expect(otcDetails.paymentTokenAmount).to.be.equal(paymentTokenToSend);
+        }
+
+        // Exercise for 1 TAP with 1e6 decimals stable, 20.7083% discount
+        {
+            const otcDealAmountInUSD = BN(33e7).mul((1e18).toString());
+            const rawPayment = otcDealAmountInUSD.div((await stableMockOracle.get('0x00'))._rate); // USDC price at 1
+            const discount = rawPayment.mul(userLock2.oTAPOption.discount).div(1e6);
+            const paymentTokenToSend = rawPayment.sub(discount).div(1e12);
+
+            const otcDetails = await tOB.connect(users[1]).getOTCDealDetails(userLock2.oTAPTokenID, stableMock.address, (1e18).toString());
+            expect(otcDetails.paymentTokenAmount).to.be.equal(paymentTokenToSend);
+        }
+
+        await snapshot.restore();
+
+        /// 1 TAP ETH
+
+        // Exercise for 1 TAP with 1e18 decimals token, 50% discount
+        {
+            const otcDealAmountInUSD = BN(33e7).mul((1e18).toString());
+            const rawPayment = otcDealAmountInUSD.div((await ethMockOracle.get('0x00'))._rate); // ETH price at 1200
+            const discount = rawPayment.mul(50).div(100);
+            const paymentTokenToSend = rawPayment.sub(discount);
+
+            const otcDetails = await tOB.connect(users[0]).getOTCDealDetails(userLock1.oTAPTokenID, ethMock.address, (1e18).toString());
+            expect(otcDetails.paymentTokenAmount).to.be.equal(paymentTokenToSend);
+        }
+        // Exercise for 1 TAP with 1e18 decimals token, 20.7083% discount
+        {
+            const otcDealAmountInUSD = BN(33e7).mul((1e18).toString());
+            const rawPayment = otcDealAmountInUSD.div((await ethMockOracle.get('0x00'))._rate); // ETH price at 1200
+            const discount = rawPayment.mul(userLock2.oTAPOption.discount).div(1e4 * 100);
+            const paymentTokenToSend = rawPayment.sub(discount);
+
+            const otcDetails = await tOB.connect(users[1]).getOTCDealDetails(userLock2.oTAPTokenID, ethMock.address, (1e18).toString());
+            expect(otcDetails.paymentTokenAmount).to.be.equal(paymentTokenToSend);
+        }
+    });
+
     it('should exercise an option', async () => {
         const {
             users,
@@ -312,6 +461,8 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2Asset,
             stableMock,
             stableMockOracle,
+            ethMock,
+            ethMockOracle,
         } = await loadFixture(setupFixture);
 
         await setupEnv(tOB, tOLP, tapOFT, sglTokenMock, sglTokenMockAsset, sglTokenMock2, sglTokenMock2Asset);
@@ -319,6 +470,7 @@ describe('TapiocaOptionBroker', () => {
         await tOB.newEpoch();
 
         await tOB.setPaymentToken(stableMock.address, stableMockOracle.address, '0x00');
+        await tOB.setPaymentToken(ethMock.address, ethMockOracle.address, '0x00');
         const userLock1 = await lockAndParticipate(users[0], 3e8, 3600, tOLP, tOB, oTAP, yieldBox, sglTokenMock, sglTokenMockAsset);
         const userLock2 = await lockAndParticipate(users[1], 1e8, 3600, tOLP, tOB, oTAP, yieldBox, sglTokenMock, sglTokenMockAsset);
 
@@ -345,19 +497,14 @@ describe('TapiocaOptionBroker', () => {
         expect(await tOB.singularityGauges(epoch, sglTokenMockAsset)).to.equal(sglGaugeTokenMock1);
         expect(await tOB.singularityGauges(epoch, sglTokenMock2Asset)).to.equal(sglGaugeTokenMock2);
 
-        // Exercise option for user 1
-        let user1EligibleTapAmount = userLock1.ybAmount;
+        // Exercise option for user 1 for full eligible TAP amount
+        let user1EligibleTapAmount;
         let user1PaymentAmount;
         {
-            const eligibleTapAmount = userLock1.ybAmount
-                .mul(await tOB.singularityGauges(epoch, sglTokenMockAsset))
-                .div(userLock1.ybAmount.add(userLock2.ybAmount));
+            const otcDetails = await tOB.connect(users[0]).getOTCDealDetails(userLock1.oTAPTokenID, stableMock.address, 0);
+            const eligibleTapAmount = otcDetails.eligibleTapAmount;
             user1EligibleTapAmount = eligibleTapAmount;
-            const otcDealAmountInUSD = eligibleTapAmount.mul(await tOB.epochTAPValuation()).div((1e18).toString());
-            const paymentTokenToSend = otcDealAmountInUSD
-                .mul((await stableMockOracle.get('0x00'))._rate)
-                .mul(userLock1.oTAPOption.discount)
-                .div(1e4);
+            const paymentTokenToSend = otcDetails.paymentTokenAmount;
             user1PaymentAmount = paymentTokenToSend;
 
             // ERC20 checks
@@ -365,7 +512,6 @@ describe('TapiocaOptionBroker', () => {
                 'ERC20: balance too low',
             );
             await stableMock.mintTo(users[0].address, paymentTokenToSend);
-
             await expect(tOB.connect(users[0]).exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0)).to.be.rejectedWith(
                 'ERC20: allowance too low',
             );
@@ -386,42 +532,40 @@ describe('TapiocaOptionBroker', () => {
             ).to.be.rejectedWith('TapiocaOptionBroker: Already exercised');
         }
 
-        // Exercise option for user 2
+        // Exercise option for user 2 for half eligible TAP amount
         {
-            const eligibleTapAmount = userLock2.ybAmount
-                .mul(await tOB.singularityGauges(epoch, sglTokenMockAsset))
-                .div(userLock2.ybAmount.add(userLock1.ybAmount));
-            const otcDealAmountInUSD = eligibleTapAmount.mul(await tOB.epochTAPValuation()).div((1e18).toString());
-            const paymentTokenToSend = otcDealAmountInUSD
-                .mul((await stableMockOracle.get('0x00'))._rate)
-                .mul(userLock2.oTAPOption.discount)
-                .div(1e4);
+            const { eligibleTapAmount: __fullEligibleTapAMount } = await tOB
+                .connect(users[1])
+                .getOTCDealDetails(userLock2.oTAPTokenID, ethMock.address, 0);
+            const eligibleTapAmount = __fullEligibleTapAMount.div(2);
+            const { paymentTokenAmount: paymentTokenToSend } = await tOB
+                .connect(users[1])
+                .getOTCDealDetails(userLock2.oTAPTokenID, ethMock.address, eligibleTapAmount);
 
-            // ERC20 checks
-            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address, 0)).to.be.rejectedWith(
-                'ERC20: balance too low',
-            );
-            await stableMock.mintTo(users[1].address, paymentTokenToSend);
+            await expect(
+                tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, ethMock.address, eligibleTapAmount),
+            ).to.be.rejectedWith('ERC20: balance too low');
+            await ethMock.mintTo(users[1].address, paymentTokenToSend);
 
-            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address, 0)).to.be.rejectedWith(
-                'ERC20: allowance too low',
-            );
-            await stableMock.connect(users[1]).approve(tOB.address, paymentTokenToSend);
+            await expect(
+                tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, ethMock.address, eligibleTapAmount),
+            ).to.be.rejectedWith('ERC20: allowance too low');
+            await ethMock.connect(users[1]).approve(tOB.address, paymentTokenToSend);
 
             // Exercise option checks
-            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address, eligibleTapAmount))
+            await expect(tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, ethMock.address, eligibleTapAmount))
                 .to.emit(tOB, 'ExerciseOption')
-                .withArgs(epoch, users[1].address, stableMock.address, userLock2.oTAPTokenID, eligibleTapAmount); // Successful exercise
+                .withArgs(epoch, users[1].address, ethMock.address, userLock2.oTAPTokenID, eligibleTapAmount); // Successful exercise
 
             expect(await tapOFT.balanceOf(users[1].address)).to.be.equal(eligibleTapAmount); // Check TAP transfer to user
             expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
                 (await tapOFT.mintedInWeek(epoch)).sub(eligibleTapAmount).sub(user1EligibleTapAmount),
             ); // Check TAP subtraction from TAP contract
-            expect(await stableMock.balanceOf(tOB.address)).to.be.equal(paymentTokenToSend.add(user1PaymentAmount)); // Check payment token transfer to TOB contract
+            expect(await ethMock.balanceOf(tOB.address)).to.be.equal(paymentTokenToSend); // Check payment token transfer to TOB contract
 
             // end
             await expect(
-                tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, stableMock.address, eligibleTapAmount),
+                tOB.connect(users[1]).exerciseOption(userLock2.oTAPTokenID, ethMock.address, eligibleTapAmount),
             ).to.be.rejectedWith('TapiocaOptionBroker: Already exercised');
         }
     });

@@ -19,7 +19,7 @@ export const setupFixture = async () => {
     const _to = signer.address;
     const tapOFT = await (
         await ethers.getContractFactory('TapOFT')
-    ).deploy(LZEndpointMockCurrentChain.address, _to, _to, _to, _to, chainId);
+    ).deploy(LZEndpointMockCurrentChain.address, _to, _to, _to, _to, _to, chainId);
 
     // YieldBox
     const _wrappedNative = await (await ethers.getContractFactory('WETH9Mock')).deploy();
@@ -28,7 +28,7 @@ export const setupFixture = async () => {
 
     // oTAP
     const tapOracleMock = await (await ethers.getContractFactory('OracleMock')).deploy('TAP');
-    await tapOracleMock.setRate(BN(33e17));
+    await tapOracleMock.setRate(BN(33e7));
     const tOLP = await (await ethers.getContractFactory('TapiocaOptionLiquidityProvision')).deploy(yieldBox.address);
     const oTAP = await (await ethers.getContractFactory('OTAP')).deploy();
     const tOB = await (
@@ -50,8 +50,8 @@ export const setupFixture = async () => {
     const stableMockOracle = await (await ethers.getContractFactory('OracleMock')).deploy('StableMockOracle');
     const ethMockOracle = await (await ethers.getContractFactory('OracleMock')).deploy('WETHMockOracle');
 
-    await stableMockOracle.setRate(1e6);
-    await ethMockOracle.setRate(BN(1e18).mul(1200));
+    await stableMockOracle.setRate(1e8);
+    await ethMockOracle.setRate(BN(1e8).mul(1200));
 
     return {
         // signers
