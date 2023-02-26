@@ -43,6 +43,7 @@ import './oTAP.sol';
 struct Participation {
     bool hasVotingPower;
     uint256 averageMagnitude;
+    bool divergenceForce; // 0 negative, 1 positive
 }
 
 struct TWAMLPool {
@@ -89,13 +90,11 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         address _tOLP,
         address _oTAP,
         address _tapOFT,
-        IOracle _oracle,
         address _paymentTokenBeneficiary
     ) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         tOLP = TapiocaOptionLiquidityProvision(_tOLP);
         tapOFT = TapOFT(_tapOFT);
-        tapOracle = _oracle;
         oTAP = OTAP(_oTAP);
     }
 
@@ -108,6 +107,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValuation);
     event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 amount);
     event SetPaymentToken(ERC20 paymentToken, IOracle oracle, bytes oracleData);
+    event SetTapOracle(IOracle oracle, bytes oracleData);
 
     // ==========
     //    READ
@@ -174,6 +174,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
 
         uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
+        bool divergenceForce;
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Participate in twAMl voting
@@ -183,9 +184,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
             pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
 
             // Compute and save new cumulative
-            pool.cumulative = lock.lockDuration > pool.cumulative
-                ? pool.cumulative + pool.averageMagnitude
-                : pool.cumulative - pool.averageMagnitude;
+            divergenceForce = lock.lockDuration > pool.cumulative;
+            pool.cumulative = divergenceForce ? pool.cumulative + pool.averageMagnitude : pool.cumulative - pool.averageMagnitude;
 
             // Save new weight
             pool.totalDeposited += lock.amount;
@@ -194,7 +194,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
             emit AMLDivergence(epoch, pool.cumulative, pool.averageMagnitude, pool.totalParticipants); // Register new voting power event
         }
         // Save twAML participation
-        participants[_tOLPTokenID] = Participation(hasVotingPower, pool.averageMagnitude);
+        participants[_tOLPTokenID] = Participation(hasVotingPower, pool.averageMagnitude, divergenceForce);
 
         // Mint oTAP position
         oTAPTokenID = oTAP.mint(msg.sender, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
@@ -219,7 +219,9 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         if (participation.hasVotingPower) {
             TWAMLPool memory pool = twAML[lock.sglAssetID];
 
-            pool.cumulative -= participation.averageMagnitude;
+            pool.cumulative = participation.divergenceForce
+                ? pool.cumulative - participation.averageMagnitude
+                : pool.cumulative + participation.averageMagnitude;
             pool.totalDeposited -= lock.amount;
             pool.totalParticipants--;
 
@@ -303,6 +305,16 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     // =========
     //   OWNER
     // =========
+
+    /// @notice Set the TapOFT Oracle address and data
+    /// @param _tapOracle The new TapOFT Oracle address
+    /// @param _tapOracleData The new TapOFT Oracle data
+    function setTapOracle(IOracle _tapOracle, bytes calldata _tapOracleData) external onlyOwner {
+        tapOracle = _tapOracle;
+        tapOracleData = _tapOracleData;
+
+        emit SetTapOracle(_tapOracle, _tapOracleData);
+    }
 
     /// @notice Activate or deactivate a payment token
     /// @dev set the oracle to address(0) to deactivate, expect the same decimal precision as TAP oracle
