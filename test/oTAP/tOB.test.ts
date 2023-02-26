@@ -229,6 +229,69 @@ describe('TapiocaOptionBroker', () => {
         await tOB.connect(user).exitPosition(_oTAPTknID);
 
         expect(await tOB.twAML(sglTokenMockAsset)).to.be.deep.equal(newPoolState); // No change in AML state
+        expect((await tOB.twAML(sglTokenMockAsset)).cumulative).to.be.equal(0);
+    });
+
+    it('should enter and exit multiple positions', async () => {
+        const { signer, tOLP, tOB, tapOFT, sglTokenMock, sglTokenMockAsset, yieldBox, oTAP } = await loadFixture(setupFixture);
+
+        // Setup tOB
+        await tOB.oTAPBrokerClaim();
+        await tapOFT.setMinter(tOB.address);
+
+        // Setup - register a singularity, mint and deposit in YB, lock in tOLP
+        const amount = 3e8;
+        const lockDuration = 10;
+        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0);
+
+        await sglTokenMock.freeMint(amount);
+        await sglTokenMock.approve(yieldBox.address, amount);
+        await yieldBox.depositAsset(sglTokenMockAsset, signer.address, signer.address, amount, 0);
+
+        const ybAmount = await yieldBox.toAmount(sglTokenMockAsset, await yieldBox.balanceOf(signer.address, sglTokenMockAsset), false);
+        await yieldBox.setApprovalForAll(tOLP.address, true);
+        await tOLP.lock(signer.address, signer.address, sglTokenMock.address, lockDuration, ybAmount.div(3));
+        await tOLP.lock(signer.address, signer.address, sglTokenMock.address, lockDuration, ybAmount.div(3));
+        await tOLP.lock(signer.address, signer.address, sglTokenMock.address, lockDuration, ybAmount.div(3));
+        const tokenID = await tOLP.tokenCounter();
+
+        // Check exit before participation
+        const snapshot = await takeSnapshot();
+        await time.increase(lockDuration);
+        await expect(tOB.exitPosition((await oTAP.mintedOTAP()).add(1))).to.be.revertedWith(
+            'TapiocaOptionBroker: oTAP position does not exist',
+        );
+        await snapshot.restore();
+
+        // Participate
+        await tOLP.approve(tOB.address, tokenID);
+        await tOLP.approve(tOB.address, tokenID.sub(1));
+        await tOLP.approve(tOB.address, tokenID.sub(2));
+        await tOB.participate(tokenID);
+        await tOB.participate(tokenID.sub(1));
+        await tOB.participate(tokenID.sub(2));
+
+        const oTAPTknID = await oTAP.mintedOTAP();
+
+        await time.increase(lockDuration);
+
+        {
+            // Exit 1
+            await oTAP.approve(tOB.address, oTAPTknID);
+            await tOB.exitPosition(oTAPTknID);
+        }
+
+        {
+            // Exit 2
+            await oTAP.approve(tOB.address, oTAPTknID.sub(1));
+            await tOB.exitPosition(oTAPTknID.sub(1));
+        }
+
+        {
+            // Exit 3
+            await oTAP.approve(tOB.address, oTAPTknID.sub(2));
+            await tOB.exitPosition(oTAPTknID.sub(2));
+        }
     });
 
     it('should set a payment token', async () => {

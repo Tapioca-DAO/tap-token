@@ -7,7 +7,7 @@ import { BigNumberish } from 'ethers';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { BN, deployLZEndpointMock, deployTapiocaOFT, time_travel } from '../test.utils';
 
-describe.only('tapOFT', () => {
+describe('tapOFT', () => {
     let signer: SignerWithAddress;
     let minter: SignerWithAddress;
     let normalUser: SignerWithAddress;
