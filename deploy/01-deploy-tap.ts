@@ -17,12 +17,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const investorAddress = constants.advisorAddress;
     const lbpAddress = constants.daoAddress;
     const airdropAddress = constants.seedAddress;
+    const daoAddress = constants.daoAddress;
     const governanceChainId = constants.governanceChainId.toString();
     const args: Parameters<TapOFT__factory['deploy']> = [
         lzEndpoint,
         contributorAddress,
         investorAddress,
         lbpAddress,
+        daoAddress,
         airdropAddress,
         governanceChainId,
     ];

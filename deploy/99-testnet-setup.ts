@@ -8,14 +8,21 @@ import {
     setTOLPRegisterSingularity__task,
     setYieldBoxRegisterAsset__task,
 } from '../tasks/setterTasks';
+import { BN } from '../test/test.utils';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const { deployments, getNamedAccounts } = hre;
     const chainId = await hre.getChainId();
 
-    const yieldBox = await hre.ethers.getContractAt('YieldBox', SDK.API.utils.getDeployment('Tapioca-Bar', 'YieldBox', chainId).address);
-
     if (hre.network.tags['testnet']) {
+        const tOB = await hre.ethers.getContractAt(
+            'TapiocaOptionBroker',
+            SDK.API.utils.getDeployment('Tapioca-Bar', 'TapiocaOptionBrokerMock', chainId).address,
+        );
+        await deployOracleMock__task({ deploymentName: 'TapOFTOracleMock', erc20Name: 'TOFTOM' }, hre);
+        const tapOFTOracleMock = SDK.API.utils.getDeployment('Tap-Token', 'TapOFTOracleMock', chainId).address;
+        await (await tOB.setTapOracle(tapOFTOracleMock, '0x00')).wait();
+        await setOracleMockRate__task({ oracleAddress: tapOFTOracleMock, rate: BN(12e7).toString() }, hre);
+
         await deployERC20Mock__task(
             { name: 'sglTokenMock1', symbol: 'sgl1', decimals: '18', deploymentName: 'sglTokenMock1', initialAmount: '0' },
             hre,
@@ -59,8 +66,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
         const wethmOracleMockMeta = SDK.API.utils.getDeployment('Tap-Token', 'WETHMOracleMock', chainId);
         const usdcmOracleMockMeta = SDK.API.utils.getDeployment('Tap-Token', 'USDCMOracleMock', chainId);
-        await setOracleMockRate__task({ oracleAddress: wethmOracleMockMeta.address, rate: '1480000000000000000000' }, hre);
-        await setOracleMockRate__task({ oracleAddress: usdcmOracleMockMeta.address, rate: '1000000' }, hre);
+        await setOracleMockRate__task({ oracleAddress: wethmOracleMockMeta.address, rate: BN(1480e8).toString() }, hre);
+        await setOracleMockRate__task({ oracleAddress: usdcmOracleMockMeta.address, rate: BN(1e8).toString() }, hre);
 
         const wethMMeta = SDK.API.utils.getDeployment('Tap-Token', 'WETHMock', chainId);
         const usdcMMeta = SDK.API.utils.getDeployment('Tap-Token', 'USDCMock', chainId);

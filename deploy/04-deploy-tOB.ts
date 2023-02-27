@@ -18,10 +18,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const tOLP = SDK.API.utils.getDeployment('Tap-Token', 'TapiocaOptionLiquidityProvision', chainId).address;
 
     const paymentTokenBeneficiary = deployer;
-    const tapOracle = '0xBaC59400ED43d56ea9b74C79D633d8FBC3FA43A4'; // Goerli Oracle Mock
 
     //all of these should be constants
-    const args: Parameters<TapiocaOptionBroker__factory['deploy']> = [tOLP, oTAP, tapOFT, tapOracle, paymentTokenBeneficiary];
+    const args: Parameters<TapiocaOptionBroker__factory['deploy']> = [tOLP, oTAP, tapOFT, paymentTokenBeneficiary];
 
     console.log('\nDeploying tOB');
     const deploymentName = hre.network.tags['testnet'] ? 'TapiocaOptionBrokerMock' : 'TapiocaOptionBroker';
