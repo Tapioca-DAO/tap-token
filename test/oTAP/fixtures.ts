@@ -33,7 +33,8 @@ export const setupFixture = async () => {
     const oTAP = await (await ethers.getContractFactory('OTAP')).deploy();
     const tOB = await (
         await ethers.getContractFactory('TapiocaOptionBroker')
-    ).deploy(tOLP.address, oTAP.address, tapOFT.address, tapOracleMock.address, paymentTokenBeneficiary.address);
+    ).deploy(tOLP.address, oTAP.address, tapOFT.address, paymentTokenBeneficiary.address);
+    await tOB.setTapOracle(tapOracleMock.address, '0x00');
 
     // Deploy a "virtual" market
     const sglTokenMock = await (await ethers.getContractFactory('ERC20Mock')).deploy('sglTokenMock', 'STM', 0, 18);
