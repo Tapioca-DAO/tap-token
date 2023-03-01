@@ -42,8 +42,8 @@ import './oTAP.sol';
 
 struct Participation {
     bool hasVotingPower;
-    uint256 averageMagnitude;
     bool divergenceForce; // 0 negative, 1 positive
+    uint256 averageMagnitude;
 }
 
 struct TWAMLPool {
@@ -194,7 +194,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
             emit AMLDivergence(epoch, pool.cumulative, pool.averageMagnitude, pool.totalParticipants); // Register new voting power event
         }
         // Save twAML participation
-        participants[_tOLPTokenID] = Participation(hasVotingPower, pool.averageMagnitude, divergenceForce);
+        participants[_tOLPTokenID] = Participation(hasVotingPower, divergenceForce, pool.averageMagnitude);
 
         // Mint oTAP position
         oTAPTokenID = oTAP.mint(msg.sender, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
