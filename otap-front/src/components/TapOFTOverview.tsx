@@ -15,10 +15,11 @@ function TapOFTOverview() {
         args: [address ?? ''],
     });
     const { data: tapPrice } = useOracleMockGet({ address: ADDRESSES.tapOracle as any, args: ['0x00'] });
+
     const tapPriceMemo = useMemo(() => {
         if (tapPrice?._rate) {
-            const decNum = tapPrice?._rate.div((1e18).toString()).toNumber();
-            const decFrac = tapPrice?._rate.div((1e17).toString()).toNumber() - decNum * 10;
+            const decNum = tapPrice?._rate.div((1e8).toString()).toNumber();
+            const decFrac = tapPrice?._rate.div((1e7).toString()).toNumber() - decNum * 10;
             return decNum + '.' + decFrac + ' USD';
         }
         return 0;

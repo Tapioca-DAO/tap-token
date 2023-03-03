@@ -10,7 +10,7 @@ export default function MainContainer(props: React.PropsWithChildren) {
                 color: 'gainsboro',
                 padding: 16,
 
-                background: 'rgba(255, 255, 255, 0.08)',
+                background: '#131516',
                 borderRadius: '16px',
                 backdropFilter: 'blur(4.7px)',
                 border: '1px solid rgba(255, 255, 255, 0.04)',

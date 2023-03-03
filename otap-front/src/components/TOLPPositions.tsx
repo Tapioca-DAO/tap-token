@@ -32,7 +32,7 @@ const useGetTOLPs = () => {
             }
         };
         fetchTokens();
-        const interval = setInterval(fetchTokens, 5000);
+        const interval = setInterval(fetchTokens, 25_000);
         return () => clearInterval(interval);
     }, []);
 
