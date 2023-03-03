@@ -84,36 +84,29 @@ describe('tapOFT', () => {
         await expect(chainBTap.connect(signer).emitForWeek()).to.be.revertedWith('chain not valid');
     });
 
-    it('should mint for each week', async () => {
-        const balBefore = await tapiocaOFT0.balanceOf(tapiocaOFT0.address);
+    it('should emit for each week', async () => {
+        const initialDSOSupply = await tapiocaOFT0.dso_supply();
+
+        const emissionForWeekBefore = await tapiocaOFT0.getCurrentWeekEmission();
         await tapiocaOFT0.connect(normalUser).emitForWeek();
-        const balAfter = await tapiocaOFT0.balanceOf(tapiocaOFT0.address);
-        expect(balAfter).to.be.gt(balBefore);
+        const emissionForWeekAfter = await tapiocaOFT0.getCurrentWeekEmission();
+        expect(emissionForWeekAfter).to.be.gt(emissionForWeekBefore);
+
         await tapiocaOFT0.connect(normalUser).emitForWeek();
-        expect(await tapiocaOFT0.balanceOf(tapiocaOFT0.address)).to.be.equal(balAfter); // Can't mint 2 times a week
+        expect(await tapiocaOFT0.getCurrentWeekEmission()).to.be.equal(emissionForWeekAfter); // Can't mint 2 times a week
 
         await time_travel(7 * 86400);
-        await expect(tapiocaOFT0.connect(normalUser).emitForWeek()).to.emit(tapiocaOFT0, 'Minted');
-        expect(await tapiocaOFT0.balanceOf(tapiocaOFT0.address)).to.be.gt(balAfter); // Can mint after 7 days
-    });
+        await expect(tapiocaOFT0.connect(normalUser).emitForWeek()).to.emit(tapiocaOFT0, 'Emitted');
+        expect(await tapiocaOFT0.getCurrentWeekEmission()).to.be.gt(emissionForWeekAfter); // Can mint after 7 days
 
-    it('should transfer unused TAP for next week', async () => {
-        await tapiocaOFT0.connect(normalUser).emitForWeek();
-        const balAfter = await tapiocaOFT0.balanceOf(tapiocaOFT0.address);
-        await tapiocaOFT0.setMinter(minter.address);
-        await tapiocaOFT0.connect(minter).extractTAP(minter.address, balAfter.div(2));
-
-        const dso_supply = await tapiocaOFT0.dso_supply();
-        const toBeEmitted = dso_supply.sub(balAfter.div(2)).mul(BN(8800000000000000)).div(BN((1e18).toString()));
-
-        await time_travel(7 * 86400);
-        await tapiocaOFT0.connect(normalUser).emitForWeek();
-        expect(await tapiocaOFT0.balanceOf(tapiocaOFT0.address)).to.be.equal(toBeEmitted.add(balAfter.div(2)));
+        // DSO supply doesn't change if not extracted
+        expect(await tapiocaOFT0.dso_supply()).to.be.equal(initialDSOSupply);
     });
 
     it('should extract minted from minter', async () => {
         const bigAmount = BN(33_500_000).mul((1e18).toString());
-        await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.emit(tapiocaOFT0, 'Minted');
+        // Check requirements
+        await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.emit(tapiocaOFT0, 'Emitted');
 
         await expect(tapiocaOFT0.connect(minter).extractTAP(minter.address, bigAmount)).to.be.revertedWith('unauthorized');
         await expect(tapiocaOFT0.connect(signer).setMinter(minter.address)).to.emit(tapiocaOFT0, 'MinterUpdated');
@@ -121,12 +114,35 @@ describe('tapOFT', () => {
         await expect(tapiocaOFT0.connect(minter).extractTAP(minter.address, 0)).to.be.revertedWith('amount not valid');
         await expect(tapiocaOFT0.connect(minter).extractTAP(minter.address, bigAmount)).to.be.revertedWith('exceeds allowable amount');
 
-        const balance = await tapiocaOFT0.balanceOf(tapiocaOFT0.address);
-
+        // Check balance
+        const emissionForWeek = await tapiocaOFT0.getCurrentWeekEmission();
         const initialUserBalance = await tapiocaOFT0.balanceOf(minter.address);
-        await tapiocaOFT0.connect(minter).extractTAP(minter.address, balance);
+        await tapiocaOFT0.connect(minter).extractTAP(minter.address, emissionForWeek);
         const afterExtractUserBalance = await tapiocaOFT0.balanceOf(minter.address);
-        expect(afterExtractUserBalance.sub(initialUserBalance).eq(balance)).to.be.true;
+        expect(afterExtractUserBalance.sub(initialUserBalance).eq(emissionForWeek)).to.be.true;
+
+        // Check state changes
+        const currentWeek = await tapiocaOFT0.getCurrentWeek();
+        const mintedInCurrentWeek = await tapiocaOFT0.mintedInWeek(currentWeek);
+        expect(mintedInCurrentWeek).to.be.equal(emissionForWeek);
+    });
+
+    it('should transfer unused TAP for next week', async () => {
+        await tapiocaOFT0.connect(normalUser).emitForWeek();
+        const emissionWeek1 = await tapiocaOFT0.getCurrentWeekEmission();
+        await tapiocaOFT0.setMinter(minter.address);
+        await tapiocaOFT0.connect(minter).extractTAP(minter.address, emissionWeek1.div(2));
+
+        const dso_supply = await tapiocaOFT0.dso_supply();
+        const toBeEmitted = dso_supply.sub(emissionWeek1.div(2)).mul(BN(8800000000000000)).div(BN((1e18).toString()));
+
+        // Check emission update that accounts for unminted TAP
+        await time_travel(7 * 86400);
+        await tapiocaOFT0.connect(normalUser).emitForWeek();
+        expect(await tapiocaOFT0.getCurrentWeekEmission()).to.be.equal(toBeEmitted.add(emissionWeek1.div(2)));
+
+        // Check DSO supply update
+        expect(await tapiocaOFT0.dso_supply()).to.be.equal(dso_supply.sub(emissionWeek1.div(2)));
     });
 
     it('should not mint when paused', async () => {
@@ -134,7 +150,7 @@ describe('tapOFT', () => {
         await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.be.reverted;
         await tapiocaOFT0.pauseSendTokens(false);
         await time_travel(86400);
-        await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.emit(tapiocaOFT0, 'Minted');
+        await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.emit(tapiocaOFT0, 'Emitted');
     });
 
     it('should burn', async () => {

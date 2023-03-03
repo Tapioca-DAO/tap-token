@@ -340,25 +340,25 @@ describe('TapiocaOptionBroker', () => {
         expect(await tOB.lastEpochUpdate()).to.be.equal((await hre.ethers.provider.getBlock(txNewEpoch.blockNumber!)).timestamp);
         expect(await tOB.epochTAPValuation()).to.be.equal(tapPrice);
 
-        const tapOFTBalance = await tapOFT.balanceOf(tapOFT.address);
+        const emittedTAP = await tapOFT.getCurrentWeekEmission();
 
         // Check TAP minting for 1 SGL asset
-        expect(tapOFTBalance.gt(0)).to.be.true;
-        expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(tapOFTBalance);
+        expect(emittedTAP.gt(0)).to.be.true;
+        expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(emittedTAP);
 
         // Check TAP minting for 2 SGL assets with equal weights
         await snapshot.restore();
         await tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 0);
         await tOB.newEpoch();
-        expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(tapOFTBalance.div(2));
-        expect(await tOB.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(tapOFTBalance.div(2));
+        expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(emittedTAP.div(2));
+        expect(await tOB.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(emittedTAP.div(2));
 
         // Check TAP minting for 2 SGL assets with different weights
         await snapshot.restore();
         await tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 2);
         await tOB.newEpoch();
-        expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(tapOFTBalance.div(3));
-        expect(await tOB.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(tapOFTBalance.mul(2).div(3));
+        expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(emittedTAP.div(3));
+        expect(await tOB.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(emittedTAP.mul(2).div(3));
     });
 
     it('should return correct OTC details', async () => {
@@ -555,8 +555,8 @@ describe('TapiocaOptionBroker', () => {
 
         // Gauge emission check
         const epoch = await tOB.epoch();
-        const sglGaugeTokenMock1 = (await tapOFT.balanceOf(tapOFT.address)).mul(2).div(3);
-        const sglGaugeTokenMock2 = (await tapOFT.balanceOf(tapOFT.address)).mul(1).div(3);
+        const sglGaugeTokenMock1 = (await tapOFT.getCurrentWeekEmission()).mul(2).div(3);
+        const sglGaugeTokenMock2 = (await tapOFT.getCurrentWeekEmission()).mul(1).div(3);
         expect(await tOB.singularityGauges(epoch, sglTokenMockAsset)).to.equal(sglGaugeTokenMock1);
         expect(await tOB.singularityGauges(epoch, sglTokenMock2Asset)).to.equal(sglGaugeTokenMock2);
 

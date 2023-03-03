@@ -54,6 +54,10 @@ contract TapOFT is PausableOFT {
     /// @dev initialized in the constructor with block.timestamp
     uint256 public immutable emissionsStartTime;
 
+    /// @notice returns the amount of emitted TAP for a specific week
+    /// @dev week is computed using (timestamp - emissionStartTime) / WEEK
+    mapping(uint256 => uint256) public emissionForWeek;
+
     /// @notice returns the amount minted for a specific week
     /// @dev week is computed using (timestamp - emissionStartTime) / WEEK
     mapping(uint256 => uint256) public mintedInWeek;
@@ -69,6 +73,8 @@ contract TapOFT is PausableOFT {
     // ==========
     /// @notice event emitted when a new minter is set
     event MinterUpdated(address indexed _old, address indexed _new);
+    /// @notice event emitted when a new emission is called
+    event Emitted(uint256 week, uint256 amount);
     /// @notice event emitted when new TAP is minted
     event Minted(address indexed _by, address indexed _to, uint256 _amount);
     /// @notice event emitted when new TAP is burned
@@ -142,9 +148,14 @@ contract TapOFT is PausableOFT {
         return _timestampToWeek(timestamp);
     }
 
+    /// @notice Returns the current week
+    function getCurrentWeek() external view returns (uint256) {
+        return _timestampToWeek(block.timestamp);
+    }
+
     /// @notice Returns the current week emission
     function getCurrentWeekEmission() external view returns (uint256) {
-        return mintedInWeek[_timestampToWeek(block.timestamp)];
+        return emissionForWeek[_timestampToWeek(block.timestamp)];
     }
 
     ///-- Write methods --
@@ -153,23 +164,18 @@ contract TapOFT is PausableOFT {
         require(_getChainId() == governanceChainIdentifier, 'chain not valid');
 
         uint256 week = _timestampToWeek(block.timestamp);
-        if (mintedInWeek[week] > 0) return 0;
+        if (emissionForWeek[week] > 0) return 0;
 
-        uint256 emission = 0;
-        // Last week unclaimed emission goes to the DSO
-        uint256 unclaimed = balanceOf(address(this));
-        if (unclaimed > 0) {
-            mintedInWeek[week - 1] -= unclaimed; // Update last week emission
-            emission = unclaimed; // Last week unclaimed emission goes to the DSO/current week emission
-            _burn(address(this), unclaimed); // Remove unclaimed emission from the supply
-        }
-
+        // Update DSO supply from last minted emissions
         dso_supply -= mintedInWeek[week - 1];
-        emission += uint256(_computeEmission());
-        mintedInWeek[week] = emission;
 
-        _mint(address(this), emission);
-        emit Minted(msg.sender, address(this), emission);
+        // Compute unclaimed emission from last week and add it to the current week emission
+        uint256 unclaimed = emissionForWeek[week - 1] - mintedInWeek[week - 1];
+        uint256 emission = uint256(_computeEmission());
+        emission += unclaimed;
+        emissionForWeek[week] = emission;
+
+        emit Emitted(week, emission);
 
         return emission;
     }
@@ -181,9 +187,11 @@ contract TapOFT is PausableOFT {
         require(msg.sender == minter, 'unauthorized');
         require(_amount > 0, 'amount not valid');
 
-        uint256 unclaimed = balanceOf(address(this));
-        require(unclaimed >= _amount, 'exceeds allowable amount');
-        _transfer(address(this), _to, _amount);
+        uint256 week = _timestampToWeek(block.timestamp);
+        require(emissionForWeek[week] >= _amount, 'exceeds allowable amount');
+        _mint(_to, _amount);
+        mintedInWeek[week] += _amount;
+        emit Minted(msg.sender, _to, _amount);
     }
 
     /// @notice burns TAP

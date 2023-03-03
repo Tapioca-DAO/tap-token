@@ -288,8 +288,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         epoch++;
 
         // Extract TAP
-        tapOFT.emitForWeek();
-        uint256 epochTAP = tapOFT.balanceOf(address(tapOFT));
+        uint256 epochTAP = tapOFT.emitForWeek();
         _emitToGauges(epochTAP);
 
         // Get epoch TAP valuation
