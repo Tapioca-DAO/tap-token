@@ -63,7 +63,7 @@ export const verify = async (hre: HardhatRuntimeEnvironment, address: string, ar
 };
 
 export const updateDeployments = async (contracts: TContract[], chainId: string) => {
-    await SDK.API.utils.saveDeploymentOnDisk({
+    SDK.API.utils.saveDeploymentOnDisk({
         [chainId]: contracts,
     });
 };
@@ -78,16 +78,17 @@ export const registerContract = async (
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    console.log(`\n Deploying ${contractName} as ${deploymentName}`);
+    console.log(`\n[+] Deploying ${contractName} as ${deploymentName}`);
     await deploy(deploymentName, {
         contract: contractName,
         from: deployer,
         log: true,
         args,
     });
-    await verify(hre, deploymentName, args);
+
     const contract = await deployments.get(deploymentName);
     console.log('[+] Deployed', contractName, 'at', contract.address);
+    await verify(hre, contract.address, args);
 
     const deploymentMeta = {
         name: deploymentName,
