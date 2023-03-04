@@ -73,7 +73,10 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
         ...supportedChains,
     },
     etherscan: {
-        apiKey: process.env.BLOCKSCAN_KEY,
+        apiKey: {
+            goerli: process.env.BLOCKSCAN_KEY ?? '',
+            arbitrumGoerli: process.env.ARBITRUM_GOERLI_KEY ?? '',
+        },
         customChains: [],
     },
     mocha: {
