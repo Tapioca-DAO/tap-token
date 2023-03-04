@@ -30,7 +30,7 @@
         "@nomicfoundation/hardhat-network-helpers": "^1.0.4",
         "@nomicfoundation/hardhat-toolbox": "^1.0.2",
         "@nomiclabs/hardhat-ethers": "^2.1.1",
-        "@nomiclabs/hardhat-etherscan": "^3.1.0",
+        "@nomiclabs/hardhat-etherscan": "^3.1.7",
         "@nomiclabs/hardhat-vyper": "^3.0.0",
         "@openzeppelin/contracts": "^4.5.0",
         "@primitivefi/hardhat-dodoc": "^0.2.3",
@@ -72,6 +72,6 @@
         "hardhat-tracer": "^1.2.1",
         "husky": "^8.0.1",
         "lodash": "^4.17.21",
-        "tapioca-sdk": "^1.1.21"
+        "tapioca-sdk": "^1.1.24"
     }
 }
