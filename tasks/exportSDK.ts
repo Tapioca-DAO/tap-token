@@ -25,7 +25,8 @@ export const exportSDK__task = async (taskArgs: { mainnet?: boolean }, hre: Hard
         'OracleMock',
         'OTAP',
         'TapiocaOptionBroker',
-        'TapiocaOptionLiquidityProvision.json',
+        'TapiocaOptionBrokerMock',
+        'TapiocaOptionLiquidityProvision',
         'Vesting',
     ];
 

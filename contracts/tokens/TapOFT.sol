@@ -33,14 +33,15 @@ contract TapOFT is OFTV2 {
 
     //  Allocation:
     // =========
-    // * DSO: 66.5m
+    // * DSO: 56.5m
+    // * DAO: 10m
     // * Contributors: 15m
     // * Investors: 11m
     // * LBP: 5m
     // * Airdrop: 2.5m
     // == 100M ==
-    uint256 public constant INITIAL_SUPPLY = 33_500_000 * 1e18; // Everything minus DSO
-    uint256 public dso_supply = 66_500_000 * 1e18;
+    uint256 public constant INITIAL_SUPPLY = 43_500_000 * 1e18; // Everything minus DSO
+    uint256 public dso_supply = 56_500_000 * 1e18;
 
     /// @notice the a parameter used in the emission function;
     uint256 constant decay_rate = 8800000000000000; // 0.88%
@@ -52,6 +53,10 @@ contract TapOFT is OFTV2 {
     /// @notice starts time for emissions
     /// @dev initialized in the constructor with block.timestamp
     uint256 public immutable emissionsStartTime;
+
+    /// @notice returns the amount of emitted TAP for a specific week
+    /// @dev week is computed using (timestamp - emissionStartTime) / WEEK
+    mapping(uint256 => uint256) public emissionForWeek;
 
     /// @notice returns the amount minted for a specific week
     /// @dev week is computed using (timestamp - emissionStartTime) / WEEK
@@ -73,6 +78,8 @@ contract TapOFT is OFTV2 {
     // ==========
     /// @notice event emitted when a new minter is set
     event MinterUpdated(address indexed _old, address indexed _new);
+    /// @notice event emitted when a new emission is called
+    event Emitted(uint256 week, uint256 amount);
     /// @notice event emitted when new TAP is minted
     event Minted(address indexed _by, address indexed _to, uint256 _amount);
     /// @notice event emitted when new TAP is burned
@@ -95,16 +102,18 @@ contract TapOFT is OFTV2 {
     /// @notice Creates a new TAP OFT type token
     /// @dev The initial supply of 100M is not minted here as we have the wrap method
     /// @param _lzEndpoint the layer zero address endpoint deployed on the current chain
-    /// @param _contributors address for the contributors
-    /// @param _investors address for the investors
-    /// @param _lbp address for the LBP
-    /// @param _airdrop address for the airdrop
+    /// @param _contributors address of the  contributors
+    /// @param _investors address of investors
+    /// @param _lbp address of the LBP
+    /// @param _dao address of the DAO
+    /// @param _airdrop address of the airdrop contract
     /// @param _governanceChainId LayerZero governance chain identifier
     constructor(
         address _lzEndpoint,
         address _contributors,
         address _investors,
         address _lbp,
+        address _dao,
         address _airdrop,
         uint16 _governanceChainId
     ) OFTV2('Tapioca', 'TAP', 8, _lzEndpoint) {
@@ -114,6 +123,7 @@ contract TapOFT is OFTV2 {
             _mint(_contributors, 1e18 * 15_000_000);
             _mint(_investors, 1e18 * 11_000_000);
             _mint(_lbp, 1e18 * 5_000_000);
+            _mint(_dao, 1e18 * 10_000_000);
             _mint(_airdrop, 1e18 * 2_500_000);
             require(totalSupply() == INITIAL_SUPPLY, 'initial supply not valid');
         }
@@ -172,9 +182,14 @@ contract TapOFT is OFTV2 {
         return _timestampToWeek(timestamp);
     }
 
+    /// @notice Returns the current week
+    function getCurrentWeek() external view returns (uint256) {
+        return _timestampToWeek(block.timestamp);
+    }
+
     /// @notice Returns the current week emission
     function getCurrentWeekEmission() external view returns (uint256) {
-        return mintedInWeek[_timestampToWeek(block.timestamp)];
+        return emissionForWeek[_timestampToWeek(block.timestamp)];
     }
 
     ///-- Write methods --
@@ -183,23 +198,18 @@ contract TapOFT is OFTV2 {
         require(_getChainId() == governanceChainIdentifier, 'chain not valid');
 
         uint256 week = _timestampToWeek(block.timestamp);
-        if (mintedInWeek[week] > 0) return 0;
+        if (emissionForWeek[week] > 0) return 0;
 
-        uint256 emission = 0;
-        // Last week unclaimed emission goes to the DSO
-        uint256 unclaimed = balanceOf(address(this));
-        if (unclaimed > 0) {
-            mintedInWeek[week - 1] -= unclaimed; // Update last week emission
-            emission = unclaimed; // Last week unclaimed emission goes to the DSO/current week emission
-            _burn(address(this), unclaimed); // Remove unclaimed emission from the supply
-        }
-
+        // Update DSO supply from last minted emissions
         dso_supply -= mintedInWeek[week - 1];
-        emission += uint256(_computeEmission());
-        mintedInWeek[week] = emission;
 
-        _mint(address(this), emission);
-        emit Minted(msg.sender, address(this), emission);
+        // Compute unclaimed emission from last week and add it to the current week emission
+        uint256 unclaimed = emissionForWeek[week - 1] - mintedInWeek[week - 1];
+        uint256 emission = uint256(_computeEmission());
+        emission += unclaimed;
+        emissionForWeek[week] = emission;
+
+        emit Emitted(week, emission);
 
         return emission;
     }
@@ -211,9 +221,11 @@ contract TapOFT is OFTV2 {
         require(msg.sender == minter, 'unauthorized');
         require(_amount > 0, 'amount not valid');
 
-        uint256 unclaimed = balanceOf(address(this));
-        require(unclaimed >= _amount, 'exceeds allowable amount');
-        _transfer(address(this), _to, _amount);
+        uint256 week = _timestampToWeek(block.timestamp);
+        require(emissionForWeek[week] >= _amount, 'exceeds allowable amount');
+        _mint(_to, _amount);
+        mintedInWeek[week] += _amount;
+        emit Minted(msg.sender, _to, _amount);
     }
 
     /// @notice burns TAP

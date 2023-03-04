@@ -11,9 +11,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer } = await getNamedAccounts();
     const chainId = await hre.getChainId();
     const contracts: TContract[] = [];
-
-    // const tapOFT = await hre.ethers.getContractAt('TapOFT', (await SDK.API.utils.getDeployment('Tap-Token', 'TapOFT', chainId)).address);
-
     //all of these should be constants
     const yieldBox = (await SDK.API.utils.getDeployment('Tapioca-Bar', 'YieldBox', chainId)).address;
     const args: Parameters<TapiocaOptionLiquidityProvision__factory['deploy']> = [yieldBox];

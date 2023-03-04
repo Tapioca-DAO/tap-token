@@ -3,7 +3,13 @@ import { task } from 'hardhat/config';
 import { exportSDK__task } from './tasks/exportSDK';
 import { setTrustedRemote__task } from './tasks/setTrustedRemote';
 import { deployERC20Mock__task, deployOracleMock__task, deployVesting__task } from './tasks/contractDeployment';
-import { setOracleMockRate__task } from './tasks/setterTasks';
+import {
+    setOracleMockRate__task,
+    setTOBPaymentToken__task,
+    setTOLPRegisterSingularity__task,
+    setTOLPUnregisterSingularity__task,
+    setYieldBoxRegisterAsset__task,
+} from './tasks/setterTasks';
 import { getLocalDeployments__task, getSDKDeployments__task } from './tasks/getDeployments';
 import { configurePacketTypes__task } from './tasks/configurePacketTypes';
 import { glob } from 'typechain';
@@ -46,7 +52,9 @@ task('deployVesting', 'Deploys a new Vesting contract', deployVesting__task)
     .addParam('duration', 'Vesting duration in seconds');
 
 task('deployERC20Mock', 'Deploys a new ERC20 Mock contract', deployERC20Mock__task)
-    .addParam('deploymentName', 'The name of the deployment')
+    .addParam('deploymentName', 'Name of the deployment')
+    .addParam('name', 'Name of the token')
+    .addParam('symbol', 'Symbol of the token')
     .addParam('initialAmount', 'Initial amount of tokens')
     .addParam('decimals', 'Number of decimals');
 
@@ -58,6 +66,28 @@ task('setOracleMockRate', 'Set exchange rate for a mock oracle', setOracleMockRa
     .addParam('oracleAddress', 'Address of the oracle')
     .addParam('rate', 'Exchange rate');
 
+task('setTOBPaymentToken', 'Set a payment token on tOB', setTOBPaymentToken__task)
+    .addParam('tknAddress', 'Address of the payment token')
+    .addParam('oracleAddress', 'Address of the oracle')
+    .addParam('oracleData', 'Oracle data');
+
+task('setTOLPRegisterSingularity', 'Register an SGL on tOLP ', setTOLPRegisterSingularity__task)
+    .addParam('sglAddress', 'Address of the SGL receipt token')
+    .addParam('assetId', 'YieldBox asset ID of the SGL receipt token')
+    .addParam('weight', 'Weight of the gauge');
+
+task('setTOLPUnregisterSingularity', 'Unregister an SGL on tOLP ', setTOLPUnregisterSingularity__task).addParam(
+    'sglAddress',
+    'Address of the SGL receipt token',
+);
+
+task('setYieldBoxRegisterAsset', 'Register an SGL on tOLP ', setYieldBoxRegisterAsset__task)
+    .addParam('tknAddress', 'Address of the SGL receipt token')
+    .addOptionalParam('tknType', 'YieldBox type of the token. 0 for natives, 1 for ERC20, 2 for ERC721, 3 for ERC1155, 4 for none')
+    .addOptionalParam('tknId', 'ID of the token, 0 if ERC20, others if ERC721')
+    .addOptionalParam('strategy', 'Address of the strategy contract')
+    .addOptionalParam('strategyName', 'Name of the strategy contract')
+    .addOptionalParam('strategyDesc', 'Description of the strategy contract');
 task('configurePacketTypes', 'Cofigures min destination gas and the usage of custom adapters', configurePacketTypes__task)
     .addParam('dstLzChainId', 'LZ destination chain id for trusted remotes')
     .addParam('src', 'TAP address');

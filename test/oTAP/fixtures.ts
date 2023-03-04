@@ -19,7 +19,7 @@ export const setupFixture = async () => {
     const _to = signer.address;
     const tapOFT = await (
         await ethers.getContractFactory('TapOFT')
-    ).deploy(LZEndpointMockCurrentChain.address, _to, _to, _to, _to, chainId);
+    ).deploy(LZEndpointMockCurrentChain.address, _to, _to, _to, _to, _to, chainId);
 
     // YieldBox
     const _wrappedNative = await (await ethers.getContractFactory('WETH9Mock')).deploy();
@@ -28,12 +28,13 @@ export const setupFixture = async () => {
 
     // oTAP
     const tapOracleMock = await (await ethers.getContractFactory('OracleMock')).deploy('TAP');
-    await tapOracleMock.setRate(BN(33e17));
+    await tapOracleMock.setRate(BN(33e7));
     const tOLP = await (await ethers.getContractFactory('TapiocaOptionLiquidityProvision')).deploy(yieldBox.address);
     const oTAP = await (await ethers.getContractFactory('OTAP')).deploy();
     const tOB = await (
         await ethers.getContractFactory('TapiocaOptionBroker')
-    ).deploy(tOLP.address, oTAP.address, tapOFT.address, tapOracleMock.address, paymentTokenBeneficiary.address);
+    ).deploy(tOLP.address, oTAP.address, tapOFT.address, paymentTokenBeneficiary.address);
+    await tOB.setTapOracle(tapOracleMock.address, '0x00');
 
     // Deploy a "virtual" market
     const sglTokenMock = await (await ethers.getContractFactory('ERC20Mock')).deploy('sglTokenMock', 'STM', 0, 18);
@@ -57,8 +58,8 @@ export const setupFixture = async () => {
     const stableMockOracle = await (await ethers.getContractFactory('OracleMock')).deploy('StableMockOracle');
     const ethMockOracle = await (await ethers.getContractFactory('OracleMock')).deploy('WETHMockOracle');
 
-    await stableMockOracle.setRate(1e6);
-    await ethMockOracle.setRate(BN(1e18).mul(1200));
+    await stableMockOracle.setRate(1e8);
+    await ethMockOracle.setRate(BN(1e8).mul(1200));
 
     return {
         // signers
@@ -93,6 +94,7 @@ export const setupFixture = async () => {
     };
 };
 
-async function deployNewMarket(yieldBox: YieldBox, tkn: ERC20Mock, strategyAddress: string) {
-    await yieldBox.registerAsset(1, tkn.address, strategyAddress, 0);
+async function deployNewMarket(yieldBox: YieldBox, tkn: ERC20Mock, name = 'test', desc = 'test') {
+    const strat = await (await ethers.getContractFactory('YieldBoxVaultStrat')).deploy(yieldBox.address, tkn.address, name, desc);
+    await yieldBox.registerAsset(1, tkn.address, strat.address, 0);
 }

@@ -163,8 +163,6 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     }
 
     /// @notice Unlocks tOLP tokens
-    /// @dev We purposefully don't burn the `tokenID` and `lockPosition`, α.
-    ///      We can rely on lockPosition.time and lockPosition.duration to check if the lock is expired.
     /// @param _tokenId ID of the position to unlock
     /// @param _singularity Singularity market address
     /// @param _to Address to send the tokens to
@@ -173,14 +171,16 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         IERC20 _singularity,
         address _to
     ) external returns (uint256 sharesOut) {
+        require(_exists(_tokenId), 'tOLP: Expired position');
+
         LockPosition memory lockPosition = lockPositions[_tokenId];
         require(block.timestamp >= lockPosition.lockTime + lockPosition.lockDuration, 'tOLP: Lock not expired');
         require(activeSingularities[_singularity].sglAssetID == lockPosition.sglAssetID, 'tOLP: Invalid singularity');
 
         require(_isApprovedOrOwner(msg.sender, _tokenId), 'tOLP: not owner nor approved');
 
-        // _burn(_tokenId);
-        // delete lockPositions[_tokenId];
+        _burn(_tokenId);
+        delete lockPositions[_tokenId];
 
         // Transfer the tOLR tokens back to the owner
         sharesOut = yieldBox.toShare(lockPosition.sglAssetID, lockPosition.amount, false);
@@ -199,7 +199,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     /// @param singularity Singularity market address
     /// @param weight Weight of the pool
     function setSGLPoolWEight(IERC20 singularity, uint256 weight) external onlyOwner updateTotalSGLPoolWeights {
-        require(activeSingularities[singularity].sglAssetID > 0, 'TapiocaOptions: not registered');
+        require(activeSingularities[singularity].sglAssetID > 0, 'tOLP: not registered');
         activeSingularities[singularity].poolWeight = weight;
 
         emit SetSGLPoolWeight(address(singularity), weight);
@@ -214,7 +214,8 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
         uint256 assetID,
         uint256 weight
     ) external onlyOwner updateTotalSGLPoolWeights {
-        require(activeSingularities[singularity].sglAssetID == 0, 'TapiocaOptions: already registered');
+        require(assetID > 0, 'tOLP: invalid asset ID');
+        require(activeSingularities[singularity].sglAssetID == 0, 'tOLP: already registered');
 
         activeSingularities[singularity].sglAssetID = assetID;
         activeSingularities[singularity].poolWeight = weight > 0 ? weight : 1;
@@ -228,7 +229,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
     /// @param singularity Singularity market address
     function unregisterSingularity(IERC20 singularity) external onlyOwner updateTotalSGLPoolWeights {
         uint256 sglAssetID = activeSingularities[singularity].sglAssetID;
-        require(sglAssetID > 0, 'TapiocaOptions: not registered');
+        require(sglAssetID > 0, 'tOLP: not registered');
 
         unchecked {
             uint256[] memory _singularities = singularities;

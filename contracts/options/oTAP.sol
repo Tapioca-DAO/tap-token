@@ -51,6 +51,7 @@ contract OTAP is ERC721 {
     //   EVENTS
     // ==========
     event Mint(address indexed to, uint256 indexed tokenId, TapOption option);
+    event Burn(address indexed from, uint256 indexed tokenId, TapOption option);
 
     // =========
     //    READ
@@ -60,13 +61,18 @@ contract OTAP is ERC721 {
         return tokenURIs[_tokenId];
     }
 
-    function isApprovedOrOwner(address spender, uint256 tokenId) external view returns (bool) {
-        return _isApprovedOrOwner(spender, tokenId);
+    function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool) {
+        return _isApprovedOrOwner(_spender, _tokenId);
     }
 
     /// @notice Return the owner of the tokenId and the attributes of the option.
-    function attributes(uint256 tokenId) external view returns (address owner, TapOption memory) {
-        return (ownerOf(tokenId), options[tokenId]);
+    function attributes(uint256 _tokenId) external view returns (address, TapOption memory) {
+        return (ownerOf(_tokenId), options[_tokenId]);
+    }
+
+    /// @notice Check if a token exists
+    function exists(uint256 _tokenId) external view returns (bool) {
+        return _exists(_tokenId);
     }
 
     // ==========
@@ -100,6 +106,16 @@ contract OTAP is ERC721 {
         emit Mint(_to, tokenId, option);
     }
 
+    /// @notice burns an OTAP
+    /// @param _tokenId tokenId to burn
+    function burn(uint256 _tokenId) external {
+        require(_isApprovedOrOwner(msg.sender, _tokenId), 'OTAP: only approved or owner');
+        _burn(_tokenId);
+
+        emit Burn(msg.sender, _tokenId, options[_tokenId]);
+    }
+
+    /// @notice tOB claim
     function brokerClaim() external {
         require(broker == address(0), 'OTAP: only once');
         broker = msg.sender;

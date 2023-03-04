@@ -45,12 +45,8 @@ describe('TapiocaOptionLiquidityProvision', () => {
         expect(await tOLP.getSingularities()).to.be.deep.eq([sglTokenMockAsset, sglTokenMock2Asset]);
 
         // Already registered
-        await expect(tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0)).to.revertedWith(
-            'TapiocaOptions: already registered',
-        );
-        await expect(tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 0)).to.revertedWith(
-            'TapiocaOptions: already registered',
-        );
+        await expect(tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0)).to.revertedWith('tOLP: already registered');
+        await expect(tOLP.registerSingularity(sglTokenMock2.address, sglTokenMock2Asset, 0)).to.revertedWith('tOLP: already registered');
     });
 
     it('should unregister a singularity', async () => {
@@ -88,8 +84,8 @@ describe('TapiocaOptionLiquidityProvision', () => {
         expect(await tOLP.getSingularities()).to.be.deep.eq([]);
 
         // Not registered
-        await expect(tOLP.unregisterSingularity(sglTokenMock.address)).to.revertedWith('TapiocaOptions: not registered');
-        await expect(tOLP.unregisterSingularity(sglTokenMock2.address)).to.revertedWith('TapiocaOptions: not registered');
+        await expect(tOLP.unregisterSingularity(sglTokenMock.address)).to.revertedWith('tOLP: not registered');
+        await expect(tOLP.unregisterSingularity(sglTokenMock2.address)).to.revertedWith('tOLP: not registered');
     });
 
     it('should create a lock', async () => {
@@ -169,6 +165,9 @@ describe('TapiocaOptionLiquidityProvision', () => {
             await yieldBox.toShare(sglTokenMockAsset, lockAmount, false),
         );
         expect((await tOLP.activeSingularities(sglTokenMock.address)).totalDeposited).to.be.eq(0);
+
+        // Can not unlock more than once the same lock
+        await expect(tOLP.unlock(tokenID, sglTokenMock.address, signer.address)).to.be.revertedWith('tOLP: Expired position');
     });
 
     it('Should should set an SGL pool weight', async () => {

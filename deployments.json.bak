@@ -1,11 +1,12 @@
 {
-    "5": [
+    "421613": [
         {
             "name": "TapOFT",
-            "address": "0xA4D1077F9A5bc94ddE22B3d01807329De9543607",
+            "address": "0x76174d787894C091AF447EA5f299E9DB5c7f9664",
             "meta": {
                 "constructorArguments": [
-                    "0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23",
+                    "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
+                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                     "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                     "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                     "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
@@ -16,103 +17,95 @@
         },
         {
             "name": "TapiocaOptionLiquidityProvision",
-            "address": "0x7363df7f81f041008D7b723835d07de12e0AcA43",
+            "address": "0x6d984d86e8E2112462F4Ce9D851190aE129C0F39",
             "meta": {
                 "constructorArguments": [
-                    "0xCA3604D7Df34a785D20Cbe7A0Bbd0AF54E9FeF9e"
+                    "0x93cF32C5fF98c0758b32dF9F6DB9e4f4faaCe736"
                 ]
             }
         },
         {
             "name": "OTAP",
-            "address": "0xC41A2B66E7B598f907Ed948733AC75462d81b66e",
+            "address": "0x4364aef7C6f644bb0e719784F1A35100beAee6Db",
             "meta": {
                 "constructorArguments": []
             }
         },
         {
-            "name": "TapOracleMock",
-            "address": "0xBaC59400ED43d56ea9b74C79D633d8FBC3FA43A4",
+            "name": "TapiocaOptionBrokerMock",
+            "address": "0x9EC14ADAA1d71cde3Db4053801927b26740471c9",
             "meta": {
                 "constructorArguments": [
-                    "TapOFTTestnet"
+                    "0x6d984d86e8E2112462F4Ce9D851190aE129C0F39",
+                    "0x4364aef7C6f644bb0e719784F1A35100beAee6Db",
+                    "0x76174d787894C091AF447EA5f299E9DB5c7f9664",
+                    "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                 ]
             }
         },
         {
-            "name": "TapiocaOptionBroker",
-            "address": "0x3D38200d198183ef4B7Ba483b9EE932551d747D1",
+            "name": "TapOFTOracleMock",
+            "address": "0x18af2C1D07674Fcac4930bb08b22370F7BcC3De7",
             "meta": {
                 "constructorArguments": [
-                    "0x7363df7f81f041008D7b723835d07de12e0AcA43",
-                    "0xC41A2B66E7B598f907Ed948733AC75462d81b66e",
-                    "0xA4D1077F9A5bc94ddE22B3d01807329De9543607",
-                    "0xBaC59400ED43d56ea9b74C79D633d8FBC3FA43A4",
-                    "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    "TOFTOM"
                 ]
             }
-        }
-    ],
-    "4002": [
+        },
         {
-            "name": "TapOFT",
-            "address": "0xFCdE8366705e8A9c1eDE4C56D716c9e7564CE50D",
+            "name": "sglTokenMock1",
+            "address": "0x8dDCd1eF7Aab51f003DD03616a2746b2A4a896dB",
             "meta": {
                 "constructorArguments": [
-                    "0x7dcAD72640F835B0FA36EFD3D6d3ec902C7E5acf",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "5"
+                    "sglTokenMock1",
+                    "sgl1",
+                    "0",
+                    "18"
                 ]
             }
-        }
-    ],
-    "43113": [
+        },
         {
-            "name": "TapOFT",
-            "address": "0xc6B03Ba05Fb5E693D8b3533aa676FB4AFDd7DDc7",
+            "name": "sglTokenMock2",
+            "address": "0x86fd9a2C84161978829fF4317534b6fB22c98ab1",
             "meta": {
                 "constructorArguments": [
-                    "0x93f54D755A063cE7bB9e6Ac47Eccc8e33411d706",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "5"
+                    "sglTokenMock2",
+                    "sgl2",
+                    "0",
+                    "18"
                 ]
             }
-        }
-    ],
-    "80001": [
+        },
         {
-            "name": "TapOFT",
-            "address": "0xd621150f4BE5b6E537f61dB2A59499F648F1B6e2",
+            "name": "WETHMock",
+            "address": "0x16E3620D6109e0652b1Cc054AC8b95F103cD7E9D",
             "meta": {
                 "constructorArguments": [
-                    "0xf69186dfBa60DdB133E91E9A4B5673624293d8F8",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "5"
+                    "wethMock",
+                    "WETHM",
+                    "0",
+                    "18"
                 ]
             }
-        }
-    ],
-    "421613": [
+        },
         {
-            "name": "TapOFT",
-            "address": "0x31dA039c8Cf6eDC95fAFECb7B3E70a308128b7E0",
+            "name": "USDCMock",
+            "address": "0x0FFA4D608B37f8386FE61356084Fa8F2bF9fDFE6",
             "meta": {
                 "constructorArguments": [
-                    "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                    "5"
+                    "usdcMock",
+                    "USDCM",
+                    "0",
+                    "6"
+                ]
+            }
+        },
+        {
+            "name": "WETHMOracleMock",
+            "address": "0x803289AE405b9Aeb6AABbf27c9Bc3e7333143844",
+            "meta": {
+                "constructorArguments": [
+                    "WETHMOracle"
                 ]
             }
         }
