@@ -209,6 +209,19 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_address",
+          "type": "address"
+        }
+      ],
+      "name": "NonContractAddress",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
           "indexed": true,
           "internalType": "address",
           "name": "previousOwner",
@@ -229,12 +242,18 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "address",
-          "name": "account",
-          "type": "address"
+          "internalType": "bool",
+          "name": "oldState",
+          "type": "bool"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "newState",
+          "type": "bool"
         }
       ],
-      "name": "Paused",
+      "name": "PausedUpdated",
       "type": "event"
     },
     {
@@ -312,7 +331,7 @@
           "indexed": false,
           "internalType": "bytes",
           "name": "_toAddress",
-          "type": "bytes"
+          "type": "bytes32"
         },
         {
           "indexed": false,
@@ -495,9 +514,22 @@
       "name": "PT_SEND",
       "outputs": [
         {
-          "internalType": "uint16",
+          "internalType": "uint8",
           "name": "",
-          "type": "uint16"
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "PT_SEND_AND_CALL",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
         }
       ],
       "stateMutability": "view",
@@ -591,6 +623,48 @@
           "internalType": "uint256",
           "name": "",
           "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "conservator",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        },
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "name": "creditedPackets",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
         }
       ],
       "stateMutability": "view",
@@ -699,9 +773,63 @@
           "type": "uint16"
         },
         {
-          "internalType": "bytes",
+          "internalType": "bytes32",
           "name": "_toAddress",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_payload",
           "type": "bytes"
+        },
+        {
+          "internalType": "uint64",
+          "name": "_dstGasForCall",
+          "type": "uint64"
+        },
+        {
+          "internalType": "bool",
+          "name": "_useZro",
+          "type": "bool"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_adapterParams",
+          "type": "bytes"
+        }
+      ],
+      "name": "estimateSendAndCallFee",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "nativeFee",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "zroFee",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint16",
+          "name": "_dstChainId",
+          "type": "uint16"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "_toAddress",
+          "type": "bytes32"
         },
         {
           "internalType": "uint256",
@@ -1092,19 +1220,6 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "bool",
-          "name": "pause",
-          "type": "bool"
-        }
-      ],
-      "name": "pauseSendTokens",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "paused",
       "outputs": [
@@ -1210,9 +1325,9 @@
           "type": "uint16"
         },
         {
-          "internalType": "bytes",
+          "internalType": "bytes32",
           "name": "_toAddress",
-          "type": "bytes"
+          "type": "bytes32"
         },
         {
           "internalType": "uint256",
@@ -1220,22 +1335,39 @@
           "type": "uint256"
         },
         {
-          "internalType": "address payable",
-          "name": "_refundAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_zroPaymentAddress",
-          "type": "address"
-        },
-        {
           "internalType": "bytes",
-          "name": "_adapterParams",
+          "name": "_payload",
           "type": "bytes"
+        },
+        {
+          "internalType": "uint64",
+          "name": "_dstGasForCall",
+          "type": "uint64"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address payable",
+              "name": "refundAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "zroPaymentAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "adapterParams",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct ICommonOFT.LzCallParams",
+          "name": "_callParams",
+          "type": "tuple"
         }
       ],
-      "name": "sendFrom",
+      "name": "sendAndCall",
       "outputs": [],
       "stateMutability": "payable",
       "type": "function"
@@ -1264,6 +1396,19 @@
         }
       ],
       "name": "setConfig",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_conservator",
+          "type": "address"
+        }
+      ],
+      "name": "setConservator",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1421,6 +1566,19 @@
       "name": "setUseCustomAdapterParams",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "sharedDecimals",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -1586,6 +1744,19 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "val",
+          "type": "bool"
+        }
+      ],
+      "name": "updatePause",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "useCustomAdapterParams",
       "outputs": [
@@ -1704,7 +1875,7 @@
       "renounceOwnership()": {
         "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
       },
-      "sendFrom(address,uint16,bytes,uint256,address,address,bytes)": {
+      "sendFrom(address,uint16,bytes32,uint256,(address,address,bytes))": {
         "details": "send `_amount` amount of token to (`_dstChainId`, `_toAddress`) from `_from` `_from` the owner of token `_dstChainId` the destination chain identifier `_toAddress` can be any size depending on the `dstChainId`. `_amount` the quantity of tokens in wei `_refundAddress` the address LayerZero refunds if too much message fee is sent `_zroPaymentAddress` set to address(0x0) if not paying in ZRO (LayerZero Token) `_adapterParams` is a flexible bytes array to indicate messaging adapter services"
       },
       "setGovernanceChainIdentifier(uint256)": {
@@ -1734,6 +1905,11 @@
       },
       "transferOwnership(address)": {
         "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+      },
+      "updatePause(bool)": {
+        "params": {
+          "val": "the new value"
+        }
       }
     },
     "stateVariables": {
@@ -1957,7 +2133,7 @@
         "contract": "contracts/tokens/TapOFT.sol:TapOFT",
         "label": "minter",
         "offset": 0,
-        "slot": "16",
+        "slot": "15",
         "type": "t_address"
       },
       {
@@ -1965,8 +2141,24 @@
         "contract": "contracts/tokens/TapOFT.sol:TapOFT",
         "label": "governanceChainIdentifier",
         "offset": 0,
-        "slot": "17",
+        "slot": "16",
         "type": "t_uint256"
+      },
+      {
+        "astId": 6390,
+        "contract": "contracts/tokens/TapOFT.sol:TapOFT",
+        "label": "paused",
+        "offset": 0,
+        "slot": "17",
+        "type": "t_bool"
+      },
+      {
+        "astId": 6393,
+        "contract": "contracts/tokens/TapOFT.sol:TapOFT",
+        "label": "conservator",
+        "offset": 1,
+        "slot": "17",
+        "type": "t_address"
       }
     ],
     "types": {
@@ -2009,6 +2201,13 @@
         "numberOfBytes": "32",
         "value": "t_uint256"
       },
+      "t_mapping(t_bytes_memory_ptr,t_mapping(t_uint64,t_bool))": {
+        "encoding": "mapping",
+        "key": "t_bytes_memory_ptr",
+        "label": "mapping(bytes => mapping(uint64 => bool))",
+        "numberOfBytes": "32",
+        "value": "t_mapping(t_uint64,t_bool)"
+      },
       "t_mapping(t_bytes_memory_ptr,t_mapping(t_uint64,t_bytes32))": {
         "encoding": "mapping",
         "key": "t_bytes_memory_ptr",
@@ -2022,6 +2221,13 @@
         "label": "mapping(uint16 => bytes)",
         "numberOfBytes": "32",
         "value": "t_bytes_storage"
+      },
+      "t_mapping(t_uint16,t_mapping(t_bytes_memory_ptr,t_mapping(t_uint64,t_bool)))": {
+        "encoding": "mapping",
+        "key": "t_uint16",
+        "label": "mapping(uint16 => mapping(bytes => mapping(uint64 => bool)))",
+        "numberOfBytes": "32",
+        "value": "t_mapping(t_bytes_memory_ptr,t_mapping(t_uint64,t_bool))"
       },
       "t_mapping(t_uint16,t_mapping(t_bytes_memory_ptr,t_mapping(t_uint64,t_bytes32)))": {
         "encoding": "mapping",

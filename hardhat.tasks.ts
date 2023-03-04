@@ -11,6 +11,7 @@ import {
     setYieldBoxRegisterAsset__task,
 } from './tasks/setterTasks';
 import { getLocalDeployments__task, getSDKDeployments__task } from './tasks/getDeployments';
+import { configurePacketTypes__task } from './tasks/configurePacketTypes';
 import { glob } from 'typechain';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
@@ -87,3 +88,6 @@ task('setYieldBoxRegisterAsset', 'Register an SGL on tOLP ', setYieldBoxRegister
     .addOptionalParam('strategy', 'Address of the strategy contract')
     .addOptionalParam('strategyName', 'Name of the strategy contract')
     .addOptionalParam('strategyDesc', 'Description of the strategy contract');
+task('configurePacketTypes', 'Cofigures min destination gas and the usage of custom adapters', configurePacketTypes__task)
+    .addParam('dstLzChainId', 'LZ destination chain id for trusted remotes')
+    .addParam('src', 'TAP address');
