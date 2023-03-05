@@ -1,7 +1,10 @@
-import { BigNumber, BigNumberish, Wallet } from 'ethers';
+import { BigNumber, BigNumberish, Signature, Wallet } from 'ethers';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
 import hre, { ethers } from 'hardhat';
 import BigNumberJs from 'bignumber.js';
+import { splitSignature } from 'ethers/lib/utils';
+import { ERC20Permit } from '../typechain';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
 
@@ -111,4 +114,62 @@ export function aml_computeCumulative(t: BigNumber, cumulative: BigNumber, avera
 
 function sqrt(value: BigNumber): BigNumber {
     return BigNumber.from(new BigNumberJs(value.toString()).sqrt().toFixed().split('.')[0]);
+}
+
+export async function getPermitSignature(
+    wallet: Wallet | SignerWithAddress,
+    token: ERC20Permit,
+    spender: string,
+    value: BigNumberish = ethers.constants.MaxUint256,
+    deadline = ethers.constants.MaxUint256,
+    permitConfig?: { nonce?: BigNumberish; name?: string; chainId?: number; version?: string },
+): Promise<Signature> {
+    const [nonce, name, version, chainId] = await Promise.all([
+        permitConfig?.nonce ?? token.nonces(wallet.address),
+        permitConfig?.name ?? token.name(),
+        permitConfig?.version ?? '1',
+        permitConfig?.chainId ?? wallet.getChainId(),
+    ]);
+
+    return splitSignature(
+        await wallet._signTypedData(
+            {
+                name,
+                version,
+                chainId,
+                verifyingContract: token.address,
+            },
+            {
+                Permit: [
+                    {
+                        name: 'owner',
+                        type: 'address',
+                    },
+                    {
+                        name: 'spender',
+                        type: 'address',
+                    },
+                    {
+                        name: 'value',
+                        type: 'uint256',
+                    },
+                    {
+                        name: 'nonce',
+                        type: 'uint256',
+                    },
+                    {
+                        name: 'deadline',
+                        type: 'uint256',
+                    },
+                ],
+            },
+            {
+                owner: wallet.address,
+                spender,
+                value,
+                nonce,
+                deadline,
+            },
+        ),
+    );
 }
