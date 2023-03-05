@@ -188,7 +188,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
         expect(await tOLP.totalSingularityPoolWeights()).to.be.eq(5);
     });
 
-    it.only('Should be able to use permit', async () => {
+    it('Should be able to use permit', async () => {
         const { signer, users, tOLP, yieldBox, sglTokenMock, sglTokenMockAsset } = await loadFixture(setupFixture);
 
         // Setup

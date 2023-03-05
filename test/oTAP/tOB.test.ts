@@ -2,7 +2,14 @@ import { loadFixture, takeSnapshot, time } from '@nomicfoundation/hardhat-networ
 import { expect } from 'chai';
 import { setupFixture } from './fixtures';
 import hre, { network } from 'hardhat';
-import { aml_computeAverageMagnitude, aml_computeDiscount, aml_computeMagnitude, BN, time_travel } from '../test.utils';
+import {
+    aml_computeAverageMagnitude,
+    aml_computeDiscount,
+    aml_computeMagnitude,
+    BN,
+    getERC721PermitSignature,
+    time_travel,
+} from '../test.utils';
 import { OTAP, TapiocaOptionBroker, TapiocaOptionLiquidityProvision, TapOFT, YieldBox } from '../../typechain';
 import { ERC20Mock } from '../../typechain/ERC20Mock';
 import { BigNumber } from 'ethers';
@@ -682,5 +689,48 @@ describe('TapiocaOptionBroker', () => {
         await tOB.collectPaymentTokens([stableMock.address]);
         expect(await stableMock.balanceOf(tOB.address)).to.be.equal(0);
         expect(await stableMock.balanceOf(paymentTokenBeneficiary.address)).to.be.equal(otcDetails.paymentTokenAmount);
+    });
+
+    it('Should be able to use permit on TapOFT', async () => {
+        const { signer, users, oTAP, tOLP, tOB, tapOFT, yieldBox, sglTokenMock, sglTokenMockAsset, sglTokenMock2, sglTokenMock2Asset } =
+            await loadFixture(setupFixture);
+        await setupEnv(tOB, tOLP, tapOFT, sglTokenMock, sglTokenMockAsset, sglTokenMock2, sglTokenMock2Asset);
+
+        // Setup
+        const userLock1 = await lockAndParticipate(signer, 3e8, 3600, tOLP, tOB, oTAP, yieldBox, sglTokenMock, sglTokenMockAsset);
+        const tokenID = userLock1.oTAPTokenID;
+
+        const [normalUser, otherAddress] = users;
+
+        const deadline = (await hre.ethers.provider.getBlock('latest')).timestamp + 10_000;
+        const { v, r, s } = await getERC721PermitSignature(signer, oTAP, normalUser.address, tokenID, BN(deadline));
+
+        // Check if it works
+        const snapshot = await takeSnapshot();
+        await expect(oTAP.permit(normalUser.address, tokenID, deadline, v, r, s))
+            .to.emit(oTAP, 'Approval')
+            .withArgs(signer.address, normalUser.address, tokenID);
+
+        // Check that it can't be used twice
+        await expect(oTAP.permit(normalUser.address, tokenID, deadline, v, r, s)).to.be.reverted;
+        await snapshot.restore();
+
+        // Check that it can't be used after deadline
+        await time_travel(10_001);
+        await expect(oTAP.permit(normalUser.address, tokenID, deadline, v, r, s)).to.be.reverted;
+        await snapshot.restore();
+
+        // Check that it can't be used with wrong signature
+        const { v: v2, r: r2, s: s2 } = await getERC721PermitSignature(signer, oTAP, otherAddress.address, tokenID, BN(deadline));
+        await expect(oTAP.permit(normalUser.address, tokenID, deadline, v2, r2, s2)).to.be.reverted;
+        await snapshot.restore();
+
+        // Check that it can be batch called
+        const permit = oTAP.interface.encodeFunctionData('permit', [normalUser.address, tokenID, deadline, v, r, s]);
+        const transfer = oTAP.interface.encodeFunctionData('transferFrom', [signer.address, normalUser.address, tokenID]);
+
+        await expect(oTAP.connect(normalUser).batch([permit, transfer], true))
+            .to.emit(oTAP, 'Transfer')
+            .withArgs(signer.address, normalUser.address, tokenID);
     });
 });
