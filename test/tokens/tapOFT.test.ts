@@ -3,9 +3,9 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import writeJsonFile from 'write-json-file';
 import { LZEndpointMock, TapOFT } from '../../typechain/';
-import { BigNumberish } from 'ethers';
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { BN, deployLZEndpointMock, deployTapiocaOFT, time_travel } from '../test.utils';
+import { BigNumberish, Wallet } from 'ethers';
+import { loadFixture, takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
+import { BN, deployLZEndpointMock, deployTapiocaOFT, getPermitSignature, time_travel } from '../test.utils';
 
 describe('tapOFT', () => {
     let signer: SignerWithAddress;
@@ -201,5 +201,46 @@ describe('tapOFT', () => {
     it('should be able to set the governance chain identifier', async () => {
         await expect(tapiocaOFT0.connect(normalUser).setGovernanceChainIdentifier(4)).to.be.reverted;
         await tapiocaOFT0.connect(signer).setGovernanceChainIdentifier(4);
+    });
+
+    it.only('Should be able to use permit', async () => {
+        const deadline = (await ethers.provider.getBlock('latest')).timestamp + 10_000;
+        const { v, r, s } = await getPermitSignature(signer, tapiocaOFT0, normalUser.address, (1e18).toString(), BN(deadline));
+
+        // Check if it works
+        const snapshot = await takeSnapshot();
+        await expect(tapiocaOFT0.permit(signer.address, normalUser.address, (1e18).toString(), deadline, v, r, s))
+            .to.emit(tapiocaOFT0, 'Approval')
+            .withArgs(signer.address, normalUser.address, (1e18).toString());
+
+        // Check that it can't be used twice
+        await expect(tapiocaOFT0.permit(signer.address, normalUser.address, (1e18).toString(), deadline, v, r, s)).to.be.reverted;
+        await snapshot.restore();
+
+        // Check that it can't be used after deadline
+        await time_travel(10_001);
+        await expect(tapiocaOFT0.permit(signer.address, normalUser.address, (1e18).toString(), deadline, v, r, s)).to.be.reverted;
+        await snapshot.restore();
+
+        // Check that it can't be used with wrong signature
+        const { v: v2, r: r2, s: s2 } = await getPermitSignature(signer, tapiocaOFT0, minter.address, (1e18).toString(), BN(deadline));
+        await expect(tapiocaOFT0.permit(signer.address, normalUser.address, (1e18).toString(), deadline, v2, r2, s2)).to.be.reverted;
+        await snapshot.restore();
+
+        // Check that it can be batch called
+        const permit = tapiocaOFT0.interface.encodeFunctionData('permit', [
+            signer.address,
+            normalUser.address,
+            (1e18).toString(),
+            deadline,
+            v,
+            r,
+            s,
+        ]);
+        const transfer = tapiocaOFT0.interface.encodeFunctionData('transferFrom', [signer.address, normalUser.address, (1e18).toString()]);
+
+        await expect(tapiocaOFT0.connect(normalUser).batch([permit, transfer], true))
+            .to.emit(tapiocaOFT0, 'Transfer')
+            .withArgs(signer.address, normalUser.address, (1e18).toString());
     });
 });
