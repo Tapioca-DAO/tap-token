@@ -5,7 +5,7 @@ import writeJsonFile from 'write-json-file';
 import { LZEndpointMock, TapOFT } from '../../typechain/';
 import { BigNumberish, Wallet } from 'ethers';
 import { loadFixture, takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
-import { BN, deployLZEndpointMock, deployTapiocaOFT, getPermitSignature, time_travel } from '../test.utils';
+import { BN, deployLZEndpointMock, deployTapiocaOFT, getERC20PermitSignature, time_travel } from '../test.utils';
 
 describe('tapOFT', () => {
     let signer: SignerWithAddress;
@@ -203,9 +203,9 @@ describe('tapOFT', () => {
         await tapiocaOFT0.connect(signer).setGovernanceChainIdentifier(4);
     });
 
-    it.only('Should be able to use permit', async () => {
+    it('Should be able to use permit', async () => {
         const deadline = (await ethers.provider.getBlock('latest')).timestamp + 10_000;
-        const { v, r, s } = await getPermitSignature(signer, tapiocaOFT0, normalUser.address, (1e18).toString(), BN(deadline));
+        const { v, r, s } = await getERC20PermitSignature(signer, tapiocaOFT0, normalUser.address, (1e18).toString(), BN(deadline));
 
         // Check if it works
         const snapshot = await takeSnapshot();
@@ -223,7 +223,7 @@ describe('tapOFT', () => {
         await snapshot.restore();
 
         // Check that it can't be used with wrong signature
-        const { v: v2, r: r2, s: s2 } = await getPermitSignature(signer, tapiocaOFT0, minter.address, (1e18).toString(), BN(deadline));
+        const { v: v2, r: r2, s: s2 } = await getERC20PermitSignature(signer, tapiocaOFT0, minter.address, (1e18).toString(), BN(deadline));
         await expect(tapiocaOFT0.permit(signer.address, normalUser.address, (1e18).toString(), deadline, v2, r2, s2)).to.be.reverted;
         await snapshot.restore();
 
