@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import {BaseBoringBatchable} from '@boringcrypto/boring-solidity/contracts/BoringBatchable.sol';
 import '@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol';
 import '@boringcrypto/boring-solidity/contracts/BoringOwnable.sol';
 import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
+import 'tapioca-sdk/dist/contracts/util/ERC4494.sol';
 import '../interfaces/IYieldBox.sol';
 
 //
@@ -44,7 +46,7 @@ struct SingularityPool {
     uint256 poolWeight; // Pool weight to calculate emission
 }
 
-contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
+contract TapiocaOptionLiquidityProvision is ERC721, ERC721Permit, BaseBoringBatchable, Pausable, BoringOwnable {
     uint256 public tokenCounter; // Counter for token IDs
     mapping(uint256 => LockPosition) public lockPositions; // TokenID => LockPosition
 
@@ -57,7 +59,7 @@ contract TapiocaOptionLiquidityProvision is ERC721, Pausable, BoringOwnable {
 
     uint256 public totalSingularityPoolWeights; // Total weight of all active singularity pools
 
-    constructor(address _yieldBox) ERC721('TapiocaOptionLiquidityProvision', 'tOLP') {
+    constructor(address _yieldBox) ERC721('TapiocaOptionLiquidityProvision', 'tOLP') ERC721Permit('TapiocaOptionLiquidityProvision') {
         yieldBox = IYieldBox(_yieldBox);
     }
 

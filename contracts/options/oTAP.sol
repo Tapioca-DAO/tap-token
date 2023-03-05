@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import {BaseBoringBatchable} from '@boringcrypto/boring-solidity/contracts/BoringBatchable.sol';
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import 'tapioca-sdk/dist/contracts/util/ERC4494.sol';
 
 //
 //                 .(%%%%%%%%%%%%*       *
@@ -32,7 +34,7 @@ struct TapOption {
     uint256 tOLP; // tOLP token ID
 }
 
-contract OTAP is ERC721 {
+contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     uint256 public mintedOTAP; // total number of OTAP minted
     uint256 public mintedTAP; // total number of TAP minted
     address public broker; // address of the onlyBroker
@@ -40,7 +42,7 @@ contract OTAP is ERC721 {
     mapping(uint256 => TapOption) public options; // tokenId => Option
     mapping(uint256 => string) public tokenURIs; // tokenId => tokenURI
 
-    constructor() ERC721('Option TAP', 'oTAP') {}
+    constructor() ERC721('Option TAP', 'oTAP') ERC721Permit('Option TAP') {}
 
     modifier onlyBroker() {
         require(msg.sender == broker, 'OTAP: only onlyBroker');

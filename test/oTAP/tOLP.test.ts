@@ -1,8 +1,8 @@
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+import { loadFixture, takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import { setupFixture } from './fixtures';
 import hre from 'hardhat';
-import { time_travel } from '../test.utils';
+import { BN, getERC721PermitSignature, time_travel } from '../test.utils';
 
 describe('TapiocaOptionLiquidityProvision', () => {
     it('should check initial state', async () => {
@@ -186,5 +186,53 @@ describe('TapiocaOptionLiquidityProvision', () => {
 
         expect((await tOLP.activeSingularities(sglTokenMock.address)).poolWeight).to.be.eq(4);
         expect(await tOLP.totalSingularityPoolWeights()).to.be.eq(5);
+    });
+
+    it('Should be able to use permit', async () => {
+        const { signer, users, tOLP, yieldBox, sglTokenMock, sglTokenMockAsset } = await loadFixture(setupFixture);
+
+        // Setup
+        const lockDuration = 10;
+        const lockAmount = 1e8;
+        await tOLP.registerSingularity(sglTokenMock.address, sglTokenMockAsset, 0);
+        await sglTokenMock.freeMint(lockAmount);
+        await sglTokenMock.approve(yieldBox.address, lockAmount);
+        await yieldBox.depositAsset(sglTokenMockAsset, signer.address, signer.address, lockAmount, 0);
+        await yieldBox.setApprovalForAll(tOLP.address, true);
+        await tOLP.lock(signer.address, signer.address, sglTokenMock.address, lockDuration, 1e8);
+        const tokenID = await tOLP.tokenCounter();
+
+        const [normalUser, otherAddress] = users;
+
+        const deadline = (await hre.ethers.provider.getBlock('latest')).timestamp + 10_000;
+        const { v, r, s } = await getERC721PermitSignature(signer, tOLP, normalUser.address, tokenID, BN(deadline));
+
+        // Check if it works
+        const snapshot = await takeSnapshot();
+        await expect(tOLP.permit(normalUser.address, tokenID, deadline, v, r, s))
+            .to.emit(tOLP, 'Approval')
+            .withArgs(signer.address, normalUser.address, tokenID);
+
+        // Check that it can't be used twice
+        await expect(tOLP.permit(normalUser.address, tokenID, deadline, v, r, s)).to.be.reverted;
+        await snapshot.restore();
+
+        // Check that it can't be used after deadline
+        await time_travel(10_001);
+        await expect(tOLP.permit(normalUser.address, tokenID, deadline, v, r, s)).to.be.reverted;
+        await snapshot.restore();
+
+        // Check that it can't be used with wrong signature
+        const { v: v2, r: r2, s: s2 } = await getERC721PermitSignature(signer, tOLP, otherAddress.address, tokenID, BN(deadline));
+        await expect(tOLP.permit(normalUser.address, tokenID, deadline, v2, r2, s2)).to.be.reverted;
+        await snapshot.restore();
+
+        // Check that it can be batch called
+        const permit = tOLP.interface.encodeFunctionData('permit', [normalUser.address, tokenID, deadline, v, r, s]);
+        const transfer = tOLP.interface.encodeFunctionData('transferFrom', [signer.address, normalUser.address, tokenID]);
+
+        await expect(tOLP.connect(normalUser).batch([permit, transfer], true))
+            .to.emit(tOLP, 'Transfer')
+            .withArgs(signer.address, normalUser.address, tokenID);
     });
 });

@@ -3,7 +3,7 @@ import { time } from '@nomicfoundation/hardhat-network-helpers';
 import hre, { ethers } from 'hardhat';
 import BigNumberJs from 'bignumber.js';
 import { splitSignature } from 'ethers/lib/utils';
-import { ERC20Permit } from '../typechain';
+import { ERC20Permit, ERC721Permit } from '../typechain';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
@@ -116,7 +116,7 @@ function sqrt(value: BigNumber): BigNumber {
     return BigNumber.from(new BigNumberJs(value.toString()).sqrt().toFixed().split('.')[0]);
 }
 
-export async function getPermitSignature(
+export async function getERC20PermitSignature(
     wallet: Wallet | SignerWithAddress,
     token: ERC20Permit,
     spender: string,
@@ -167,6 +167,60 @@ export async function getPermitSignature(
                 owner: wallet.address,
                 spender,
                 value,
+                nonce,
+                deadline,
+            },
+        ),
+    );
+}
+
+export async function getERC721PermitSignature(
+    wallet: Wallet | SignerWithAddress,
+    token: ERC721Permit,
+    spender: string,
+    tokenId: BigNumberish,
+    deadline = ethers.constants.MaxUint256,
+    permitConfig?: { nonce?: BigNumberish; name?: string; chainId?: number; version?: string },
+): Promise<Signature> {
+    const [nonce, name, version, chainId] = await Promise.all([
+        permitConfig?.nonce ?? token.nonces(wallet.address),
+        permitConfig?.name ?? token.name(),
+        permitConfig?.version ?? '1',
+        permitConfig?.chainId ?? wallet.getChainId(),
+    ]);
+
+    return splitSignature(
+        await wallet._signTypedData(
+            {
+                name,
+                version,
+                chainId,
+                verifyingContract: token.address,
+            },
+            {
+                Permit: [
+                    {
+                        name: 'spender',
+                        type: 'address',
+                    },
+                    {
+                        name: 'tokenId',
+                        type: 'uint256',
+                    },
+                    {
+                        name: 'nonce',
+                        type: 'uint256',
+                    },
+                    {
+                        name: 'deadline',
+                        type: 'uint256',
+                    },
+                ],
+            },
+            {
+                owner: wallet.address,
+                spender,
+                tokenId,
                 nonce,
                 deadline,
             },
