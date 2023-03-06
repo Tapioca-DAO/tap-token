@@ -13,6 +13,8 @@ import {
 import { getLocalDeployments__task, getSDKDeployments__task } from './tasks/getDeployments';
 import { configurePacketTypes__task } from './tasks/configurePacketTypes';
 import { glob } from 'typechain';
+import { batchSetTrustedRemote__task } from './tasks/batchSetTrustedRemote';
+import { batchConfigureAdapterParams__task } from './tasks/batchConfigureAdapterParams';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -91,3 +93,16 @@ task('setYieldBoxRegisterAsset', 'Register an SGL on tOLP ', setYieldBoxRegister
 task('configurePacketTypes', 'Cofigures min destination gas and the usage of custom adapters', configurePacketTypes__task)
     .addParam('dstLzChainId', 'LZ destination chain id for trusted remotes')
     .addParam('src', 'TAP address');
+
+task(
+    'batchSetTrustedRemote',
+    'Set trusted remote between all available tOFT contracts for the current chain',
+    batchSetTrustedRemote__task,
+).addParam('contract', 'Contract name to filter by');
+
+task(
+    'batchConfigureAdapterParams',
+    'Sets OFT to use adapter params and the minimum destination gas between all available tOFT contracts for the current chain',
+    batchConfigureAdapterParams__task,
+).addParam('contract', 'Contract name to filter by');
+
