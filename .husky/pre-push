@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npm i tapioaca-sdk
+npm i tapioca-sdk
 npm run lint
 npm run test
