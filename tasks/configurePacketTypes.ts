@@ -8,7 +8,7 @@ export const configurePacketTypes__task = async (taskArgs: { src: string; dstLzC
 
     const tapContract = await hre.ethers.getContractAt('TapOFT', taskArgs.src);
 
-    for (var i = 0; i < packetTypes.length; i++) {
+    for (let i = 0; i < packetTypes.length; i++) {
         await (await tapContract.setMinDstGas(taskArgs.dstLzChainId, packetTypes[i], 200000)).wait();
         await (await tapContract.setUseCustomAdapterParams(true)).wait();
     }

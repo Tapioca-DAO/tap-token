@@ -105,4 +105,3 @@ task(
     'Sets OFT to use adapter params and the minimum destination gas between all available tOFT contracts for the current chain',
     batchConfigureAdapterParams__task,
 ).addParam('contract', 'Contract name to filter by');
-

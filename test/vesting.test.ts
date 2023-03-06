@@ -42,7 +42,7 @@ describe('Vesting', () => {
         let vested = await vesting['vested()']();
         expect(vested.eq(0)).to.be.true;
 
-        let claimable = await vesting['claimable()']();
+        const claimable = await vesting['claimable()']();
         expect(claimable.eq(0)).to.be.true;
 
         await time_travel(cliff / 2);
@@ -107,7 +107,7 @@ describe('Vesting', () => {
 
         await vesting.registerUser(eoa1.address, mintAmount.div(4));
         await vesting.registerUser(deployer.address, mintAmount.div(4));
-        for (var i = 0; i < newSigners.length; i++) {
+        for (let i = 0; i < newSigners.length; i++) {
             await vesting.registerUser(newSigners[i].address, mintAmount.div(10));
         }
 
@@ -117,24 +117,24 @@ describe('Vesting', () => {
 
         await time_travel(duration / 2);
 
-        let vested = await vesting['vested()']();
+        const vested = await vesting['vested()']();
         expect(vested.eq(mintAmount.div(2))).to.be.true;
 
-        let randomSignerPossibleAmount = mintAmount.div(20);
-        let randomSignerClaimable = await vesting['claimable(address)'](newSigners[0].address);
+        const randomSignerPossibleAmount = mintAmount.div(20);
+        const randomSignerClaimable = await vesting['claimable(address)'](newSigners[0].address);
 
-        let eoa1PossibleAmount = mintAmount.div(8);
-        let eoa1Claimable = await vesting['claimable(address)'](eoa1.address);
+        const eoa1PossibleAmount = mintAmount.div(8);
+        const eoa1Claimable = await vesting['claimable(address)'](eoa1.address);
         expect(eoa1PossibleAmount.eq(eoa1Claimable)).to.be.true;
 
-        let eoa1TokensBefore = await usdc.balanceOf(eoa1.address);
+        const eoa1TokensBefore = await usdc.balanceOf(eoa1.address);
         await vesting.connect(eoa1).claim();
-        let eoa1TokensAfter = await usdc.balanceOf(eoa1.address);
+        const eoa1TokensAfter = await usdc.balanceOf(eoa1.address);
         expect(eoa1TokensAfter.sub(eoa1TokensBefore)).to.be.approximately(eoa1Claimable, eoa1Claimable.mul(99).div(100));
 
-        let randomSignerTokensBefore = await usdc.balanceOf(newSigners[0].address);
+        const randomSignerTokensBefore = await usdc.balanceOf(newSigners[0].address);
         await vesting.connect(newSigners[0]).claim();
-        let randomSignerTokensAfter = await usdc.balanceOf(newSigners[0].address);
+        const randomSignerTokensAfter = await usdc.balanceOf(newSigners[0].address);
         expect(randomSignerTokensAfter.sub(randomSignerTokensBefore)).to.be.approximately(
             randomSignerClaimable,
             randomSignerClaimable.mul(99).div(100),
@@ -145,13 +145,13 @@ describe('Vesting', () => {
         //claim everything
         await vesting.claim();
         await vesting.connect(eoa1).claim();
-        for (var i = 0; i < newSigners.length; i++) {
+        for (let i = 0; i < newSigners.length; i++) {
             await vesting.connect(newSigners[i]).claim();
         }
 
         let total = await usdc.balanceOf(eoa1.address);
         total = total.add(await usdc.balanceOf(deployer.address));
-        for (var i = 0; i < newSigners.length; i++) {
+        for (let i = 0; i < newSigners.length; i++) {
             total = total.add(await usdc.balanceOf(newSigners[i].address));
         }
 
@@ -161,7 +161,7 @@ describe('Vesting', () => {
 
         await expect(vesting.claim()).to.be.revertedWithCustomError(vesting, 'NothingToClaim');
         await expect(vesting.connect(eoa1).claim()).to.be.revertedWithCustomError(vesting, 'NothingToClaim');
-        for (var i = 0; i < newSigners.length; i++) {
+        for (let i = 0; i < newSigners.length; i++) {
             await expect(vesting.connect(newSigners[i]).claim()).to.be.revertedWithCustomError(vesting, 'NothingToClaim');
         }
     });
@@ -179,7 +179,7 @@ describe('Vesting', () => {
 
         await vesting.registerUser(eoa1.address, mintAmount.div(4));
         await vesting.registerUser(deployer.address, mintAmount.div(4));
-        for (var i = 0; i < newSigners.length; i++) {
+        for (let i = 0; i < newSigners.length; i++) {
             await vesting.registerUser(newSigners[i].address, mintAmount.div(10));
         }
 
