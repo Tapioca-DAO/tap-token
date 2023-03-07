@@ -17,12 +17,17 @@ import { HttpNetworkConfig } from 'hardhat/types';
 
 dotenv.config();
 
-type TNetwork = ReturnType<typeof SDK.API.utils.getSupportedChains>[number]['name'];
+type TNetwork = ReturnType<
+    typeof SDK.API.utils.getSupportedChains
+>[number]['name'];
 const supportedChains = SDK.API.utils.getSupportedChains().reduce(
     (sdkChains, chain) => ({
         ...sdkChains,
         [chain.name]: <HttpNetworkConfig>{
-            accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+            accounts:
+                process.env.PRIVATE_KEY !== undefined
+                    ? [process.env.PRIVATE_KEY]
+                    : [],
             live: true,
             url: chain.rpc.replace('<api_key>', process.env.ALCHEMY_API_KEY),
             gasMultiplier: chain.tags.includes('testnet') ? 2 : 1,
@@ -57,7 +62,12 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
         ],
     },
     vyper: {
-        compilers: [{ version: '0.2.15' }, { version: '0.2.8' }, { version: '0.3.1' }, { version: '0.3.3' }],
+        compilers: [
+            { version: '0.2.15' },
+            { version: '0.2.8' },
+            { version: '0.3.1' },
+            { version: '0.3.3' },
+        ],
     },
     namedAccounts: {
         deployer: 0,

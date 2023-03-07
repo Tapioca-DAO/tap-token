@@ -12,8 +12,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const chainId = await hre.getChainId();
     const contracts: TContract[] = [];
     //all of these should be constants
-    const yieldBox = (await SDK.API.utils.getDeployment('Tapioca-Bar', 'YieldBox', chainId)).address;
-    const args: Parameters<TapiocaOptionLiquidityProvision__factory['deploy']> = [yieldBox];
+    const yieldBox = (
+        await SDK.API.utils.getDeployment('Tapioca-Bar', 'YieldBox', chainId)
+    ).address;
+    const args: Parameters<TapiocaOptionLiquidityProvision__factory['deploy']> =
+        [yieldBox];
 
     console.log('\nDeploying tOLP');
     await deploy('TapiocaOptionLiquidityProvision', {
@@ -22,14 +25,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args,
         // gasPrice: '20000000000',
     });
-    const tOLPDeployment = await deployments.get('TapiocaOptionLiquidityProvision');
+    const tOLPDeployment = await deployments.get(
+        'TapiocaOptionLiquidityProvision',
+    );
     await verify(hre, tOLPDeployment.address, args);
     contracts.push({
         name: 'TapiocaOptionLiquidityProvision',
         address: tOLPDeployment.address,
         meta: { constructorArguments: args },
     });
-    console.log(`Done. Deployed on ${tOLPDeployment.address} with args ${args}`);
+    console.log(
+        `Done. Deployed on ${tOLPDeployment.address} with args ${args}`,
+    );
 
     await updateDeployments(contracts, chainId);
 };

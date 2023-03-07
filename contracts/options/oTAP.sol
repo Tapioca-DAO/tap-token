@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {BaseBoringBatchable} from '@boringcrypto/boring-solidity/contracts/BoringBatchable.sol';
-import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import 'tapioca-sdk/dist/contracts/util/ERC4494.sol';
+import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 
 //
 //                 .(%%%%%%%%%%%%*       *
@@ -42,10 +42,10 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     mapping(uint256 => TapOption) public options; // tokenId => Option
     mapping(uint256 => string) public tokenURIs; // tokenId => tokenURI
 
-    constructor() ERC721('Option TAP', 'oTAP') ERC721Permit('Option TAP') {}
+    constructor() ERC721("Option TAP", "oTAP") ERC721Permit("Option TAP") {}
 
     modifier onlyBroker() {
-        require(msg.sender == broker, 'OTAP: only onlyBroker');
+        require(msg.sender == broker, "OTAP: only onlyBroker");
         _;
     }
 
@@ -59,16 +59,23 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     //    READ
     // =========
 
-    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override returns (string memory) {
         return tokenURIs[_tokenId];
     }
 
-    function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool) {
+    function isApprovedOrOwner(
+        address _spender,
+        uint256 _tokenId
+    ) external view returns (bool) {
         return _isApprovedOrOwner(_spender, _tokenId);
     }
 
     /// @notice Return the owner of the tokenId and the attributes of the option.
-    function attributes(uint256 _tokenId) external view returns (address, TapOption memory) {
+    function attributes(
+        uint256 _tokenId
+    ) external view returns (address, TapOption memory) {
         return (ownerOf(_tokenId), options[_tokenId]);
     }
 
@@ -82,7 +89,10 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     // ==========
 
     function setTokenURI(uint256 _tokenId, string calldata _tokenURI) external {
-        require(_isApprovedOrOwner(msg.sender, _tokenId), 'OTAP: only approved or owner');
+        require(
+            _isApprovedOrOwner(msg.sender, _tokenId),
+            "OTAP: only approved or owner"
+        );
         tokenURIs[_tokenId] = _tokenURI;
     }
 
@@ -111,7 +121,10 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     /// @notice burns an OTAP
     /// @param _tokenId tokenId to burn
     function burn(uint256 _tokenId) external {
-        require(_isApprovedOrOwner(msg.sender, _tokenId), 'OTAP: only approved or owner');
+        require(
+            _isApprovedOrOwner(msg.sender, _tokenId),
+            "OTAP: only approved or owner"
+        );
         _burn(_tokenId);
 
         emit Burn(msg.sender, _tokenId, options[_tokenId]);
@@ -119,7 +132,7 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
 
     /// @notice tOB claim
     function brokerClaim() external {
-        require(broker == address(0), 'OTAP: only once');
+        require(broker == address(0), "OTAP: only once");
         broker = msg.sender;
     }
 }

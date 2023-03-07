@@ -12,8 +12,15 @@ ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
 // exports
 // ---
 
-export async function registerVesting(token: string, cliff: BigNumberish, duration: BigNumberish, staging?: boolean) {
-    const vesting = await (await ethers.getContractFactory('Vesting')).deploy(cliff, duration);
+export async function registerVesting(
+    token: string,
+    cliff: BigNumberish,
+    duration: BigNumberish,
+    staging?: boolean,
+) {
+    const vesting = await (
+        await ethers.getContractFactory('Vesting')
+    ).deploy(cliff, duration);
     await vesting.deployed();
 
     return { vesting };
@@ -22,11 +29,16 @@ export async function registerVesting(token: string, cliff: BigNumberish, durati
 export const randomSigners = async (amount: number) => {
     const signers: Wallet[] = [];
     for (let i = 0; i < amount; i++) {
-        const signer = new ethers.Wallet(ethers.Wallet.createRandom().privateKey, hre.ethers.provider);
+        const signer = new ethers.Wallet(
+            ethers.Wallet.createRandom().privateKey,
+            hre.ethers.provider,
+        );
         signers.push(signer);
         await ethers.provider.send('hardhat_setBalance', [
             signer.address,
-            ethers.utils.hexStripZeros(ethers.utils.parseEther(String(100000))._hex),
+            ethers.utils.hexStripZeros(
+                ethers.utils.parseEther(String(100000))._hex,
+            ),
         ]);
     }
     return signers;
@@ -61,37 +73,57 @@ export const LZ_ENDPOINTS: TLZ_Endpoint = {
     },
 };
 export async function deployUSDC(amount: BigNumberish, decimals: number) {
-    const usdc = await (await ethers.getContractFactory('ERC20Mock')).deploy('USDCMock', 'USDCM', amount, decimals);
+    const usdc = await (
+        await ethers.getContractFactory('ERC20Mock')
+    ).deploy('USDCMock', 'USDCM', amount, decimals);
     await usdc.deployed();
 
     return usdc;
 }
 export async function deployLZEndpointMock(chainId: number) {
-    const lzEndpointContract = await (await ethers.getContractFactory('LZEndpointMock')).deploy(chainId);
+    const lzEndpointContract = await (
+        await ethers.getContractFactory('LZEndpointMock')
+    ).deploy(chainId);
     await lzEndpointContract.deployed();
 
     return lzEndpointContract;
 }
 export async function deployUsd0(lzEndpoint: string) {
-    const oftContract = await (await ethers.getContractFactory('USD0')).deploy(lzEndpoint);
+    const oftContract = await (
+        await ethers.getContractFactory('USD0')
+    ).deploy(lzEndpoint);
     await oftContract.deployed();
 
     return oftContract;
 }
-export async function deployTapiocaOFT(lzEndpoint: string, to: string, chainId_?: number) {
+export async function deployTapiocaOFT(
+    lzEndpoint: string,
+    to: string,
+    chainId_?: number,
+) {
     let { chainId } = await ethers.provider.getNetwork();
     chainId = chainId_ ?? chainId;
-    const oftContract = await (await ethers.getContractFactory('TapOFT')).deploy(lzEndpoint, to, to, to, to, to, chainId);
+    const oftContract = await (
+        await ethers.getContractFactory('TapOFT')
+    ).deploy(lzEndpoint, to, to, to, to, to, chainId);
     await oftContract.deployed();
 
     return oftContract;
 }
 
-export function aml_computeMinWeight(totalWeights: BigNumber, minWeightFactor: BigNumber) {
+export function aml_computeMinWeight(
+    totalWeights: BigNumber,
+    minWeightFactor: BigNumber,
+) {
     return totalWeights.mul(minWeightFactor);
 }
 
-export function aml_computeDiscount(magnitude: BigNumber, cumulative: BigNumber, dmin: BigNumber, dmax: BigNumber) {
+export function aml_computeDiscount(
+    magnitude: BigNumber,
+    cumulative: BigNumber,
+    dmin: BigNumber,
+    dmax: BigNumber,
+) {
     if (cumulative.lte(0)) {
         return dmax;
     }
@@ -104,16 +136,28 @@ export function aml_computeMagnitude(t: BigNumber, cumulative: BigNumber) {
     return sqrt(t.pow(2).add(cumulative.pow(2))).sub(cumulative);
 }
 
-export function aml_computeAverageMagnitude(magnitude: BigNumber, averageMagnitude: BigNumber, totalParticipants: BigNumber) {
+export function aml_computeAverageMagnitude(
+    magnitude: BigNumber,
+    averageMagnitude: BigNumber,
+    totalParticipants: BigNumber,
+) {
     return magnitude.add(averageMagnitude).div(totalParticipants);
 }
 
-export function aml_computeCumulative(t: BigNumber, cumulative: BigNumber, averageMagnitude: BigNumber) {
-    return t > cumulative ? cumulative.add(averageMagnitude) : cumulative.sub(averageMagnitude);
+export function aml_computeCumulative(
+    t: BigNumber,
+    cumulative: BigNumber,
+    averageMagnitude: BigNumber,
+) {
+    return t > cumulative
+        ? cumulative.add(averageMagnitude)
+        : cumulative.sub(averageMagnitude);
 }
 
 function sqrt(value: BigNumber): BigNumber {
-    return BigNumber.from(new BigNumberJs(value.toString()).sqrt().toFixed().split('.')[0]);
+    return BigNumber.from(
+        new BigNumberJs(value.toString()).sqrt().toFixed().split('.')[0],
+    );
 }
 
 export async function getERC20PermitSignature(
@@ -122,7 +166,12 @@ export async function getERC20PermitSignature(
     spender: string,
     value: BigNumberish = ethers.constants.MaxUint256,
     deadline = ethers.constants.MaxUint256,
-    permitConfig?: { nonce?: BigNumberish; name?: string; chainId?: number; version?: string },
+    permitConfig?: {
+        nonce?: BigNumberish;
+        name?: string;
+        chainId?: number;
+        version?: string;
+    },
 ): Promise<Signature> {
     const [nonce, name, version, chainId] = await Promise.all([
         permitConfig?.nonce ?? token.nonces(wallet.address),
@@ -180,7 +229,12 @@ export async function getERC721PermitSignature(
     spender: string,
     tokenId: BigNumberish,
     deadline = ethers.constants.MaxUint256,
-    permitConfig?: { nonce?: BigNumberish; name?: string; chainId?: number; version?: string },
+    permitConfig?: {
+        nonce?: BigNumberish;
+        name?: string;
+        chainId?: number;
+        version?: string;
+    },
 ): Promise<Signature> {
     const [nonce, name, version, chainId] = await Promise.all([
         permitConfig?.nonce ?? token.nonces(wallet.address),

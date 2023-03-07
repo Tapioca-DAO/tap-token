@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import '../../interfaces/IOracle.sol';
+import "../../interfaces/IOracle.sol";
 
 contract OracleMock is IOracle {
     uint256 public mockValue;
@@ -20,7 +20,9 @@ contract OracleMock is IOracle {
     /// (string memory collateralSymbol, string memory assetSymbol, uint256 division) = abi.decode(data, (string, string, uint256));
     /// @return success if no valid (recent) rate is available, return false else true.
     /// @return _rate The rate of the requested asset / pair / pool.
-    function get(bytes calldata) external view returns (bool success, uint256 _rate) {
+    function get(
+        bytes calldata
+    ) external view returns (bool success, uint256 _rate) {
         return (true, mockValue);
     }
 
@@ -29,7 +31,9 @@ contract OracleMock is IOracle {
     /// (string memory collateralSymbol, string memory assetSymbol, uint256 division) = abi.decode(data, (string, string, uint256));
     /// @return success if no valid (recent) rate is available, return false else true.
     /// @return rate The rate of the requested asset / pair / pool.
-    function peek(bytes calldata) external view returns (bool success, uint256 rate) {
+    function peek(
+        bytes calldata
+    ) external view returns (bool success, uint256 rate) {
         return (true, mockValue);
     }
 
@@ -46,7 +50,7 @@ contract OracleMock is IOracle {
     /// (string memory collateralSymbol, string memory assetSymbol, uint256 division) = abi.decode(data, (string, string, uint256));
     /// @return (string) A human readable symbol name about this oracle.
     function symbol(bytes calldata) external pure returns (string memory) {
-        return 'ORCM';
+        return "ORCM";
     }
 
     /// @notice Returns a human readable name about this oracle.

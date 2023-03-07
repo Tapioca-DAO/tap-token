@@ -2,7 +2,11 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TContract } from 'tapioca-sdk/dist/shared';
-import { TapiocaOptionBroker, TapiocaOptionBrokerMock, TapiocaOptionBroker__factory } from '../typechain';
+import {
+    TapiocaOptionBroker,
+    TapiocaOptionBrokerMock,
+    TapiocaOptionBroker__factory,
+} from '../typechain';
 import { updateDeployments, verify } from '../scripts/deployment.utils';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -13,17 +17,36 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const contracts: TContract[] = [];
 
-    const tapOFT = SDK.API.utils.getDeployment('Tap-Token', 'TapOFT', chainId).address;
-    const oTAP = SDK.API.utils.getDeployment('Tap-Token', 'OTAP', chainId).address;
-    const tOLP = SDK.API.utils.getDeployment('Tap-Token', 'TapiocaOptionLiquidityProvision', chainId).address;
+    const tapOFT = SDK.API.utils.getDeployment(
+        'Tap-Token',
+        'TapOFT',
+        chainId,
+    ).address;
+    const oTAP = SDK.API.utils.getDeployment(
+        'Tap-Token',
+        'OTAP',
+        chainId,
+    ).address;
+    const tOLP = SDK.API.utils.getDeployment(
+        'Tap-Token',
+        'TapiocaOptionLiquidityProvision',
+        chainId,
+    ).address;
 
     const paymentTokenBeneficiary = deployer;
 
     //all of these should be constants
-    const args: Parameters<TapiocaOptionBroker__factory['deploy']> = [tOLP, oTAP, tapOFT, paymentTokenBeneficiary];
+    const args: Parameters<TapiocaOptionBroker__factory['deploy']> = [
+        tOLP,
+        oTAP,
+        tapOFT,
+        paymentTokenBeneficiary,
+    ];
 
     console.log('\nDeploying tOB');
-    const deploymentName = hre.network.tags['testnet'] ? 'TapiocaOptionBrokerMock' : 'TapiocaOptionBroker';
+    const deploymentName = hre.network.tags['testnet']
+        ? 'TapiocaOptionBrokerMock'
+        : 'TapiocaOptionBroker';
     await deploy(deploymentName, {
         from: deployer,
         log: true,
@@ -44,7 +67,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         await (await tap.setMinter(tOBDeployment.address)).wait();
     }
 
-    const tOB = (await hre.ethers.getContractAt(deploymentName, tOBDeployment.address)) as TapiocaOptionBroker | TapiocaOptionBrokerMock;
+    const tOB = (await hre.ethers.getContractAt(
+        deploymentName,
+        tOBDeployment.address,
+    )) as TapiocaOptionBroker | TapiocaOptionBrokerMock;
     const oTAPcontract = await hre.ethers.getContractAt('OTAP', oTAP);
     if ((await oTAPcontract.broker()) !== tOBDeployment.address) {
         console.log('[+] Claiming oTAP broker role on tOB');

@@ -29,7 +29,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         address: oTAPDeployment.address,
         meta: { constructorArguments: args },
     });
-    console.log(`Done. Deployed on ${oTAPDeployment.address} with args ${args}`);
+    console.log(
+        `Done. Deployed on ${oTAPDeployment.address} with args ${args}`,
+    );
 
     await updateDeployments(contracts, chainId);
 };

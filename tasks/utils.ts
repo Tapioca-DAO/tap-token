@@ -3,7 +3,10 @@ import _ from 'lodash';
 import { TContract } from 'tapioca-sdk/dist/shared';
 import { getDeployments } from './getDeployments';
 
-export const getDeployment = async (hre: HardhatRuntimeEnvironment, name: string) => {
+export const getDeployment = async (
+    hre: HardhatRuntimeEnvironment,
+    name: string,
+) => {
     let deployments: TContract[] = [];
 
     try {

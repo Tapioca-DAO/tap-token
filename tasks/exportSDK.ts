@@ -11,11 +11,15 @@ import { getLocalDeployments__task } from './getDeployments';
  * https://github.com/Tapioca-DAO/tapioca-sdk
  */
 
-export const exportSDK__task = async (taskArgs: { mainnet?: boolean }, hre: HardhatRuntimeEnvironment) => {
+export const exportSDK__task = async (
+    taskArgs: { mainnet?: boolean },
+    hre: HardhatRuntimeEnvironment,
+) => {
     const chainId = await hre.getChainId();
 
     const _deployments: TProjectDeployment = {
-        [chainId as keyof TProjectDeployment]: SDK.API.utils.getDeployments('Tap-Token', chainId, true) ?? [],
+        [chainId as keyof TProjectDeployment]:
+            SDK.API.utils.getDeployments('Tap-Token', chainId, true) ?? [],
     };
 
     const contractNames = [
@@ -30,7 +34,9 @@ export const exportSDK__task = async (taskArgs: { mainnet?: boolean }, hre: Hard
         'Vesting',
     ];
 
-    console.log('[+] Exporting typechain & deployment files for tapioca-sdk...');
+    console.log(
+        '[+] Exporting typechain & deployment files for tapioca-sdk...',
+    );
     console.log(contractNames);
 
     await SDK.API.exportSDK.run({

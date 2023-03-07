@@ -5,13 +5,21 @@ abstract contract TWAML {
     /// @notice Compute the minimum weight to participate in the twAML voting mechanism
     /// @param _totalWeight The total weight of the twAML system
     /// @param _minWeightFactor The minimum weight factor in BPS
-    function computeMinWeight(uint256 _totalWeight, uint256 _minWeightFactor) internal pure returns (uint256) {
+    function computeMinWeight(
+        uint256 _totalWeight,
+        uint256 _minWeightFactor
+    ) internal pure returns (uint256) {
         uint256 mul = (_totalWeight * _minWeightFactor);
         return mul >= 1e4 ? mul / 1e4 : _totalWeight;
     }
 
-    function computeMagnitude(uint256 _timeWeight, uint256 _cumulative) internal pure returns (uint256) {
-        return sqrt(_timeWeight * _timeWeight + _cumulative * _cumulative) - _cumulative;
+    function computeMagnitude(
+        uint256 _timeWeight,
+        uint256 _cumulative
+    ) internal pure returns (uint256) {
+        return
+            sqrt(_timeWeight * _timeWeight + _cumulative * _cumulative) -
+            _cumulative;
     }
 
     function computeTarget(

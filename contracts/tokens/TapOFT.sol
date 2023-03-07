@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol';
-import 'tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol';
-import {BaseBoringBatchable} from '@boringcrypto/boring-solidity/contracts/BoringBatchable.sol';
-import 'tapioca-sdk/dist/contracts/token/oft/v2/OFTV2.sol';
-import 'tapioca-sdk/dist/contracts/libraries/LzLib.sol';
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import "tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol";
+import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
+import "tapioca-sdk/dist/contracts/token/oft/v2/OFTV2.sol";
+import "tapioca-sdk/dist/contracts/libraries/LzLib.sol";
 
 /*
 
@@ -94,7 +94,7 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     event ConservatorUpdated(address indexed old, address indexed _new);
 
     modifier notPaused() {
-        require(!paused, 'TAP: paused');
+        require(!paused, "TAP: paused");
         _;
     }
 
@@ -118,8 +118,8 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
         address _dao,
         address _airdrop,
         uint16 _governanceChainId
-    ) OFTV2('Tapioca', 'TAP', 8, _lzEndpoint) ERC20Permit('Tapioca') {
-        require(_lzEndpoint != address(0), 'LZ endpoint not valid');
+    ) OFTV2("Tapioca", "TAP", 8, _lzEndpoint) ERC20Permit("Tapioca") {
+        require(_lzEndpoint != address(0), "LZ endpoint not valid");
         governanceChainIdentifier = _governanceChainId;
         if (_getChainId() == governanceChainIdentifier) {
             _mint(_contributors, 1e18 * 15_000_000);
@@ -127,7 +127,10 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
             _mint(_lbp, 1e18 * 5_000_000);
             _mint(_dao, 1e18 * 10_000_000);
             _mint(_airdrop, 1e18 * 2_500_000);
-            require(totalSupply() == INITIAL_SUPPLY, 'initial supply not valid');
+            require(
+                totalSupply() == INITIAL_SUPPLY,
+                "initial supply not valid"
+            );
         }
         emissionsStartTime = block.timestamp;
 
@@ -137,8 +140,13 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     ///-- Owner methods --
     /// @notice sets the governance chain identifier
     /// @param _identifier LayerZero chain identifier
-    function setGovernanceChainIdentifier(uint256 _identifier) external onlyOwner {
-        emit GovernanceChainIdentifierUpdated(governanceChainIdentifier, _identifier);
+    function setGovernanceChainIdentifier(
+        uint256 _identifier
+    ) external onlyOwner {
+        emit GovernanceChainIdentifierUpdated(
+            governanceChainIdentifier,
+            _identifier
+        );
         governanceChainIdentifier = _identifier;
     }
 
@@ -146,7 +154,7 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     /// @dev Conservator can pause the contract
     /// @param _conservator The new address
     function setConservator(address _conservator) external onlyOwner {
-        require(_conservator != address(0), 'TAP: address not valid');
+        require(_conservator != address(0), "TAP: address not valid");
         emit ConservatorUpdated(conservator, _conservator);
         conservator = _conservator;
     }
@@ -154,8 +162,8 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     /// @notice updates the pause state of the contract
     /// @param val the new value
     function updatePause(bool val) external {
-        require(msg.sender == conservator, 'TAP: unauthorized');
-        require(val != paused, 'TAP: same state');
+        require(msg.sender == conservator, "TAP: unauthorized");
+        require(val != paused, "TAP: same state");
         emit PausedUpdated(paused, val);
         paused = val;
     }
@@ -163,7 +171,7 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     /// @notice sets a new minter address
     /// @param _minter the new address
     function setMinter(address _minter) external onlyOwner {
-        require(_minter != address(0), 'address not valid');
+        require(_minter != address(0), "address not valid");
         emit MinterUpdated(minter, _minter);
         minter = _minter;
     }
@@ -175,7 +183,9 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     }
 
     /// @notice Returns the current week given a timestamp
-    function timestampToWeek(uint256 timestamp) external view returns (uint256) {
+    function timestampToWeek(
+        uint256 timestamp
+    ) external view returns (uint256) {
         if (timestamp == 0) {
             timestamp = block.timestamp;
         }
@@ -197,7 +207,7 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     ///-- Write methods --
     /// @notice Emit the TAP for the current week
     function emitForWeek() external notPaused returns (uint256) {
-        require(_getChainId() == governanceChainIdentifier, 'chain not valid');
+        require(_getChainId() == governanceChainIdentifier, "chain not valid");
 
         uint256 week = _timestampToWeek(block.timestamp);
         if (emissionForWeek[week] > 0) return 0;
@@ -220,11 +230,11 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     /// @param _to Address to send the minted TAP to
     /// @param _amount TAP amount
     function extractTAP(address _to, uint256 _amount) external notPaused {
-        require(msg.sender == minter, 'unauthorized');
-        require(_amount > 0, 'amount not valid');
+        require(msg.sender == minter, "unauthorized");
+        require(_amount > 0, "amount not valid");
 
         uint256 week = _timestampToWeek(block.timestamp);
-        require(emissionForWeek[week] >= _amount, 'exceeds allowable amount');
+        require(emissionForWeek[week] >= _amount, "exceeds allowable amount");
         _mint(_to, _amount);
         mintedInWeek[week] += _amount;
         emit Minted(msg.sender, _to, _amount);
@@ -238,7 +248,9 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     }
 
     ///-- Internal methods --
-    function _timestampToWeek(uint256 timestamp) internal view returns (uint256) {
+    function _timestampToWeek(
+        uint256 timestamp
+    ) internal view returns (uint256) {
         return ((timestamp - emissionsStartTime) / WEEK) + 1; // Starts at week 1
     }
 

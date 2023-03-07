@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
-import '@boringcrypto/boring-solidity/contracts/BoringOwnable.sol';
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 
 contract Vesting is BoringOwnable, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -63,7 +63,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     /// @param _cliff cliff period
     /// @param _duration vesting period
     constructor(uint256 _cliff, uint256 _duration) {
-        require(_duration > 0, 'Vesting: no vesting');
+        require(_duration > 0, "Vesting: no vesting");
 
         cliff = _cliff;
         duration = _duration;

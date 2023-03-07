@@ -3,15 +3,17 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TContract } from 'tapioca-sdk/dist/shared';
 
-const supportedChains: { [key: string]: any } = SDK.API.utils.getSupportedChains().reduce(
-    (sdkChains, chain) => ({
-        ...sdkChains,
-        [chain.name]: {
-            ...chain,
-        },
-    }),
-    {},
-);
+const supportedChains: { [key: string]: any } = SDK.API.utils
+    .getSupportedChains()
+    .reduce(
+        (sdkChains, chain) => ({
+            ...sdkChains,
+            [chain.name]: {
+                ...chain,
+            },
+        }),
+        {},
+    );
 
 export const constants: { [key: string]: any } = {
     teamAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
@@ -49,7 +51,11 @@ export const constants: { [key: string]: any } = {
     //------------- MAINNETS --------------
 };
 
-export const verify = async (hre: HardhatRuntimeEnvironment, address: string, args: any[]) => {
+export const verify = async (
+    hre: HardhatRuntimeEnvironment,
+    address: string,
+    args: any[],
+) => {
     console.log(`[+] Verifying ${address}`);
     try {
         await hre.run('verify', {
@@ -62,7 +68,10 @@ export const verify = async (hre: HardhatRuntimeEnvironment, address: string, ar
     }
 };
 
-export const updateDeployments = async (contracts: TContract[], chainId: string) => {
+export const updateDeployments = async (
+    contracts: TContract[],
+    chainId: string,
+) => {
     SDK.API.utils.saveDeploymentOnDisk({
         [chainId]: contracts,
     });

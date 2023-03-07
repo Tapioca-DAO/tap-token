@@ -1,6 +1,10 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { constants, verify, updateDeployments } from '../scripts/deployment.utils';
+import {
+    constants,
+    verify,
+    updateDeployments,
+} from '../scripts/deployment.utils';
 import { TContract } from 'tapioca-sdk/dist/shared';
 import { TapOFT, TapOFT__factory } from '../typechain';
 
@@ -43,7 +47,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         address: tapOFTDeployment.address,
         meta: { constructorArguments: args },
     });
-    console.log(`Done. Deployed on ${tapOFTDeployment.address} with args ${args}`);
+    console.log(
+        `Done. Deployed on ${tapOFTDeployment.address} with args ${args}`,
+    );
 
     await updateDeployments(contracts, chainId);
 };
