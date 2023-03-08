@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity 0.8.18;
 import "@boringcrypto/boring-solidity/contracts/ERC20.sol";
 
 contract ERC20Mock is ERC20WithSupply {
