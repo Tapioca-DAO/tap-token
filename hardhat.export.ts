@@ -3,7 +3,6 @@ import * as dotenv from 'dotenv';
 import { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-chai-matchers';
-import '@nomiclabs/hardhat-vyper';
 import '@nomiclabs/hardhat-etherscan';
 import 'hardhat-deploy';
 import 'hardhat-contract-sizer';
@@ -38,7 +37,7 @@ const supportedChains = SDK.API.utils.getSupportedChains().reduce(
     {} as { [key in TNetwork]: HttpNetworkConfig },
 );
 
-const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
+const config: HardhatUserConfig & { dodoc: any } = {
     solidity: {
         compilers: [
             {
@@ -59,14 +58,6 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
                     },
                 },
             },
-        ],
-    },
-    vyper: {
-        compilers: [
-            { version: '0.2.15' },
-            { version: '0.2.8' },
-            { version: '0.3.1' },
-            { version: '0.3.3' },
         ],
     },
     namedAccounts: {
@@ -95,15 +86,6 @@ const config: HardhatUserConfig & { vyper: any; dodoc: any } = {
     dodoc: {
         runOnCompile: false,
         freshOutput: true,
-        exclude: [
-            //doesn't work with Vyper contracts
-            'VeTap',
-            'FeeDistributor',
-            'GaugeController',
-            'BoostV2',
-            'DelegationProxy',
-            'VotingEscrowDelegation',
-        ],
     },
     typechain: {
         outDir: 'typechain',
