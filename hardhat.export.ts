@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 
+// Plugins
 import { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-chai-matchers';
@@ -10,7 +11,9 @@ import '@primitivefi/hardhat-dodoc';
 import 'typechain';
 import '@typechain/hardhat';
 import 'hardhat-tracer';
+import 'tapioca-sdk';
 
+// Utils
 import SDK from 'tapioca-sdk';
 import { HttpNetworkConfig } from 'hardhat/types';
 
@@ -74,6 +77,7 @@ const config: HardhatUserConfig & { dodoc: any } = {
         },
         ...supportedChains,
     },
+    SDK: { project: 'tap-token' },
     etherscan: {
         apiKey: {
             goerli: process.env.BLOCKSCAN_KEY ?? '',

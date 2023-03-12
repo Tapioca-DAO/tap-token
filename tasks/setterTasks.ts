@@ -14,16 +14,21 @@ export const setOracleMockRate__task = async (
 };
 
 export const setTOBPaymentToken__task = async (
-    taskArgs: { tknAddress: string; oracleAddress: string; oracleData: string },
+    taskArgs: {
+        tknAddress: string;
+        oracleAddress: string;
+        oracleData: string;
+        tag?: string;
+    },
     hre: HardhatRuntimeEnvironment,
 ) => {
     const contractName = !!hre.network.tags['testnet']
         ? 'TapiocaOptionBrokerMock'
         : 'TapiocaOptionBroker';
-    const tOBAddress = SDK.API.utils.getDeployment(
-        'Tap-Token',
-        contractName,
+    const tOBAddress = SDK.API.db.getLocalDeployment(
         await hre.getChainId(),
+        contractName,
+        taskArgs.tag,
     )?.address;
     const tOB = (await hre.ethers.getContractAt(
         contractName,
@@ -40,13 +45,18 @@ export const setTOBPaymentToken__task = async (
 };
 
 export const setTOLPRegisterSingularity__task = async (
-    taskArgs: { sglAddress: string; assetId: string; weight: string },
+    taskArgs: {
+        sglAddress: string;
+        assetId: string;
+        weight: string;
+        tag?: string;
+    },
     hre: HardhatRuntimeEnvironment,
 ) => {
-    const tOLPAdress = SDK.API.utils.getDeployment(
-        'Tap-Token',
-        'TapiocaOptionLiquidityProvision',
+    const tOLPAdress = SDK.API.db.getLocalDeployment(
         await hre.getChainId(),
+        'TapiocaOptionLiquidityProvision',
+        taskArgs.tag,
     )?.address;
     const tOLP = await hre.ethers.getContractAt(
         'TapiocaOptionLiquidityProvision',
@@ -63,13 +73,13 @@ export const setTOLPRegisterSingularity__task = async (
 };
 
 export const setTOLPUnregisterSingularity__task = async (
-    taskArgs: { sglAddress: string },
+    taskArgs: { sglAddress: string; tag?: string },
     hre: HardhatRuntimeEnvironment,
 ) => {
-    const tOLPAdress = SDK.API.utils.getDeployment(
-        'Tap-Token',
-        'TapiocaOptionLiquidityProvision',
+    const tOLPAdress = SDK.API.db.getLocalDeployment(
         await hre.getChainId(),
+        'TapiocaOptionLiquidityProvision',
+        taskArgs.tag,
     )?.address;
     const tOLP = await hre.ethers.getContractAt(
         'TapiocaOptionLiquidityProvision',
@@ -87,13 +97,14 @@ export const setYieldBoxRegisterAsset__task = async (
         strategy?: string;
         strategyName?: string;
         strategyDesc?: string;
+        tag?: string;
     },
     hre: HardhatRuntimeEnvironment,
 ) => {
-    const yieldBoxAddress = SDK.API.utils.getDeployment(
-        'Tapioca-Bar',
-        'YieldBox',
+    const yieldBoxAddress = SDK.API.db.getLocalDeployment(
         await hre.getChainId(),
+        'YieldBox',
+        taskArgs.tag,
     )?.address;
     const yb = await hre.ethers.getContractAt('YieldBox', yieldBoxAddress);
 

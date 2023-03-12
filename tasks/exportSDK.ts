@@ -1,26 +1,16 @@
-import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import SDK from 'tapioca-sdk';
-import { TProjectDeployment } from 'tapioca-sdk/dist/shared';
-import { glob, runTypeChain } from 'typechain';
-import writeJsonFile from 'write-json-file';
-import { getDeployments } from '../scripts/getDeployments-script';
-import { getLocalDeployments__task } from './getDeployments';
+import { TLocalDeployment } from 'tapioca-sdk/dist/shared';
 /**
  * Script used to generate typings for the tapioca-sdk
  * https://github.com/Tapioca-DAO/tapioca-sdk
  */
 
-export const exportSDK__task = async (
-    taskArgs: { mainnet?: boolean },
-    hre: HardhatRuntimeEnvironment,
-) => {
+export const exportSDK__task = async ({}, hre: HardhatRuntimeEnvironment) => {
     const chainId = await hre.getChainId();
-
-    const _deployments: TProjectDeployment = {
-        [chainId as keyof TProjectDeployment]:
-            SDK.API.utils.getDeployments('Tap-Token', chainId, true) ?? [],
-    };
+    const deployments = hre.SDK.db.readDeployment(
+        'local',
+        {},
+    ) as TLocalDeployment;
 
     const contractNames = [
         'OFT20',
@@ -39,10 +29,10 @@ export const exportSDK__task = async (
     );
     console.log(contractNames);
 
-    await SDK.API.exportSDK.run({
+    hre.SDK.exportSDK.run({
+        projectCaller: hre.config.SDK.project,
         artifactPath: hre.config.paths.artifacts,
-        projectCaller: 'Tap-Token',
         contractNames,
-        _deployments,
+        deployment: { data: deployments },
     });
 };
