@@ -1,4 +1,4 @@
-import { Contract } from 'ethers';
+import { Contract, ContractFactory } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { TContract } from 'tapioca-sdk/dist/shared';
 import { Multicall3 } from 'tapioca-sdk/dist/typechain/utils/MultiCall';
@@ -12,13 +12,19 @@ interface IDependentOn {
 
 interface IDeploymentQueue {
     deploymentName: string;
-    contract: Contract;
+    contract: ContractFactory;
     args: unknown[];
     dependsOn?: IDependentOn[];
 }
 
 interface TDeploymentVMContract extends TContract {
     meta: { args: unknown[]; salt: string; create2: true };
+}
+
+interface IConstructorOptions {
+    multicall: Multicall3;
+    verify?: boolean;
+    tag?: string;
 }
 
 /**
@@ -32,9 +38,8 @@ interface TDeploymentVMContract extends TContract {
 export class DeployerVM {
     #tapiocaDeployer?: TapiocaDeployer;
 
-    multicall: Multicall3;
     hre: HardhatRuntimeEnvironment;
-    tag?: string;
+    options: IConstructorOptions;
 
     /**
      * Queue of contracts to deploy
@@ -58,13 +63,9 @@ export class DeployerVM {
      */
     private executed = false;
 
-    constructor(
-        hre: HardhatRuntimeEnvironment,
-        options: { multicall: Multicall3; tag?: string },
-    ) {
+    constructor(hre: HardhatRuntimeEnvironment, options: IConstructorOptions) {
         this.hre = hre;
-        this.multicall = options.multicall;
-        this.tag = options.tag;
+        this.options = options;
     }
 
     // ***********
@@ -89,6 +90,10 @@ export class DeployerVM {
      * Return a list of deployed contracts
      */
     list(): TDeploymentVMContract[] {
+        if (!this.executed) {
+            throw new Error('[-] Deployment queue has not been executed yet');
+        }
+
         return this.buildQueue.map((contract) => ({
             name: contract.deploymentName,
             address: contract.deterministicAddress,
@@ -101,13 +106,13 @@ export class DeployerVM {
     }
 
     // ***********
-    // Setter
+    // Exec
     // ***********
 
     /**
      * Add a contract to the deployment queue
      */
-    add<T extends Contract>(
+    add<T extends ContractFactory>(
         contract: IDeploymentQueue & {
             contract: T;
             args: Parameters<T['deploy']>;
@@ -134,12 +139,27 @@ export class DeployerVM {
      * Execute the current build queue and deploy the contracts, using Multicall3 to aggregate the calls.
      */
     async execute() {
-        console.log('[+] Executing deployment queue...');
-
         const calls = await this.getBuildCalls();
 
-        await (await this.multicall.aggregate3(calls)).wait();
+        const tx = await this.options.multicall.aggregate3(calls);
+        console.log('[+] Executing deployment queue on ', tx.hash);
+        await tx.wait(7);
         this.executed = true;
+        console.log('[+] Deployment queue executed');
+    }
+
+    write() {
+        if (!this.executed) {
+            throw new Error(
+                '[-] Deployment queue has not been executed. Please call execute() before writing the deployment file',
+            );
+        }
+        const dep = this.hre.SDK.db.buildLocalDeployment({
+            chainId: String(this.hre.network.config.chainId),
+            contracts: this.list(),
+        });
+        this.hre.SDK.db.saveLocally(dep, this.options.tag);
+        console.log('[+] Deployment file written');
     }
 
     /**
@@ -163,10 +183,31 @@ export class DeployerVM {
         return this.buildQueue.map(
             (contract): Multicall3.Call3Struct => ({
                 target: tapiocaDeployer.address,
-                callData: contract.creationCode,
+                callData: this.buildDeployerCode(
+                    tapiocaDeployer,
+                    0,
+                    contract.salt,
+                    contract.creationCode,
+                ),
                 allowFailure: false,
             }),
         );
+    }
+
+    /**
+     * Build the bytecode for the TapiocaDeployer 'deploy' function
+     */
+    private buildDeployerCode(
+        tapiocaDeployer: TapiocaDeployer,
+        amount: number,
+        salt: string,
+        creationCode: string,
+    ) {
+        return tapiocaDeployer.interface.encodeFunctionData('deploy', [
+            amount,
+            salt,
+            creationCode,
+        ]);
     }
 
     /**
@@ -175,40 +216,47 @@ export class DeployerVM {
     private async buildCreationCode() {
         const tapiocaDeployer = await this.getTapiocaDeployer();
 
-        this.deploymentQueue.forEach(async (contract) => {
-            // Build dependencies if any
-            contract.dependsOn?.forEach((dependency) => {
-                // Find the dependency
-                const deps = this.buildQueue.find(
-                    (e) => e.deploymentName === dependency.deploymentName,
-                );
-                // Throw if not found
-                if (!deps) {
-                    throw new Error(
-                        `[-] Dependency ${dependency.deploymentName} not found for ${contract.deploymentName}}`,
+        for (const contract of this.deploymentQueue) {
+            {
+                // Build dependencies if any
+                contract.dependsOn?.forEach((dependency) => {
+                    // Find the dependency
+                    const deps = this.buildQueue.find(
+                        (e) => e.deploymentName === dependency.deploymentName,
                     );
-                }
-                // Set the dependency address in the contract args
-                contract.args[dependency.argPosition] =
-                    deps.deterministicAddress;
-            });
+                    // Throw if not found
+                    if (!deps) {
+                        throw new Error(
+                            `[-] Dependency ${dependency.deploymentName} not found for ${contract.deploymentName}}`,
+                        );
+                    }
+                    // Set the dependency address in the contract args
+                    contract.args[dependency.argPosition] =
+                        deps.deterministicAddress;
+                });
 
-            const creationCode = contract.contract.interface.encodeDeploy(
-                contract.args,
-            );
-            const salt = this.genSalt();
+                // Build the creation code
+                const creationCode =
+                    contract.contract.bytecode +
+                    contract.contract.interface
+                        .encodeDeploy(contract.args)
+                        .split('x')[1];
 
-            this.buildQueue.push({
-                ...contract,
-                deterministicAddress: await this.computeDeterministicAddress(
-                    tapiocaDeployer,
-                    salt,
+                const salt = this.genSalt();
+
+                this.buildQueue.push({
+                    ...contract,
+                    deterministicAddress:
+                        await this.computeDeterministicAddress(
+                            tapiocaDeployer,
+                            salt,
+                            creationCode,
+                        ),
                     creationCode,
-                ),
-                creationCode,
-                salt,
-            });
-        });
+                    salt,
+                });
+            }
+        }
     }
 
     private computeDeterministicAddress(
@@ -225,11 +273,14 @@ export class DeployerVM {
         if (this.#tapiocaDeployer) return this.#tapiocaDeployer;
 
         // Get deployer deployment
-        const deployment = this.hre.SDK.db.getLocalDeployment(
-            String(this.hre.network.config.chainId),
-            'TapiocaDeployer',
-            this.tag,
-        );
+        let deployment: TContract | undefined;
+        try {
+            deployment = this.hre.SDK.db.getLocalDeployment(
+                String(this.hre.network.config.chainId),
+                'TapiocaDeployer',
+                this.options.tag,
+            );
+        } catch (e) {}
 
         // Deploy TapiocaDeployer if not deployed
         if (!deployment) {
@@ -240,9 +291,8 @@ export class DeployerVM {
             await tapiocaDeployer.deployTransaction.wait(3);
 
             // Save deployment
-            this.hre.SDK.db.buildLocalDatabase({
+            const dep = this.hre.SDK.db.buildLocalDeployment({
                 chainId: String(this.hre.network.config.chainId),
-                tag: this.tag,
                 contracts: [
                     {
                         address: tapiocaDeployer.address,
@@ -251,6 +301,7 @@ export class DeployerVM {
                     },
                 ],
             });
+            this.hre.SDK.db.saveLocally(dep, this.options.tag);
 
             this.#tapiocaDeployer = tapiocaDeployer;
             return tapiocaDeployer;
@@ -264,6 +315,6 @@ export class DeployerVM {
     }
 
     private genSalt() {
-        return this.hre.ethers.utils.keccak256(uuidv4());
+        return this.hre.ethers.utils.solidityKeccak256(['string'], [uuidv4()]);
     }
 }
