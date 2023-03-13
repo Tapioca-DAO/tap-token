@@ -16,6 +16,7 @@ import {
 
 import { glob } from 'typechain';
 import { configurePacketTypes__task } from './tasks/configurePacketTypes';
+import { deployStack__task } from './tasks/deployStack';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -121,3 +122,9 @@ task(
 )
     .addParam('dstLzChainId', 'LZ destination chain id for trusted remotes')
     .addParam('src', 'TAP address');
+
+task(
+    'deployStack',
+    'Deploys the entire stack with on deterministic addresses, with MulticallV3.',
+    deployStack__task,
+);
