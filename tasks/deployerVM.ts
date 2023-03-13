@@ -148,20 +148,81 @@ export class DeployerVM {
         await tx.wait(wait);
         this.executed = true;
         console.log('[+] Deployment queue executed');
+
+        return this;
     }
 
-    write() {
+    /**
+     * Save the deployments to the local database.
+     */
+    save() {
         if (!this.executed) {
             throw new Error(
                 '[-] Deployment queue has not been executed. Please call execute() before writing the deployment file',
             );
         }
+
         const dep = this.hre.SDK.db.buildLocalDeployment({
             chainId: String(this.hre.network.config.chainId),
             contracts: this.list(),
         });
         this.hre.SDK.db.saveLocally(dep, this.options.tag);
-        console.log('[+] Deployment file written');
+        console.log(
+            '[+] Deployment saved for chainId: ',
+            String(this.hre.network.config.chainId),
+        );
+
+        return this;
+    }
+
+    /**
+     *
+     * Verify the deployed contracts on Etherscan.
+     */
+    async verify() {
+        console.log('[+] Verifying deployed contracts');
+        type TVerificationObject = {
+            contract?: string;
+            address: string;
+            constructorArguments: unknown[];
+        };
+
+        // We will batch the verification calls to avoid hitting the etherscan API rate limit, max 5 calls per second
+        const verifyList: TVerificationObject[][] = [[]];
+
+        let counter = 1;
+        for (const contract of this.list()) {
+            if (counter % 5 === 0) {
+                verifyList.push([]);
+            }
+
+            verifyList[verifyList.length - 1].push({
+                //TODO for testing purpose, remove later
+                ...(contract.name === 'YieldBoxMock'
+                    ? {
+                          contract:
+                              'contracts/options/mocks/YieldBoxMock.sol:YieldBoxMock',
+                      }
+                    : {}),
+                address: contract.address,
+                constructorArguments: contract.meta.args,
+            });
+            counter++;
+        }
+        // Verify the contracts
+
+        for (const batch of verifyList) {
+            await Promise.all(
+                batch.map((contract) =>
+                    this.hre.run('verify:verify', {
+                        ...contract,
+                        noCompile: true,
+                    }),
+                ),
+            );
+        }
+
+        return this;
     }
 
     /**

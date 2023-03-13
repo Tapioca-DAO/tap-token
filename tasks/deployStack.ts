@@ -23,7 +23,7 @@ const buildAndAddYieldBox = async (
     const ybURIBuilder = await hre.ethers.getContractFactory(
         'YieldBoxURIBuilder',
     );
-    const yb = await hre.ethers.getContractFactory('YieldBox');
+    const yb = await hre.ethers.getContractFactory('YieldBoxMock');
 
     return [
         {
@@ -33,7 +33,7 @@ const buildAndAddYieldBox = async (
         },
         {
             contract: yb,
-            deploymentName: 'YieldBox',
+            deploymentName: 'YieldBoxMock',
             args: [
                 // Wrapped Native (we don't need it for now, so we replace it with a dummy value)
                 hre.ethers.constants.AddressZero,
@@ -88,7 +88,7 @@ const buildAndAddTOLP = async (
         hre.ethers.constants.AddressZero,
         signerAddr,
     ],
-    dependsOn: [{ argPosition: 0, deploymentName: 'YieldBox' }],
+    dependsOn: [{ argPosition: 0, deploymentName: 'YieldBoxMock' }],
 });
 
 // TODO - Refactor steps to external function to lighten up the task
@@ -113,14 +113,16 @@ export const deployStack__task = async ({}, hre: HardhatRuntimeEnvironment) => {
     );
 
     // Add and execute
-    await VM.execute();
+    await VM.execute(3);
+    VM.save();
+    await VM.verify();
 
     // Testing
     const list = VM.list();
-    console.log(JSON.stringify(list, null, 2));
+
     const tap = await hre.ethers.getContractAt(
         'YieldBox',
-        list.find((e) => e.name === 'YieldBox')?.address ?? '',
+        list.find((e) => e.name === 'YieldBoxMock')?.address ?? '',
     );
     console.log(await tap.DOMAIN_SEPARATOR());
 };
