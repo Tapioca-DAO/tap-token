@@ -36,6 +36,7 @@ describe('Vesting', () => {
             usdc.address,
             cliff,
             duration,
+            deployer.address,
         );
         await usdc.transfer(vesting.address, mintAmount);
 
@@ -91,6 +92,7 @@ describe('Vesting', () => {
             usdc.address,
             cliff,
             duration,
+            deployer.address,
         );
         await usdc.transfer(vesting.address, mintAmount);
 
@@ -129,6 +131,7 @@ describe('Vesting', () => {
             usdc.address,
             cliff,
             duration,
+            deployer.address,
         );
         await usdc.transfer(vesting.address, mintAmount);
 
@@ -226,6 +229,7 @@ describe('Vesting', () => {
             usdc.address,
             cliff,
             duration,
+            deployer.address,
         );
         await usdc.transfer(vesting.address, mintAmount);
 

@@ -16,11 +16,12 @@ export async function registerVesting(
     token: string,
     cliff: BigNumberish,
     duration: BigNumberish,
+    owner: string,
     staging?: boolean,
 ) {
     const vesting = await (
         await ethers.getContractFactory('Vesting')
-    ).deploy(cliff, duration);
+    ).deploy(cliff, duration, owner);
     await vesting.deployed();
 
     return { vesting };

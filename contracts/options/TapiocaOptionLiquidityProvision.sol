@@ -66,12 +66,14 @@ contract TapiocaOptionLiquidityProvision is
     uint256 public totalSingularityPoolWeights; // Total weight of all active singularity pools
 
     constructor(
-        address _yieldBox
+        address _yieldBox,
+        address _owner
     )
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
         ERC721Permit("TapiocaOptionLiquidityProvision")
     {
         yieldBox = IYieldBox(_yieldBox);
+        owner = _owner;
     }
 
     // ==========

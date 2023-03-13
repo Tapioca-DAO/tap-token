@@ -90,12 +90,14 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
         address _tOLP,
         address _oTAP,
         address _tapOFT,
-        address _paymentTokenBeneficiary
+        address _paymentTokenBeneficiary,
+        address _owner
     ) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         tOLP = TapiocaOptionLiquidityProvision(_tOLP);
         tapOFT = TapOFT(_tapOFT);
         oTAP = OTAP(_oTAP);
+        owner = _owner;
     }
 
     // ==========
