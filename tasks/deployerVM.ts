@@ -27,6 +27,12 @@ interface IConstructorOptions {
     tag?: string;
 }
 
+export interface IDeployerVMAdd<T extends ContractFactory>
+    extends IDeploymentQueue {
+    contract: T;
+    args: Parameters<T['deploy']>;
+}
+
 /**
  * Class to deploy contracts using the TapiocaDeployer & Multicall3 to aggregate deployments in a single transaction.
  * @param hre HardhatRuntimeEnvironment instance of Hardhat.
@@ -112,15 +118,10 @@ export class DeployerVM {
     /**
      * Add a contract to the deployment queue
      */
-    add<T extends ContractFactory>(
-        contract: IDeploymentQueue & {
-            contract: T;
-            args: Parameters<T['deploy']>;
-        },
-    ) {
+    add<T extends ContractFactory>(contract: IDeployerVMAdd<T>) {
         // Validate contract dependencies
         contract.dependsOn?.forEach((dependency) => {
-            if (dependency.argPosition < contract.args.length) {
+            if (dependency.argPosition >= contract.args.length) {
                 throw new Error(
                     `[-] Dependency for ${contract.deploymentName} argPosition is out of bounds`,
                 );
@@ -137,13 +138,14 @@ export class DeployerVM {
 
     /**
      * Execute the current build queue and deploy the contracts, using Multicall3 to aggregate the calls.
+     * @param wait Number of blocks to wait for the transaction to be mined. Default: 0
      */
-    async execute() {
+    async execute(wait = 0) {
         const calls = await this.getBuildCalls();
 
         const tx = await this.options.multicall.aggregate3(calls);
         console.log('[+] Executing deployment queue on ', tx.hash);
-        await tx.wait(7);
+        await tx.wait(wait);
         this.executed = true;
         console.log('[+] Deployment queue executed');
     }
