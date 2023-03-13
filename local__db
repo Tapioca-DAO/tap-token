@@ -55,6 +55,30 @@
                     "salt": "0xbc893064b1f14a2746aa4492235b116b95f3c1a3390de9283d7bb7515925fb94",
                     "create2": true
                 }
+            },
+            {
+                "name": "OTAP",
+                "address": "0x45042223ba97791d28a74002A070b8F3586D31EB",
+                "meta": {
+                    "args": [],
+                    "salt": "0x79ed1101553bd0dbb610e39b173d3032c3dad68a21cfffcba088c08869c3205c",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapiocaOptionBrokerMock",
+                "address": "0x4A80D953Fa95D11eed7B3DE2424663a3A52b0932",
+                "meta": {
+                    "args": [
+                        "0x1406fE6908Da33EA5a5af0aF7A9e037Ce7B90CB2",
+                        "0x81eA5dfaE5C9912698E162eaaCd8cC02F69Ef678",
+                        "0x45042223ba97791d28a74002A070b8F3586D31EB",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0xfdc6f087c731636fa2b002ce2c9022b6c96a6a4807b5164ba4b9043c3dbbd6bd",
+                    "create2": true
+                }
             }
         ]
     }
