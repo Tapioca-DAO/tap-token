@@ -1,4 +1,4 @@
-import { Contract, ContractFactory } from 'ethers';
+import { ContractFactory } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { TContract } from 'tapioca-sdk/dist/shared';
 import { Multicall3 } from 'tapioca-sdk/dist/typechain/utils/MultiCall';
@@ -32,7 +32,8 @@ export interface IDeployerVMAdd<T extends ContractFactory>
     args: Parameters<T['deploy']>;
 }
 
-// TODO - Already deployed contract loader? (To verify?)
+// TODO - Ability to load already deployed contract (To verify?)
+// TODO - Ability to add arbitrary calls in between deployments?
 /**
  * Class to deploy contracts using the TapiocaDeployer & Multicall3 to aggregate deployments in a single transaction.
  * @param hre HardhatRuntimeEnvironment instance of Hardhat.
@@ -239,22 +240,25 @@ export class DeployerVM {
     // Utils
     // ***********
     private async getBuildCalls(): Promise<Multicall3.Call3Struct[]> {
-        await this.buildCreationCode();
+        await this.populateBuildQueue();
 
         const tapiocaDeployer = await this.getTapiocaDeployer();
 
-        return this.buildQueue.map(
-            (contract): Multicall3.Call3Struct => ({
+        const calls: Multicall3.Call3Struct[] = [];
+        for (const build of this.buildQueue) {
+            // Add creation code to the calls
+            calls.push({
                 target: tapiocaDeployer.address,
                 callData: this.buildDeployerCode(
                     tapiocaDeployer,
                     0,
-                    contract.salt,
-                    contract.creationCode,
+                    build.salt,
+                    build.creationCode,
                 ),
                 allowFailure: false,
-            }),
-        );
+            });
+        }
+        return calls;
     }
 
     /**
@@ -276,7 +280,7 @@ export class DeployerVM {
     /**
      * Build the creation code for each contract in the queue. For each contract, we check if it has dependencies, and build them deterministically.
      */
-    private async buildCreationCode() {
+    private async populateBuildQueue() {
         const tapiocaDeployer = await this.getTapiocaDeployer();
 
         for (const contract of this.deploymentQueue) {
