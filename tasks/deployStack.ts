@@ -1,141 +1,13 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { constants } from '../scripts/deployment.utils';
-import {
-    Multicall3__factory,
-    OTAP__factory,
-    TapiocaOptionBroker__factory,
-    TapiocaOptionLiquidityProvision__factory,
-    TapOFT__factory,
-    YieldBoxURIBuilder__factory,
-    YieldBox__factory,
-} from '../typechain';
+import { Multicall3 } from 'tapioca-sdk/dist/typechain/utils/MultiCall';
+import { Multicall3__factory } from '../typechain';
+import { buildTapOFT } from './deploy/01-buildTapOFT';
+import { buildTOLP } from './deploy/02-buildTOLP';
+import { buildOTAP } from './deploy/03-buildOTAP';
+import { buildTOB } from './deploy/04-buildTOB';
+import { buildYieldBoxMock } from './deploy/901-buildYieldBoxMock';
 
-import { DeployerVM, IDeployerVMAdd } from './deployerVM';
-
-// TODO remove this
-const buildYieldBoxMock = async (
-    hre: HardhatRuntimeEnvironment,
-): Promise<
-    [
-        IDeployerVMAdd<YieldBoxURIBuilder__factory>,
-        IDeployerVMAdd<YieldBox__factory>,
-    ]
-> => {
-    const ybURIBuilder = await hre.ethers.getContractFactory(
-        'YieldBoxURIBuilder',
-    );
-    const yb = await hre.ethers.getContractFactory('YieldBoxMock');
-
-    return [
-        {
-            contract: ybURIBuilder,
-            deploymentName: 'YieldBoxURIBuilder',
-            args: [],
-        },
-        {
-            contract: yb,
-            deploymentName: 'YieldBoxMock',
-            args: [
-                // Wrapped Native (we don't need it for now, so we replace it with a dummy value)
-                hre.ethers.constants.AddressZero,
-                // YieldBoxURIBuilder, to be replaced by VM
-                hre.ethers.constants.AddressZero,
-            ],
-            dependsOn: [
-                { argPosition: 0, deploymentName: 'YieldBoxURIBuilder' }, // dummy value
-                { argPosition: 1, deploymentName: 'YieldBoxURIBuilder' },
-            ],
-        },
-    ];
-};
-
-const buildTapOFT = async (
-    hre: HardhatRuntimeEnvironment,
-): Promise<IDeployerVMAdd<TapOFT__factory>> => {
-    const chainId = await hre.getChainId();
-    const lzEndpoint = constants[chainId as '5'].address as string;
-    const contributorAddress = constants.teamAddress;
-    const investorAddress = constants.advisorAddress;
-    const lbpAddress = constants.daoAddress;
-    const airdropAddress = constants.seedAddress;
-    const daoAddress = constants.daoAddress;
-    const governanceChainId = constants.governanceChainId.toString();
-
-    return {
-        contract: await hre.ethers.getContractFactory('TapOFT'),
-        deploymentName: 'TapOFT',
-        args: [
-            lzEndpoint,
-            contributorAddress,
-            investorAddress,
-            lbpAddress,
-            daoAddress,
-            airdropAddress,
-            governanceChainId,
-        ],
-    };
-};
-
-const buildTOLP = async (
-    hre: HardhatRuntimeEnvironment,
-    signerAddr: string,
-): Promise<IDeployerVMAdd<TapiocaOptionLiquidityProvision__factory>> => ({
-    contract: await hre.ethers.getContractFactory(
-        'TapiocaOptionLiquidityProvision',
-    ),
-    deploymentName: 'TapiocaOptionLiquidityProvision',
-    args: [
-        // To be replaced by VM
-        hre.ethers.constants.AddressZero,
-        signerAddr,
-    ],
-    dependsOn: [{ argPosition: 0, deploymentName: 'YieldBoxMock' }],
-});
-
-const buildOTAP = async (
-    hre: HardhatRuntimeEnvironment,
-): Promise<IDeployerVMAdd<OTAP__factory>> => {
-    return {
-        contract: await hre.ethers.getContractFactory('OTAP'),
-        deploymentName: 'OTAP',
-        args: [],
-    };
-};
-
-const buildTOB = async (
-    hre: HardhatRuntimeEnvironment,
-    paymentTokenBeneficiary: string,
-    signer: string,
-): Promise<IDeployerVMAdd<TapiocaOptionBroker__factory>> => {
-    const deploymentName = hre.network.tags['testnet']
-        ? 'TapiocaOptionBrokerMock'
-        : 'TapiocaOptionBroker';
-    return {
-        contract: (await hre.ethers.getContractFactory(
-            deploymentName,
-        )) as TapiocaOptionBroker__factory,
-        deploymentName,
-        args: [
-            // To be replaced by VM
-            hre.ethers.constants.AddressZero,
-            // To be replaced by VM
-            hre.ethers.constants.AddressZero,
-            // To be replaced by VM
-            hre.ethers.constants.AddressZero,
-            paymentTokenBeneficiary,
-            signer,
-        ],
-        dependsOn: [
-            {
-                argPosition: 0,
-                deploymentName: 'TapiocaOptionLiquidityProvision',
-            },
-            { argPosition: 1, deploymentName: 'TapOFT' },
-            { argPosition: 2, deploymentName: 'OTAP' },
-        ],
-    };
-};
+import { DeployerVM } from './deployerVM';
 
 // TODO - Refactor steps to external function to lighten up the task
 export const deployStack__task = async ({}, hre: HardhatRuntimeEnvironment) => {
@@ -165,4 +37,9 @@ export const deployStack__task = async ({}, hre: HardhatRuntimeEnvironment) => {
     await VM.verify();
 
     // After deployment setup
+    const multiCall = await hre.ethers.getContractAt(
+        'Multicall3',
+        hre.SDK.config.MULTICALL_ADDRESS,
+    );
+    const calls: Multicall3.Call3Struct[] = [];
 };

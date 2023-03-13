@@ -32,6 +32,7 @@ export interface IDeployerVMAdd<T extends ContractFactory>
     args: Parameters<T['deploy']>;
 }
 
+// TODO - Already deployed contract loader? (To verify?)
 /**
  * Class to deploy contracts using the TapiocaDeployer & Multicall3 to aggregate deployments in a single transaction.
  * @param hre HardhatRuntimeEnvironment instance of Hardhat.
