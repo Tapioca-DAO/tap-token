@@ -23,7 +23,6 @@ interface TDeploymentVMContract extends TContract {
 
 interface IConstructorOptions {
     multicall: Multicall3;
-    verify?: boolean;
     tag?: string;
 }
 
