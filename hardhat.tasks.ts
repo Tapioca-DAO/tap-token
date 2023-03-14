@@ -30,7 +30,9 @@ task(
     'exportSDK',
     'Generate and export the typings and/or addresses for the SDK. May deploy contracts.',
     exportSDK__task,
-).addFlag('mainnet', 'Using the current chain ID deployments.');
+)
+    .addFlag('mainnet', 'Using the current chain ID deployments.')
+    .addOptionalParam('tag', 'The tag of the deployment.');
 
 task(
     'getContractNames',

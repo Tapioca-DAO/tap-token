@@ -5,12 +5,16 @@ import { TLocalDeployment } from 'tapioca-sdk/dist/shared';
  * https://github.com/Tapioca-DAO/tapioca-sdk
  */
 
-export const exportSDK__task = async ({}, hre: HardhatRuntimeEnvironment) => {
-    const chainId = await hre.getChainId();
-    const deployments = hre.SDK.db.readDeployment(
-        'local',
-        {},
-    ) as TLocalDeployment;
+export const exportSDK__task = async (
+    taskArgs: { tag?: string },
+    hre: HardhatRuntimeEnvironment,
+) => {
+    const tag = taskArgs.tag || 'default';
+
+    const deployments = hre.SDK.db.readDeployment('local', {
+        tag,
+    }) as TLocalDeployment;
+    console.log(deployments);
 
     const contractNames = [
         'OFT20',
@@ -33,6 +37,6 @@ export const exportSDK__task = async ({}, hre: HardhatRuntimeEnvironment) => {
         projectCaller: hre.config.SDK.project,
         artifactPath: hre.config.paths.artifacts,
         contractNames,
-        deployment: { data: deployments },
+        deployment: { data: deployments, tag },
     });
 };
