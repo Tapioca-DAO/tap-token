@@ -62,10 +62,12 @@ export const verify = async (
 export const updateDeployments = async (
     contracts: TContract[],
     chainId: string,
+    tag?: string,
 ) => {
-    SDK.API.utils.saveDeploymentOnDisk({
-        [chainId]: contracts,
-    });
+    SDK.API.db.saveLocally(
+        SDK.API.db.buildLocalDeployment({ chainId, contracts }),
+        tag,
+    );
 };
 
 export const registerContract = async (

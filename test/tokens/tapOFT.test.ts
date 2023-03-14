@@ -2,12 +2,13 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import writeJsonFile from 'write-json-file';
-import { LZEndpointMock, TapOFT } from '../../typechain/';
-import { BigNumberish, Wallet } from 'ethers';
+
 import {
     loadFixture,
     takeSnapshot,
 } from '@nomicfoundation/hardhat-network-helpers';
+import { BigNumberish } from 'ethers';
+import { LZEndpointMock, TapOFT } from '../../typechain';
 import {
     BN,
     deployLZEndpointMock,
@@ -42,10 +43,12 @@ describe('tapOFT', () => {
         )) as LZEndpointMock;
 
         tapiocaOFT0 = (await deployTapiocaOFT(
+            signer,
             LZEndpointMockCurrentChain.address,
             signer.address,
         )) as TapOFT;
         tapiocaOFT1 = (await deployTapiocaOFT(
+            signer,
             LZEndpointMockGovernance.address,
             signer.address,
         )) as TapOFT;
@@ -82,6 +85,7 @@ describe('tapOFT', () => {
                 signer.address,
                 signer.address,
                 1,
+                signer.address,
             ),
         ).to.be.reverted;
     });
@@ -117,6 +121,7 @@ describe('tapOFT', () => {
     it('should not allow emit from another chain', async () => {
         const chainBLzEndpoint = await deployLZEndpointMock(11);
         const chainBTap = await deployTapiocaOFT(
+            signer,
             chainBLzEndpoint.address,
             signer.address,
             10,

@@ -3,8 +3,9 @@ import { time } from '@nomicfoundation/hardhat-network-helpers';
 import hre, { ethers } from 'hardhat';
 import BigNumberJs from 'bignumber.js';
 import { splitSignature } from 'ethers/lib/utils';
-import { ERC20Permit, ERC721Permit } from '../typechain';
+
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { ERC20Permit, ERC721Permit } from '../typechain';
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
 
@@ -98,6 +99,7 @@ export async function deployUsd0(lzEndpoint: string) {
     return oftContract;
 }
 export async function deployTapiocaOFT(
+    signer: SignerWithAddress,
     lzEndpoint: string,
     to: string,
     chainId_?: number,
@@ -106,7 +108,7 @@ export async function deployTapiocaOFT(
     chainId = chainId_ ?? chainId;
     const oftContract = await (
         await ethers.getContractFactory('TapOFT')
-    ).deploy(lzEndpoint, to, to, to, to, to, chainId);
+    ).deploy(lzEndpoint, to, to, to, to, to, chainId, signer.address);
     await oftContract.deployed();
 
     return oftContract;

@@ -30,6 +30,7 @@ export const setTOBPaymentToken__task = async (
         contractName,
         taskArgs.tag,
     )?.address;
+    if (!tOBAddress) throw new Error('TapiocaOptionBroker not found');
     const tOB = (await hre.ethers.getContractAt(
         contractName,
         tOBAddress,
@@ -58,6 +59,8 @@ export const setTOLPRegisterSingularity__task = async (
         'TapiocaOptionLiquidityProvision',
         taskArgs.tag,
     )?.address;
+    if (!tOLPAdress)
+        throw new Error('TapiocaOptionLiquidityProvision not found');
     const tOLP = await hre.ethers.getContractAt(
         'TapiocaOptionLiquidityProvision',
         tOLPAdress,
@@ -81,6 +84,8 @@ export const setTOLPUnregisterSingularity__task = async (
         'TapiocaOptionLiquidityProvision',
         taskArgs.tag,
     )?.address;
+    if (!tOLPAdress)
+        throw new Error('TapiocaOptionLiquidityProvision not found');
     const tOLP = await hre.ethers.getContractAt(
         'TapiocaOptionLiquidityProvision',
         tOLPAdress,
@@ -106,6 +111,7 @@ export const setYieldBoxRegisterAsset__task = async (
         'YieldBox',
         taskArgs.tag,
     )?.address;
+    if (!yieldBoxAddress) throw new Error('YieldBox not found');
     const yb = await hre.ethers.getContractAt('YieldBox', yieldBoxAddress);
 
     const strat = await (

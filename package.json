@@ -21,7 +21,7 @@
         "deploy:GaugeFactory": "hardhat deploy --tags GaugeFactory --network",
         "generate-sdk": "npx hardhat exportSDK",
         "prepare": "husky install",
-        "lint:ts": "eslint ./deploy ./scripts ./tasks ./test ./*.ts --fix",
+        "lint:ts": "eslint ./scripts ./tasks ./test ./*.ts --fix",
         "lint:sol": "prettier --write 'contracts/**/*.sol' && solhint 'contracts/**/*.sol' --fix",
         "lint": "npm run lint:ts && npm run lint:sol"
     },
