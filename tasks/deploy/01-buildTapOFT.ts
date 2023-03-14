@@ -5,8 +5,10 @@ import { IDeployerVMAdd } from '../deployerVM';
 
 export const buildTapOFT = async (
     hre: HardhatRuntimeEnvironment,
+    signer: string,
 ): Promise<IDeployerVMAdd<TapOFT__factory>> => {
     const chainId = await hre.getChainId();
+
     const lzEndpoint = constants[chainId as '5'].address as string;
     const contributorAddress = constants.teamAddress;
     const investorAddress = constants.advisorAddress;
@@ -26,6 +28,7 @@ export const buildTapOFT = async (
             daoAddress,
             airdropAddress,
             governanceChainId,
+            signer,
         ],
     };
 };

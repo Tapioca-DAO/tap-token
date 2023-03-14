@@ -30,8 +30,8 @@ export const buildTOB = async (
                 argPosition: 0,
                 deploymentName: 'TapiocaOptionLiquidityProvision',
             },
-            { argPosition: 1, deploymentName: 'TapOFT' },
-            { argPosition: 2, deploymentName: 'OTAP' },
+            { argPosition: 1, deploymentName: 'OTAP' },
+            { argPosition: 2, deploymentName: 'TapOFT' },
         ],
     };
 };
