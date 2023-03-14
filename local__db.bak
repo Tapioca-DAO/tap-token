@@ -1,30 +1,234 @@
 {
     "default": {
-        "421613": [
+        "5": [
             {
                 "name": "YieldBoxURIBuilder",
-                "address": "0xD4f3ef032029cd9DF6B1E232044B4b8EfB92337B",
+                "address": "0x76afBC150c0c78673Cc5F5D18005C59E16c6876a",
                 "meta": {
                     "args": [],
-                    "salt": "0x0a8491a13892a6b9a37172f5f2d6679bc3f88f8d18b7d44a7ea8fa271f538005",
+                    "salt": "0x0ced18eb64b792fa41892c45adc982366bd494eecb7603957275219795520473",
                     "create2": true
                 }
             },
             {
                 "name": "YieldBoxMock",
-                "address": "0xCE6095227539A70751f719CF22B7Ec3d0568C8cd",
+                "address": "0x0756C3E3997ca362ac478c69884C70FA4b1cC186",
                 "meta": {
                     "args": [
-                        "0xD4f3ef032029cd9DF6B1E232044B4b8EfB92337B",
-                        "0xD4f3ef032029cd9DF6B1E232044B4b8EfB92337B"
+                        "0x76afBC150c0c78673Cc5F5D18005C59E16c6876a",
+                        "0x76afBC150c0c78673Cc5F5D18005C59E16c6876a"
                     ],
-                    "salt": "0x188913f1dd68b9edf93ea279aabdd313538f7b6b4a990b24a21b87d7088fe407",
+                    "salt": "0x5bc92925b54539b3c07665dafb399555f46d45ebb04cbdfdd122b1b6934983ac",
                     "create2": true
                 }
             },
             {
                 "name": "TapOFT",
-                "address": "0xf14351A9b763E3Aa81EcecDE66098FaE0F8E4537",
+                "address": "0x0533e831fdC78C079a94250c5E682299ee7aE8aB",
+                "meta": {
+                    "args": [
+                        "0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "5",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0x4df688e12a0c61b010f891beaf16e79eb9f66da928b2db37a9a21c4aed30f336",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapiocaOptionLiquidityProvision",
+                "address": "0x55BcFfe0f2c6b534AD52EB5bC6825acDbc69253D",
+                "meta": {
+                    "args": [
+                        "0x0756C3E3997ca362ac478c69884C70FA4b1cC186",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0x5543bc22723d83845d64702152681e84ec9b93b1c71061506ff1237e07c46dbe",
+                    "create2": true
+                }
+            },
+            {
+                "name": "OTAP",
+                "address": "0xe544EC0C0c379E3E064cEb6839F761DF9CD87Efb",
+                "meta": {
+                    "args": [],
+                    "salt": "0xb74d5581384657799fede25f03794561826c85e05be1be2f0d25007c1bcdcdaa",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapiocaOptionBrokerMock",
+                "address": "0x809184e71082d2fA802DCA6690d56543A819E81D",
+                "meta": {
+                    "args": [
+                        "0x55BcFfe0f2c6b534AD52EB5bC6825acDbc69253D",
+                        "0xe544EC0C0c379E3E064cEb6839F761DF9CD87Efb",
+                        "0x0533e831fdC78C079a94250c5E682299ee7aE8aB",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0x7819d4960e77f1f896cc16d221c9890fef1928b264055372b76baa7f26ab364d",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapOFTOracleMock",
+                "address": "0xC521261eB01404C95bB1AC7d228C92E469143E7B",
+                "meta": {
+                    "args": [
+                        "TOFTOM"
+                    ],
+                    "salt": "0x6ba5356afbde790f81bd694a17df5e0547e1c6539a2e2d74c8461854157d94ca",
+                    "create2": true
+                }
+            },
+            {
+                "name": "sglTokenMock1",
+                "address": "0xf65927B9c1cc710953D9C6D03e10387783d586Df",
+                "meta": {
+                    "args": [
+                        "sglTokenMock1",
+                        "SGL1",
+                        18,
+                        0
+                    ],
+                    "salt": "0xcb6cfc52600fceba3858757609bd470311258e072fa90986d4de2498951eca1e",
+                    "create2": true
+                }
+            },
+            {
+                "name": "sglTokenMock2",
+                "address": "0x6139841B2482f132BD6B7994bAC6B04A83688BfC",
+                "meta": {
+                    "args": [
+                        "sglTokenMock2",
+                        "SGL2",
+                        18,
+                        0
+                    ],
+                    "salt": "0x89f18764c109c1e2ed91728334c451f4972c6a6fe2c0633f3710e047eb4baafd",
+                    "create2": true
+                }
+            },
+            {
+                "name": "WETHMock",
+                "address": "0xe02DB1319f61688EeaCB9A7485100e3F10f8eb39",
+                "meta": {
+                    "args": [
+                        "wethMock",
+                        "WETHM",
+                        18,
+                        0
+                    ],
+                    "salt": "0xcc0bb6a2f49f26c5624dbaab862afcf3b4bbbf6c75bfe65f14833db342dbbcd1",
+                    "create2": true
+                }
+            },
+            {
+                "name": "USDCMock",
+                "address": "0xC8BF93A8bd778c017649097cA9f600881D5B35F6",
+                "meta": {
+                    "args": [
+                        "usdcMock",
+                        "USDCM",
+                        6,
+                        0
+                    ],
+                    "salt": "0x86e35d966d69666eba37e72b332969e90115c44cdb5305ad282115474917dcae",
+                    "create2": true
+                }
+            },
+            {
+                "name": "WETHMOracleMock",
+                "address": "0x3c24Bd67d1B8C03e107eAF12e8D8A57a9fC0E059",
+                "meta": {
+                    "args": [
+                        "WETHMOracle"
+                    ],
+                    "salt": "0x7c1df1812de0200ad84faf3e970b7552939be17a1c25a063c81d4cfadce74e08",
+                    "create2": true
+                }
+            },
+            {
+                "name": "USDCMOracleMock",
+                "address": "0x720092AA857B1f23F304f33C2605f4e32EB6620C",
+                "meta": {
+                    "args": [
+                        "USDCMOracle"
+                    ],
+                    "salt": "0x3f8ba1276dc043e90725b7c451429166c194177944a12324ddb3970a19adc484",
+                    "create2": true
+                }
+            },
+            {
+                "name": "YieldBoxVaultStratSGlTokenMock1",
+                "address": "0x6d0F00f5C6c50402A7c768504a69F08A813F7124",
+                "meta": {
+                    "args": [
+                        "0x0756C3E3997ca362ac478c69884C70FA4b1cC186",
+                        "0xf65927B9c1cc710953D9C6D03e10387783d586Df",
+                        "YBVaultStratSGLTKN1",
+                        "YBVaultStrat for sglTokenMock1"
+                    ],
+                    "salt": "0x6ea9223a9808ac2519bfcea988e6cc025f452f084e64b227efa2f00480aff42b",
+                    "create2": true
+                }
+            },
+            {
+                "name": "YieldBoxVaultStratSGlTokenMock2",
+                "address": "0xF84257efe7623EB79577766ec171789DEeB38819",
+                "meta": {
+                    "args": [
+                        "0x0756C3E3997ca362ac478c69884C70FA4b1cC186",
+                        "0x6139841B2482f132BD6B7994bAC6B04A83688BfC",
+                        "YBVaultStratSGLTKN2",
+                        "YBVaultStrat for sglTokenMock2"
+                    ],
+                    "salt": "0x8884ae4dae4e40d3a4cc820aab62e74b968298d01e52bb1feed11aff81d8ba9f",
+                    "create2": true
+                }
+            },
+            {
+                "address": "0xD830E6D303b30fd0160371e7052c8B1205Ae2C98",
+                "name": "TapiocaDeployer",
+                "meta": {}
+            }
+        ],
+        "421613": [
+            {
+                "address": "0xC9fA718B94e98B9Be6729DA43DB52484D4a88b75",
+                "name": "TapiocaDeployer",
+                "meta": {}
+            },
+            {
+                "name": "YieldBoxURIBuilder",
+                "address": "0xf2ffDDf0435C88eD0D38Ae0e1Ff1752a13ab2C13",
+                "meta": {
+                    "args": [],
+                    "salt": "0x4ecc9715208038d1a3bd4780d26282ce900c92046c78adfffd7083d28ab91ba7",
+                    "create2": true
+                }
+            },
+            {
+                "name": "YieldBoxMock",
+                "address": "0x76Eb21e0Ae33e29039e2d27BF38Fd1dfB2cF50eD",
+                "meta": {
+                    "args": [
+                        "0xf2ffDDf0435C88eD0D38Ae0e1Ff1752a13ab2C13",
+                        "0xf2ffDDf0435C88eD0D38Ae0e1Ff1752a13ab2C13"
+                    ],
+                    "salt": "0x5c513882ca7bf52b55671efc2bae7b3ae72264408efa36257676bf8a7ab8f690",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapOFT",
+                "address": "0x6a8391D6C790cc3272e63528f7b436BFf1837c3b",
                 "meta": {
                     "args": [
                         "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
@@ -36,60 +240,60 @@
                         "5",
                         "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                     ],
-                    "salt": "0x843be935238deefc08ee5b3cb0c32bd53e87b1a6748b499541d5379d107b6e61",
+                    "salt": "0xc2de45cc3e5de3f4202b21910738eedc24b3dcba29e60a7cc8df1973d10868e1",
                     "create2": true
                 }
             },
             {
                 "name": "TapiocaOptionLiquidityProvision",
-                "address": "0x2fFeBaFED4d2B3F4E4E83866bFAAa4C3a8f36279",
+                "address": "0x8fF4034afD92a2e2e10A15B46a75b53a33e89Ac6",
                 "meta": {
                     "args": [
-                        "0xCE6095227539A70751f719CF22B7Ec3d0568C8cd",
+                        "0x76Eb21e0Ae33e29039e2d27BF38Fd1dfB2cF50eD",
                         "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                     ],
-                    "salt": "0xce50321339e4b334c27c1506ab08fd587dbe8e348ff9be4bc96a69a03608bf75",
+                    "salt": "0x6dda2e4d5475c77cd4173139616a2b214464369234275c4b7e2dd29e1dadcd55",
                     "create2": true
                 }
             },
             {
                 "name": "OTAP",
-                "address": "0x931D0ac911533A774f4E4a860827c210D478E5dD",
+                "address": "0x3b6885f2194706a2829207441Ad86aA546eeC83F",
                 "meta": {
                     "args": [],
-                    "salt": "0xec15e08a61c03791b532484770943e246e833bd5dda177e7110e3d6d072076e5",
+                    "salt": "0x0cb27c5e1cd9167484766dd60d54b8b29bdef7e93103e18b6d614a2b84d36277",
                     "create2": true
                 }
             },
             {
                 "name": "TapiocaOptionBrokerMock",
-                "address": "0x609903777d599eB6FbF6eF9FD1d484883A2F92d6",
+                "address": "0xCEd6A7Da248304F631ed849d022B2C60f3DC794c",
                 "meta": {
                     "args": [
-                        "0x2fFeBaFED4d2B3F4E4E83866bFAAa4C3a8f36279",
-                        "0x931D0ac911533A774f4E4a860827c210D478E5dD",
-                        "0xf14351A9b763E3Aa81EcecDE66098FaE0F8E4537",
+                        "0x8fF4034afD92a2e2e10A15B46a75b53a33e89Ac6",
+                        "0x3b6885f2194706a2829207441Ad86aA546eeC83F",
+                        "0x6a8391D6C790cc3272e63528f7b436BFf1837c3b",
                         "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F",
                         "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                     ],
-                    "salt": "0x8cb154249bce28304a66bb64566d1e55ac6c53e3c9a150b131f4649a7b36c9cb",
+                    "salt": "0xf20104d32e70cbf7f350043c9576b6fb98a07a0a2ff53bc97121ce23f1765bef",
                     "create2": true
                 }
             },
             {
                 "name": "TapOFTOracleMock",
-                "address": "0xd047C0a8DF60990371d8c2EF666d1fba93Cc6b0C",
+                "address": "0xb547be8555c067199dc8E4168f7a3A13ffEbdBA3",
                 "meta": {
                     "args": [
                         "TOFTOM"
                     ],
-                    "salt": "0x1027a8af8517d891db756ddd617de51d0f8fd746805ac140fc90a7aafc8e1780",
+                    "salt": "0xf55cd93d408c32d471c59a85d9c4a9bea7404f66df774302b1b260eeb135692a",
                     "create2": true
                 }
             },
             {
                 "name": "sglTokenMock1",
-                "address": "0x35F3D436d68D74adb77B46C591770FBa62AafC65",
+                "address": "0xB8626Bc5aD23903D6Cd15A4B2D056F4Ddf213dca",
                 "meta": {
                     "args": [
                         "sglTokenMock1",
@@ -97,13 +301,13 @@
                         18,
                         0
                     ],
-                    "salt": "0x4624d84e9924d20e93f71e50c21b3ffce975a41c448e9ba7cc6c4afee92689c1",
+                    "salt": "0xc217f7c448769d770983138736bc3a790bb6cb801d2d95a7a7fa0983c5746c54",
                     "create2": true
                 }
             },
             {
                 "name": "sglTokenMock2",
-                "address": "0xe0F1E75F03B10EB8928b3b2241334f209AbBabc9",
+                "address": "0x0c9611A33357b1e5eaD3e0686d309bf94BE7B64B",
                 "meta": {
                     "args": [
                         "sglTokenMock2",
@@ -111,13 +315,13 @@
                         18,
                         0
                     ],
-                    "salt": "0xae9a37c93e3acbb37cccfb788cbe40994f08242a4a02c2c6b77e52184abffa22",
+                    "salt": "0xd2fa227cde33ed427dbc71b9b233ad8dbb887031ea81e5cab0a3f3f26ab543ac",
                     "create2": true
                 }
             },
             {
                 "name": "WETHMock",
-                "address": "0x6aB8dF3c43F83ac7D5901aDe9Cee7d33aB19010b",
+                "address": "0x1F1044FdbB2149d150158789124C1c97768E1fE4",
                 "meta": {
                     "args": [
                         "wethMock",
@@ -125,13 +329,13 @@
                         18,
                         0
                     ],
-                    "salt": "0xc0bcaaad4bd94f93ac3a26ed77f5e768fd42d3433c23973c3a27920e395c37dc",
+                    "salt": "0xfec9feeffa1b4900d2a7d474a7f6520f81fb33a19d3c5745dc3c7aa653a39fd6",
                     "create2": true
                 }
             },
             {
                 "name": "USDCMock",
-                "address": "0xF4A917Ec8effabfC31c6e6e98aFe1785ef032701",
+                "address": "0x81E22838b087d91132F106104c903ddF976CBA9E",
                 "meta": {
                     "args": [
                         "usdcMock",
@@ -139,64 +343,59 @@
                         6,
                         0
                     ],
-                    "salt": "0xed88e910ec8af3a532c3eed52fa11fae48b3564aae84a68b1a2c187e4f463f47",
+                    "salt": "0x202542f384dcaa7d963af1ab4ff8a638ddadc06487d7e8eda928bec92a9c2623",
                     "create2": true
                 }
             },
             {
                 "name": "WETHMOracleMock",
-                "address": "0xc54599aeD4356812884Fd6Bd1eb9F81b6ea07D21",
+                "address": "0x648F738a0F298244fef9cDf336b70fbc503Db108",
                 "meta": {
                     "args": [
                         "WETHMOracle"
                     ],
-                    "salt": "0x17ef7bf30b67f2a6e40bb9e583120838f119bfbdf293a0fe770cf25b828a9b4d",
+                    "salt": "0x0aad1e517ded6e1d7814fb4b3f733cd6fc9aedf0591a5295e4c86c78ca407b88",
                     "create2": true
                 }
             },
             {
                 "name": "USDCMOracleMock",
-                "address": "0x13927885ED5c5Ff69AAaBd9767D025F6BdEf735e",
+                "address": "0x3324423F4057ff0917F265eCab401379EA3ACb04",
                 "meta": {
                     "args": [
                         "USDCMOracle"
                     ],
-                    "salt": "0xe967a2db5de1be14711ff45a67cd2ba36e661713f3cf98c4c261d895b8944acd",
+                    "salt": "0x9da79fd5802fc868bef73116345509cfecda2ae4ec5fbcfd26e8079cbd80d5aa",
                     "create2": true
                 }
             },
             {
                 "name": "YieldBoxVaultStratSGlTokenMock1",
-                "address": "0xfcDFF203C2eA4FA2652c594C78799B6EEd0F4deb",
+                "address": "0xA0fd12D62fB2e7B4a599A90302617e552DdAF079",
                 "meta": {
                     "args": [
-                        "0xCE6095227539A70751f719CF22B7Ec3d0568C8cd",
-                        "0x35F3D436d68D74adb77B46C591770FBa62AafC65",
+                        "0x76Eb21e0Ae33e29039e2d27BF38Fd1dfB2cF50eD",
+                        "0xB8626Bc5aD23903D6Cd15A4B2D056F4Ddf213dca",
                         "YBVaultStratSGLTKN1",
                         "YBVaultStrat for sglTokenMock1"
                     ],
-                    "salt": "0xfb20a78198e2fbe5bc29499d95ba9c5556c713cdbcc45e97acf68b83df89b778",
+                    "salt": "0xa54d3c9a7a50e6e255ac8963587a7e91988347c2554877ebbd391db1da5baf2d",
                     "create2": true
                 }
             },
             {
                 "name": "YieldBoxVaultStratSGlTokenMock2",
-                "address": "0xA72BcaC3176E882294792517E76637b54A67D907",
+                "address": "0xdA3A09A0097032F3E27F74DB4eA2aB44Eb5D28B8",
                 "meta": {
                     "args": [
-                        "0xCE6095227539A70751f719CF22B7Ec3d0568C8cd",
-                        "0x35F3D436d68D74adb77B46C591770FBa62AafC65",
+                        "0x76Eb21e0Ae33e29039e2d27BF38Fd1dfB2cF50eD",
+                        "0x0c9611A33357b1e5eaD3e0686d309bf94BE7B64B",
                         "YBVaultStratSGLTKN2",
                         "YBVaultStrat for sglTokenMock2"
                     ],
-                    "salt": "0xcba10f5ae3218aab09a284d61b16f287213aa5d2785c829d855f1aea07c2b39f",
+                    "salt": "0xa4c1350b24da1f6ea7591f2fca84d282472614ef85ab582cc597d857cc92eac4",
                     "create2": true
                 }
-            },
-            {
-                "address": "0x897bd9D560c4E7398F7e06CD24aaB91693314A14",
-                "name": "TapiocaDeployer",
-                "meta": {}
             }
         ]
     }
