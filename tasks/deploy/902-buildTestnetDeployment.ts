@@ -1,11 +1,11 @@
 import { ContractFactory } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import {
     ERC20Mock__factory,
     OracleMock__factory,
     YieldBoxVaultStrat__factory,
 } from '../../typechain';
-import { IDeployerVMAdd } from '../deployerVM';
 
 export const buildTestnetDeployment = async (
     hre: HardhatRuntimeEnvironment,

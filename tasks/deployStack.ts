@@ -10,15 +10,17 @@ import { buildYieldBoxMock } from './deploy/901-buildYieldBoxMock';
 import { buildTestnetDeployment } from './deploy/902-buildTestnetDeployment';
 import { buildTestnetAfterDepSetup } from './deploy/99-buildTestnetAfterDepSetup';
 
-import { DeployerVM } from './deployerVM';
-
+// hh deployStack --type build --network goerli
 export const deployStack__task = async (
     taskArgs: { type: 'build' | 'load' },
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
     const signer = (await hre.ethers.getSigners())[0];
-    const VM = new DeployerVM(hre, {
+    const VM = new hre.SDK.DeployerVM(hre, {
+        // Change this if you get bytecode size error / gas required exceeds allowance (550000000)/ anything related to bytecode size
+        // Could be different by network/RPC provider
+        bytecodeSizeLimit: 100_000,
         multicall: Multicall3__factory.connect(
             hre.SDK.config.MULTICALL_ADDRESS,
             signer,
@@ -90,4 +92,6 @@ export const deployStack__task = async (
             ).wait();
         }
     }
+
+    console.log('[+] Stack deployed! 🎉');
 };

@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { TapiocaOptionBroker__factory } from '../../typechain';
-import { IDeployerVMAdd } from '../deployerVM';
 
 export const buildTOB = async (
     hre: HardhatRuntimeEnvironment,

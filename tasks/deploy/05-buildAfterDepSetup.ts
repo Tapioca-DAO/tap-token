@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { TDeploymentVMContract } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { Multicall3 } from '../../typechain';
-import { TDeploymentVMContract } from '../deployerVM';
 
 export const buildAfterDepSetup = async (
     hre: HardhatRuntimeEnvironment,

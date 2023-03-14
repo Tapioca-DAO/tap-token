@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { constants } from '../../scripts/deployment.utils';
 import { TapOFT__factory } from '../../typechain';
-import { IDeployerVMAdd } from '../deployerVM';
 
 export const buildTapOFT = async (
     hre: HardhatRuntimeEnvironment,
