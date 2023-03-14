@@ -7,8 +7,8 @@ import {
     deployUSDC,
 } from './test.utils';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { ERC20Mock } from '../typechain';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { ERC20Mock } from '../typechain';
 
 describe('Vesting', () => {
     let usdc: ERC20Mock;
@@ -36,6 +36,7 @@ describe('Vesting', () => {
             usdc.address,
             cliff,
             duration,
+            deployer.address,
         );
         await usdc.transfer(vesting.address, mintAmount);
 
@@ -91,6 +92,7 @@ describe('Vesting', () => {
             usdc.address,
             cliff,
             duration,
+            deployer.address,
         );
         await usdc.transfer(vesting.address, mintAmount);
 
@@ -129,6 +131,7 @@ describe('Vesting', () => {
             usdc.address,
             cliff,
             duration,
+            deployer.address,
         );
         await usdc.transfer(vesting.address, mintAmount);
 
@@ -226,6 +229,7 @@ describe('Vesting', () => {
             usdc.address,
             cliff,
             duration,
+            deployer.address,
         );
         await usdc.transfer(vesting.address, mintAmount);
 

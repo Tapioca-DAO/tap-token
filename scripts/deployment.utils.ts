@@ -3,19 +3,10 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TContract } from 'tapioca-sdk/dist/shared';
 
-const supportedChains: { [key: string]: any } = SDK.API.utils
-    .getSupportedChains()
-    .reduce(
-        (sdkChains, chain) => ({
-            ...sdkChains,
-            [chain.name]: {
-                ...chain,
-            },
-        }),
-        {},
-    );
-
-export const constants: { [key: string]: any } = {
+type TNetwork = ReturnType<
+    typeof SDK.API.utils.getSupportedChains
+>[number]['name'];
+export const constants = {
     teamAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
     advisorAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
     daoAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
@@ -31,21 +22,21 @@ export const constants: { [key: string]: any } = {
     //------------- TESTNETS --------------
     //goerli
     '5': {
-        ...supportedChains['goerli'],
+        ...SDK.API.utils.getChainBy('name', 'goerli')!,
         mx_ETH: '0xADCea8173CA63CFeB047Ccedd53045271A6C268b', //mock
     },
     '43113': {
-        ...supportedChains['fuji_avalanche'],
+        ...SDK.API.utils.getChainBy('name', 'fuji_avalanche')!,
     },
     '421613': {
-        ...supportedChains['arbitrum_goerli'],
+        ...SDK.API.utils.getChainBy('name', 'arbitrum_goerli')!,
     },
     '80001': {
-        ...supportedChains['mumbai'],
+        ...SDK.API.utils.getChainBy('name', 'mumbai')!,
     },
     //fantom_testnet
     '4002': {
-        ...supportedChains['fantom_testnet'],
+        ...SDK.API.utils.getChainBy('name', 'fantom_testnet')!,
         mx_ETH: '0xADCea8173CA63CFeB047Ccedd53045271A6C268b', //mock
     },
     //------------- MAINNETS --------------
@@ -71,10 +62,12 @@ export const verify = async (
 export const updateDeployments = async (
     contracts: TContract[],
     chainId: string,
+    tag?: string,
 ) => {
-    SDK.API.utils.saveDeploymentOnDisk({
-        [chainId]: contracts,
-    });
+    SDK.API.db.saveLocally(
+        SDK.API.db.buildLocalDeployment({ chainId, contracts }),
+        tag,
+    );
 };
 
 export const registerContract = async (

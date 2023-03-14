@@ -1,12 +1,11 @@
 import '@nomiclabs/hardhat-ethers';
 import { task } from 'hardhat/config';
-import { exportSDK__task } from './tasks/exportSDK';
-import { setTrustedRemote__task } from './tasks/setTrustedRemote';
 import {
     deployERC20Mock__task,
     deployOracleMock__task,
     deployVesting__task,
 } from './tasks/contractDeployment';
+import { exportSDK__task } from './tasks/exportSDK';
 import {
     setOracleMockRate__task,
     setTOBPaymentToken__task,
@@ -14,14 +13,10 @@ import {
     setTOLPUnregisterSingularity__task,
     setYieldBoxRegisterAsset__task,
 } from './tasks/setterTasks';
-import {
-    getLocalDeployments__task,
-    getSDKDeployments__task,
-} from './tasks/getDeployments';
-import { configurePacketTypes__task } from './tasks/configurePacketTypes';
+
 import { glob } from 'typechain';
-import { batchSetTrustedRemote__task } from './tasks/batchSetTrustedRemote';
-import { batchConfigureAdapterParams__task } from './tasks/batchConfigureAdapterParams';
+import { configurePacketTypes__task } from './tasks/configurePacketTypes';
+import { deployStack__task } from './tasks/deployStack';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -35,13 +30,9 @@ task(
     'exportSDK',
     'Generate and export the typings and/or addresses for the SDK. May deploy contracts.',
     exportSDK__task,
-).addFlag('mainnet', 'Using the current chain ID deployments.');
-
-task(
-    'getLocalDeployment',
-    'Try to load a local deployment.',
-    getLocalDeployments__task,
-).addOptionalParam('contractName', 'The name of the contract to load');
+)
+    .addFlag('mainnet', 'Using the current chain ID deployments.')
+    .addOptionalParam('tag', 'The tag of the deployment.');
 
 task(
     'getContractNames',
@@ -54,23 +45,6 @@ task(
         );
     },
 );
-
-task(
-    'getSDKDeployment',
-    'Try to load an SDK deployment.',
-    getSDKDeployments__task,
-)
-    .addParam('repo', 'The name of the repo to load the deployment from')
-    .addOptionalParam('contractName', 'The name of the contract to load');
-
-task(
-    'setTrustedRemote',
-    'Calls setTrustedRemote on TapOFT contract',
-    setTrustedRemote__task,
-)
-    .addParam('chain', 'LZ destination chain id for trusted remotes')
-    .addParam('dst', 'TapOFT destination address')
-    .addParam('src', 'TapOFT source address');
 
 task('deployVesting', 'Deploys a new Vesting contract', deployVesting__task)
     .addParam('deploymentName', 'The name of the deployment')
@@ -152,13 +126,10 @@ task(
     .addParam('src', 'TAP address');
 
 task(
-    'batchSetTrustedRemote',
-    'Set trusted remote between all available tOFT contracts for the current chain',
-    batchSetTrustedRemote__task,
-).addParam('contract', 'Contract name to filter by');
-
-task(
-    'batchConfigureAdapterParams',
-    'Sets OFT to use adapter params and the minimum destination gas between all available tOFT contracts for the current chain',
-    batchConfigureAdapterParams__task,
-).addParam('contract', 'Contract name to filter by');
+    'deployStack',
+    'Deploys the entire stack with on deterministic addresses, with MulticallV3.',
+    deployStack__task,
+).addOptionalParam(
+    'type',
+    '"build": Build the contracts and deploy them.\n"load": Load the contracts from the local database."',
+);

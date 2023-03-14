@@ -1,9 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import {
-    registerContract,
-    updateDeployments,
-    verify,
-} from '../scripts/deployment.utils';
+import { registerContract } from '../scripts/deployment.utils';
 
 export const deployVesting__task = async (
     taskArgs: {

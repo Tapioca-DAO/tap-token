@@ -73,8 +73,6 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     /// @notice returns the pause state of the contract
     bool public paused;
 
-    /// @notice returns the Conservator address
-    address public conservator;
     // ==========
     // *EVENTS*
     // ==========
@@ -90,8 +88,6 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     event GovernanceChainIdentifierUpdated(uint256 _old, uint256 _new);
     /// @notice event emitted when pause state is changed
     event PausedUpdated(bool oldState, bool newState);
-    /// @notice event emitted when Conservator is changed
-    event ConservatorUpdated(address indexed old, address indexed _new);
 
     modifier notPaused() {
         require(!paused, "TAP: paused");
@@ -110,6 +106,7 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     /// @param _dao address of the DAO
     /// @param _airdrop address of the airdrop contract
     /// @param _governanceChainId LayerZero governance chain identifier
+    /// @param _conservator address of the conservator/owner
     constructor(
         address _lzEndpoint,
         address _contributors,
@@ -117,7 +114,8 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
         address _lbp,
         address _dao,
         address _airdrop,
-        uint16 _governanceChainId
+        uint16 _governanceChainId,
+        address _conservator
     ) OFTV2("Tapioca", "TAP", 8, _lzEndpoint) ERC20Permit("Tapioca") {
         require(_lzEndpoint != address(0), "LZ endpoint not valid");
         governanceChainIdentifier = _governanceChainId;
@@ -134,7 +132,7 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
         }
         emissionsStartTime = block.timestamp;
 
-        conservator = msg.sender;
+        transferOwnership(_conservator);
     }
 
     ///-- Owner methods --
@@ -150,19 +148,9 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
         governanceChainIdentifier = _identifier;
     }
 
-    /// @notice Set the Conservator address
-    /// @dev Conservator can pause the contract
-    /// @param _conservator The new address
-    function setConservator(address _conservator) external onlyOwner {
-        require(_conservator != address(0), "TAP: address not valid");
-        emit ConservatorUpdated(conservator, _conservator);
-        conservator = _conservator;
-    }
-
     /// @notice updates the pause state of the contract
     /// @param val the new value
-    function updatePause(bool val) external {
-        require(msg.sender == conservator, "TAP: unauthorized");
+    function updatePause(bool val) external onlyOwner {
         require(val != paused, "TAP: same state");
         emit PausedUpdated(paused, val);
         paused = val;
