@@ -17,7 +17,7 @@ interface IDeploymentQueue {
     dependsOn?: IDependentOn[];
 }
 
-interface TDeploymentVMContract extends TContract {
+export interface TDeploymentVMContract extends TContract {
     meta: { args: unknown[]; salt: string; create2: true };
 }
 
@@ -43,6 +43,7 @@ export interface IDeployerVMAdd<T extends ContractFactory>
  *
  */
 export class DeployerVM {
+    readonly #bytecodeSizeLimit = 100_000; // Limit of bytecode size for a single transaction, error happened on Arb Goerli with Alchemy RPC
     #tapiocaDeployer?: TapiocaDeployer;
 
     hre: HardhatRuntimeEnvironment;
@@ -64,6 +65,11 @@ export class DeployerVM {
         creationCode: string;
         salt: string;
     })[] = [];
+
+    /**
+     * List of deployed contracts
+     */
+    private depList: TContract[] = [];
 
     /**
      * Flag to check if the deployment queue has been executed
@@ -100,16 +106,19 @@ export class DeployerVM {
         if (!this.executed) {
             throw new Error('[-] Deployment queue has not been executed yet');
         }
+        if (this.depList.length === 0) {
+            this.depList = this.buildQueue.map((contract) => ({
+                name: contract.deploymentName,
+                address: contract.deterministicAddress,
+                meta: {
+                    args: contract.args,
+                    salt: contract.salt,
+                    create2: true,
+                },
+            }));
+        }
 
-        return this.buildQueue.map((contract) => ({
-            name: contract.deploymentName,
-            address: contract.deterministicAddress,
-            meta: {
-                args: contract.args,
-                salt: contract.salt,
-                create2: true,
-            },
-        }));
+        return this.depList;
     }
 
     // ***********
@@ -142,11 +151,26 @@ export class DeployerVM {
      * @param wait Number of blocks to wait for the transaction to be mined. Default: 0
      */
     async execute(wait = 0) {
+        if (this.executed) {
+            throw new Error('[-] Deployment queue has already been executed');
+        }
         const calls = await this.getBuildCalls();
 
-        const tx = await this.options.multicall.aggregate3(calls);
-        console.log('[+] Executing deployment queue on ', tx.hash);
-        await tx.wait(wait);
+        console.log('[+] Executing deployment queue');
+        if (calls.length > 1) {
+            console.log(
+                '[+] Call data size exceeded, batching calls into ',
+                calls.length,
+                ' transactions',
+            );
+        }
+        // Execute the calls
+        for (const call of calls) {
+            const tx = await this.options.multicall.aggregate3(call);
+            console.log(`[+] Execution batch hash: ${tx.hash}`);
+            await tx.wait(wait);
+        }
+
         this.executed = true;
         console.log('[+] Deployment queue executed');
 
@@ -210,8 +234,8 @@ export class DeployerVM {
             });
             counter++;
         }
-        // Verify the contracts
 
+        // Verify the contracts
         for (const batch of verifyList) {
             await Promise.all(
                 batch.map((contract) =>
@@ -221,8 +245,19 @@ export class DeployerVM {
                     }),
                 ),
             );
+            await new Promise((resolve) => setTimeout(resolve, 2000));
         }
 
+        return this;
+    }
+
+    /**
+     * Load already deployed contracts.
+     * @param deps List of deployed contracts
+     */
+    load(deps: TDeploymentVMContract[]) {
+        this.executed = true;
+        this.depList = deps;
         return this;
     }
 
@@ -233,31 +268,50 @@ export class DeployerVM {
         this.deploymentQueue = [];
         this.buildQueue = [];
         this.executed = false;
+        this.depList = [];
         return this;
     }
 
     // ***********
     // Utils
     // ***********
-    private async getBuildCalls(): Promise<Multicall3.Call3Struct[]> {
+    private async getBuildCalls(): Promise<Multicall3.Call3Struct[][]> {
+        console.log('[+] Populating build queue');
         await this.populateBuildQueue();
-
+        console.log('[+] Building call queue');
         const tapiocaDeployer = await this.getTapiocaDeployer();
 
-        const calls: Multicall3.Call3Struct[] = [];
+        // Build the calls
+        let currentByteCodeSize = 0;
+        let currentBatch = 0;
+        const calls: Multicall3.Call3Struct[][] = [[]];
         for (const build of this.buildQueue) {
+            // We'll batch the calls to avoid hitting the gas limit
+            const callData = this.buildDeployerCode(
+                tapiocaDeployer,
+                0,
+                build.salt,
+                build.creationCode,
+            );
+            // Check if we need to create a new batch
+            if (
+                currentByteCodeSize + callData.length >
+                this.#bytecodeSizeLimit
+            ) {
+                currentByteCodeSize = 0;
+                currentBatch++;
+                calls[currentBatch] = [];
+            }
+
+            currentByteCodeSize += callData.length;
             // Add creation code to the calls
-            calls.push({
+            calls[currentBatch].push({
                 target: tapiocaDeployer.address,
-                callData: this.buildDeployerCode(
-                    tapiocaDeployer,
-                    0,
-                    build.salt,
-                    build.creationCode,
-                ),
                 allowFailure: false,
+                callData,
             });
         }
+
         return calls;
     }
 
