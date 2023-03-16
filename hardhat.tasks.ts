@@ -4,7 +4,6 @@ import {
     deployOracleMock__task,
     deployVesting__task,
 } from './tasks/contractDeployment';
-import { exportSDK__task } from './tasks/exportSDK';
 import {
     setOracleMockRate__task,
     setTOBPaymentToken__task,
@@ -24,14 +23,6 @@ task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
         console.log(account.address);
     }
 });
-
-task(
-    'exportSDK',
-    'Generate and export the typings and/or addresses for the SDK. May deploy contracts.',
-    exportSDK__task,
-)
-    .addFlag('mainnet', 'Using the current chain ID deployments.')
-    .addOptionalParam('tag', 'The tag of the deployment.');
 
 task(
     'getContractNames',
