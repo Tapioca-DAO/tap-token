@@ -1,42 +1,45 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import inquirer from 'inquirer';
 import { TLocalDeployment } from 'tapioca-sdk/dist/shared';
-/**
- * Script used to generate typings for the tapioca-sdk
- * https://github.com/Tapioca-DAO/tapioca-sdk
- */
 
+// TODO - Put in SDK
 export const exportSDK__task = async (
     taskArgs: { tag?: string },
     hre: HardhatRuntimeEnvironment,
 ) => {
-    const tag = taskArgs.tag || 'default';
-
-    const deployments = hre.SDK.db.readDeployment('local', {
+    console.log(
+        '\n\n[+] Exporting typechain & deployment files for tapioca-sdk...',
+    );
+    const tag = await hre.SDK.hardhatUtils.askForTag(hre, 'local');
+    const data = hre.SDK.db.readDeployment('local', {
         tag,
     }) as TLocalDeployment;
-    console.log(deployments);
 
-    const contractNames = [
-        'OFT20',
-        'TapOFT',
-        'ERC20Mock',
-        'OracleMock',
-        'OTAP',
-        'TapiocaOptionBroker',
-        'TapiocaOptionBrokerMock',
-        'TapiocaOptionLiquidityProvision',
-        'Vesting',
-    ];
+    if (!tag) {
+        console.log('[-] No local deployment found. Skipping to typechain');
+    }
+
+    const allContracts = (await hre.artifacts.getAllFullyQualifiedNames())
+        .filter((e) => e.startsWith('contracts/'))
+        .map((e) => e.split(':')[1])
+        .filter((e) => e[0] !== 'I');
+
+    const { contractNames } = await inquirer.prompt({
+        type: 'checkbox',
+        message: 'Select contracts to export',
+        name: 'contractNames',
+        choices: allContracts,
+        default: allContracts,
+    });
 
     console.log(
         '[+] Exporting typechain & deployment files for tapioca-sdk...',
     );
-    console.log(contractNames);
 
     hre.SDK.exportSDK.run({
         projectCaller: hre.config.SDK.project,
         artifactPath: hre.config.paths.artifacts,
+        deployment: { data, tag },
         contractNames,
-        deployment: { data: deployments, tag },
     });
 };
