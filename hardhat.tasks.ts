@@ -1,7 +1,6 @@
 import '@nomiclabs/hardhat-ethers';
 import { task } from 'hardhat/config';
 import {
-    deployERC20Mock__task,
     deployOracleMock__task,
     deployVesting__task,
 } from './tasks/contractDeployment';
@@ -51,17 +50,6 @@ task('deployVesting', 'Deploys a new Vesting contract', deployVesting__task)
     .addParam('token', 'Vested token')
     .addParam('cliff', 'Cliff duration in seconds')
     .addParam('duration', 'Vesting duration in seconds');
-
-task(
-    'deployERC20Mock',
-    'Deploys a new ERC20 Mock contract',
-    deployERC20Mock__task,
-)
-    .addParam('deploymentName', 'Name of the deployment')
-    .addParam('name', 'Name of the token')
-    .addParam('symbol', 'Symbol of the token')
-    .addParam('initialAmount', 'Initial amount of tokens')
-    .addParam('decimals', 'Number of decimals');
 
 task(
     'deployOracleMock',
