@@ -74,10 +74,14 @@ export const LZ_ENDPOINTS: TLZ_Endpoint = {
         lzChainId: '10009',
     },
 };
-export async function deployUSDC(amount: BigNumberish, decimals: number) {
+export async function deployUSDC(
+    amount: BigNumberish,
+    decimals: number,
+    owner: string,
+) {
     const usdc = await (
         await ethers.getContractFactory('ERC20Mock')
-    ).deploy('USDCMock', 'USDCM', amount, decimals);
+    ).deploy('USDCMock', 'USDCM', amount, decimals, owner);
     await usdc.deployed();
 
     return usdc;
