@@ -71,7 +71,7 @@ export const setupFixture = async () => {
     // Deploy a "virtual" market
     const sglTokenMock = await (
         await ethers.getContractFactory('ERC20Mock')
-    ).deploy('sglTokenMock', 'STM', 0, 18);
+    ).deploy('sglTokenMock', 'STM', 0, 18, signer.address);
     const sglTokenMockAsset = await yieldBox.assetCount();
     const sglTokenMockStrategy = await (
         await ethers.getContractFactory('ERC20WithoutStrategy')
@@ -79,7 +79,7 @@ export const setupFixture = async () => {
 
     const sglTokenMock2 = await (
         await ethers.getContractFactory('ERC20Mock')
-    ).deploy('sglTokenMock', 'STM', 0, 18);
+    ).deploy('sglTokenMock', 'STM', 0, 18, signer.address);
     const sglTokenMock2Asset = sglTokenMockAsset.add(1);
     const sglTokenMock2Strategy = await (
         await ethers.getContractFactory('ERC20WithoutStrategy')
@@ -95,10 +95,10 @@ export const setupFixture = async () => {
     // Deploy payment tokens
     const stableMock = await (
         await ethers.getContractFactory('ERC20Mock')
-    ).deploy('StableMock', 'STBLM', 0, 6);
+    ).deploy('StableMock', 'STBLM', 0, 6, signer.address);
     const ethMock = await (
         await ethers.getContractFactory('ERC20Mock')
-    ).deploy('wethMock', 'WETHM', 0, 18);
+    ).deploy('wethMock', 'WETHM', 0, 18, signer.address);
     const stableMockOracle = await (
         await ethers.getContractFactory('OracleMock')
     ).deploy('StableMockOracle');

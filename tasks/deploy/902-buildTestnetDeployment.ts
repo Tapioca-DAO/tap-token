@@ -9,6 +9,7 @@ import {
 
 export const buildTestnetDeployment = async (
     hre: HardhatRuntimeEnvironment,
+    owner: string,
 ): Promise<IDeployerVMAdd<ContractFactory>[]> => {
     if (!hre.network.tags['testnet']) {
         throw new Error('[-] This builder is only for testnet');
@@ -23,25 +24,25 @@ export const buildTestnetDeployment = async (
     const sglTokenMock1: IDeployerVMAdd<ERC20Mock__factory> = {
         contract: await hre.ethers.getContractFactory('ERC20Mock'),
         deploymentName: 'sglTokenMock1',
-        args: ['sglTokenMock1', 'SGL1', 18, 0],
+        args: ['sglTokenMock1', 'SGL1', 18, 0, owner],
     };
 
     const sglTokenMock2: IDeployerVMAdd<ERC20Mock__factory> = {
         contract: await hre.ethers.getContractFactory('ERC20Mock'),
         deploymentName: 'sglTokenMock2',
-        args: ['sglTokenMock2', 'SGL2', 18, 0],
+        args: ['sglTokenMock2', 'SGL2', 18, 0, owner],
     };
 
     const wethMock: IDeployerVMAdd<ERC20Mock__factory> = {
         contract: await hre.ethers.getContractFactory('ERC20Mock'),
         deploymentName: 'WETHMock',
-        args: ['wethMock', 'WETHM', 18, 0],
+        args: ['wethMock', 'WETHM', 18, 0, owner],
     };
 
     const usdcMock: IDeployerVMAdd<ERC20Mock__factory> = {
         contract: await hre.ethers.getContractFactory('ERC20Mock'),
         deploymentName: 'USDCMock',
-        args: ['usdcMock', 'USDCM', 6, 0],
+        args: ['usdcMock', 'USDCM', 6, 0, owner],
     };
 
     const wethMOracleMock: IDeployerVMAdd<OracleMock__factory> = {
