@@ -7,6 +7,8 @@ contract ERC20Mock is ERC20WithSupply {
     string public name;
     string public symbol;
 
+    address public immutable owner;
+
     constructor(
         string memory _name,
         string memory _symbol,
