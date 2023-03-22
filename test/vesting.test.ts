@@ -21,7 +21,7 @@ describe('Vesting', () => {
         usdc = (await deployUSDC(
             ethers.utils.parseEther('100000000'),
             18,
-            deployer.address
+            deployer.address,
         )) as ERC20Mock;
     }
     beforeEach(async () => {
