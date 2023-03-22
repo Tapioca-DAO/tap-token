@@ -40,16 +40,6 @@ export const deployStack__task = async (
             .add(await buildOTAP(hre))
             .add(await buildTOB(hre, signer.address, signer.address));
 
-        // Testnet only
-        if (hre.network.tags['testnet']) {
-            const testnetBuilds = await buildTestnetDeployment(
-                hre,
-                signer.address,
-            );
-            for (const build of testnetBuilds) {
-                VM.add(build);
-            }
-        }
 
         // Add and execute
         await VM.execute(3);
@@ -68,10 +58,6 @@ export const deployStack__task = async (
     const calls: Multicall3.Call3Struct[] = [
         ...(await buildAfterDepSetup(hre, vmList)),
     ];
-
-    if (hre.network.tags['testnet']) {
-        calls.push(...(await buildTestnetAfterDepSetup(hre, vmList)));
-    }
 
     // Execute
     console.log('[+] After deployment setup calls number: ', calls.length);
