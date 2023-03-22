@@ -42,7 +42,10 @@ export const deployStack__task = async (
 
         // Testnet only
         if (hre.network.tags['testnet']) {
-            const testnetBuilds = await buildTestnetDeployment(hre);
+            const testnetBuilds = await buildTestnetDeployment(
+                hre,
+                signer.address,
+            );
             for (const build of testnetBuilds) {
                 VM.add(build);
             }

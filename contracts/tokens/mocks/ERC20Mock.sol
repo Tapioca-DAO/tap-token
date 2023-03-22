@@ -7,18 +7,18 @@ contract ERC20Mock is ERC20WithSupply {
     string public name;
     string public symbol;
 
-    address public immutable owner = msg.sender;
-
     constructor(
         string memory _name,
         string memory _symbol,
         uint256 _initialAmount,
-        uint256 _decimals
+        uint256 _decimals,
+        address _owner
     ) {
         name = _name;
         symbol = _symbol;
         totalSupply = _initialAmount;
         decimals = uint8(_decimals);
+        owner = _owner;
     }
 
     function mintTo(address _to, uint256 _amount) external {
