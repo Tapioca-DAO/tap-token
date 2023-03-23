@@ -90,6 +90,9 @@ const config: HardhatUserConfig & { dodoc: any } = {
         apiKey: {
             goerli: process.env.BLOCKSCAN_KEY ?? '',
             arbitrumGoerli: process.env.ARBITRUM_GOERLI_KEY ?? '',
+            avalancheFujiTestnet: process.env.AVALANCHE_FUJI_KEY ?? '',
+            bscTestnet: process.env.BSC_KEY ?? '',
+            polygonMumbai: process.env.POLYGON_MUMBAI ?? '',
         },
         customChains: [],
     },

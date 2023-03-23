@@ -114,7 +114,7 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
         address _lbp,
         address _dao,
         address _airdrop,
-        uint16 _governanceChainId,
+        uint256 _governanceChainId,
         address _conservator
     ) OFTV2("Tapioca", "TAP", 8, _lzEndpoint) ERC20Permit("Tapioca") {
         require(_lzEndpoint != address(0), "LZ endpoint not valid");
