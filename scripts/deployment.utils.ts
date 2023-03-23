@@ -14,7 +14,7 @@ export const constants = {
     seedAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
     lbpAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
     airdropAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
-    governanceChainId: 5,
+    governanceChainId: 421613,
     feeDistributorStartTimestamp: '1677187670', //random
     feeDistributorAdminAddress: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',
     feeDistributorEmergencyReturn: '0x40282d3Cf4890D9806BC1853e97a59C93D813653',

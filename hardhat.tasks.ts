@@ -15,6 +15,7 @@ import {
 import { glob } from 'typechain';
 import { configurePacketTypes__task } from './tasks/configurePacketTypes';
 import { deployStack__task } from './tasks/deployStack';
+import { deployTapOFT__task } from './tasks/deployTapOFT';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -112,3 +113,6 @@ task(
     'type',
     '"build": Build the contracts and deploy them.\n"load": Load the contracts from the local database."',
 );
+
+task('deployTapOFT', 'Deploys just the TapOFT contract', deployTapOFT__task);
+

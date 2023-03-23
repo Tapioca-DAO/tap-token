@@ -6,9 +6,8 @@ import { buildOTAP } from './deploy/03-buildOTAP';
 import { buildTOB } from './deploy/04-buildTOB';
 import { buildAfterDepSetup } from './deploy/05-buildAfterDepSetup';
 import { buildYieldBoxMock } from './deploy/901-buildYieldBoxMock';
-import { buildTestnetDeployment } from './deploy/902-buildTestnetDeployment';
-import { buildTestnetAfterDepSetup } from './deploy/99-buildTestnetAfterDepSetup';
 import { typechain } from 'tapioca-sdk';
+import { loadVM } from './utils';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
@@ -16,17 +15,13 @@ export const deployStack__task = async (
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
+    const tag = await hre.SDK.hardhatUtils.askForTag(hre, 'local');
     const signer = (await hre.ethers.getSigners())[0];
-    const multicall = typechain.Multicall.Multicall3__factory.connect(
-        hre.SDK.config.MULTICALL_ADDRESS,
-        signer,
+    const chainInfo = hre.SDK.utils.getChainBy(
+        'chainId',
+        await hre.getChainId(),
     );
-    const VM = new hre.SDK.DeployerVM(hre, {
-        // Change this if you get bytecode size error / gas required exceeds allowance (550000000)/ anything related to bytecode size
-        // Could be different by network/RPC provider
-        bytecodeSizeLimit: 95_000,
-        multicall,
-    });
+    const VM = await loadVM(hre, tag);
 
     if (taskArgs.type === 'build') {
         // TODO - To remove
@@ -42,7 +37,7 @@ export const deployStack__task = async (
 
 
         // Add and execute
-        await VM.execute(3);
+        await VM.execute(3, false);
         VM.save();
         await VM.verify();
     } else {
