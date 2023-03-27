@@ -29,5 +29,4 @@ export const deployTapOFT__task = async (
     await VM.execute(3, false);
     VM.save();
     await VM.verify();
-
 };

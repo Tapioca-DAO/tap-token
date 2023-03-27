@@ -17,7 +17,6 @@ export const buildTapOFT = async (
     const daoAddress = constants.daoAddress;
     const governanceChainId = constants.governanceChainId.toString();
 
-    
     return {
         contract: await hre.ethers.getContractFactory('TapOFT'),
         deploymentName: 'TapOFT',

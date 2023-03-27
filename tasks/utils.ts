@@ -2,7 +2,6 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import _ from 'lodash';
 import { typechain } from 'tapioca-sdk';
 
-
 export const loadVM = async (
     hre: HardhatRuntimeEnvironment,
     tag: string,
