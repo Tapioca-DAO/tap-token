@@ -3,10 +3,9 @@ node_modules
 coverage
 coverage.json
 typechain
-tapioca-sdk
-gitsub_tapioca-sdk
 docs
 package-lock.json
+
 
 #Hardhat files
 cache
