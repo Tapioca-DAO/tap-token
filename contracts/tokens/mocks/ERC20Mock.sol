@@ -27,6 +27,11 @@ contract ERC20Mock is ERC20WithSupply {
         owner = _owner;
     }
 
+    function mintTo(address _to, uint256 _amount) external {
+        require(msg.sender == owner, "ERC20Mock: only owner");
+        _mint(_to, _amount);
+    }
+
     function updateMintLimit(uint256 _newVal) external {
         require(msg.sender == owner, "UNAUTHORIZED");
         mintLimit = _newVal;
