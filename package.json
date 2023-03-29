@@ -2,7 +2,7 @@
   "name": "tap-token",
   "license": "MIT",
   "scripts": {
-    "compile": "yarn clean && NODE_ENV=compile hardhat compile --quiet && yarn solhint",
+    "compile": "NODE_ENV=compile hardhat compile --quiet && npm run lint:sol",
     "solhint": "solhint contracts/**/*.sol --fix",
     "clean": "rm -rf ./cache && rm -rf ./artifacts && rm -rf ./.openzeppelin",
     "typechain": "npx hardhat typechain",
