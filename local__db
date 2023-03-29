@@ -25,6 +25,31 @@
                 "meta": {}
             }
         ],
+        "4002": [
+            {
+                "name": "TapOFT",
+                "address": "0x4B6909b7A8E66FF327BFB4f990e46AecE8DBA415",
+                "meta": {
+                    "args": [
+                        "0x7dcAD72640F835B0FA36EFD3D6d3ec902C7E5acf",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "421613",
+                        "0x499821270A079744e2133CB1450df0Da12A77Aa1"
+                    ],
+                    "salt": "0xc37c9b02fa166b6459c83c47ef97e64a17630e1eddc34b27826587b2756ae2b9",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapiocaDeployer",
+                "address": "0x39b8000954C31E8F0590c7C0d0CE2373B28e0bF0",
+                "meta": {}
+            }
+        ],
         "43113": [
             {
                 "name": "TapOFT",
