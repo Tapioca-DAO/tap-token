@@ -39,6 +39,10 @@ export const constants = {
         ...SDK.API.utils.getChainBy('name', 'fantom_testnet')!,
         mx_ETH: '0xADCea8173CA63CFeB047Ccedd53045271A6C268b', //mock
     },
+    //bsc_testnet
+    '97': {
+        ...SDK.API.utils.getChainBy('name', 'bsc_testnet')!,
+    },
     //------------- MAINNETS --------------
 };
 

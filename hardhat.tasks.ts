@@ -114,8 +114,4 @@ task(
     '"build": Build the contracts and deploy them.\n"load": Load the contracts from the local database."',
 );
 
-task(
-    'deployTapOFT',
-    'Deploys just the TapOFT contract',
-    deployTapOFT__task,
-).addParam('multisig', 'Multisig address to transfer ownership to');
+task('deployTapOFT', 'Deploys just the TapOFT contract', deployTapOFT__task);
