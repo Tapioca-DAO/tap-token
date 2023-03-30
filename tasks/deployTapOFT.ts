@@ -9,20 +9,17 @@ import { buildYieldBoxMock } from './deploy/901-buildYieldBoxMock';
 import { typechain } from 'tapioca-sdk';
 import { loadVM } from './utils';
 
-// hh deployTapOFT -network goerli --multisig 0x...
+// hh deployTapOFT -network goerli
 export const deployTapOFT__task = async (
-    taskArgs: { multisig: string },
+    {},
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
     const tag = await hre.SDK.hardhatUtils.askForTag(hre, 'local');
     const signer = (await hre.ethers.getSigners())[0];
-    const chainInfo = hre.SDK.utils.getChainBy(
-        'chainId',
-        await hre.getChainId(),
-    );
+
     const VM = await loadVM(hre, tag, false);
-    const tapOft = await buildTapOFT(hre, taskArgs.multisig);
+    const tapOft = await buildTapOFT(hre, signer.address);
     VM.add(tapOft);
 
     // Add and execute
