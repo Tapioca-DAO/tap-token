@@ -1,73 +1,9 @@
 {
     "default": {
-        "5": [
-            {
-                "name": "TapOFT",
-                "address": "0x1d87170CAFE60CfB9A42810D79524e8d4B3e3E06",
-                "meta": {
-                    "args": [
-                        "0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "421613",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
-                    ],
-                    "salt": "0x018545f786553e44474aec586ff939e098a639c412ff1912c216d1c270197bd3",
-                    "create2": true
-                }
-            },
-            {
-                "name": "TapiocaDeployer",
-                "address": "0x84CaC7138ab07711e6297310E6A5D21c666c07D2",
-                "meta": {}
-            },
-            {
-                "name": "WETHMock",
-                "address": "0xffcE5008898ddF90F03FabDeF43C8C388e132fE1",
-                "meta": {
-                    "isERC20Mock": true
-                }
-            }
-        ],
-        "97": [
-            {
-                "name": "TapOFT",
-                "address": "0x7Eb76F80e4D0e3c557528D11F41d377f9f1fC0c6",
-                "meta": {
-                    "args": [
-                        "0x6Fcb97553D41516Cb228ac03FdC8B9a0a9df04A1",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "421613",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
-                    ],
-                    "salt": "0xe12f89278d7ab566f3987ed137ea41b7cc6f77729fd2cd4a1aca906b3a3dabda",
-                    "create2": true
-                }
-            },
-            {
-                "name": "TapiocaDeployer",
-                "address": "0x0992cc30850df5f07Cd45683e5070684EdB39953",
-                "meta": {}
-            },
-            {
-                "name": "WETHMock",
-                "address": "0xBEb739E11742D7015B807012894bDA8b0fe6b141",
-                "meta": {
-                    "isERC20Mock": true
-                }
-            }
-        ],
         "4002": [
             {
                 "name": "TapOFT",
-                "address": "0x1eC9D26C152aDbf835EdA5358Bd9F7224bF2FC69",
+                "address": "0xC5E270D2598210c7600aFf9Ca1Aee279B1b4ac18",
                 "meta": {
                     "args": [
                         "0x7dcAD72640F835B0FA36EFD3D6d3ec902C7E5acf",
@@ -79,18 +15,25 @@
                         "421613",
                         "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
                     ],
-                    "salt": "0xd1d53a64e58065680a51216dceb0e6e438b1fed4c400789996aa6f356be17631",
+                    "salt": "0xba0d5c1c0da72a61952b4b88e2986a61a47f01859df98fd36b338929fc6ac9ef",
                     "create2": true
                 }
             },
             {
                 "name": "TapiocaDeployer",
-                "address": "0xBe1ea5e209e8DB0055A0E708F5dd8B7Bf5777697",
+                "address": "0x47B4B94D9479a7c1c7847076321d74B3FF3fD379",
                 "meta": {}
             },
             {
+                "name": "Fantom",
+                "address": "0x15aa13E541EAcD9dD01E7472D6CEb629261f0515",
+                "meta": {
+                    "isERC20Mock": true
+                }
+            },
+            {
                 "name": "WETHMock",
-                "address": "0xD3eDcac1952D2892C184231fBf6F2C65A9FF9371",
+                "address": "0x679A3de79Ba9B2E1A1aBc1f8Ea1BA53990F8422F",
                 "meta": {
                     "isERC20Mock": true
                 }
@@ -98,15 +41,8 @@
         ],
         "43113": [
             {
-                "name": "Avalanche",
-                "address": "0xBD54fBCDfFD7CC9A4F6f1C98e26F7FDc6D963cd8",
-                "meta": {
-                    "isERC20Mock": true
-                }
-            },
-            {
                 "name": "TapOFT",
-                "address": "0x8422ab8C14a3C29113742628fe2Ac660166dC2Eb",
+                "address": "0xF122A0D185fc2027958Deea0D5209aBa5359BEE4",
                 "meta": {
                     "args": [
                         "0x93f54D755A063cE7bB9e6Ac47Eccc8e33411d706",
@@ -118,18 +54,25 @@
                         "421613",
                         "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
                     ],
-                    "salt": "0x5a13c6af4fd089de975409149153fe3fece9b6ed5d3babc5e210c78b73b87642",
+                    "salt": "0x160d5ee3be38befa316a9d0eb23f2edf740e95cb6323c257ead078020c487aa5",
                     "create2": true
                 }
             },
             {
                 "name": "TapiocaDeployer",
-                "address": "0xAef6dcab06B99A45E903DB20DFF4A6596831053A",
+                "address": "0x719A8246aC999978e5Ad60aC56545373B633A6D8",
                 "meta": {}
             },
             {
+                "name": "Avalanche",
+                "address": "0xfA5d411d754C9D309cbd487394d0a46bee6B0bb7",
+                "meta": {
+                    "isERC20Mock": true
+                }
+            },
+            {
                 "name": "WETHMock",
-                "address": "0x83CE4Ad0d9A178FddCe80e77D260023a082b1701",
+                "address": "0x7f95BD22832D236a9334f9958ceab28f6e132AAC",
                 "meta": {
                     "isERC20Mock": true
                 }
@@ -137,15 +80,8 @@
         ],
         "80001": [
             {
-                "name": "Polygon",
-                "address": "0x8887EEefDC0a709BcAf733c46Af0Df1fc3D56175",
-                "meta": {
-                    "isERC20Mock": true
-                }
-            },
-            {
                 "name": "TapOFT",
-                "address": "0x3c72aEb19aF03Bc241418e053e75B510e1337634",
+                "address": "0x5669c1235710078cc71fdA2B0F2D5Ac4bB3860aA",
                 "meta": {
                     "args": [
                         "0xf69186dfBa60DdB133E91E9A4B5673624293d8F8",
@@ -157,18 +93,25 @@
                         "421613",
                         "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
                     ],
-                    "salt": "0xe6b24db1a7d541aeaa28b94ae7fd2a0fcd1cfee8ae95b7a0a963d13f25cd3cbe",
+                    "salt": "0xea0a2b9bb127a9796af09065954ab3d2c45d0998f306a9045275476337641528",
                     "create2": true
                 }
             },
             {
                 "name": "TapiocaDeployer",
-                "address": "0xF346B1260eE637377dEdAA7664C0e0d17e5550e3",
+                "address": "0xa6A08279bC21ff0DD51904Cb45cBA3DB539BFb04",
                 "meta": {}
             },
             {
+                "name": "Polygon",
+                "address": "0x9f438d98a2De9D6A18Ad2F3648244b4Df39df954",
+                "meta": {
+                    "isERC20Mock": true
+                }
+            },
+            {
                 "name": "WETHMock",
-                "address": "0xFEd46Fb1362bD46c5BE7d513320C9E3A3567b388",
+                "address": "0x19a338052Abc780a326B3b3e8a3BdC79620872cf",
                 "meta": {
                     "isERC20Mock": true
                 }
@@ -176,38 +119,13 @@
         ],
         "421613": [
             {
-                "name": "Arbitrum",
-                "address": "0x0ADB0BdEFe61EE2C462e357305c0eFB903127B7e",
-                "meta": {
-                    "isERC20Mock": true
-                }
-            },
-            {
-                "name": "TapOFT",
-                "address": "0x0109934b6e2766acF4398478f2Ba377221185374",
-                "meta": {
-                    "args": [
-                        "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
-                        "421613",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
-                    ],
-                    "salt": "0x30fb96c0f341dbff1f1d648288b66daf68efb5becb7cba8ce90584b6878e233c",
-                    "create2": true
-                }
-            },
-            {
                 "name": "TapiocaDeployer",
-                "address": "0x854b5E093186c0bC2a25224ddFcfE20A7cd7a910",
+                "address": "0x3c91C69FDA2874e288C9cF01AED49ebf8C5F3Cd1",
                 "meta": {}
             },
             {
                 "name": "WETHMock",
-                "address": "0xa556082835f616a2D47f23D94cE9b34B5441bCbf",
+                "address": "0xcEfDD7519AdfB67EC6858C6ACC22dD1471596E5a",
                 "meta": {
                     "isERC20Mock": true
                 }

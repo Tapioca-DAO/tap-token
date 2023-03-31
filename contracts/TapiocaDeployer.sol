@@ -22,7 +22,8 @@ contract TapiocaDeployer {
     function deploy(
         uint256 amount,
         bytes32 salt,
-        bytes memory bytecode
+        bytes memory bytecode,
+        string memory contractName
     ) external payable returns (address addr) {
         require(
             address(this).balance >= amount,
@@ -33,7 +34,13 @@ contract TapiocaDeployer {
         assembly {
             addr := create2(amount, add(bytecode, 0x20), mload(bytecode), salt)
         }
-        require(addr != address(0), "Create2: Failed on deploy");
+        require(
+            addr != address(0),
+            string.concat(
+                "Create2: Failed on deploy for contract:",
+                contractName
+            )
+        );
     }
 
     /**
