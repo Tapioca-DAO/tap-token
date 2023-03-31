@@ -1055,7 +1055,7 @@ describe('TapiocaOptionBroker', () => {
                         stableMock.address,
                         0,
                     ),
-            ).to.be.rejectedWith('ERC20: balance too low');
+            ).to.be.rejectedWith('ERC20: insufficient allowance');
             await stableMock.mintTo(users[0].address, paymentTokenToSend);
             await expect(
                 tOB
@@ -1065,7 +1065,7 @@ describe('TapiocaOptionBroker', () => {
                         stableMock.address,
                         0,
                     ),
-            ).to.be.rejectedWith('ERC20: allowance too low');
+            ).to.be.rejectedWith('ERC20: insufficient allowance');
             await stableMock
                 .connect(users[0])
                 .approve(tOB.address, paymentTokenToSend);
@@ -1133,7 +1133,7 @@ describe('TapiocaOptionBroker', () => {
                         ethMock.address,
                         eligibleTapAmount,
                     ),
-            ).to.be.rejectedWith('ERC20: balance too low');
+            ).to.be.rejectedWith('ERC20: insufficient allowance');
             await ethMock.mintTo(users[1].address, paymentTokenToSend);
 
             await expect(
@@ -1144,7 +1144,7 @@ describe('TapiocaOptionBroker', () => {
                         ethMock.address,
                         eligibleTapAmount,
                     ),
-            ).to.be.rejectedWith('ERC20: allowance too low');
+            ).to.be.rejectedWith('ERC20: insufficient allowance');
             await ethMock
                 .connect(users[1])
                 .approve(tOB.address, paymentTokenToSend);
