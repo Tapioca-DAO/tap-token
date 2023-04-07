@@ -3,7 +3,6 @@ pragma solidity 0.8.18;
 
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "../tokens/TapOFT.sol";
 import "../twAML.sol";
 import "./twTAP.sol";
@@ -51,7 +50,7 @@ struct TWAMLPool {
     uint256 cumulative;
 }
 
-contract TapiocaDAOPortal is Pausable, BoringOwnable, TWAML {
+contract TapiocaDAOPortal is BoringOwnable, TWAML {
     TapOFT public immutable tapOFT;
     TWTap public immutable twTAP;
 
@@ -200,6 +199,8 @@ contract TapiocaDAOPortal is Pausable, BoringOwnable, TWAML {
 
         // Delete participation and burn twTAP position
         delete participants[_participant];
+        // TODO: Make `burn()` do this?
+        twTAP.claim(_twTAPTokenID, twTAP.ownerOf(_twTAPTokenID));
         twTAP.burn(_twTAPTokenID);
 
         // Transfer position back to twTAP owner
