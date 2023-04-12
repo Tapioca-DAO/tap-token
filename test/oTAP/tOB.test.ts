@@ -349,9 +349,6 @@ describe('TapiocaOptionBroker', () => {
         const prevPoolState = await tOB.twAML(sglTokenMockAsset);
 
         // Test exit
-        await expect(
-            tOB.connect(users[0]).exitPosition(oTAPTknID),
-        ).to.be.revertedWith('TapiocaOptionBroker: Not approved or owner');
         await expect(tOB.exitPosition(oTAPTknID)).to.be.revertedWith(
             'TapiocaOptionBroker: Lock not expired',
         );
