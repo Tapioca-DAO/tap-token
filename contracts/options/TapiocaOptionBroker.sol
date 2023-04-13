@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "./TapiocaOptionLiquidityProvision.sol";
 import "../interfaces/IOracle.sol";
 import "../tokens/TapOFT.sol";
-import "./twAML.sol";
+import "../twAML.sol";
 import "./oTAP.sol";
 
 // ********************************************************************************
