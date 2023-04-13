@@ -2,6 +2,7 @@
   "name": "tap-token",
   "license": "MIT",
   "scripts": {
+    "test": "npx hardhat test",
     "compile": "NODE_ENV=compile hardhat compile --quiet && npm run lint:sol",
     "solhint": "solhint contracts/**/*.sol --fix",
     "clean": "rm -rf ./cache && rm -rf ./artifacts && rm -rf ./.openzeppelin",
