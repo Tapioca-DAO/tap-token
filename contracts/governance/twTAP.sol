@@ -37,8 +37,9 @@ import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 // ************************************..     ..***********************************
 
 struct TapEntry {
-    uint256 expiry; // timestamp
+    uint256 expiry; // expiry timestamp
     uint256 tapAmount; // amount of TAP to be released
+    uint256 multiplier; // voting power
 }
 
 contract TWTap is ERC721, ERC721Permit, BaseBoringBatchable {
@@ -53,7 +54,7 @@ contract TWTap is ERC721, ERC721Permit, BaseBoringBatchable {
     {}
 
     modifier onlyPortal() {
-        require(msg.sender == broker, "twTAP: only portal");
+        require(msg.sender == portal, "twTAP: only portal");
         _;
     }
 
@@ -97,29 +98,32 @@ contract TWTap is ERC721, ERC721Permit, BaseBoringBatchable {
     //    WRITE
     // ==========
 
-    function setTokenURI(uint256 _tokenId, string calldata _tokenURI) external {
-        require(
-            _isApprovedOrOwner(msg.sender, _tokenId),
-            "twTap: only approved or owner"
-        );
-        tokenURIs[_tokenId] = _tokenURI;
-    }
+    // function setTokenURI(uint256 _tokenId, string calldata _tokenURI) external {
+    //     require(
+    //         _isApprovedOrOwner(msg.sender, _tokenId),
+    //         "twTap: only approved or owner"
+    //     );
+    //     tokenURIs[_tokenId] = _tokenURI;
+    // }
 
     /// @notice mint twTAP
     /// @param _to address to mint to
     /// @param _expiry timestamp
     /// @param _tapAmount amount of TAP to be released
+    /// @param _multiplier voting power
     function mint(
         address _to,
-        uint128 _expiry,
-        uint128 _tapAmount
-    ) external onlyBroker returns (uint256 tokenId) {
+        uint256 _expiry,
+        uint256 _tapAmount,
+        uint256 _multiplier
+    ) external onlyPortal returns (uint256 tokenId) {
         tokenId = ++mintedTWTap;
         _safeMint(_to, tokenId);
 
-        TapEntry storage option = options[tokenId];
+        TapEntry storage option = entry[tokenId];
         option.expiry = _expiry;
         option.tapAmount = _tapAmount;
+        option.multiplier = _multiplier;
 
         emit Mint(_to, tokenId, option);
     }
@@ -133,12 +137,12 @@ contract TWTap is ERC721, ERC721Permit, BaseBoringBatchable {
         );
         _burn(_tokenId);
 
-        emit Burn(msg.sender, _tokenId, options[_tokenId]);
+        emit Burn(msg.sender, _tokenId, entry[_tokenId]);
     }
 
     /// @notice tDP claim
     function portalClaim() external {
-        require(broker == address(0), "twTap: only once");
-        broker = msg.sender;
+        require(portal == address(0), "twTap: only once");
+        portal = msg.sender;
     }
 }
