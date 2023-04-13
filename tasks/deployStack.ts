@@ -8,10 +8,12 @@ import { buildAfterDepSetup } from './deploy/05-buildAfterDepSetup';
 import { buildYieldBoxMock } from './deploy/901-buildYieldBoxMock';
 import { typechain } from 'tapioca-sdk';
 import { loadVM } from './utils';
+import { buildTestnetAfterDepSetup } from './deploy/99-buildTestnetAfterDepSetup';
+import { buildTestnetDeployment } from './deploy/902-buildTestnetDeployment';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
-    taskArgs: { type: 'build' | 'load' },
+    taskArgs: { load?: boolean },
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
@@ -23,7 +25,13 @@ export const deployStack__task = async (
     );
     const VM = await loadVM(hre, tag);
 
-    if (taskArgs.type === 'build') {
+    if (taskArgs.load) {
+        const data = hre.SDK.db.loadLocalDeployment(
+            'default',
+            String(hre.network.config.chainId),
+        );
+        VM.load(data);
+    } else {
         // TODO - To remove
         // Build YieldBox on the go:)
         const yb = await buildYieldBoxMock(hre);
@@ -35,27 +43,32 @@ export const deployStack__task = async (
             .add(await buildOTAP(hre))
             .add(await buildTOB(hre, signer.address, signer.address));
 
+        // Testnet only
+        if (hre.network.tags['testnet']) {
+            (await buildTestnetDeployment(hre)).forEach((c) => VM.add(c));
+        }
+
         // Add and execute
         await VM.execute(3, false);
         VM.save();
-        await VM.verify();
-    } else {
-        const data = hre.SDK.db.loadLocalDeployment(
-            'default',
-            String(hre.network.config.chainId),
-        );
-        VM.load(data);
+        // await VM.verify();
     }
 
     const vmList = VM.list();
     // After deployment setup
+
     const calls: Multicall3.Call3Struct[] = [
+        // Build testnet related calls
+        ...(hre.network.tags['testnet']
+            ? await buildTestnetAfterDepSetup(hre, vmList)
+            : []),
         ...(await buildAfterDepSetup(hre, vmList)),
     ];
 
     // Execute
     console.log('[+] After deployment setup calls number: ', calls.length);
     try {
+        const multicall = await VM.getMulticall();
         const tx = await (await multicall.aggregate3(calls)).wait(1);
         console.log(
             '[+] After deployment setup multicall Tx: ',

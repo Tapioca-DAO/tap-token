@@ -3,9 +3,9 @@ import {
     takeSnapshot,
 } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-import { setupFixture } from './fixtures';
 import hre from 'hardhat';
 import { BN, getERC721PermitSignature, time_travel } from '../test.utils';
+import { setupFixture } from './fixtures';
 
 describe('TapiocaOptionLiquidityProvision', () => {
     it('should check initial state', async () => {
