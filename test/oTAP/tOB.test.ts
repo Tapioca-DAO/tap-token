@@ -18,7 +18,7 @@ import {
 import {
     BN,
     aml_computeAverageMagnitude,
-    aml_computeDiscount,
+    aml_computeTarget,
     aml_computeMagnitude,
     getERC721PermitSignature,
     time_travel,
@@ -193,7 +193,7 @@ describe('TapiocaOptionBroker', () => {
             BN(0),
             prevPoolState.totalParticipants.add(1),
         );
-        computedAML.discount = aml_computeDiscount(
+        computedAML.discount = aml_computeTarget(
             computedAML.magnitude,
             BN(0),
             BN(5e4),
