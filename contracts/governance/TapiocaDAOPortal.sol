@@ -203,11 +203,7 @@ contract TapiocaDAOPortal is Pausable, BoringOwnable, TWAML {
         twTAP.burn(_twTAPTokenID);
 
         // Transfer position back to twTAP owner
-        tapOFT.transferFrom(
-            address(this),
-            _participant,
-            twTAPPosition.tapAmount
-        );
+        tapOFT.transfer(_participant, twTAPPosition.tapAmount);
 
         emit ExitPosition(_twTAPTokenID, twTAPPosition.tapAmount);
     }
