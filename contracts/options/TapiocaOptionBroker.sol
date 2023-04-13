@@ -112,8 +112,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     );
     event AMLDivergence(
         uint256 indexed epoch,
-        uint256 indexed cumulative,
-        uint256 indexed averageMagnitude,
+        uint256 cumulative,
+        uint256 averageMagnitude,
         uint256 totalParticipants
     );
     event ExerciseOption(
