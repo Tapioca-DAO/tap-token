@@ -3,27 +3,27 @@ import {
     takeSnapshot,
     time,
 } from '@nomicfoundation/hardhat-network-helpers';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { setupFixture } from './fixtures';
-import hre, { network } from 'hardhat';
+import { BigNumber } from 'ethers';
+import hre from 'hardhat';
 import {
+    ERC20Mock,
+    OTAP,
+    TapOFT,
+    TapiocaOptionBroker,
+    TapiocaOptionLiquidityProvision,
+    YieldBox,
+} from '../../typechain';
+import {
+    BN,
     aml_computeAverageMagnitude,
     aml_computeDiscount,
     aml_computeMagnitude,
-    BN,
     getERC721PermitSignature,
     time_travel,
 } from '../test.utils';
-import {
-    OTAP,
-    TapiocaOptionBroker,
-    TapiocaOptionLiquidityProvision,
-    TapOFT,
-    YieldBox,
-} from '../../typechain';
-import { ERC20Mock } from '../../typechain/ERC20Mock';
-import { BigNumber } from 'ethers';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { setupFixture } from './fixtures';
 
 describe('TapiocaOptionBroker', () => {
     const setupEnv = async (

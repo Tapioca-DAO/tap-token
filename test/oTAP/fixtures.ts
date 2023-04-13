@@ -1,7 +1,5 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumberish } from 'ethers';
 import hre, { ethers } from 'hardhat';
-import { YieldBox, ERC20Mock } from '../../typechain';
+import { ERC20Mock, YieldBox } from '../../typechain';
 import { BN } from '../test.utils';
 
 export const setupFixture = async () => {
