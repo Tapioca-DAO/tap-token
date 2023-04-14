@@ -8,7 +8,7 @@ import {
 } from './test.utils';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ERC20Mock } from '../typechain';
+import { ERC20Mock } from '../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
 
 describe('Vesting', () => {
     let usdc: ERC20Mock;
@@ -21,7 +21,7 @@ describe('Vesting', () => {
         usdc = (await deployUSDC(
             ethers.utils.parseEther('100000000'),
             18,
-            deployer.address,
+            deployer,
         )) as ERC20Mock;
     }
     beforeEach(async () => {

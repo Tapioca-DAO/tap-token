@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.18;
 
+//TODO to be taken from tapioca-periphery after 'master' branch merge
 interface IOracle {
     /// @notice Get the latest exchange rate.
     /// @param data Usually abi encoded, implementation specific data that contains information and arguments to & about the oracle.
