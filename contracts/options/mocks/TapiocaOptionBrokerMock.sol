@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity ^0.8.18;
 
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
 import "../TapiocaOptionLiquidityProvision.sol";
-import "../../interfaces/IOracle.sol";
 import "../../tokens/TapOFT.sol";
 import "../twAML.sol";
 import "../oTAP.sol";
@@ -40,6 +39,49 @@ import "../oTAP.sol";
 // ***************************                           **************************
 // ************************************..     ..***********************************
 
+interface IOracleMock {
+    /// @notice Get the latest exchange rate.
+    /// @param data Usually abi encoded, implementation specific data that contains information and arguments to & about the oracle.
+    /// For example:
+    /// (string memory collateralSymbol, string memory assetSymbol, uint256 division) = abi.decode(data, (string, string, uint256));
+    /// @return success if no valid (recent) rate is available, return false else true.
+    /// @return rate The rate of the requested asset / pair / pool.
+    function get(
+        bytes calldata data
+    ) external returns (bool success, uint256 rate);
+
+    /// @notice Check the last exchange rate without any state changes.
+    /// @param data Usually abi encoded, implementation specific data that contains information and arguments to & about the oracle.
+    /// For example:
+    /// (string memory collateralSymbol, string memory assetSymbol, uint256 division) = abi.decode(data, (string, string, uint256));
+    /// @return success if no valid (recent) rate is available, return false else true.
+    /// @return rate The rate of the requested asset / pair / pool.
+    function peek(
+        bytes calldata data
+    ) external view returns (bool success, uint256 rate);
+
+    /// @notice Check the current spot exchange rate without any state changes. For oracles like TWAP this will be different from peek().
+    /// @param data Usually abi encoded, implementation specific data that contains information and arguments to & about the oracle.
+    /// For example:
+    /// (string memory collateralSymbol, string memory assetSymbol, uint256 division) = abi.decode(data, (string, string, uint256));
+    /// @return rate The rate of the requested asset / pair / pool.
+    function peekSpot(bytes calldata data) external view returns (uint256 rate);
+
+    /// @notice Returns a human readable (short) name about this oracle.
+    /// @param data Usually abi encoded, implementation specific data that contains information and arguments to & about the oracle.
+    /// For example:
+    /// (string memory collateralSymbol, string memory assetSymbol, uint256 division) = abi.decode(data, (string, string, uint256));
+    /// @return (string) A human readable symbol name about this oracle.
+    function symbol(bytes calldata data) external view returns (string memory);
+
+    /// @notice Returns a human readable name about this oracle.
+    /// @param data Usually abi encoded, implementation specific data that contains information and arguments to & about the oracle.
+    /// For example:
+    /// (string memory collateralSymbol, string memory assetSymbol, uint256 division) = abi.decode(data, (string, string, uint256));
+    /// @return (string) A human readable name about this oracle.
+    function name(bytes calldata data) external view returns (string memory);
+}
+
 struct Participation {
     bool hasVotingPower;
     uint256 averageMagnitude;
@@ -54,7 +96,7 @@ struct TWAMLPool {
 }
 
 struct PaymentTokenOracle {
-    IOracle oracle;
+    IOracleMock oracle;
     bytes oracleData;
 }
 
@@ -63,7 +105,7 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
     bytes public tapOracleData;
     TapOFT public immutable tapOFT;
     OTAP public immutable oTAP;
-    IOracle public tapOracle;
+    IOracleMock public tapOracle;
 
     uint256 public lastEpochUpdate; // timestamp of the last epoch update
     uint256 public epochTAPValuation; // TAP price for the current epoch
@@ -133,8 +175,12 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
         uint256 indexed tokenId,
         uint256 amount
     );
-    event SetPaymentToken(ERC20 paymentToken, IOracle oracle, bytes oracleData);
-    event SetTapOracle(IOracle oracle, bytes oracleData);
+    event SetPaymentToken(
+        ERC20 paymentToken,
+        IOracleMock oracle,
+        bytes oracleData
+    );
+    event SetTapOracle(IOracleMock oracle, bytes oracleData);
 
     // ==========
     //    READ
@@ -169,7 +215,7 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
 
         // Check requirements
         require(
-            paymentTokenOracle.oracle != IOracle(address(0)),
+            paymentTokenOracle.oracle != IOracleMock(address(0)),
             "TapiocaOptionBroker: Payment token not supported"
         );
         require(
@@ -363,7 +409,7 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
 
         // Check requirements
         require(
-            paymentTokenOracle.oracle != IOracle(address(0)),
+            paymentTokenOracle.oracle != IOracleMock(address(0)),
             "TapiocaOptionBroker: Payment token not supported"
         );
         require(
@@ -450,7 +496,7 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
     /// @param _tapOracle The new TapOFT Oracle address
     /// @param _tapOracleData The new TapOFT Oracle data
     function setTapOracle(
-        IOracle _tapOracle,
+        IOracleMock _tapOracle,
         bytes calldata _tapOracleData
     ) external onlyOwner {
         tapOracle = _tapOracle;
@@ -463,7 +509,7 @@ contract TapiocaOptionBrokerMock is Pausable, BoringOwnable, TWAML {
     /// @dev set the oracle to address(0) to deactivate, expect the same decimal precision as TAP oracle
     function setPaymentToken(
         ERC20 _paymentToken,
-        IOracle _oracle,
+        IOracleMock _oracle,
         bytes calldata _oracleData
     ) external onlyOwner {
         paymentTokens[_paymentToken].oracle = _oracle;

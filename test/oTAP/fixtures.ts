@@ -1,7 +1,17 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumberish } from 'ethers';
 import hre, { ethers } from 'hardhat';
-import { YieldBox, ERC20Mock } from '../../typechain';
+import {
+    ERC20Mock,
+    ERC20Mock__factory,
+    LZEndpointMock__factory,
+    OracleMock__factory,
+} from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
+import {
+    ERC20WithoutStrategy__factory,
+    YieldBox,
+} from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
+
 import { BN } from '../test.utils';
 
 export const setupFixture = async () => {
@@ -15,12 +25,9 @@ export const setupFixture = async () => {
     const chainId = (await ethers.provider.getNetwork()).chainId;
 
     // LZ Endpoint Mocks
-    const LZEndpointMockCurrentChain = await (
-        await ethers.getContractFactory('LZEndpointMock')
-    ).deploy(chainId);
-    const LZEndpointMockGovernance = await (
-        await ethers.getContractFactory('LZEndpointMock')
-    ).deploy(11);
+    const LZEndpointMock = new LZEndpointMock__factory(signer);
+    const LZEndpointMockCurrentChain = await LZEndpointMock.deploy(chainId);
+    const LZEndpointMockGovernance = await LZEndpointMock.deploy(11);
 
     // Tap OFT
     const _to = signer.address;
@@ -48,11 +55,10 @@ export const setupFixture = async () => {
         await ethers.getContractFactory('YieldBox')
     ).deploy(_wrappedNative.address, _uriBuilder.address);
 
+    const OracleMock = new OracleMock__factory(signer);
+
     // oTAP
-    const tapOracleMock = await (
-        await ethers.getContractFactory('OracleMock')
-    ).deploy('TAP');
-    await tapOracleMock.setRate(BN(33e7));
+    const tapOracleMock = await OracleMock.deploy('TAP', 'TAP', BN(33e7));
     const tOLP = await (
         await ethers.getContractFactory('TapiocaOptionLiquidityProvision')
     ).deploy(yieldBox.address, signer.address);
@@ -69,17 +75,31 @@ export const setupFixture = async () => {
     await tOB.setTapOracle(tapOracleMock.address, '0x00');
 
     // Deploy a "virtual" market
-    const sglTokenMock = await (
-        await ethers.getContractFactory('ERC20Mock')
-    ).deploy('sglTokenMock', 'STM', 0, 18, signer.address);
-    const sglTokenMockAsset = await yieldBox.assetCount();
-    const sglTokenMockStrategy = await (
-        await ethers.getContractFactory('ERC20WithoutStrategy')
-    ).deploy(yieldBox.address, sglTokenMock.address);
+    const ERC20Mock = new ERC20Mock__factory(signer);
+    const sglTokenMock = await ERC20Mock.deploy(
+        'sglTokenMock',
+        'STM',
+        0,
+        18,
+        signer.address,
+    );
+    await sglTokenMock.updateMintLimit(ethers.constants.MaxUint256);
 
-    const sglTokenMock2 = await (
-        await ethers.getContractFactory('ERC20Mock')
-    ).deploy('sglTokenMock', 'STM', 0, 18, signer.address);
+    const ERC20WithoutStrategy = new ERC20WithoutStrategy__factory(signer);
+    const sglTokenMockAsset = await yieldBox.assetCount();
+    const sglTokenMockStrategy = await ERC20WithoutStrategy.deploy(
+        yieldBox.address,
+        sglTokenMock.address,
+    );
+
+    const sglTokenMock2 = await ERC20Mock.deploy(
+        'sglTokenMock',
+        'STM',
+        0,
+        18,
+        signer.address,
+    );
+    await sglTokenMock2.updateMintLimit(ethers.constants.MaxUint256);
     const sglTokenMock2Asset = sglTokenMockAsset.add(1);
     const sglTokenMock2Strategy = await (
         await ethers.getContractFactory('ERC20WithoutStrategy')
@@ -93,21 +113,33 @@ export const setupFixture = async () => {
     );
 
     // Deploy payment tokens
-    const stableMock = await (
-        await ethers.getContractFactory('ERC20Mock')
-    ).deploy('StableMock', 'STBLM', 0, 6, signer.address);
-    const ethMock = await (
-        await ethers.getContractFactory('ERC20Mock')
-    ).deploy('wethMock', 'WETHM', 0, 18, signer.address);
-    const stableMockOracle = await (
-        await ethers.getContractFactory('OracleMock')
-    ).deploy('StableMockOracle');
-    const ethMockOracle = await (
-        await ethers.getContractFactory('OracleMock')
-    ).deploy('WETHMockOracle');
+    const stableMock = await ERC20Mock.deploy(
+        'StableMock',
+        'STBLM',
+        0,
+        6,
+        signer.address,
+    );
+    await stableMock.updateMintLimit(ethers.constants.MaxUint256);
+    const ethMock = await ERC20Mock.deploy(
+        'wethMock',
+        'WETHM',
+        0,
+        18,
+        signer.address,
+    );
+    await ethMock.updateMintLimit(ethers.constants.MaxUint256);
 
-    await stableMockOracle.setRate(1e8);
-    await ethMockOracle.setRate(BN(1e8).mul(1200));
+    const stableMockOracle = await OracleMock.deploy(
+        'StableMockOracle',
+        'SMO',
+        1e8,
+    );
+    const ethMockOracle = await OracleMock.deploy(
+        'WETHMockOracle',
+        'WMO',
+        BN(1e8).mul(1200),
+    );
 
     return {
         // signers

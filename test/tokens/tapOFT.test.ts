@@ -8,7 +8,9 @@ import {
     takeSnapshot,
 } from '@nomicfoundation/hardhat-network-helpers';
 import { BigNumberish } from 'ethers';
-import { LZEndpointMock, TapOFT } from '../../typechain';
+import { TapOFT } from '../../typechain';
+import { LZEndpointMock } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
+
 import {
     BN,
     deployLZEndpointMock,
