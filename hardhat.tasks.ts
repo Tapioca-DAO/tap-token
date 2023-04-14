@@ -109,9 +109,6 @@ task(
     'deployStack',
     'Deploys the entire stack with on deterministic addresses, with MulticallV3.',
     deployStack__task,
-).addOptionalParam(
-    'type',
-    '"build": Build the contracts and deploy them.\n"load": Load the contracts from the local database."',
-);
+).addFlag('load', 'Load the contracts from the local database.');
 
 task('deployTapOFT', 'Deploys just the TapOFT contract', deployTapOFT__task);

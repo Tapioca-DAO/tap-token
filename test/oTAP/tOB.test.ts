@@ -4,13 +4,12 @@ import {
     time,
 } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-import { setupFixture } from './fixtures';
-import hre, { network } from 'hardhat';
+import hre from 'hardhat';
 import {
+    BN,
     aml_computeAverageMagnitude,
     aml_computeDiscount,
     aml_computeMagnitude,
-    BN,
     getERC721PermitSignature,
     time_travel,
 } from '../test.utils';
@@ -24,6 +23,7 @@ import { BigNumber } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { ERC20Mock } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
 import { YieldBox } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
+import { setupFixture } from './fixtures';
 
 describe('TapiocaOptionBroker', () => {
     const setupEnv = async (
@@ -349,9 +349,6 @@ describe('TapiocaOptionBroker', () => {
         const prevPoolState = await tOB.twAML(sglTokenMockAsset);
 
         // Test exit
-        await expect(
-            tOB.connect(users[0]).exitPosition(oTAPTknID),
-        ).to.be.revertedWith('TapiocaOptionBroker: Not approved or owner');
         await expect(tOB.exitPosition(oTAPTknID)).to.be.revertedWith(
             'TapiocaOptionBroker: Lock not expired',
         );

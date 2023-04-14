@@ -1,5 +1,3 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumberish } from 'ethers';
 import hre, { ethers } from 'hardhat';
 import {
     ERC20Mock,

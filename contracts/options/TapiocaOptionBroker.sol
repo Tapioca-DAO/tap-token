@@ -302,10 +302,6 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         (, LockPosition memory lock) = tOLP.getLock(oTAPPosition.tOLP);
 
         require(
-            oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID),
-            "TapiocaOptionBroker: Not approved or owner"
-        );
-        require(
             block.timestamp >= lock.lockTime + lock.lockDuration,
             "TapiocaOptionBroker: Lock not expired"
         );
@@ -332,11 +328,12 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         }
 
         // Delete participation and burn oTAP position
+        address otapOwner = oTAP.ownerOf(_oTAPTokenID);
         delete participants[oTAPPosition.tOLP];
         oTAP.burn(_oTAPTokenID);
 
-        // Transfer position back to user
-        tOLP.transferFrom(address(this), msg.sender, oTAPPosition.tOLP);
+        // Transfer position back to oTAP owner
+        tOLP.transferFrom(address(this), otapOwner, oTAPPosition.tOLP);
 
         emit ExitPosition(epoch, oTAPPosition.tOLP, lock.amount);
     }
