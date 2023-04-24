@@ -130,9 +130,15 @@ contract TapiocaDAOPortal is Pausable, BoringOwnable, TWAML {
 
             // Compute and save new cumulative
             divergenceForce = _duration > pool.cumulative;
-            pool.cumulative = divergenceForce
-                ? pool.cumulative + pool.averageMagnitude
-                : pool.cumulative - pool.averageMagnitude;
+            if (divergenceForce) {
+                if (pool.cumulative > pool.averageMagnitude) {
+                    pool.cumulative -= pool.averageMagnitude;
+                } else {
+                    pool.cumulative = 0;
+                }
+            } else {
+                pool.cumulative += pool.averageMagnitude;
+            }
 
             // Save new weight
             pool.totalDeposited += _amount;
@@ -184,9 +190,16 @@ contract TapiocaDAOPortal is Pausable, BoringOwnable, TWAML {
         if (participation.hasVotingPower) {
             TWAMLPool memory pool = twAML;
 
-            pool.cumulative = participation.divergenceForce
-                ? pool.cumulative - participation.averageMagnitude
-                : pool.cumulative + participation.averageMagnitude;
+            if (participation.divergenceForce) {
+                if (pool.cumulative > pool.averageMagnitude) {
+                    pool.cumulative -= pool.averageMagnitude;
+                } else {
+                    pool.cumulative = 0;
+                }
+            } else {
+                pool.cumulative += pool.averageMagnitude;
+            }
+
             pool.totalDeposited -= twTAPPosition.tapAmount;
             pool.totalParticipants--;
 
@@ -212,12 +225,4 @@ contract TapiocaDAOPortal is Pausable, BoringOwnable, TWAML {
     function twTAPPortalClaim() external {
         twTAP.portalClaim();
     }
-
-    // =========
-    //   OWNER
-    // =========
-
-    // ============
-    //   INTERNAL
-    // ============
 }
