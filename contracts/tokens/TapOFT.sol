@@ -194,6 +194,7 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
 
     ///-- Write methods --
     /// @notice Emit the TAP for the current week
+    /// @return the emitted amount
     function emitForWeek() external notPaused returns (uint256) {
         require(_getChainId() == governanceChainIdentifier, "chain not valid");
 
