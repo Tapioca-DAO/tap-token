@@ -9,7 +9,6 @@ import { buildYieldBoxMock } from './deploy/901-buildYieldBoxMock';
 import { typechain } from 'tapioca-sdk';
 import { loadVM } from './utils';
 import { buildTestnetAfterDepSetup } from './deploy/99-buildTestnetAfterDepSetup';
-import { buildTestnetDeployment } from './deploy/902-buildTestnetDeployment';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
@@ -42,11 +41,6 @@ export const deployStack__task = async (
             .add(await buildTOLP(hre, signer.address))
             .add(await buildOTAP(hre))
             .add(await buildTOB(hre, signer.address, signer.address));
-
-        // Testnet only
-        if (hre.network.tags['testnet']) {
-            (await buildTestnetDeployment(hre)).forEach((c) => VM.add(c));
-        }
 
         // Add and execute
         await VM.execute(3, false);
