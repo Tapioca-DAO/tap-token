@@ -14,18 +14,24 @@ import {
 } from "../test.utils";
 import { setupTDPFixture } from "./fixtures";
 
-describe("TapiocaOptionPortal", () => {
+const WEEK = 86400 * 7;
+const EIGHT_DAYS = 86400 * 7;
+
+describe("TapiocaDAOPortal", () => {
   it("should participate", async () => {
-    const { signer, users, tDP, tapOFT, twTAP } = await loadFixture(
+    const { signer, users, tDP, tapOFT } = await loadFixture(
       setupTDPFixture
     );
 
     // Setup - Get some Tap tokens
     const toMint = BN(2e18);
-    const lockDuration = 1000; // 1000 seconds
+    const lockDuration = EIGHT_DAYS;
     await tapOFT.freeMint(toMint);
 
     // test tDP participation
+    await expect(
+      tDP.participate(signer.address, toMint, WEEK-1)
+    ).to.be.revertedWith("TapiocaDAOPortal: Lock not a week");
     await expect(
       tDP.participate(signer.address, toMint, lockDuration)
     ).to.be.revertedWith("ERC20: insufficient allowance");
@@ -115,7 +121,7 @@ describe("TapiocaOptionPortal", () => {
 
       // Setup - Get some Tap tokens
       const toMint = BN(2e18);
-      const lockDuration = 1000; // 1000 seconds
+      const lockDuration = EIGHT_DAYS;
       await tapOFT.freeMint(toMint);
 
       // Check exit before participation
@@ -144,7 +150,6 @@ describe("TapiocaOptionPortal", () => {
 
       // Check tokens transfer
       expect(await tapOFT.balanceOf(tDP.address)).to.be.equal(0);
-      // expect(await twTAP.exists(twTAPTokenID)).to.be.false;
 
       // Check AML update
       const newPoolState = await tDP.twAML();
@@ -188,7 +193,7 @@ describe("TapiocaOptionPortal", () => {
       // Setup - Get some Tap tokens
       const toMint = BN(3e18);
       const toParticipate = BN(1e18);
-      const lockDuration = 1000; // 1000 seconds
+      const lockDuration = EIGHT_DAYS;
       await tapOFT.freeMint(toMint);
 
       // Check exit before participation

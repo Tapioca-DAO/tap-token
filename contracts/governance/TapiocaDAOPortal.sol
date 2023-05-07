@@ -197,7 +197,8 @@ contract TapiocaDAOPortal is
         uint256 _amount,
         uint256 _duration
     ) external returns (uint256 tokenId) {
-        // TODO: Require that `_duration` be at least a week
+        require(_duration >= WEEK, "TapiocaDAOPortal: Lock not a week");
+
         // Transfer TAP to this contract
         tapOFT.transferFrom(msg.sender, address(this), _amount);
 
