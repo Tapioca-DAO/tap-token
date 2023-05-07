@@ -197,6 +197,7 @@ contract TapiocaDAOPortal is
         uint256 _amount,
         uint256 _duration
     ) external returns (uint256 tokenId) {
+        // TODO: Require that `_duration` be at least a week
         // Transfer TAP to this contract
         tapOFT.transferFrom(msg.sender, address(this), _amount);
 
@@ -374,7 +375,7 @@ contract TapiocaDAOPortal is
                 _to == owner ||
                 isApprovedForAll(owner, msg.sender) ||
                 getApproved(_tokenId) == msg.sender,
-            "twTAP: cannot claim"
+            "TapiocaDAOPortal: cannot claim"
         );
     }
 
@@ -395,7 +396,10 @@ contract TapiocaDAOPortal is
 
     function _releaseTap(uint256 _tokenId, address _to) internal {
         Participation storage position = participants[_tokenId];
-        require(position.expiry <= block.timestamp, "Still locked");
+        require(
+            position.expiry <= block.timestamp,
+            "TapiocaDAOPortal: Lock not expired"
+        );
 
         uint256 amount = position.tapAmount;
         if (amount == 0) {
