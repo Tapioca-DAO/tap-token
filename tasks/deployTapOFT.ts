@@ -23,7 +23,7 @@ export const deployTapOFT__task = async (
     VM.add(tapOft);
 
     // Add and execute
-    await VM.execute(3, false);
+    await VM.execute(3);
     VM.save();
     await VM.verify();
 };

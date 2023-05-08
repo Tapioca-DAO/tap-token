@@ -43,7 +43,7 @@ export const deployStack__task = async (
             .add(await buildTOB(hre, signer.address, signer.address));
 
         // Add and execute
-        await VM.execute(3, false);
+        await VM.execute(3);
         VM.save();
         // await VM.verify();
     }
