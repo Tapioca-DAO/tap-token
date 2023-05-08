@@ -3,7 +3,7 @@ import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import {
     YieldBoxURIBuilder__factory,
     YieldBox__factory,
-} from '../../typechain';
+} from 'tapioca-sdk/dist/typechain/YieldBox';
 
 // TODO remove this
 export const buildYieldBoxMock = async (
