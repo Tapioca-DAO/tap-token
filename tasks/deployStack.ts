@@ -31,13 +31,13 @@ export const deployStack__task = async (
         );
         VM.load(data);
     } else {
-        // TODO - To remove
-        let yieldBox = hre.SDK.db
+        const yieldBox = hre.SDK.db
             .loadGlobalDeployment(tag, 'tapioca-bar', chainInfo.chainId)
             .find((e) => e.name === 'YieldBox');
 
-        const yb = await buildYieldBoxMock(hre);
-        VM.add(yb[0]).add(yb[1]);
+        if (!yieldBox) {
+            throw '[-] YieldBox not found';
+        }
 
         // Build contracts
         VM.add(await buildTapOFT(hre, signer.address))
