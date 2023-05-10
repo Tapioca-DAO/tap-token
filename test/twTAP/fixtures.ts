@@ -1,6 +1,6 @@
 import hre, { ethers } from 'hardhat';
 
-export const setupTDPFixture = async () => {
+export const setupTwTAPFixture = async () => {
     const signer = (await hre.ethers.getSigners())[0];
     const users = (await hre.ethers.getSigners()).splice(1);
 
@@ -9,9 +9,9 @@ export const setupTDPFixture = async () => {
         await ethers.getContractFactory('ERC20Mock')
     ).deploy('TapOFT', 'TapOFT', (1e18).toString(), 18, signer.address);
 
-    // twTAP / DAO Portal
-    const tDP = await (
-        await ethers.getContractFactory('TapiocaDAOPortal')
+    // twtap
+    const twtap = await (
+        await ethers.getContractFactory('TwTAP')
     ).deploy(tapOFT.address, signer.address);
 
     return {
@@ -20,6 +20,6 @@ export const setupTDPFixture = async () => {
         users,
         // vars
         tapOFT,
-        tDP,
+        twtap,
     };
 };

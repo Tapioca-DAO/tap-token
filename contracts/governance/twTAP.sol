@@ -69,7 +69,7 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TapiocaDAOPortal is
+contract TwTAP is
     BoringOwnable,
     TWAML,
     ERC721,
