@@ -56,6 +56,7 @@ describe('TapiocaDAOPortal', () => {
             magnitude: BN(0),
             averageMagnitude: BN(0),
             multiplier: BN(0),
+            votes: BN(0),
         };
         computedAML.magnitude = aml_computeMagnitude(BN(lockDuration), BN(0));
         computedAML.averageMagnitude = aml_computeAverageMagnitude(
