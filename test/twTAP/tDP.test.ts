@@ -14,32 +14,24 @@ import {
 } from '../test.utils';
 import { setupTDPFixture } from './fixtures';
 
-describe('TapiocaOptionPortal', () => {
-    const setupEnv = async (tDP: TapiocaDAOPortal) => {
-        await tDP.twTAPPortalClaim();
-    };
+const WEEK = 86400 * 7;
+const EIGHT_DAYS = 86400 * 7;
 
-    it('should claim twTAP', async () => {
-        const { tDP, twTAP } = await loadFixture(setupTDPFixture);
-
-        await tDP.twTAPPortalClaim();
-        expect(await twTAP.portal()).to.be.eq(tDP.address);
-    });
-
+describe('TapiocaDAOPortal', () => {
     it('should participate', async () => {
-        const { signer, users, tDP, tapOFT, twTAP } = await loadFixture(
+        const { signer, users, tDP, tapOFT } = await loadFixture(
             setupTDPFixture,
         );
 
-        // Setup tDP
-        await setupEnv(tDP);
-
         // Setup - Get some Tap tokens
         const toMint = BN(2e18);
-        const lockDuration = 1000; // 1000 seconds
+        const lockDuration = EIGHT_DAYS;
         await tapOFT.freeMint(toMint);
 
         // test tDP participation
+        await expect(
+            tDP.participate(signer.address, toMint, WEEK - 1),
+        ).to.be.revertedWith('TapiocaDAOPortal: Lock not a week');
         await expect(
             tDP.participate(signer.address, toMint, lockDuration),
         ).to.be.revertedWith('ERC20: insufficient allowance');
@@ -57,7 +49,10 @@ describe('TapiocaOptionPortal', () => {
         expect(await tapOFT.balanceOf(tDP.address)).to.be.equal(toMint);
 
         // Check participation
-        const participation = await tDP.participants(signer.address);
+        const twTAPTokenID = await tDP.mintedTWTap();
+
+        const participation = await tDP.participants(twTAPTokenID);
+
         const computedAML = {
             magnitude: BN(0),
             averageMagnitude: BN(0),
@@ -69,12 +64,13 @@ describe('TapiocaOptionPortal', () => {
             BN(0),
             prevPoolState.totalParticipants.add(1),
         );
-        computedAML.multiplier = aml_computeTarget(
+        const multiplier = aml_computeTarget(
             computedAML.magnitude,
             BN(0),
             BN(10e4),
             BN(100e4),
         );
+        computedAML.votes = multiplier.mul(toMint);
 
         expect(participation.hasVotingPower).to.be.true;
         expect(participation.averageMagnitude).to.be.equal(
@@ -96,15 +92,11 @@ describe('TapiocaOptionPortal', () => {
         );
 
         // Check twTAP minting
-        const twpTAPTokenID = await twTAP.mintedTWTap();
+        expect(twTAPTokenID).to.be.equal(1);
 
-        expect(twpTAPTokenID).to.be.equal(1);
-        expect(await twTAP.ownerOf(twpTAPTokenID)).to.be.equal(signer.address);
-
-        const [, twpTAPToken] = await twTAP.attributes(twpTAPTokenID);
-
-        expect(twpTAPToken.multiplier).to.be.equal(computedAML.multiplier);
-        expect(twpTAPToken.expiry).to.be.equal(
+        expect(await tDP.ownerOf(twTAPTokenID)).to.be.equal(signer.address);
+        expect(participation.votes).to.be.equal(computedAML.votes);
+        expect(participation.expiry).to.be.equal(
             (await hre.ethers.provider.getBlock(lockTx.blockNumber!))
                 .timestamp + lockDuration,
         );
@@ -129,31 +121,28 @@ describe('TapiocaOptionPortal', () => {
     });
 
     it('should exit position', async () => {
-        const { signer, users, tDP, tapOFT, twTAP } = await loadFixture(
+        const { signer, users, tDP, tapOFT } = await loadFixture(
             setupTDPFixture,
         );
 
-        // Setup tDP
-        await setupEnv(tDP);
-
         // Setup - Get some Tap tokens
         const toMint = BN(2e18);
-        const lockDuration = 1000; // 1000 seconds
+        const lockDuration = EIGHT_DAYS;
         await tapOFT.freeMint(toMint);
 
         // Check exit before participation
         const snapshot = await takeSnapshot();
         await time.increase(lockDuration);
         await expect(
-            tDP.exitPosition((await twTAP.mintedTWTap()).add(1)),
-        ).to.be.revertedWith('TapiocaDAOPortal: twTAP position does not exist');
+            tDP.exitPosition((await tDP.mintedTWTap()).add(1)),
+        ).to.be.revertedWith('ERC721: invalid token ID');
         await snapshot.restore();
 
         // Participate
         await tapOFT.approve(tDP.address, toMint);
         await tDP.participate(signer.address, toMint, lockDuration);
-        const twTAPTokenID = await twTAP.mintedTWTap();
-        const participation = await tDP.participants(signer.address);
+        const twTAPTokenID = await tDP.mintedTWTap();
+        const participation = await tDP.participants(twTAPTokenID);
         const prevPoolState = await tDP.twAML();
 
         // Test exit
@@ -163,16 +152,10 @@ describe('TapiocaOptionPortal', () => {
         expect(await tapOFT.balanceOf(tDP.address)).to.be.equal(toMint);
 
         await time.increase(lockDuration);
-        await expect(tDP.exitPosition(twTAPTokenID)).to.be.revertedWith(
-            'twTap: only approved or owner',
-        );
-
-        await twTAP.approve(tDP.address, twTAPTokenID);
         await tDP.exitPosition(twTAPTokenID);
 
         // Check tokens transfer
         expect(await tapOFT.balanceOf(tDP.address)).to.be.equal(0);
-        expect(await twTAP.exists(twTAPTokenID)).to.be.false;
 
         // Check AML update
         const newPoolState = await tDP.twAML();
@@ -201,34 +184,28 @@ describe('TapiocaOptionPortal', () => {
 
         await time.increase(lockDuration);
 
-        const _twTAPTokenID = await twTAP.mintedTWTap();
-        await twTAP.connect(user).approve(tDP.address, _twTAPTokenID);
-        await tDP.connect(user).exitPosition(_twTAPTokenID);
+        const _twTAPTokenID = await tDP.mintedTWTap();
+        await tDP.exitPosition(_twTAPTokenID);
 
         expect(await tDP.twAML()).to.be.deep.equal(newPoolState); // No change in AML state
         expect((await tDP.twAML()).cumulative).to.be.equal(0);
     });
 
     it('should enter and exit multiple positions', async () => {
-        const { signer, tDP, tapOFT, twTAP } = await loadFixture(
-            setupTDPFixture,
-        );
-
-        // Setup tOB
-        await setupEnv(tDP);
+        const { signer, tDP, tapOFT } = await loadFixture(setupTDPFixture);
 
         // Setup - Get some Tap tokens
         const toMint = BN(3e18);
         const toParticipate = BN(1e18);
-        const lockDuration = 1000; // 1000 seconds
+        const lockDuration = EIGHT_DAYS;
         await tapOFT.freeMint(toMint);
 
         // Check exit before participation
         const snapshot = await takeSnapshot();
         await time.increase(lockDuration);
         await expect(
-            tDP.exitPosition((await twTAP.mintedTWTap()).add(1)),
-        ).to.be.revertedWith('TapiocaDAOPortal: twTAP position does not exist');
+            tDP.exitPosition((await tDP.mintedTWTap()).add(1)),
+        ).to.be.revertedWith('ERC721: invalid token ID');
         await snapshot.restore();
 
         // Participate
@@ -237,25 +214,22 @@ describe('TapiocaOptionPortal', () => {
         await tDP.participate(signer.address, toParticipate, lockDuration);
         await tDP.participate(signer.address, toParticipate, lockDuration);
 
-        const twTAPTokenID = await twTAP.mintedTWTap();
+        const twTAPTokenID = await tDP.mintedTWTap();
 
         await time.increase(lockDuration);
 
         {
             // Exit 1
-            await twTAP.approve(tDP.address, twTAPTokenID);
             await tDP.exitPosition(twTAPTokenID);
         }
 
         {
             // Exit 2
-            await twTAP.approve(tDP.address, twTAPTokenID.sub(1));
             await tDP.exitPosition(twTAPTokenID.sub(1));
         }
 
         {
             // Exit 3
-            await twTAP.approve(tDP.address, twTAPTokenID.sub(2));
             await tDP.exitPosition(twTAPTokenID.sub(2));
         }
     });

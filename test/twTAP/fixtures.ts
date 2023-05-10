@@ -9,11 +9,10 @@ export const setupTDPFixture = async () => {
         await ethers.getContractFactory('ERC20Mock')
     ).deploy('TapOFT', 'TapOFT', (1e18).toString(), 18, signer.address);
 
-    // twTAP
-    const twTAP = await (await ethers.getContractFactory('TWTap')).deploy();
+    // twTAP / DAO Portal
     const tDP = await (
         await ethers.getContractFactory('TapiocaDAOPortal')
-    ).deploy(tapOFT.address, twTAP.address, signer.address);
+    ).deploy(tapOFT.address, signer.address);
 
     return {
         // signers
@@ -21,7 +20,6 @@ export const setupTDPFixture = async () => {
         users,
         // vars
         tapOFT,
-        twTAP,
         tDP,
     };
 };
