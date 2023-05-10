@@ -418,10 +418,15 @@ contract TapiocaDAOPortal is
         if (position.hasVotingPower) {
             TWAMLPool memory pool = twAML;
 
-            pool.cumulative = position.divergenceForce
-                ? pool.cumulative - position.averageMagnitude
-                : pool.cumulative + position.averageMagnitude;
-            pool.totalDeposited -= position.tapAmount;
+            if (position.divergenceForce) {
+                if (pool.cumulative > pool.averageMagnitude) {
+                    pool.cumulative -= pool.averageMagnitude;
+                } else {
+                    pool.cumulative = 0;
+                }
+            } else {
+                pool.cumulative += pool.averageMagnitude;
+            }
             pool.totalParticipants--;
 
             twAML = pool; // Save twAML exit
