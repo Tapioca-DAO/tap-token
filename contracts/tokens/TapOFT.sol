@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol";
@@ -194,6 +194,7 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
 
     ///-- Write methods --
     /// @notice Emit the TAP for the current week
+    /// @return the emitted amount
     function emitForWeek() external notPaused returns (uint256) {
         require(_getChainId() == governanceChainIdentifier, "chain not valid");
 

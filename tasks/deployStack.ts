@@ -9,7 +9,6 @@ import { buildYieldBoxMock } from './deploy/901-buildYieldBoxMock';
 import { typechain } from 'tapioca-sdk';
 import { loadVM } from './utils';
 import { buildTestnetAfterDepSetup } from './deploy/99-buildTestnetAfterDepSetup';
-import { buildTestnetDeployment } from './deploy/902-buildTestnetDeployment';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
@@ -32,24 +31,22 @@ export const deployStack__task = async (
         );
         VM.load(data);
     } else {
-        // TODO - To remove
-        // Build YieldBox on the go:)
-        const yb = await buildYieldBoxMock(hre);
-        VM.add(yb[0]).add(yb[1]);
+        const yieldBox = hre.SDK.db
+            .loadGlobalDeployment(tag, 'tapioca-bar', chainInfo.chainId)
+            .find((e) => e.name === 'YieldBox');
+
+        if (!yieldBox) {
+            throw '[-] YieldBox not found';
+        }
 
         // Build contracts
         VM.add(await buildTapOFT(hre, signer.address))
-            .add(await buildTOLP(hre, signer.address))
+            .add(await buildTOLP(hre, signer.address, yieldBox?.address))
             .add(await buildOTAP(hre))
             .add(await buildTOB(hre, signer.address, signer.address));
 
-        // Testnet only
-        if (hre.network.tags['testnet']) {
-            (await buildTestnetDeployment(hre)).forEach((c) => VM.add(c));
-        }
-
         // Add and execute
-        await VM.execute(3, false);
+        await VM.execute(3);
         VM.save();
         // await VM.verify();
     }

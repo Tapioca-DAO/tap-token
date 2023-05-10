@@ -1,12 +1,12 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { TDeploymentVMContract } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
-import { Multicall3 } from 'tapioca-sdk/dist/typechain/utils/MultiCall';
+import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
 
 export const buildTestnetAfterDepSetup = async (
     hre: HardhatRuntimeEnvironment,
     deps: TDeploymentVMContract[],
-): Promise<Multicall3.Call3Struct[]> => {
-    const calls: Multicall3.Call3Struct[] = [];
+): Promise<Multicall3.CallStruct[]> => {
+    const calls: Multicall3.CallStruct[] = [];
 
     /**
      * Load addresses

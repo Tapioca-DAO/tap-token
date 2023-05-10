@@ -7,6 +7,11 @@ import { splitSignature } from 'ethers/lib/utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { ERC20Permit, ERC721Permit } from '../typechain';
 
+import {
+    ERC20Mock__factory,
+    LZEndpointMock__factory,
+} from '../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
+
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
 
 // ---
@@ -77,20 +82,24 @@ export const LZ_ENDPOINTS: TLZ_Endpoint = {
 export async function deployUSDC(
     amount: BigNumberish,
     decimals: number,
-    owner: string,
+    owner: any,
 ) {
-    const usdc = await (
-        await ethers.getContractFactory('ERC20Mock')
-    ).deploy('USDCMock', 'USDCM', amount, decimals, owner);
-    await usdc.deployed();
+    const ERC20Mock = new ERC20Mock__factory(owner);
+    const usdc = await ERC20Mock.deploy(
+        'USDCMock',
+        'USDCM',
+        amount,
+        decimals,
+        owner.address,
+    );
+    await usdc.updateMintLimit(ethers.constants.MaxUint256);
 
     return usdc;
 }
 export async function deployLZEndpointMock(chainId: number) {
-    const lzEndpointContract = await (
-        await ethers.getContractFactory('LZEndpointMock')
-    ).deploy(chainId);
-    await lzEndpointContract.deployed();
+    const deployer = (await ethers.getSigners())[0];
+    const LZEndpointMock = new LZEndpointMock__factory(deployer);
+    const lzEndpointContract = await LZEndpointMock.deploy(chainId);
 
     return lzEndpointContract;
 }

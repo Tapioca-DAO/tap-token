@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity ^0.8.18;
 
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "tapioca-periph/contracts/interfaces/IOracle.sol";
 import "./TapiocaOptionLiquidityProvision.sol";
-import "../interfaces/IOracle.sol";
 import "../tokens/TapOFT.sol";
 import "./twAML.sol";
 import "./oTAP.sol";
