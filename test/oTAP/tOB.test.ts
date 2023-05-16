@@ -80,13 +80,7 @@ describe('TapiocaOptionBroker', () => {
         await yieldBox.connect(signer).setApprovalForAll(tOLP.address, true);
         const lockTx = await tOLP
             .connect(signer)
-            .lock(
-                signer.address,
-                signer.address,
-                sglTokenMock.address,
-                lockDuration,
-                ybAmount,
-            );
+            .lock(signer.address, sglTokenMock.address, lockDuration, ybAmount);
         const tOLPTokenID = await tOLP.tokenCounter();
 
         await tOLP.connect(signer).approve(tOB.address, tOLPTokenID);
@@ -159,7 +153,6 @@ describe('TapiocaOptionBroker', () => {
         );
         await yieldBox.setApprovalForAll(tOLP.address, true);
         const lockTx = await tOLP.lock(
-            signer.address,
             signer.address,
             sglTokenMock.address,
             lockDuration,
@@ -264,13 +257,7 @@ describe('TapiocaOptionBroker', () => {
         await yieldBox.connect(user).setApprovalForAll(tOLP.address, true);
         await tOLP
             .connect(user)
-            .lock(
-                user.address,
-                user.address,
-                sglTokenMock.address,
-                lockDuration,
-                _ybAmount,
-            );
+            .lock(user.address, sglTokenMock.address, lockDuration, _ybAmount);
         const _tokenID = await tOLP.tokenCounter();
         await tOLP.connect(user).approve(tOB.address, _tokenID);
         await tOB.connect(user).participate(_tokenID);
@@ -323,7 +310,6 @@ describe('TapiocaOptionBroker', () => {
         );
         await yieldBox.setApprovalForAll(tOLP.address, true);
         await tOLP.lock(
-            signer.address,
             signer.address,
             sglTokenMock.address,
             lockDuration,
@@ -401,13 +387,7 @@ describe('TapiocaOptionBroker', () => {
         await yieldBox.connect(user).setApprovalForAll(tOLP.address, true);
         await tOLP
             .connect(user)
-            .lock(
-                user.address,
-                user.address,
-                sglTokenMock.address,
-                lockDuration,
-                _ybAmount,
-            );
+            .lock(user.address, sglTokenMock.address, lockDuration, _ybAmount);
         const _tokenID = await tOLP.tokenCounter();
         await tOLP.connect(user).approve(tOB.address, _tokenID);
         await tOB.connect(user).participate(_tokenID);
@@ -467,20 +447,17 @@ describe('TapiocaOptionBroker', () => {
         await yieldBox.setApprovalForAll(tOLP.address, true);
         await tOLP.lock(
             signer.address,
-            signer.address,
             sglTokenMock.address,
             lockDuration,
             ybAmount.div(3),
         );
         await tOLP.lock(
             signer.address,
-            signer.address,
             sglTokenMock.address,
             lockDuration,
             ybAmount.div(3),
         );
         await tOLP.lock(
-            signer.address,
             signer.address,
             sglTokenMock.address,
             lockDuration,
