@@ -38,6 +38,7 @@ describe('TapiocaDAOPortal', () => {
         const prevPoolState = await twtap.twAML();
 
         await tapOFT.approve(twtap.address, toMint);
+
         const lockTx = await twtap.participate(
             signer.address,
             toMint,
@@ -64,6 +65,7 @@ describe('TapiocaDAOPortal', () => {
             BN(0),
             prevPoolState.totalParticipants.add(1),
         );
+
         const multiplier = aml_computeTarget(
             computedAML.magnitude,
             BN(0),

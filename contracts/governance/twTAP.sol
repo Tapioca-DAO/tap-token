@@ -225,14 +225,15 @@ contract TwTAP is
 
             // Compute and save new cumulative
             divergenceForce = _duration > pool.cumulative;
+
             if (divergenceForce) {
+                pool.cumulative += pool.averageMagnitude;
+            } else {
                 if (pool.cumulative > pool.averageMagnitude) {
                     pool.cumulative -= pool.averageMagnitude;
                 } else {
                     pool.cumulative = 0;
                 }
-            } else {
-                pool.cumulative += pool.averageMagnitude;
             }
 
             // Save new weight
@@ -376,11 +377,11 @@ contract TwTAP is
         address _to,
         uint256 _tokenId
     ) internal view {
-        address owner = ownerOf(_tokenId);
+        address tokenOwner = ownerOf(_tokenId);
         require(
-            msg.sender == owner ||
-                _to == owner ||
-                isApprovedForAll(owner, msg.sender) ||
+            msg.sender == tokenOwner ||
+                _to == tokenOwner ||
+                isApprovedForAll(tokenOwner, msg.sender) ||
                 getApproved(_tokenId) == msg.sender,
             "TapiocaDAOPortal: cannot claim"
         );
@@ -417,7 +418,9 @@ contract TwTAP is
         // Remove participation
         if (position.hasVotingPower) {
             TWAMLPool memory pool = twAML;
+            pool.totalParticipants--;
 
+            // Inverse of the participation
             if (position.divergenceForce) {
                 if (pool.cumulative > pool.averageMagnitude) {
                     pool.cumulative -= pool.averageMagnitude;
@@ -427,7 +430,9 @@ contract TwTAP is
             } else {
                 pool.cumulative += pool.averageMagnitude;
             }
-            pool.totalParticipants--;
+
+            // Save new weight
+            pool.totalDeposited -= position.tapAmount;
 
             twAML = pool; // Save twAML exit
             emit AMLDivergence(
@@ -436,6 +441,7 @@ contract TwTAP is
                 pool.totalParticipants
             ); // Register new voting power event
         }
+
         position.tapAmount = 0;
 
         emit ExitPosition(_tokenId, amount);
