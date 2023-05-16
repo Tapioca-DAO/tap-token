@@ -163,14 +163,12 @@ contract TapiocaOptionLiquidityProvision is
     // ==========
 
     /// @notice Locks tOLR tokens for a given duration
-    /// @param _from Address to transfer the SGL tokens from
     /// @param _to Address to mint the tOLP NFT to
     /// @param _singularity Singularity market address
     /// @param _lockDuration Duration of the lock
     /// @param _amount Amount of tOLR tokens to lock
     /// @return tokenId The ID of the minted NFT
     function lock(
-        address _from,
         address _to,
         IERC20 _singularity,
         uint128 _lockDuration,
@@ -185,7 +183,7 @@ contract TapiocaOptionLiquidityProvision is
         // Transfer the Singularity position to this contract
         uint256 sharesIn = yieldBox.toShare(sglAssetID, _amount, false);
 
-        yieldBox.transfer(_from, address(this), sglAssetID, sharesIn);
+        yieldBox.transfer(msg.sender, address(this), sglAssetID, sharesIn);
         activeSingularities[_singularity].totalDeposited += _amount;
 
         // Mint the tOLP NFT position
