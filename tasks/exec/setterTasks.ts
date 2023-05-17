@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
-import { TapiocaOptionBroker } from '../typechain';
+import { TapiocaOptionBroker } from '../../typechain';
 
 export const setOracleMockRate__task = async (
     taskArgs: { rate: string; oracleAddress: string },
