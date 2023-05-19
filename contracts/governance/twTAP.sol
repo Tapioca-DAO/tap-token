@@ -39,16 +39,24 @@ import "../twAML.sol";
 // ***************************                           **************************
 // ************************************..     ..***********************************
 
-// TODO: Compact data sizes? Leave out Magnitude? Struct-in-struct?
+// Justification for data sizes:
+// - 56 bits can represent over 2 billion years in seconds
+// - TAP has a maximum supply of 100 million, and a precision of 10^18. Any
+//   amount will therefore fit in (lg 10^26 = 87) bits.
+// - The multiplier has a maximum of 1 million; dMAX = 100 * 1e4, which fits
+//   in 20 bits.
+// - A week is 86400 * 7 = 604800 seconds; less than 2^20. Even if we start
+//   counting at the (Unix) epoch, we will run out of `expiry` before we
+//   saturate the week fields.
 struct Participation {
+    uint256 averageMagnitude;
     bool hasVotingPower;
     bool divergenceForce; // 0 negative, 1 positive
-    uint256 averageMagnitude;
-    uint256 expiry; // expiry timestamp
-    uint256 tapAmount; // amount of TAP locked
-    uint256 votes; // voting power. tapAmount (while locked) * multiplier
-    uint256 lastInactive; // One week BEFORE the staker gets a share of rewards
-    uint256 lastActive; // Last week that the staker shares in rewards
+    uint56 expiry; // expiry timestamp. Big enough for over 2 billion years..
+    uint88 tapAmount; // amount of TAP locked
+    uint24 multiplier; // Votes = multiplier * tapAmount
+    uint40 lastInactive; // One week BEFORE the staker gets a share of rewards
+    uint40 lastActive; // Last week that the staker shares in rewards
 }
 
 struct TWAMLPool {
@@ -63,7 +71,6 @@ struct WeekTotals {
     // active votes in the previous week, minus the votes known to expire this
     // week. For future weeks, it is a negative number corresponding to the
     // expiring votes.
-    // TODO: Will fit in an int128
     int256 netActiveVotes;
     // rewardTokens index -> amount
     mapping(uint256 => uint256) totalDistPerVote;
@@ -91,23 +98,24 @@ contract TwTAP is
     uint256 constant WEEK = 7 days;
 
     // If we assume 128 bit balances for the reward token -- which fit 1e40
-    // "tokens" at the most comonly used 1e18 precision -- then we can use
-    // the other 128 bits to store the tokens allotted to a single vote more
-    // accurately. Votes are proportional to the amount of TAP locked, weighted
-    // by a multiplier. TAP has a supply of 100M * 1e18 (87 bits), and the
-    // weight ranges from 10-100% in basis points, so 10k (14 bits).
-    // the multiplier is at most 100% = 10k (14 bits), so we are safe.
+    // "tokens" at the most comonly used 1e18 precision -- then we can use the
+    // other 128 bits to store the tokens allotted to a single vote more
+    // accurately. Votes in turn are proportional to the amount of TAP locked,
+    // weighted by a multiplier. This number is at most 107 bits long (see
+    // definition of `Participation` struct).
+    // the weight ranges from 10-100% where 1% = 1e4, so 1 million (20 bits).
+    // the multiplier is at most 100% = 1M (20 bits), so votes is at most a
+    // 107-bit number.
     uint256 constant DIST_PRECISION = 2 ** 128;
-
-    // The current week is determined by creation, but there are values that
-    // need to be updated weekly. If, for any reason whatsoever, this cannot
-    // be done in time, the `lastProcessedWeek` will be behind until this is
-    // done.
 
     IERC20[] public rewardTokens;
     // tokenId -> rewardTokens index -> amount
     mapping(uint256 => mapping(uint256 => uint256)) public claimed;
 
+    // The current week is determined by creation, but there are values that
+    // need to be updated weekly. If, for any reason whatsoever, this cannot
+    // be done in time, the `lastProcessedWeek` will be behind until this is
+    // done.
     uint256 public mintedTWTap;
     uint256 public creation; // Week 0 starts here
     uint256 public lastProcessedWeek;
@@ -152,10 +160,13 @@ contract TwTAP is
         uint256 len = rewardTokens.length;
         uint256[] memory result = new uint256[](len);
 
-        // Why not storage? Because we are going to fit it all into one slot
         Participation memory position = participants[_tokenId];
-        // Math is safe: (TODO: update types)
-        uint256 votes = position.votes;
+        uint256 votes;
+        unchecked {
+            // Math is safe: Types fit
+            votes = uint256(position.tapAmount) * uint256(position.multiplier);
+        }
+
         if (votes == 0) {
             return result;
         }
@@ -173,12 +184,51 @@ contract TwTAP is
         WeekTotals storage cur = weekTotals[week];
         WeekTotals storage prev = weekTotals[position.lastInactive];
 
-        for (uint256 i = 0; i < len; ) {
-            // Math is safe: (TODO: proof, make entire loop unchecked)
-            uint256 net = cur.totalDistPerVote[i] - prev.totalDistPerVote[i];
-            result[i] = ((votes * net) / DIST_PRECISION) - claimed[_tokenId][i];
-            unchecked {
-                ++i;
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                // Math is safe:
+                //
+                // -- The `totalDistPerVote[i]` values are increasing as a
+                //    function of weeks (see `advanceWeek()`), and if `week`
+                //    were not greater than `position.lastInactive`, this bit
+                //    of code would not be reached (see above). Therefore the
+                //    subtraction in the calculation of `net` cannot underflow.
+                //
+                // -- `votes * net` is at most the entire reward amount given
+                //    out, ever, in units of
+                //
+                //        (reward tokens) * DIST_PRECISION.
+                //
+                //    If this number were to exceed 256 bits, then
+                //    `distributeReward` would revert.
+                //
+                // -- `claimed[_tokenId][i]` is the sum of all (the i-th values
+                //    of) previous calls to the current function that were made
+                //    by `_claimRewards()`. Let there be n such calls, and let
+                //    r_j be `result[i]`, c_j be `claimed[_tokenId][i]`, and
+                //    net_j be `net` during that j-th call. Then, up to a
+                //    multiplication by votes / DIST_PRECISION:
+                //
+                //              c_1 = 0 <= net_1,
+                //
+                //    and, for n > 1:
+                //
+                //              c_n = r_(n-1) + r_(n-2) + ... + r_1
+                //                  = r_(n-1) + c_(n-1)
+                //                  = (net_(n-1) - c_(n-1) + c_(n-1)
+                //                  = net_(n-1)
+                //                  <= net_n,
+                //
+                //    so that the subtraction net_n - c_n does not underflow.
+                //    (The rounding the calculation favors the greater first
+                //    term).
+                //    (TODO: Word better?)
+                //
+                uint256 net = cur.totalDistPerVote[i] -
+                    prev.totalDistPerVote[i];
+                result[i] =
+                    ((votes * net) / DIST_PRECISION) -
+                    claimed[_tokenId][i];
             }
         }
         return result;
@@ -252,28 +302,26 @@ contract TwTAP is
         _safeMint(_participant, tokenId);
 
         uint256 expiry = block.timestamp + _duration;
-        // Cast is safe: votes fits in 87 + 14 bits
-        // TODO: Update / encode
-        // Eligibility starts NEXT week (for the locker; not globally)
+        require(expiry < type(uint56).max, "TapiocaDAOPortal: too long");
+        // Eligibility starts NEXT week:
         uint256 w0 = currentWeek();
         uint256 w1 = w0 + (expiry - creation) / WEEK;
 
         // Save twAML participation
+        // Casts are safe: see struct definition
         uint256 votes = _amount * multiplier;
         participants[tokenId] = Participation({
+            averageMagnitude: pool.averageMagnitude,
             hasVotingPower: hasVotingPower,
             divergenceForce: divergenceForce,
-            averageMagnitude: pool.averageMagnitude,
-            expiry: expiry,
-            tapAmount: _amount,
-            votes: votes,
-            lastInactive: w0,
-            lastActive: w1
+            expiry: uint56(expiry),
+            tapAmount: uint88(_amount),
+            multiplier: uint24(multiplier),
+            lastInactive: uint40(w0),
+            lastActive: uint40(w1)
         });
 
-        // Cast is safe: votes fits in 87 + 14 bits
-        //   `multiplier` fits in 14 bits (TODO: Enforce -- merge)
-        //   `tapAmount` fits in 87 bits (see TAP contract)
+        // Cast is safe: `votes` is the product of a uint88 and a uint24
         weekTotals[w0].netActiveVotes += int256(votes);
         weekTotals[w1].netActiveVotes -= int256(votes);
 
@@ -321,7 +369,7 @@ contract TwTAP is
         while (week < goal) {
             WeekTotals storage prev = weekTotals[week];
             WeekTotals storage next = weekTotals[++week];
-            // TODO: Math is safe
+            // TODO: Prove that math is safe
             next.netActiveVotes += prev.netActiveVotes;
             for (uint256 i = 0; i < len; ) {
                 next.totalDistPerVote[i] += prev.totalDistPerVote[i];
@@ -336,18 +384,19 @@ contract TwTAP is
     /// @notice distributes a reward among all tokens, weighted by voting power
     /// @notice The reward gets allocated to all positions that have locked in
     /// @notice the current week. Fails, intentionally, if this number is zero.
+    /// @notice Total rewards cannot exceed 2^128 tokens.
     /// @param _rewardTokenId index of the reward in `rewardTokens`
-    /// @param _amount amount of reward token to distribute
+    /// @param _amount amount of reward token to distribute.
     function distributeReward(
         uint256 _rewardTokenId,
         uint256 _amount
     ) external {
-        require(lastProcessedWeek == currentWeek(), "Week not updated");
+        require(lastProcessedWeek == currentWeek(), "Advance week first");
         WeekTotals storage totals = weekTotals[lastProcessedWeek];
         IERC20 rewardToken = rewardTokens[_rewardTokenId];
         // If this is a DBZ then there are no positions to give the reward to.
         // Since reward eligibility starts in the week after locking, there is
-        // no way to give out rewards THIS week:
+        // no way to give out rewards THIS week.
         // Cast is safe: `netActiveVotes` is at most zero by construction of
         // weekly totals and the requirement that they are up to date.
         // TODO: Word this better
@@ -420,15 +469,18 @@ contract TwTAP is
             TWAMLPool memory pool = twAML;
             pool.totalParticipants--;
 
-            // Inverse of the participation
+            // Inverse of the participation. The participation entry tracks
+            // the average magnitude as it was at the time the participant
+            // entered. When going the other way around, this value matches the
+            // one in the pool, but here it does not.
             if (position.divergenceForce) {
-                if (pool.cumulative > pool.averageMagnitude) {
-                    pool.cumulative -= pool.averageMagnitude;
+                if (pool.cumulative > position.averageMagnitude) {
+                    pool.cumulative -= position.averageMagnitude;
                 } else {
                     pool.cumulative = 0;
                 }
             } else {
-                pool.cumulative += pool.averageMagnitude;
+                pool.cumulative += position.averageMagnitude;
             }
 
             // Save new weight
