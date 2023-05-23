@@ -1,14 +1,12 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Multicall3 } from 'tapioca-sdk/dist/typechain/utils/MultiCall';
-import { buildTapOFT } from './deploy/01-buildTapOFT';
-import { buildTOLP } from './deploy/02-buildTOLP';
-import { buildOTAP } from './deploy/03-buildOTAP';
-import { buildTOB } from './deploy/04-buildTOB';
-import { buildAfterDepSetup } from './deploy/05-buildAfterDepSetup';
-import { buildYieldBoxMock } from './deploy/901-buildYieldBoxMock';
-import { typechain } from 'tapioca-sdk';
-import { loadVM } from './utils';
-import { buildTestnetAfterDepSetup } from './deploy/99-buildTestnetAfterDepSetup';
+import { buildTapOFT } from '../deployBuilds/01-buildTapOFT';
+import { buildTOLP } from '../deployBuilds/02-buildTOLP';
+import { buildOTAP } from '../deployBuilds/03-buildOTAP';
+import { buildTOB } from '../deployBuilds/04-buildTOB';
+import { buildAfterDepSetup } from '../deployBuilds/05-buildAfterDepSetup';
+import { loadVM } from '../utils';
+import { buildTestnetAfterDepSetup } from '../deployBuilds/99-buildTestnetAfterDepSetup';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
