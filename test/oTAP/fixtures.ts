@@ -7,6 +7,9 @@ import {
 } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
 import {
     ERC20WithoutStrategy__factory,
+    ERC20StrategyMock__factory,
+    YieldBoxURIBuilder__factory,
+    YieldBox__factory,
     YieldBox,
 } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
 
@@ -43,15 +46,18 @@ export const setupFixture = async () => {
     );
 
     // YieldBox
-    const _wrappedNative = await (
-        await ethers.getContractFactory('WETH9Mock')
-    ).deploy();
-    const _uriBuilder = await (
-        await ethers.getContractFactory('YieldBoxURIBuilder')
-    ).deploy();
-    const yieldBox = await (
-        await ethers.getContractFactory('YieldBox')
-    ).deploy(_wrappedNative.address, _uriBuilder.address);
+    const _wrappedNative = await new ERC20Mock__factory(signer).deploy(
+        'WETH',
+        'WETH',
+        0,
+        18,
+        signer.address,
+    );
+    const _uriBuilder = await new YieldBoxURIBuilder__factory(signer).deploy();
+    const yieldBox = await new YieldBox__factory(signer).deploy(
+        _wrappedNative.address,
+        _uriBuilder.address,
+    );
 
     const OracleMock = new OracleMock__factory(signer);
 
@@ -99,8 +105,8 @@ export const setupFixture = async () => {
     );
     await sglTokenMock2.updateMintLimit(ethers.constants.MaxUint256);
     const sglTokenMock2Asset = sglTokenMockAsset.add(1);
-    const sglTokenMock2Strategy = await (
-        await ethers.getContractFactory('ERC20WithoutStrategy')
+    const sglTokenMock2Strategy = await new ERC20WithoutStrategy__factory(
+        signer,
     ).deploy(yieldBox.address, sglTokenMock2.address);
 
     await deployNewMarket(yieldBox, sglTokenMock, sglTokenMockStrategy.address);
@@ -178,8 +184,10 @@ async function deployNewMarket(
     name = 'test',
     desc = 'test',
 ) {
-    const strat = await (
-        await ethers.getContractFactory('YieldBoxVaultStrat')
-    ).deploy(yieldBox.address, tkn.address, name, desc);
+    const signer = (await hre.ethers.getSigners())[0];
+    const strat = await new ERC20StrategyMock__factory(signer).deploy(
+        yieldBox.address,
+        tkn.address,
+    );
     await yieldBox.registerAsset(1, tkn.address, strat.address, 0);
 }
