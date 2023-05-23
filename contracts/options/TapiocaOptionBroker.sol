@@ -318,7 +318,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         if (participation.hasVotingPower) {
             TWAMLPool memory pool = twAML[lock.sglAssetID];
 
-            if (divergenceForce) {
+            if (participation.divergenceForce) {
                 if (pool.cumulative > pool.averageMagnitude) {
                     pool.cumulative -= pool.averageMagnitude;
                 } else {
