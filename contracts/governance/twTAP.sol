@@ -413,7 +413,6 @@ contract TwTAP is
         if (amount == 0) {
             return;
         }
-        tapOFT.transfer(_to, amount);
 
         // Remove participation
         if (position.hasVotingPower) {
@@ -443,6 +442,7 @@ contract TwTAP is
         }
 
         position.tapAmount = 0;
+        tapOFT.transfer(_to, amount);
 
         emit ExitPosition(_tokenId, amount);
     }
