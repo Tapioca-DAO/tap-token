@@ -51,7 +51,7 @@ describe('TapiocaDAOPortal', () => {
         // Check participation
         const twTAPTokenID = await twtap.mintedTWTap();
 
-        const participation = await twtap.participants(twTAPTokenID);
+        const participation = await twtap.getParticipation(twTAPTokenID);
 
         const computedAML = {
             magnitude: BN(0),
@@ -144,7 +144,7 @@ describe('TapiocaDAOPortal', () => {
         await tapOFT.approve(twtap.address, toMint);
         await twtap.participate(signer.address, toMint, lockDuration);
         const twTAPTokenID = await twtap.mintedTWTap();
-        const participation = await twtap.participants(twTAPTokenID);
+        const participation = await twtap.getParticipation(twTAPTokenID);
         const prevPoolState = await twtap.twAML();
 
         // Test exit

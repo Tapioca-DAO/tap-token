@@ -83,7 +83,7 @@ contract TwTAP is
     /// ===== TWAML ======
     TWAMLPool public twAML; // sglAssetId => twAMLPool
 
-    mapping(uint256 => Participation) public participants; // tokenId => part.
+    mapping(uint256 => Participation) private participants; // tokenId => part.
 
     uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
     uint256 constant dMAX = 100 * 1e4; // 10% - 100% voting power multiplier
@@ -143,6 +143,17 @@ contract TwTAP is
 
     function currentWeek() public view returns (uint256) {
         return (block.timestamp - creation) / WEEK;
+    }
+
+    /// @notice Return the participation of a token. Returns 0 votes for expired tokens.
+    function getParticipation(
+        uint _tokenId
+    ) public view returns (Participation memory participant) {
+        participant = participants[_tokenId];
+        if (participant.expiry < block.timestamp) {
+            participant.votes = 0;
+        }
+        return participant;
     }
 
     /// @notice Amount currently claimable for each reward token
@@ -442,6 +453,7 @@ contract TwTAP is
         }
 
         position.tapAmount = 0;
+        position.votes = 0;
         tapOFT.transfer(_to, amount);
 
         emit ExitPosition(_tokenId, amount);
