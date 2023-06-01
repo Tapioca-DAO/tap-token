@@ -52,6 +52,7 @@ struct Participation {
     uint256 averageMagnitude;
     bool hasVotingPower;
     bool divergenceForce; // 0 negative, 1 positive
+    bool tapReleased; // allow restaking while rewards may still accumulate
     uint56 expiry; // expiry timestamp. Big enough for over 2 billion years..
     uint88 tapAmount; // amount of TAP locked
     uint24 multiplier; // Votes = multiplier * tapAmount
@@ -159,7 +160,7 @@ contract TwTAP is
     ) public view returns (Participation memory participant) {
         participant = participants[_tokenId];
         if (participant.expiry < block.timestamp) {
-            participant.votes = 0;
+            participant.multiplier = 0;
         }
         return participant;
     }
@@ -325,6 +326,7 @@ contract TwTAP is
             averageMagnitude: pool.averageMagnitude,
             hasVotingPower: hasVotingPower,
             divergenceForce: divergenceForce,
+            tapReleased: false,
             expiry: uint56(expiry),
             tapAmount: uint88(_amount),
             multiplier: uint24(multiplier),
@@ -360,7 +362,8 @@ contract TwTAP is
     /// @notice Exit a twAML participation and delete the voting power if existing
     /// @param _tokenId The tokenId of the twTAP position
     function exitPosition(uint256 _tokenId) external {
-        _releaseTap(_tokenId, ownerOf(_tokenId));
+        address to = ownerOf(_tokenId);
+        _releaseTap(_tokenId, to);
     }
 
     /// @notice Indicate that (a) week(s) have passed and update running totals
@@ -463,7 +466,10 @@ contract TwTAP is
     }
 
     function _releaseTap(uint256 _tokenId, address _to) internal {
-        Participation storage position = participants[_tokenId];
+        Participation memory position = participants[_tokenId];
+        if (position.tapReleased) {
+            return;
+        }
         require(
             position.expiry <= block.timestamp,
             "TapiocaDAOPortal: Lock not expired"
@@ -504,8 +510,7 @@ contract TwTAP is
             ); // Register new voting power event
         }
 
-        position.tapAmount = 0;
-        position.votes = 0;
+        position.tapReleased = true;
         tapOFT.transfer(_to, amount);
 
         emit ExitPosition(_tokenId, amount);
