@@ -129,6 +129,7 @@ contract TwTAP is
     ) ERC721("Time Weighted TAP", "twTAP") ERC721Permit("Time Weighted TAP") {
         tapOFT = TapOFT(_tapOFT);
         owner = _owner;
+        creation = block.timestamp;
     }
 
     // ==========
@@ -291,6 +292,7 @@ contract TwTAP is
             if (divergenceForce) {
                 pool.cumulative += pool.averageMagnitude;
             } else {
+                // TODO: Strongly suspect this is never less. Prove it.
                 if (pool.cumulative > pool.averageMagnitude) {
                     pool.cumulative -= pool.averageMagnitude;
                 } else {
@@ -315,9 +317,16 @@ contract TwTAP is
 
         uint256 expiry = block.timestamp + _duration;
         require(expiry < type(uint56).max, "TapiocaDAOPortal: too long");
-        // Eligibility starts NEXT week:
+        // Eligibility starts NEXT week, and lasts until the week that the lock
+        // expires. This is guaranteed to be at least one week later by the
+        // check on `_duration`.
+        // If a user locks right before the current week ends, and have a
+        // duration slightly over one week, straddling the two starting points,
+        // then that user is eligible for the rewards during both weeks; the
+        // price for this maneuver is a lower multiplier, and loss of voting
+        // power in the DAO after the lock expires.
         uint256 w0 = currentWeek();
-        uint256 w1 = w0 + (expiry - creation) / WEEK;
+        uint256 w1 = (expiry - creation) / WEEK;
 
         // Save twAML participation
         // Casts are safe: see struct definition
@@ -334,9 +343,11 @@ contract TwTAP is
             lastActive: uint40(w1)
         });
 
+        // w0 + 1 = lastInactive + 1 = first active
+        // w1 + 1 = lastActive + 1 = first inactive
         // Cast is safe: `votes` is the product of a uint88 and a uint24
-        weekTotals[w0].netActiveVotes += int256(votes);
-        weekTotals[w1].netActiveVotes -= int256(votes);
+        weekTotals[w0 + 1].netActiveVotes += int256(votes);
+        weekTotals[w1 + 1].netActiveVotes -= int256(votes);
 
         emit Participate(_participant, _amount, multiplier);
         // TODO: Mint event?
@@ -476,9 +487,6 @@ contract TwTAP is
         );
 
         uint256 amount = position.tapAmount;
-        if (amount == 0) {
-            return;
-        }
 
         // Remove participation
         if (position.hasVotingPower) {
@@ -510,7 +518,7 @@ contract TwTAP is
             ); // Register new voting power event
         }
 
-        position.tapReleased = true;
+        participants[_tokenId].tapReleased = true;
         tapOFT.transfer(_to, amount);
 
         emit ExitPosition(_tokenId, amount);
