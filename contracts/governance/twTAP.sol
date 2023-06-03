@@ -197,51 +197,52 @@ contract TwTAP is
         WeekTotals storage cur = weekTotals[week];
         WeekTotals storage prev = weekTotals[position.lastInactive];
 
-        unchecked {
-            for (uint256 i = 0; i < len; ++i) {
-                // Math is safe:
-                //
-                // -- The `totalDistPerVote[i]` values are increasing as a
-                //    function of weeks (see `advanceWeek()`), and if `week`
-                //    were not greater than `position.lastInactive`, this bit
-                //    of code would not be reached (see above). Therefore the
-                //    subtraction in the calculation of `net` cannot underflow.
-                //
-                // -- `votes * net` is at most the entire reward amount given
-                //    out, ever, in units of
-                //
-                //        (reward tokens) * DIST_PRECISION.
-                //
-                //    If this number were to exceed 256 bits, then
-                //    `distributeReward` would revert.
-                //
-                // -- `claimed[_tokenId][i]` is the sum of all (the i-th values
-                //    of) previous calls to the current function that were made
-                //    by `_claimRewards()`. Let there be n such calls, and let
-                //    r_j be `result[i]`, c_j be `claimed[_tokenId][i]`, and
-                //    net_j be `net` during that j-th call. Then, up to a
-                //    multiplication by votes / DIST_PRECISION:
-                //
-                //              c_1 = 0 <= net_1,
-                //
-                //    and, for n > 1:
-                //
-                //              c_n = r_(n-1) + r_(n-2) + ... + r_1
-                //                  = r_(n-1) + c_(n-1)
-                //                  = (net_(n-1) - c_(n-1) + c_(n-1)
-                //                  = net_(n-1)
-                //                  <= net_n,
-                //
-                //    so that the subtraction net_n - c_n does not underflow.
-                //    (The rounding the calculation favors the greater first
-                //    term).
-                //    (TODO: Word better?)
-                //
-                uint256 net = cur.totalDistPerVote[i] -
-                    prev.totalDistPerVote[i];
-                result[i] =
-                    ((votes * net) / DIST_PRECISION) -
-                    claimed[_tokenId][i];
+        for (uint256 i = 0; i < len; ) {
+            // Math is safe (but we do the checks anyway):
+            //
+            // -- The `totalDistPerVote[i]` values are increasing as a
+            //    function of weeks (see `advanceWeek()`), and if `week`
+            //    were not greater than `position.lastInactive`, this bit
+            //    of code would not be reached (see above). Therefore the
+            //    subtraction in the calculation of `net` cannot underflow.
+            //
+            // -- `votes * net` is at most the entire reward amount given
+            //    out, ever, in units of
+            //
+            //        (reward tokens) * DIST_PRECISION.
+            //
+            //    If this number were to exceed 256 bits, then
+            //    `distributeReward` would revert.
+            //
+            // -- `claimed[_tokenId][i]` is the sum of all (the i-th values
+            //    of) previous calls to the current function that were made
+            //    by `_claimRewards()`. Let there be n such calls, and let
+            //    r_j be `result[i]`, c_j be `claimed[_tokenId][i]`, and
+            //    net_j be `net` during that j-th call. Then, up to a
+            //    multiplication by votes / DIST_PRECISION:
+            //
+            //              c_1 = 0 <= net_1,
+            //
+            //    and, for n > 1:
+            //
+            //              c_n = r_(n-1) + r_(n-2) + ... + r_1
+            //                  = r_(n-1) + c_(n-1)
+            //                  = (net_(n-1) - c_(n-1) + c_(n-1)
+            //                  = net_(n-1)
+            //                  <= net_n,
+            //
+            //    so that the subtraction net_n - c_n does not underflow.
+            //    (The rounding the calculation favors the greater first
+            //    term).
+            //    (TODO: Word better?)
+            //
+            uint256 net = cur.totalDistPerVote[i] -
+                prev.totalDistPerVote[i];
+            result[i] =
+                ((votes * net) / DIST_PRECISION) -
+                claimed[_tokenId][i];
+            unchecked {
+                ++i;
             }
         }
         return result;
