@@ -236,11 +236,8 @@ contract TwTAP is
             //    term).
             //    (TODO: Word better?)
             //
-            uint256 net = cur.totalDistPerVote[i] -
-                prev.totalDistPerVote[i];
-            result[i] =
-                ((votes * net) / DIST_PRECISION) -
-                claimed[_tokenId][i];
+            uint256 net = cur.totalDistPerVote[i] - prev.totalDistPerVote[i];
+            result[i] = ((votes * net) / DIST_PRECISION) - claimed[_tokenId][i];
             unchecked {
                 ++i;
             }

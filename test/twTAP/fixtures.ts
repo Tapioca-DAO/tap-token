@@ -55,7 +55,6 @@ export const setupTwTAPFixture = async () => {
         await tapOFT.connect(acc).approve(twtap.address, tapAmount);
     }
 
-
     return {
         // signers
         signer,
@@ -63,6 +62,6 @@ export const setupTwTAPFixture = async () => {
         // vars
         tapOFT,
         twtap,
-        tokens
+        tokens,
     };
 };
