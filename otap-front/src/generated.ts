@@ -8,7 +8,12 @@ import {
     WriteContractUnpreparedArgs,
 } from '@wagmi/core';
 
-import { useContract, UseContractConfig, useContractRead, UseContractReadConfig } from 'wagmi';
+import {
+    useContract,
+    UseContractConfig,
+    useContractRead,
+    UseContractReadConfig,
+} from 'wagmi';
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Vesting
@@ -19,7 +24,11 @@ export const vestingABI = [
         stateMutability: 'nonpayable',
         type: 'constructor',
         inputs: [
-            { name: '_token', internalType: 'contract IERC20', type: 'address' },
+            {
+                name: '_token',
+                internalType: 'contract IERC20',
+                type: 'address',
+            },
             { name: '_cliff', internalType: 'uint256', type: 'uint256' },
             { name: '_duration', internalType: 'uint256', type: 'uint256' },
         ],
@@ -28,8 +37,18 @@ export const vestingABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'user', internalType: 'address', type: 'address', indexed: true },
-            { name: 'amount', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'user',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'amount',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'Claimed',
     },
@@ -37,8 +56,18 @@ export const vestingABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'old', internalType: 'address', type: 'address', indexed: true },
-            { name: '_new', internalType: 'address', type: 'address', indexed: true },
+            {
+                name: 'old',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_new',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
         ],
         name: 'ConservatorUpdated',
     },
@@ -46,8 +75,18 @@ export const vestingABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'previousOwner', internalType: 'address', type: 'address', indexed: true },
-            { name: 'newOwner', internalType: 'address', type: 'address', indexed: true },
+            {
+                name: 'previousOwner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'newOwner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
         ],
         name: 'OwnershipTransferred',
     },
@@ -55,8 +94,18 @@ export const vestingABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'oldState', internalType: 'bool', type: 'bool', indexed: false },
-            { name: 'newState', internalType: 'bool', type: 'bool', indexed: false },
+            {
+                name: 'oldState',
+                internalType: 'bool',
+                type: 'bool',
+                indexed: false,
+            },
+            {
+                name: 'newState',
+                internalType: 'bool',
+                type: 'bool',
+                indexed: false,
+            },
         ],
         name: 'PausedUpdated',
     },
@@ -64,8 +113,18 @@ export const vestingABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'user', internalType: 'address', type: 'address', indexed: true },
-            { name: 'timestamp', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'user',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'timestamp',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'RevokeCompleted',
     },
@@ -73,8 +132,18 @@ export const vestingABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'user', internalType: 'address', type: 'address', indexed: true },
-            { name: 'timestamp', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'user',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'timestamp',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'RevokeRequested',
     },
@@ -82,13 +151,35 @@ export const vestingABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'user', internalType: 'address', type: 'address', indexed: true },
-            { name: 'amount', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'user',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'amount',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'UserRegistered',
     },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'claim', outputs: [] },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'claimOwnership', outputs: [] },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [],
+        name: 'claim',
+        outputs: [],
+    },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [],
+        name: 'claimOwnership',
+        outputs: [],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -131,11 +222,19 @@ export const vestingABI = [
         name: 'emergencyRevoke',
         outputs: [],
     },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'emergencyRevoke', outputs: [] },
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_seededAmount', internalType: 'uint256', type: 'uint256' }],
+        inputs: [],
+        name: 'emergencyRevoke',
+        outputs: [],
+    },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [
+            { name: '_seededAmount', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'init',
         outputs: [],
     },
@@ -146,7 +245,13 @@ export const vestingABI = [
         name: 'owner',
         outputs: [{ name: '', internalType: 'address', type: 'address' }],
     },
-    { stateMutability: 'view', type: 'function', inputs: [], name: 'paused', outputs: [{ name: '', internalType: 'bool', type: 'bool' }] },
+    {
+        stateMutability: 'view',
+        type: 'function',
+        inputs: [],
+        name: 'paused',
+        outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -164,7 +269,13 @@ export const vestingABI = [
         name: 'registerUser',
         outputs: [],
     },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'requestEmergencyRevoke', outputs: [] },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [],
+        name: 'requestEmergencyRevoke',
+        outputs: [],
+    },
     {
         stateMutability: 'nonpayable',
         type: 'function',
@@ -186,7 +297,13 @@ export const vestingABI = [
         name: 'revokeTimeWindow',
         outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     },
-    { stateMutability: 'view', type: 'function', inputs: [], name: 'revoked', outputs: [{ name: '', internalType: 'bool', type: 'bool' }] },
+    {
+        stateMutability: 'view',
+        type: 'function',
+        inputs: [],
+        name: 'revoked',
+        outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -197,7 +314,9 @@ export const vestingABI = [
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_conservator', internalType: 'address', type: 'address' }],
+        inputs: [
+            { name: '_conservator', internalType: 'address', type: 'address' },
+        ],
         name: 'setConservator',
         outputs: [],
     },
@@ -213,7 +332,9 @@ export const vestingABI = [
         type: 'function',
         inputs: [],
         name: 'token',
-        outputs: [{ name: '', internalType: 'contract IERC20', type: 'address' }],
+        outputs: [
+            { name: '', internalType: 'contract IERC20', type: 'address' },
+        ],
     },
     {
         stateMutability: 'view',
@@ -248,7 +369,11 @@ export const vestingABI = [
         outputs: [
             { name: 'amount', internalType: 'uint256', type: 'uint256' },
             { name: 'claimed', internalType: 'uint256', type: 'uint256' },
-            { name: 'latestClaimTimestamp', internalType: 'uint256', type: 'uint256' },
+            {
+                name: 'latestClaimTimestamp',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
             { name: 'revoked', internalType: 'bool', type: 'bool' },
         ],
     },
@@ -280,18 +405,46 @@ export const tapiocaOptionBrokerABI = [
             { name: '_tOLP', internalType: 'address', type: 'address' },
             { name: '_oTAP', internalType: 'address', type: 'address' },
             { name: '_tapOFT', internalType: 'address', type: 'address' },
-            { name: '_oracle', internalType: 'contract IOracle', type: 'address' },
-            { name: '_paymentTokenBeneficiary', internalType: 'address', type: 'address' },
+            {
+                name: '_oracle',
+                internalType: 'contract IOracle',
+                type: 'address',
+            },
+            {
+                name: '_paymentTokenBeneficiary',
+                internalType: 'address',
+                type: 'address',
+            },
         ],
     },
     {
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'epoch', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'cumulative', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'averageMagnitude', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'totalParticipants', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'epoch',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'cumulative',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'averageMagnitude',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'totalParticipants',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'AMLDivergence',
     },
@@ -299,11 +452,36 @@ export const tapiocaOptionBrokerABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'epoch', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'to', internalType: 'address', type: 'address', indexed: true },
-            { name: 'paymentToken', internalType: 'contract IERC20', type: 'address', indexed: true },
-            { name: 'oTapTokenID', internalType: 'uint256', type: 'uint256', indexed: false },
-            { name: 'amount', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'epoch',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'paymentToken',
+                internalType: 'contract IERC20',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'oTapTokenID',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
+            {
+                name: 'amount',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'ExerciseOption',
     },
@@ -311,9 +489,24 @@ export const tapiocaOptionBrokerABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'epoch', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'tokenId', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'amount', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'epoch',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'tokenId',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'amount',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'ExitPosition',
     },
@@ -321,9 +514,24 @@ export const tapiocaOptionBrokerABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'epoch', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'extractedTAP', internalType: 'uint256', type: 'uint256', indexed: false },
-            { name: 'epochTAPValuation', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'epoch',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'extractedTAP',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
+            {
+                name: 'epochTAPValuation',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'NewEpoch',
     },
@@ -331,8 +539,18 @@ export const tapiocaOptionBrokerABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'previousOwner', internalType: 'address', type: 'address', indexed: true },
-            { name: 'newOwner', internalType: 'address', type: 'address', indexed: true },
+            {
+                name: 'previousOwner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'newOwner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
         ],
         name: 'OwnershipTransferred',
     },
@@ -340,52 +558,129 @@ export const tapiocaOptionBrokerABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'epoch', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'sglAssetID', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'totalDeposited', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'epoch',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'sglAssetID',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'totalDeposited',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
             {
                 name: 'lock',
                 internalType: 'struct LockPosition',
                 type: 'tuple',
                 components: [
-                    { name: 'sglAssetID', internalType: 'uint128', type: 'uint128' },
-                    { name: 'amount', internalType: 'uint128', type: 'uint128' },
-                    { name: 'lockTime', internalType: 'uint128', type: 'uint128' },
-                    { name: 'lockDuration', internalType: 'uint128', type: 'uint128' },
+                    {
+                        name: 'sglAssetID',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'amount',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'lockTime',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'lockDuration',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
                 ],
                 indexed: false,
             },
-            { name: 'discount', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'discount',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'Participate',
     },
     {
         type: 'event',
         anonymous: false,
-        inputs: [{ name: 'account', internalType: 'address', type: 'address', indexed: false }],
+        inputs: [
+            {
+                name: 'account',
+                internalType: 'address',
+                type: 'address',
+                indexed: false,
+            },
+        ],
         name: 'Paused',
     },
     {
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'paymentToken', internalType: 'contract IERC20', type: 'address', indexed: false },
-            { name: 'oracle', internalType: 'contract IOracle', type: 'address', indexed: false },
-            { name: 'oracleData', internalType: 'bytes', type: 'bytes', indexed: false },
+            {
+                name: 'paymentToken',
+                internalType: 'contract IERC20',
+                type: 'address',
+                indexed: false,
+            },
+            {
+                name: 'oracle',
+                internalType: 'contract IOracle',
+                type: 'address',
+                indexed: false,
+            },
+            {
+                name: 'oracleData',
+                internalType: 'bytes',
+                type: 'bytes',
+                indexed: false,
+            },
         ],
         name: 'SetPaymentToken',
     },
     {
         type: 'event',
         anonymous: false,
-        inputs: [{ name: 'account', internalType: 'address', type: 'address', indexed: false }],
+        inputs: [
+            {
+                name: 'account',
+                internalType: 'address',
+                type: 'address',
+                indexed: false,
+            },
+        ],
         name: 'Unpaused',
     },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'claimOwnership', outputs: [] },
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_paymentTokens', internalType: 'address[]', type: 'address[]' }],
+        inputs: [],
+        name: 'claimOwnership',
+        outputs: [],
+    },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [
+            {
+                name: '_paymentTokens',
+                internalType: 'address[]',
+                type: 'address[]',
+            },
+        ],
         name: 'collectPaymentTokens',
         outputs: [],
     },
@@ -408,7 +703,11 @@ export const tapiocaOptionBrokerABI = [
         type: 'function',
         inputs: [
             { name: '_oTAPTokenID', internalType: 'uint256', type: 'uint256' },
-            { name: '_paymentToken', internalType: 'contract IERC20', type: 'address' },
+            {
+                name: '_paymentToken',
+                internalType: 'contract IERC20',
+                type: 'address',
+            },
             { name: '_tapAmount', internalType: 'uint256', type: 'uint256' },
         ],
         name: 'exerciseOption',
@@ -417,7 +716,9 @@ export const tapiocaOptionBrokerABI = [
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_oTAPTokenID', internalType: 'uint256', type: 'uint256' }],
+        inputs: [
+            { name: '_oTAPTokenID', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'exitPosition',
         outputs: [],
     },
@@ -426,13 +727,25 @@ export const tapiocaOptionBrokerABI = [
         type: 'function',
         inputs: [
             { name: '_oTAPTokenID', internalType: 'uint256', type: 'uint256' },
-            { name: '_paymentToken', internalType: 'contract IERC20', type: 'address' },
+            {
+                name: '_paymentToken',
+                internalType: 'contract IERC20',
+                type: 'address',
+            },
             { name: '_tapAmount', internalType: 'uint256', type: 'uint256' },
         ],
         name: 'getOTCDealDetails',
         outputs: [
-            { name: 'eligibleTapAmount', internalType: 'uint256', type: 'uint256' },
-            { name: 'paymentTokenAmount', internalType: 'uint256', type: 'uint256' },
+            {
+                name: 'eligibleTapAmount',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
+            {
+                name: 'paymentTokenAmount',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
         ],
     },
     {
@@ -442,7 +755,13 @@ export const tapiocaOptionBrokerABI = [
         name: 'lastEpochUpdate',
         outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'newEpoch', outputs: [] },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [],
+        name: 'newEpoch',
+        outputs: [],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -450,7 +769,13 @@ export const tapiocaOptionBrokerABI = [
         name: 'oTAP',
         outputs: [{ name: '', internalType: 'contract OTAP', type: 'address' }],
     },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'oTAPBrokerClaim', outputs: [] },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [],
+        name: 'oTAPBrokerClaim',
+        outputs: [],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -475,17 +800,31 @@ export const tapiocaOptionBrokerABI = [
         name: 'participants',
         outputs: [
             { name: 'hasVotingPower', internalType: 'bool', type: 'bool' },
-            { name: 'averageMagnitude', internalType: 'uint256', type: 'uint256' },
+            {
+                name: 'averageMagnitude',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
         ],
     },
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_tOLPTokenID', internalType: 'uint256', type: 'uint256' }],
+        inputs: [
+            { name: '_tOLPTokenID', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'participate',
-        outputs: [{ name: 'oTAPTokenID', internalType: 'uint256', type: 'uint256' }],
+        outputs: [
+            { name: 'oTAPTokenID', internalType: 'uint256', type: 'uint256' },
+        ],
     },
-    { stateMutability: 'view', type: 'function', inputs: [], name: 'paused', outputs: [{ name: '', internalType: 'bool', type: 'bool' }] },
+    {
+        stateMutability: 'view',
+        type: 'function',
+        inputs: [],
+        name: 'paused',
+        outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -496,10 +835,16 @@ export const tapiocaOptionBrokerABI = [
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: '', internalType: 'contract IERC20', type: 'address' }],
+        inputs: [
+            { name: '', internalType: 'contract IERC20', type: 'address' },
+        ],
         name: 'paymentTokens',
         outputs: [
-            { name: 'oracle', internalType: 'contract IOracle', type: 'address' },
+            {
+                name: 'oracle',
+                internalType: 'contract IOracle',
+                type: 'address',
+            },
             { name: 'oracleData', internalType: 'bytes', type: 'bytes' },
         ],
     },
@@ -514,8 +859,16 @@ export const tapiocaOptionBrokerABI = [
         stateMutability: 'nonpayable',
         type: 'function',
         inputs: [
-            { name: '_paymentToken', internalType: 'contract IERC20', type: 'address' },
-            { name: '_oracle', internalType: 'contract IOracle', type: 'address' },
+            {
+                name: '_paymentToken',
+                internalType: 'contract IERC20',
+                type: 'address',
+            },
+            {
+                name: '_oracle',
+                internalType: 'contract IOracle',
+                type: 'address',
+            },
             { name: '_oracleData', internalType: 'bytes', type: 'bytes' },
         ],
         name: 'setPaymentToken',
@@ -524,7 +877,13 @@ export const tapiocaOptionBrokerABI = [
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_paymentTokenBeneficiary', internalType: 'address', type: 'address' }],
+        inputs: [
+            {
+                name: '_paymentTokenBeneficiary',
+                internalType: 'address',
+                type: 'address',
+            },
+        ],
         name: 'setPaymentTokenBeneficiary',
         outputs: [],
     },
@@ -543,21 +902,31 @@ export const tapiocaOptionBrokerABI = [
         type: 'function',
         inputs: [],
         name: 'tOLP',
-        outputs: [{ name: '', internalType: 'contract TapiocaOptionLiquidityProvision', type: 'address' }],
+        outputs: [
+            {
+                name: '',
+                internalType: 'contract TapiocaOptionLiquidityProvision',
+                type: 'address',
+            },
+        ],
     },
     {
         stateMutability: 'view',
         type: 'function',
         inputs: [],
         name: 'tapOFT',
-        outputs: [{ name: '', internalType: 'contract TapOFT', type: 'address' }],
+        outputs: [
+            { name: '', internalType: 'contract TapOFT', type: 'address' },
+        ],
     },
     {
         stateMutability: 'view',
         type: 'function',
         inputs: [],
         name: 'tapOracle',
-        outputs: [{ name: '', internalType: 'contract IOracle', type: 'address' }],
+        outputs: [
+            { name: '', internalType: 'contract IOracle', type: 'address' },
+        ],
     },
     {
         stateMutability: 'view',
@@ -583,9 +952,21 @@ export const tapiocaOptionBrokerABI = [
         inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
         name: 'twAML',
         outputs: [
-            { name: 'totalParticipants', internalType: 'uint256', type: 'uint256' },
-            { name: 'averageMagnitude', internalType: 'uint256', type: 'uint256' },
-            { name: 'totalDeposited', internalType: 'uint256', type: 'uint256' },
+            {
+                name: 'totalParticipants',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
+            {
+                name: 'averageMagnitude',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
+            {
+                name: 'totalDeposited',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
             { name: 'cumulative', internalType: 'uint256', type: 'uint256' },
         ],
     },
@@ -596,14 +977,35 @@ export const tapiocaOptionBrokerABI = [
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export const tapiocaOptionLiquidityProvisionABI = [
-    { stateMutability: 'nonpayable', type: 'constructor', inputs: [{ name: '_yieldBox', internalType: 'address', type: 'address' }] },
+    {
+        stateMutability: 'nonpayable',
+        type: 'constructor',
+        inputs: [
+            { name: '_yieldBox', internalType: 'address', type: 'address' },
+        ],
+    },
     {
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'owner', internalType: 'address', type: 'address', indexed: true },
-            { name: 'approved', internalType: 'address', type: 'address', indexed: true },
-            { name: 'tokenId', internalType: 'uint256', type: 'uint256', indexed: true },
+            {
+                name: 'owner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'approved',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'tokenId',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
         ],
         name: 'Approval',
     },
@@ -611,9 +1013,24 @@ export const tapiocaOptionLiquidityProvisionABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'owner', internalType: 'address', type: 'address', indexed: true },
-            { name: 'operator', internalType: 'address', type: 'address', indexed: true },
-            { name: 'approved', internalType: 'bool', type: 'bool', indexed: false },
+            {
+                name: 'owner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'operator',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'approved',
+                internalType: 'bool',
+                type: 'bool',
+                indexed: false,
+            },
         ],
         name: 'ApprovalForAll',
     },
@@ -621,17 +1038,43 @@ export const tapiocaOptionLiquidityProvisionABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'to', internalType: 'address', type: 'address', indexed: true },
-            { name: 'sglAssetID', internalType: 'uint128', type: 'uint128', indexed: true },
+            {
+                name: 'to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'sglAssetID',
+                internalType: 'uint128',
+                type: 'uint128',
+                indexed: true,
+            },
             {
                 name: 'lockPosition',
                 internalType: 'struct LockPosition',
                 type: 'tuple',
                 components: [
-                    { name: 'sglAssetID', internalType: 'uint128', type: 'uint128' },
-                    { name: 'amount', internalType: 'uint128', type: 'uint128' },
-                    { name: 'lockTime', internalType: 'uint128', type: 'uint128' },
-                    { name: 'lockDuration', internalType: 'uint128', type: 'uint128' },
+                    {
+                        name: 'sglAssetID',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'amount',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'lockTime',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'lockDuration',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
                 ],
                 indexed: false,
             },
@@ -642,17 +1085,43 @@ export const tapiocaOptionLiquidityProvisionABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'to', internalType: 'address', type: 'address', indexed: true },
-            { name: 'sglAssetID', internalType: 'uint128', type: 'uint128', indexed: true },
+            {
+                name: 'to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'sglAssetID',
+                internalType: 'uint128',
+                type: 'uint128',
+                indexed: true,
+            },
             {
                 name: 'lockPosition',
                 internalType: 'struct LockPosition',
                 type: 'tuple',
                 components: [
-                    { name: 'sglAssetID', internalType: 'uint128', type: 'uint128' },
-                    { name: 'amount', internalType: 'uint128', type: 'uint128' },
-                    { name: 'lockTime', internalType: 'uint128', type: 'uint128' },
-                    { name: 'lockDuration', internalType: 'uint128', type: 'uint128' },
+                    {
+                        name: 'sglAssetID',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'amount',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'lockTime',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'lockDuration',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
                 ],
                 indexed: false,
             },
@@ -663,23 +1132,50 @@ export const tapiocaOptionLiquidityProvisionABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'previousOwner', internalType: 'address', type: 'address', indexed: true },
-            { name: 'newOwner', internalType: 'address', type: 'address', indexed: true },
+            {
+                name: 'previousOwner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'newOwner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
         ],
         name: 'OwnershipTransferred',
     },
     {
         type: 'event',
         anonymous: false,
-        inputs: [{ name: 'account', internalType: 'address', type: 'address', indexed: false }],
+        inputs: [
+            {
+                name: 'account',
+                internalType: 'address',
+                type: 'address',
+                indexed: false,
+            },
+        ],
         name: 'Paused',
     },
     {
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'sgl', internalType: 'address', type: 'address', indexed: false },
-            { name: 'assetID', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'sgl',
+                internalType: 'address',
+                type: 'address',
+                indexed: false,
+            },
+            {
+                name: 'assetID',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'RegisterSingularity',
     },
@@ -687,8 +1183,18 @@ export const tapiocaOptionLiquidityProvisionABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'sgl', internalType: 'address', type: 'address', indexed: false },
-            { name: 'poolWeight', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'sgl',
+                internalType: 'address',
+                type: 'address',
+                indexed: false,
+            },
+            {
+                name: 'poolWeight',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'SetSGLPoolWeight',
     },
@@ -696,41 +1202,86 @@ export const tapiocaOptionLiquidityProvisionABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'from', internalType: 'address', type: 'address', indexed: true },
-            { name: 'to', internalType: 'address', type: 'address', indexed: true },
-            { name: 'tokenId', internalType: 'uint256', type: 'uint256', indexed: true },
+            {
+                name: 'from',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'tokenId',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
         ],
         name: 'Transfer',
     },
     {
         type: 'event',
         anonymous: false,
-        inputs: [{ name: 'account', internalType: 'address', type: 'address', indexed: false }],
+        inputs: [
+            {
+                name: 'account',
+                internalType: 'address',
+                type: 'address',
+                indexed: false,
+            },
+        ],
         name: 'Unpaused',
     },
     {
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'sgl', internalType: 'address', type: 'address', indexed: false },
-            { name: 'assetID', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'sgl',
+                internalType: 'address',
+                type: 'address',
+                indexed: false,
+            },
+            {
+                name: 'assetID',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'UnregisterSingularity',
     },
     {
         type: 'event',
         anonymous: false,
-        inputs: [{ name: 'totalSingularityPoolWeights', internalType: 'uint256', type: 'uint256', indexed: false }],
+        inputs: [
+            {
+                name: 'totalSingularityPoolWeights',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
+        ],
         name: 'UpdateTotalSingularityPoolWeights',
     },
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: '', internalType: 'contract IERC20', type: 'address' }],
+        inputs: [
+            { name: '', internalType: 'contract IERC20', type: 'address' },
+        ],
         name: 'activeSingularities',
         outputs: [
             { name: 'sglAssetID', internalType: 'uint256', type: 'uint256' },
-            { name: 'totalDeposited', internalType: 'uint256', type: 'uint256' },
+            {
+                name: 'totalDeposited',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
             { name: 'poolWeight', internalType: 'uint256', type: 'uint256' },
         ],
     },
@@ -751,7 +1302,13 @@ export const tapiocaOptionLiquidityProvisionABI = [
         name: 'balanceOf',
         outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'claimOwnership', outputs: [] },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [],
+        name: 'claimOwnership',
+        outputs: [],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -762,7 +1319,9 @@ export const tapiocaOptionLiquidityProvisionABI = [
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: '_tokenId', internalType: 'uint256', type: 'uint256' }],
+        inputs: [
+            { name: '_tokenId', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'getLock',
         outputs: [
             { name: '', internalType: 'bool', type: 'bool' },
@@ -771,10 +1330,26 @@ export const tapiocaOptionLiquidityProvisionABI = [
                 internalType: 'struct LockPosition',
                 type: 'tuple',
                 components: [
-                    { name: 'sglAssetID', internalType: 'uint128', type: 'uint128' },
-                    { name: 'amount', internalType: 'uint128', type: 'uint128' },
-                    { name: 'lockTime', internalType: 'uint128', type: 'uint128' },
-                    { name: 'lockDuration', internalType: 'uint128', type: 'uint128' },
+                    {
+                        name: 'sglAssetID',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'amount',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'lockTime',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'lockDuration',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
                 ],
             },
         ],
@@ -797,9 +1372,21 @@ export const tapiocaOptionLiquidityProvisionABI = [
                 internalType: 'struct SingularityPool[]',
                 type: 'tuple[]',
                 components: [
-                    { name: 'sglAssetID', internalType: 'uint256', type: 'uint256' },
-                    { name: 'totalDeposited', internalType: 'uint256', type: 'uint256' },
-                    { name: 'poolWeight', internalType: 'uint256', type: 'uint256' },
+                    {
+                        name: 'sglAssetID',
+                        internalType: 'uint256',
+                        type: 'uint256',
+                    },
+                    {
+                        name: 'totalDeposited',
+                        internalType: 'uint256',
+                        type: 'uint256',
+                    },
+                    {
+                        name: 'poolWeight',
+                        internalType: 'uint256',
+                        type: 'uint256',
+                    },
                 ],
             },
         ],
@@ -807,7 +1394,9 @@ export const tapiocaOptionLiquidityProvisionABI = [
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: '_sglAssetId', internalType: 'uint256', type: 'uint256' }],
+        inputs: [
+            { name: '_sglAssetId', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'getTotalPoolDeposited',
         outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     },
@@ -837,12 +1426,18 @@ export const tapiocaOptionLiquidityProvisionABI = [
         inputs: [
             { name: '_from', internalType: 'address', type: 'address' },
             { name: '_to', internalType: 'address', type: 'address' },
-            { name: '_singularity', internalType: 'contract IERC20', type: 'address' },
+            {
+                name: '_singularity',
+                internalType: 'contract IERC20',
+                type: 'address',
+            },
             { name: '_lockDuration', internalType: 'uint128', type: 'uint128' },
             { name: '_amount', internalType: 'uint128', type: 'uint128' },
         ],
         name: 'lock',
-        outputs: [{ name: 'tokenId', internalType: 'uint256', type: 'uint256' }],
+        outputs: [
+            { name: 'tokenId', internalType: 'uint256', type: 'uint256' },
+        ],
     },
     {
         stateMutability: 'view',
@@ -890,7 +1485,13 @@ export const tapiocaOptionLiquidityProvisionABI = [
         name: 'ownerOf',
         outputs: [{ name: '', internalType: 'address', type: 'address' }],
     },
-    { stateMutability: 'view', type: 'function', inputs: [], name: 'paused', outputs: [{ name: '', internalType: 'bool', type: 'bool' }] },
+    {
+        stateMutability: 'view',
+        type: 'function',
+        inputs: [],
+        name: 'paused',
+        outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -902,7 +1503,11 @@ export const tapiocaOptionLiquidityProvisionABI = [
         stateMutability: 'nonpayable',
         type: 'function',
         inputs: [
-            { name: 'singularity', internalType: 'contract IERC20', type: 'address' },
+            {
+                name: 'singularity',
+                internalType: 'contract IERC20',
+                type: 'address',
+            },
             { name: 'assetID', internalType: 'uint256', type: 'uint256' },
             { name: 'weight', internalType: 'uint256', type: 'uint256' },
         ],
@@ -946,7 +1551,11 @@ export const tapiocaOptionLiquidityProvisionABI = [
         stateMutability: 'nonpayable',
         type: 'function',
         inputs: [
-            { name: 'singularity', internalType: 'contract IERC20', type: 'address' },
+            {
+                name: 'singularity',
+                internalType: 'contract IERC20',
+                type: 'address',
+            },
             { name: 'weight', internalType: 'uint256', type: 'uint256' },
         ],
         name: 'setSGLPoolWEight',
@@ -957,7 +1566,9 @@ export const tapiocaOptionLiquidityProvisionABI = [
         type: 'function',
         inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
         name: 'sglAssetIDToAddress',
-        outputs: [{ name: '', internalType: 'contract IERC20', type: 'address' }],
+        outputs: [
+            { name: '', internalType: 'contract IERC20', type: 'address' },
+        ],
     },
     {
         stateMutability: 'view',
@@ -969,7 +1580,9 @@ export const tapiocaOptionLiquidityProvisionABI = [
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+        inputs: [
+            { name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' },
+        ],
         name: 'supportsInterface',
         outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
     },
@@ -1028,16 +1641,28 @@ export const tapiocaOptionLiquidityProvisionABI = [
         type: 'function',
         inputs: [
             { name: '_tokenId', internalType: 'uint256', type: 'uint256' },
-            { name: '_singularity', internalType: 'contract IERC20', type: 'address' },
+            {
+                name: '_singularity',
+                internalType: 'contract IERC20',
+                type: 'address',
+            },
             { name: '_to', internalType: 'address', type: 'address' },
         ],
         name: 'unlock',
-        outputs: [{ name: 'sharesOut', internalType: 'uint256', type: 'uint256' }],
+        outputs: [
+            { name: 'sharesOut', internalType: 'uint256', type: 'uint256' },
+        ],
     },
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: 'singularity', internalType: 'contract IERC20', type: 'address' }],
+        inputs: [
+            {
+                name: 'singularity',
+                internalType: 'contract IERC20',
+                type: 'address',
+            },
+        ],
         name: 'unregisterSingularity',
         outputs: [],
     },
@@ -1046,7 +1671,9 @@ export const tapiocaOptionLiquidityProvisionABI = [
         type: 'function',
         inputs: [],
         name: 'yieldBox',
-        outputs: [{ name: '', internalType: 'contract IYieldBox', type: 'address' }],
+        outputs: [
+            { name: '', internalType: 'contract IYieldBox', type: 'address' },
+        ],
     },
 ] as const;
 
@@ -1060,9 +1687,24 @@ export const otapABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'owner', internalType: 'address', type: 'address', indexed: true },
-            { name: 'approved', internalType: 'address', type: 'address', indexed: true },
-            { name: 'tokenId', internalType: 'uint256', type: 'uint256', indexed: true },
+            {
+                name: 'owner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'approved',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'tokenId',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
         ],
         name: 'Approval',
     },
@@ -1070,9 +1712,24 @@ export const otapABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'owner', internalType: 'address', type: 'address', indexed: true },
-            { name: 'operator', internalType: 'address', type: 'address', indexed: true },
-            { name: 'approved', internalType: 'bool', type: 'bool', indexed: false },
+            {
+                name: 'owner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'operator',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'approved',
+                internalType: 'bool',
+                type: 'bool',
+                indexed: false,
+            },
         ],
         name: 'ApprovalForAll',
     },
@@ -1080,15 +1737,33 @@ export const otapABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'from', internalType: 'address', type: 'address', indexed: true },
-            { name: 'tokenId', internalType: 'uint256', type: 'uint256', indexed: true },
+            {
+                name: 'from',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'tokenId',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
             {
                 name: 'option',
                 internalType: 'struct TapOption',
                 type: 'tuple',
                 components: [
-                    { name: 'expiry', internalType: 'uint128', type: 'uint128' },
-                    { name: 'discount', internalType: 'uint128', type: 'uint128' },
+                    {
+                        name: 'expiry',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'discount',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
                     { name: 'tOLP', internalType: 'uint256', type: 'uint256' },
                 ],
                 indexed: false,
@@ -1100,15 +1775,33 @@ export const otapABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'to', internalType: 'address', type: 'address', indexed: true },
-            { name: 'tokenId', internalType: 'uint256', type: 'uint256', indexed: true },
+            {
+                name: 'to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'tokenId',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
             {
                 name: 'option',
                 internalType: 'struct TapOption',
                 type: 'tuple',
                 components: [
-                    { name: 'expiry', internalType: 'uint128', type: 'uint128' },
-                    { name: 'discount', internalType: 'uint128', type: 'uint128' },
+                    {
+                        name: 'expiry',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'discount',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
                     { name: 'tOLP', internalType: 'uint256', type: 'uint256' },
                 ],
                 indexed: false,
@@ -1120,9 +1813,24 @@ export const otapABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'from', internalType: 'address', type: 'address', indexed: true },
-            { name: 'to', internalType: 'address', type: 'address', indexed: true },
-            { name: 'tokenId', internalType: 'uint256', type: 'uint256', indexed: true },
+            {
+                name: 'from',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'tokenId',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
         ],
         name: 'Transfer',
     },
@@ -1139,7 +1847,9 @@ export const otapABI = [
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: '_tokenId', internalType: 'uint256', type: 'uint256' }],
+        inputs: [
+            { name: '_tokenId', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'attributes',
         outputs: [
             { name: '', internalType: 'address', type: 'address' },
@@ -1148,8 +1858,16 @@ export const otapABI = [
                 internalType: 'struct TapOption',
                 type: 'tuple',
                 components: [
-                    { name: 'expiry', internalType: 'uint128', type: 'uint128' },
-                    { name: 'discount', internalType: 'uint128', type: 'uint128' },
+                    {
+                        name: 'expiry',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'discount',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
                     { name: 'tOLP', internalType: 'uint256', type: 'uint256' },
                 ],
             },
@@ -1169,18 +1887,28 @@ export const otapABI = [
         name: 'broker',
         outputs: [{ name: '', internalType: 'address', type: 'address' }],
     },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'brokerClaim', outputs: [] },
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_tokenId', internalType: 'uint256', type: 'uint256' }],
+        inputs: [],
+        name: 'brokerClaim',
+        outputs: [],
+    },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [
+            { name: '_tokenId', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'burn',
         outputs: [],
     },
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: '_tokenId', internalType: 'uint256', type: 'uint256' }],
+        inputs: [
+            { name: '_tokenId', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'exists',
         outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
     },
@@ -1221,7 +1949,9 @@ export const otapABI = [
             { name: '_tOLP', internalType: 'uint256', type: 'uint256' },
         ],
         name: 'mint',
-        outputs: [{ name: 'tokenId', internalType: 'uint256', type: 'uint256' }],
+        outputs: [
+            { name: 'tokenId', internalType: 'uint256', type: 'uint256' },
+        ],
     },
     {
         stateMutability: 'view',
@@ -1308,7 +2038,9 @@ export const otapABI = [
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+        inputs: [
+            { name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' },
+        ],
         name: 'supportsInterface',
         outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
     },
@@ -1322,7 +2054,9 @@ export const otapABI = [
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: '_tokenId', internalType: 'uint256', type: 'uint256' }],
+        inputs: [
+            { name: '_tokenId', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'tokenURI',
         outputs: [{ name: '', internalType: 'string', type: 'string' }],
     },
@@ -1360,16 +2094,35 @@ export const tapOftABI = [
             { name: '_investors', internalType: 'address', type: 'address' },
             { name: '_lbp', internalType: 'address', type: 'address' },
             { name: '_airdrop', internalType: 'address', type: 'address' },
-            { name: '_governanceChainId', internalType: 'uint16', type: 'uint16' },
+            {
+                name: '_governanceChainId',
+                internalType: 'uint16',
+                type: 'uint16',
+            },
         ],
     },
     {
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'owner', internalType: 'address', type: 'address', indexed: true },
-            { name: 'spender', internalType: 'address', type: 'address', indexed: true },
-            { name: 'value', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'owner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'spender',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'value',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'Approval',
     },
@@ -1377,8 +2130,18 @@ export const tapOftABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_from', internalType: 'address', type: 'address', indexed: true },
-            { name: '_amount', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: '_from',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_amount',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'Burned',
     },
@@ -1386,8 +2149,18 @@ export const tapOftABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_old', internalType: 'uint256', type: 'uint256', indexed: false },
-            { name: '_new', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: '_old',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
+            {
+                name: '_new',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'GovernanceChainIdentifierUpdated',
     },
@@ -1395,11 +2168,36 @@ export const tapOftABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_srcChainId', internalType: 'uint16', type: 'uint16', indexed: false },
-            { name: '_srcAddress', internalType: 'bytes', type: 'bytes', indexed: false },
-            { name: '_nonce', internalType: 'uint64', type: 'uint64', indexed: false },
-            { name: '_payload', internalType: 'bytes', type: 'bytes', indexed: false },
-            { name: '_reason', internalType: 'bytes', type: 'bytes', indexed: false },
+            {
+                name: '_srcChainId',
+                internalType: 'uint16',
+                type: 'uint16',
+                indexed: false,
+            },
+            {
+                name: '_srcAddress',
+                internalType: 'bytes',
+                type: 'bytes',
+                indexed: false,
+            },
+            {
+                name: '_nonce',
+                internalType: 'uint64',
+                type: 'uint64',
+                indexed: false,
+            },
+            {
+                name: '_payload',
+                internalType: 'bytes',
+                type: 'bytes',
+                indexed: false,
+            },
+            {
+                name: '_reason',
+                internalType: 'bytes',
+                type: 'bytes',
+                indexed: false,
+            },
         ],
         name: 'MessageFailed',
     },
@@ -1407,9 +2205,24 @@ export const tapOftABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_by', internalType: 'address', type: 'address', indexed: true },
-            { name: '_to', internalType: 'address', type: 'address', indexed: true },
-            { name: '_amount', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: '_by',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_amount',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'Minted',
     },
@@ -1417,8 +2230,18 @@ export const tapOftABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_old', internalType: 'address', type: 'address', indexed: true },
-            { name: '_new', internalType: 'address', type: 'address', indexed: true },
+            {
+                name: '_old',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_new',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
         ],
         name: 'MinterUpdated',
     },
@@ -1426,24 +2249,56 @@ export const tapOftABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'previousOwner', internalType: 'address', type: 'address', indexed: true },
-            { name: 'newOwner', internalType: 'address', type: 'address', indexed: true },
+            {
+                name: 'previousOwner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'newOwner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
         ],
         name: 'OwnershipTransferred',
     },
     {
         type: 'event',
         anonymous: false,
-        inputs: [{ name: 'account', internalType: 'address', type: 'address', indexed: false }],
+        inputs: [
+            {
+                name: 'account',
+                internalType: 'address',
+                type: 'address',
+                indexed: false,
+            },
+        ],
         name: 'Paused',
     },
     {
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_srcChainId', internalType: 'uint16', type: 'uint16', indexed: true },
-            { name: '_to', internalType: 'address', type: 'address', indexed: true },
-            { name: '_amount', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: '_srcChainId',
+                internalType: 'uint16',
+                type: 'uint16',
+                indexed: true,
+            },
+            {
+                name: '_to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_amount',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'ReceiveFromChain',
     },
@@ -1451,10 +2306,30 @@ export const tapOftABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_srcChainId', internalType: 'uint16', type: 'uint16', indexed: false },
-            { name: '_srcAddress', internalType: 'bytes', type: 'bytes', indexed: false },
-            { name: '_nonce', internalType: 'uint64', type: 'uint64', indexed: false },
-            { name: '_payloadHash', internalType: 'bytes32', type: 'bytes32', indexed: false },
+            {
+                name: '_srcChainId',
+                internalType: 'uint16',
+                type: 'uint16',
+                indexed: false,
+            },
+            {
+                name: '_srcAddress',
+                internalType: 'bytes',
+                type: 'bytes',
+                indexed: false,
+            },
+            {
+                name: '_nonce',
+                internalType: 'uint64',
+                type: 'uint64',
+                indexed: false,
+            },
+            {
+                name: '_payloadHash',
+                internalType: 'bytes32',
+                type: 'bytes32',
+                indexed: false,
+            },
         ],
         name: 'RetryMessageSuccess',
     },
@@ -1462,10 +2337,30 @@ export const tapOftABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_dstChainId', internalType: 'uint16', type: 'uint16', indexed: true },
-            { name: '_from', internalType: 'address', type: 'address', indexed: true },
-            { name: '_toAddress', internalType: 'bytes', type: 'bytes', indexed: false },
-            { name: '_amount', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: '_dstChainId',
+                internalType: 'uint16',
+                type: 'uint16',
+                indexed: true,
+            },
+            {
+                name: '_from',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_toAddress',
+                internalType: 'bytes',
+                type: 'bytes',
+                indexed: false,
+            },
+            {
+                name: '_amount',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'SendToChain',
     },
@@ -1473,24 +2368,56 @@ export const tapOftABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_dstChainId', internalType: 'uint16', type: 'uint16', indexed: false },
-            { name: '_type', internalType: 'uint16', type: 'uint16', indexed: false },
-            { name: '_minDstGas', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: '_dstChainId',
+                internalType: 'uint16',
+                type: 'uint16',
+                indexed: false,
+            },
+            {
+                name: '_type',
+                internalType: 'uint16',
+                type: 'uint16',
+                indexed: false,
+            },
+            {
+                name: '_minDstGas',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'SetMinDstGas',
     },
     {
         type: 'event',
         anonymous: false,
-        inputs: [{ name: 'precrime', internalType: 'address', type: 'address', indexed: false }],
+        inputs: [
+            {
+                name: 'precrime',
+                internalType: 'address',
+                type: 'address',
+                indexed: false,
+            },
+        ],
         name: 'SetPrecrime',
     },
     {
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_remoteChainId', internalType: 'uint16', type: 'uint16', indexed: false },
-            { name: '_path', internalType: 'bytes', type: 'bytes', indexed: false },
+            {
+                name: '_remoteChainId',
+                internalType: 'uint16',
+                type: 'uint16',
+                indexed: false,
+            },
+            {
+                name: '_path',
+                internalType: 'bytes',
+                type: 'bytes',
+                indexed: false,
+            },
         ],
         name: 'SetTrustedRemote',
     },
@@ -1498,31 +2425,70 @@ export const tapOftABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_remoteChainId', internalType: 'uint16', type: 'uint16', indexed: false },
-            { name: '_remoteAddress', internalType: 'bytes', type: 'bytes', indexed: false },
+            {
+                name: '_remoteChainId',
+                internalType: 'uint16',
+                type: 'uint16',
+                indexed: false,
+            },
+            {
+                name: '_remoteAddress',
+                internalType: 'bytes',
+                type: 'bytes',
+                indexed: false,
+            },
         ],
         name: 'SetTrustedRemoteAddress',
     },
     {
         type: 'event',
         anonymous: false,
-        inputs: [{ name: '_useCustomAdapterParams', internalType: 'bool', type: 'bool', indexed: false }],
+        inputs: [
+            {
+                name: '_useCustomAdapterParams',
+                internalType: 'bool',
+                type: 'bool',
+                indexed: false,
+            },
+        ],
         name: 'SetUseCustomAdapterParams',
     },
     {
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'from', internalType: 'address', type: 'address', indexed: true },
-            { name: 'to', internalType: 'address', type: 'address', indexed: true },
-            { name: 'value', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'from',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'value',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'Transfer',
     },
     {
         type: 'event',
         anonymous: false,
-        inputs: [{ name: 'account', internalType: 'address', type: 'address', indexed: false }],
+        inputs: [
+            {
+                name: 'account',
+                internalType: 'address',
+                type: 'address',
+                indexed: false,
+            },
+        ],
         name: 'Unpaused',
     },
     {
@@ -1606,7 +2572,11 @@ export const tapOftABI = [
         type: 'function',
         inputs: [
             { name: 'spender', internalType: 'address', type: 'address' },
-            { name: 'subtractedValue', internalType: 'uint256', type: 'uint256' },
+            {
+                name: 'subtractedValue',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
         ],
         name: 'decreaseAllowance',
         outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
@@ -1701,7 +2671,9 @@ export const tapOftABI = [
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: '_remoteChainId', internalType: 'uint16', type: 'uint16' }],
+        inputs: [
+            { name: '_remoteChainId', internalType: 'uint16', type: 'uint16' },
+        ],
         name: 'getTrustedRemoteAddress',
         outputs: [{ name: '', internalType: 'bytes', type: 'bytes' }],
     },
@@ -1737,7 +2709,13 @@ export const tapOftABI = [
         type: 'function',
         inputs: [],
         name: 'lzEndpoint',
-        outputs: [{ name: '', internalType: 'contract ILayerZeroEndpoint', type: 'address' }],
+        outputs: [
+            {
+                name: '',
+                internalType: 'contract ILayerZeroEndpoint',
+                type: 'address',
+            },
+        ],
     },
     {
         stateMutability: 'nonpayable',
@@ -1808,7 +2786,13 @@ export const tapOftABI = [
         name: 'pauseSendTokens',
         outputs: [],
     },
-    { stateMutability: 'view', type: 'function', inputs: [], name: 'paused', outputs: [{ name: '', internalType: 'bool', type: 'bool' }] },
+    {
+        stateMutability: 'view',
+        type: 'function',
+        inputs: [],
+        name: 'paused',
+        outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -1830,7 +2814,13 @@ export const tapOftABI = [
         name: 'removeTAP',
         outputs: [],
     },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'renounceOwnership', outputs: [] },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [],
+        name: 'renounceOwnership',
+        outputs: [],
+    },
     {
         stateMutability: 'payable',
         type: 'function',
@@ -1851,8 +2841,16 @@ export const tapOftABI = [
             { name: '_dstChainId', internalType: 'uint16', type: 'uint16' },
             { name: '_toAddress', internalType: 'bytes', type: 'bytes' },
             { name: '_amount', internalType: 'uint256', type: 'uint256' },
-            { name: '_refundAddress', internalType: 'address payable', type: 'address' },
-            { name: '_zroPaymentAddress', internalType: 'address', type: 'address' },
+            {
+                name: '_refundAddress',
+                internalType: 'address payable',
+                type: 'address',
+            },
+            {
+                name: '_zroPaymentAddress',
+                internalType: 'address',
+                type: 'address',
+            },
             { name: '_adapterParams', internalType: 'bytes', type: 'bytes' },
         ],
         name: 'sendFrom',
@@ -1873,7 +2871,9 @@ export const tapOftABI = [
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_identifier', internalType: 'uint256', type: 'uint256' }],
+        inputs: [
+            { name: '_identifier', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'setGovernanceChainIdentifier',
         outputs: [],
     },
@@ -1908,7 +2908,9 @@ export const tapOftABI = [
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_precrime', internalType: 'address', type: 'address' }],
+        inputs: [
+            { name: '_precrime', internalType: 'address', type: 'address' },
+        ],
         name: 'setPrecrime',
         outputs: [],
     },
@@ -1949,14 +2951,22 @@ export const tapOftABI = [
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_useCustomAdapterParams', internalType: 'bool', type: 'bool' }],
+        inputs: [
+            {
+                name: '_useCustomAdapterParams',
+                internalType: 'bool',
+                type: 'bool',
+            },
+        ],
         name: 'setUseCustomAdapterParams',
         outputs: [],
     },
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+        inputs: [
+            { name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' },
+        ],
         name: 'supportsInterface',
         outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
     },
@@ -1970,7 +2980,9 @@ export const tapOftABI = [
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: 'timestamp', internalType: 'uint256', type: 'uint256' }],
+        inputs: [
+            { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'timestampToWeek',
         outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     },
@@ -2012,7 +3024,9 @@ export const tapOftABI = [
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+        inputs: [
+            { name: 'newOwner', internalType: 'address', type: 'address' },
+        ],
         name: 'transferOwnership',
         outputs: [],
     },
@@ -2037,7 +3051,11 @@ export const tapOftABI = [
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export const oracleMockABI = [
-    { stateMutability: 'nonpayable', type: 'constructor', inputs: [{ name: '__name', internalType: 'string', type: 'string' }] },
+    {
+        stateMutability: 'nonpayable',
+        type: 'constructor',
+        inputs: [{ name: '__name', internalType: 'string', type: 'string' }],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -2114,18 +3132,46 @@ export const tapiocaOptionBrokerMockABI = [
             { name: '_tOLP', internalType: 'address', type: 'address' },
             { name: '_oTAP', internalType: 'address', type: 'address' },
             { name: '_tapOFT', internalType: 'address', type: 'address' },
-            { name: '_oracle', internalType: 'contract IOracle', type: 'address' },
-            { name: '_paymentTokenBeneficiary', internalType: 'address', type: 'address' },
+            {
+                name: '_oracle',
+                internalType: 'contract IOracle',
+                type: 'address',
+            },
+            {
+                name: '_paymentTokenBeneficiary',
+                internalType: 'address',
+                type: 'address',
+            },
         ],
     },
     {
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'epoch', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'cumulative', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'averageMagnitude', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'totalParticipants', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'epoch',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'cumulative',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'averageMagnitude',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'totalParticipants',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'AMLDivergence',
     },
@@ -2133,11 +3179,36 @@ export const tapiocaOptionBrokerMockABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'epoch', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'to', internalType: 'address', type: 'address', indexed: true },
-            { name: 'paymentToken', internalType: 'contract IERC20', type: 'address', indexed: true },
-            { name: 'oTapTokenID', internalType: 'uint256', type: 'uint256', indexed: false },
-            { name: 'amount', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'epoch',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'paymentToken',
+                internalType: 'contract IERC20',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'oTapTokenID',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
+            {
+                name: 'amount',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'ExerciseOption',
     },
@@ -2145,9 +3216,24 @@ export const tapiocaOptionBrokerMockABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'epoch', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'tokenId', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'amount', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'epoch',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'tokenId',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'amount',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'ExitPosition',
     },
@@ -2155,9 +3241,24 @@ export const tapiocaOptionBrokerMockABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'epoch', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'extractedTAP', internalType: 'uint256', type: 'uint256', indexed: false },
-            { name: 'epochTAPValuation', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'epoch',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'extractedTAP',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
+            {
+                name: 'epochTAPValuation',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'NewEpoch',
     },
@@ -2165,8 +3266,18 @@ export const tapiocaOptionBrokerMockABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'previousOwner', internalType: 'address', type: 'address', indexed: true },
-            { name: 'newOwner', internalType: 'address', type: 'address', indexed: true },
+            {
+                name: 'previousOwner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'newOwner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
         ],
         name: 'OwnershipTransferred',
     },
@@ -2174,52 +3285,129 @@ export const tapiocaOptionBrokerMockABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'epoch', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'sglAssetID', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'totalDeposited', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'epoch',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'sglAssetID',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'totalDeposited',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
             {
                 name: 'lock',
                 internalType: 'struct LockPosition',
                 type: 'tuple',
                 components: [
-                    { name: 'sglAssetID', internalType: 'uint128', type: 'uint128' },
-                    { name: 'amount', internalType: 'uint128', type: 'uint128' },
-                    { name: 'lockTime', internalType: 'uint128', type: 'uint128' },
-                    { name: 'lockDuration', internalType: 'uint128', type: 'uint128' },
+                    {
+                        name: 'sglAssetID',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'amount',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'lockTime',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'lockDuration',
+                        internalType: 'uint128',
+                        type: 'uint128',
+                    },
                 ],
                 indexed: false,
             },
-            { name: 'discount', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'discount',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'Participate',
     },
     {
         type: 'event',
         anonymous: false,
-        inputs: [{ name: 'account', internalType: 'address', type: 'address', indexed: false }],
+        inputs: [
+            {
+                name: 'account',
+                internalType: 'address',
+                type: 'address',
+                indexed: false,
+            },
+        ],
         name: 'Paused',
     },
     {
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'paymentToken', internalType: 'contract IERC20', type: 'address', indexed: false },
-            { name: 'oracle', internalType: 'contract IOracle', type: 'address', indexed: false },
-            { name: 'oracleData', internalType: 'bytes', type: 'bytes', indexed: false },
+            {
+                name: 'paymentToken',
+                internalType: 'contract IERC20',
+                type: 'address',
+                indexed: false,
+            },
+            {
+                name: 'oracle',
+                internalType: 'contract IOracle',
+                type: 'address',
+                indexed: false,
+            },
+            {
+                name: 'oracleData',
+                internalType: 'bytes',
+                type: 'bytes',
+                indexed: false,
+            },
         ],
         name: 'SetPaymentToken',
     },
     {
         type: 'event',
         anonymous: false,
-        inputs: [{ name: 'account', internalType: 'address', type: 'address', indexed: false }],
+        inputs: [
+            {
+                name: 'account',
+                internalType: 'address',
+                type: 'address',
+                indexed: false,
+            },
+        ],
         name: 'Unpaused',
     },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'claimOwnership', outputs: [] },
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_paymentTokens', internalType: 'address[]', type: 'address[]' }],
+        inputs: [],
+        name: 'claimOwnership',
+        outputs: [],
+    },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [
+            {
+                name: '_paymentTokens',
+                internalType: 'address[]',
+                type: 'address[]',
+            },
+        ],
         name: 'collectPaymentTokens',
         outputs: [],
     },
@@ -2242,7 +3430,11 @@ export const tapiocaOptionBrokerMockABI = [
         type: 'function',
         inputs: [
             { name: '_oTAPTokenID', internalType: 'uint256', type: 'uint256' },
-            { name: '_paymentToken', internalType: 'contract IERC20', type: 'address' },
+            {
+                name: '_paymentToken',
+                internalType: 'contract IERC20',
+                type: 'address',
+            },
             { name: '_tapAmount', internalType: 'uint256', type: 'uint256' },
         ],
         name: 'exerciseOption',
@@ -2251,7 +3443,9 @@ export const tapiocaOptionBrokerMockABI = [
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_oTAPTokenID', internalType: 'uint256', type: 'uint256' }],
+        inputs: [
+            { name: '_oTAPTokenID', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'exitPosition',
         outputs: [],
     },
@@ -2260,13 +3454,25 @@ export const tapiocaOptionBrokerMockABI = [
         type: 'function',
         inputs: [
             { name: '_oTAPTokenID', internalType: 'uint256', type: 'uint256' },
-            { name: '_paymentToken', internalType: 'contract IERC20', type: 'address' },
+            {
+                name: '_paymentToken',
+                internalType: 'contract IERC20',
+                type: 'address',
+            },
             { name: '_tapAmount', internalType: 'uint256', type: 'uint256' },
         ],
         name: 'getOTCDealDetails',
         outputs: [
-            { name: 'eligibleTapAmount', internalType: 'uint256', type: 'uint256' },
-            { name: 'paymentTokenAmount', internalType: 'uint256', type: 'uint256' },
+            {
+                name: 'eligibleTapAmount',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
+            {
+                name: 'paymentTokenAmount',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
         ],
     },
     {
@@ -2276,7 +3482,13 @@ export const tapiocaOptionBrokerMockABI = [
         name: 'lastEpochUpdate',
         outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'newEpoch', outputs: [] },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [],
+        name: 'newEpoch',
+        outputs: [],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -2284,7 +3496,13 @@ export const tapiocaOptionBrokerMockABI = [
         name: 'oTAP',
         outputs: [{ name: '', internalType: 'contract OTAP', type: 'address' }],
     },
-    { stateMutability: 'nonpayable', type: 'function', inputs: [], name: 'oTAPBrokerClaim', outputs: [] },
+    {
+        stateMutability: 'nonpayable',
+        type: 'function',
+        inputs: [],
+        name: 'oTAPBrokerClaim',
+        outputs: [],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -2309,17 +3527,31 @@ export const tapiocaOptionBrokerMockABI = [
         name: 'participants',
         outputs: [
             { name: 'hasVotingPower', internalType: 'bool', type: 'bool' },
-            { name: 'averageMagnitude', internalType: 'uint256', type: 'uint256' },
+            {
+                name: 'averageMagnitude',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
         ],
     },
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_tOLPTokenID', internalType: 'uint256', type: 'uint256' }],
+        inputs: [
+            { name: '_tOLPTokenID', internalType: 'uint256', type: 'uint256' },
+        ],
         name: 'participate',
-        outputs: [{ name: 'oTAPTokenID', internalType: 'uint256', type: 'uint256' }],
+        outputs: [
+            { name: 'oTAPTokenID', internalType: 'uint256', type: 'uint256' },
+        ],
     },
-    { stateMutability: 'view', type: 'function', inputs: [], name: 'paused', outputs: [{ name: '', internalType: 'bool', type: 'bool' }] },
+    {
+        stateMutability: 'view',
+        type: 'function',
+        inputs: [],
+        name: 'paused',
+        outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    },
     {
         stateMutability: 'view',
         type: 'function',
@@ -2330,10 +3562,16 @@ export const tapiocaOptionBrokerMockABI = [
     {
         stateMutability: 'view',
         type: 'function',
-        inputs: [{ name: '', internalType: 'contract IERC20', type: 'address' }],
+        inputs: [
+            { name: '', internalType: 'contract IERC20', type: 'address' },
+        ],
         name: 'paymentTokens',
         outputs: [
-            { name: 'oracle', internalType: 'contract IOracle', type: 'address' },
+            {
+                name: 'oracle',
+                internalType: 'contract IOracle',
+                type: 'address',
+            },
             { name: 'oracleData', internalType: 'bytes', type: 'bytes' },
         ],
     },
@@ -2348,8 +3586,16 @@ export const tapiocaOptionBrokerMockABI = [
         stateMutability: 'nonpayable',
         type: 'function',
         inputs: [
-            { name: '_paymentToken', internalType: 'contract IERC20', type: 'address' },
-            { name: '_oracle', internalType: 'contract IOracle', type: 'address' },
+            {
+                name: '_paymentToken',
+                internalType: 'contract IERC20',
+                type: 'address',
+            },
+            {
+                name: '_oracle',
+                internalType: 'contract IOracle',
+                type: 'address',
+            },
             { name: '_oracleData', internalType: 'bytes', type: 'bytes' },
         ],
         name: 'setPaymentToken',
@@ -2358,7 +3604,13 @@ export const tapiocaOptionBrokerMockABI = [
     {
         stateMutability: 'nonpayable',
         type: 'function',
-        inputs: [{ name: '_paymentTokenBeneficiary', internalType: 'address', type: 'address' }],
+        inputs: [
+            {
+                name: '_paymentTokenBeneficiary',
+                internalType: 'address',
+                type: 'address',
+            },
+        ],
         name: 'setPaymentTokenBeneficiary',
         outputs: [],
     },
@@ -2377,21 +3629,31 @@ export const tapiocaOptionBrokerMockABI = [
         type: 'function',
         inputs: [],
         name: 'tOLP',
-        outputs: [{ name: '', internalType: 'contract TapiocaOptionLiquidityProvision', type: 'address' }],
+        outputs: [
+            {
+                name: '',
+                internalType: 'contract TapiocaOptionLiquidityProvision',
+                type: 'address',
+            },
+        ],
     },
     {
         stateMutability: 'view',
         type: 'function',
         inputs: [],
         name: 'tapOFT',
-        outputs: [{ name: '', internalType: 'contract TapOFT', type: 'address' }],
+        outputs: [
+            { name: '', internalType: 'contract TapOFT', type: 'address' },
+        ],
     },
     {
         stateMutability: 'view',
         type: 'function',
         inputs: [],
         name: 'tapOracle',
-        outputs: [{ name: '', internalType: 'contract IOracle', type: 'address' }],
+        outputs: [
+            { name: '', internalType: 'contract IOracle', type: 'address' },
+        ],
     },
     {
         stateMutability: 'view',
@@ -2417,9 +3679,21 @@ export const tapiocaOptionBrokerMockABI = [
         inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
         name: 'twAML',
         outputs: [
-            { name: 'totalParticipants', internalType: 'uint256', type: 'uint256' },
-            { name: 'averageMagnitude', internalType: 'uint256', type: 'uint256' },
-            { name: 'totalDeposited', internalType: 'uint256', type: 'uint256' },
+            {
+                name: 'totalParticipants',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
+            {
+                name: 'averageMagnitude',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
+            {
+                name: 'totalDeposited',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
             { name: 'cumulative', internalType: 'uint256', type: 'uint256' },
         ],
     },
@@ -2436,7 +3710,11 @@ export const erc20MockABI = [
         inputs: [
             { name: '_name', internalType: 'string', type: 'string' },
             { name: '_symbol', internalType: 'string', type: 'string' },
-            { name: '_initialAmount', internalType: 'uint256', type: 'uint256' },
+            {
+                name: '_initialAmount',
+                internalType: 'uint256',
+                type: 'uint256',
+            },
             { name: '_decimals', internalType: 'uint256', type: 'uint256' },
         ],
     },
@@ -2444,9 +3722,24 @@ export const erc20MockABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'owner', internalType: 'address', type: 'address', indexed: true },
-            { name: 'spender', internalType: 'address', type: 'address', indexed: true },
-            { name: 'value', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'owner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'spender',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'value',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'Approval',
     },
@@ -2454,9 +3747,24 @@ export const erc20MockABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'from', internalType: 'address', type: 'address', indexed: true },
-            { name: 'to', internalType: 'address', type: 'address', indexed: true },
-            { name: 'value', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'from',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'value',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'Transfer',
     },
@@ -2600,17 +3908,40 @@ export const yieldBoxABI = [
         stateMutability: 'nonpayable',
         type: 'constructor',
         inputs: [
-            { name: 'wrappedNative_', internalType: 'contract IWrappedNative', type: 'address' },
-            { name: 'uriBuilder_', internalType: 'contract YieldBoxURIBuilder', type: 'address' },
+            {
+                name: 'wrappedNative_',
+                internalType: 'contract IWrappedNative',
+                type: 'address',
+            },
+            {
+                name: 'uriBuilder_',
+                internalType: 'contract YieldBoxURIBuilder',
+                type: 'address',
+            },
         ],
     },
     {
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_owner', internalType: 'address', type: 'address', indexed: true },
-            { name: '_operator', internalType: 'address', type: 'address', indexed: true },
-            { name: '_approved', internalType: 'bool', type: 'bool', indexed: false },
+            {
+                name: '_owner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_operator',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_approved',
+                internalType: 'bool',
+                type: 'bool',
+                indexed: false,
+            },
         ],
         name: 'ApprovalForAll',
     },
@@ -2618,11 +3949,36 @@ export const yieldBoxABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'tokenType', internalType: 'enum TokenType', type: 'uint8', indexed: true },
-            { name: 'contractAddress', internalType: 'address', type: 'address', indexed: true },
-            { name: 'strategy', internalType: 'contract IStrategy', type: 'address', indexed: false },
-            { name: 'tokenId', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'assetId', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'tokenType',
+                internalType: 'enum TokenType',
+                type: 'uint8',
+                indexed: true,
+            },
+            {
+                name: 'contractAddress',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'strategy',
+                internalType: 'contract IStrategy',
+                type: 'address',
+                indexed: false,
+            },
+            {
+                name: 'tokenId',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'assetId',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'AssetRegistered',
     },
@@ -2630,9 +3986,24 @@ export const yieldBoxABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'tokenId', internalType: 'uint256', type: 'uint256', indexed: true },
-            { name: 'previousOwner', internalType: 'address', type: 'address', indexed: true },
-            { name: 'newOwner', internalType: 'address', type: 'address', indexed: true },
+            {
+                name: 'tokenId',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
+            {
+                name: 'previousOwner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'newOwner',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
         ],
         name: 'OwnershipTransferred',
     },
@@ -2640,11 +4011,36 @@ export const yieldBoxABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: 'creator', internalType: 'address', type: 'address', indexed: true },
-            { name: 'name', internalType: 'string', type: 'string', indexed: false },
-            { name: 'symbol', internalType: 'string', type: 'string', indexed: false },
-            { name: 'decimals', internalType: 'uint8', type: 'uint8', indexed: false },
-            { name: 'tokenId', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: 'creator',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: 'name',
+                internalType: 'string',
+                type: 'string',
+                indexed: false,
+            },
+            {
+                name: 'symbol',
+                internalType: 'string',
+                type: 'string',
+                indexed: false,
+            },
+            {
+                name: 'decimals',
+                internalType: 'uint8',
+                type: 'uint8',
+                indexed: false,
+            },
+            {
+                name: 'tokenId',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'TokenCreated',
     },
@@ -2652,11 +4048,36 @@ export const yieldBoxABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_operator', internalType: 'address', type: 'address', indexed: true },
-            { name: '_from', internalType: 'address', type: 'address', indexed: true },
-            { name: '_to', internalType: 'address', type: 'address', indexed: true },
-            { name: '_ids', internalType: 'uint256[]', type: 'uint256[]', indexed: false },
-            { name: '_values', internalType: 'uint256[]', type: 'uint256[]', indexed: false },
+            {
+                name: '_operator',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_from',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_ids',
+                internalType: 'uint256[]',
+                type: 'uint256[]',
+                indexed: false,
+            },
+            {
+                name: '_values',
+                internalType: 'uint256[]',
+                type: 'uint256[]',
+                indexed: false,
+            },
         ],
         name: 'TransferBatch',
     },
@@ -2664,11 +4085,36 @@ export const yieldBoxABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_operator', internalType: 'address', type: 'address', indexed: true },
-            { name: '_from', internalType: 'address', type: 'address', indexed: true },
-            { name: '_to', internalType: 'address', type: 'address', indexed: true },
-            { name: '_id', internalType: 'uint256', type: 'uint256', indexed: false },
-            { name: '_value', internalType: 'uint256', type: 'uint256', indexed: false },
+            {
+                name: '_operator',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_from',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_to',
+                internalType: 'address',
+                type: 'address',
+                indexed: true,
+            },
+            {
+                name: '_id',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
+            {
+                name: '_value',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: false,
+            },
         ],
         name: 'TransferSingle',
     },
@@ -2676,8 +4122,18 @@ export const yieldBoxABI = [
         type: 'event',
         anonymous: false,
         inputs: [
-            { name: '_value', internalType: 'string', type: 'string', indexed: false },
-            { name: '_id', internalType: 'uint256', type: 'uint256', indexed: true },
+            {
+                name: '_value',
+                internalType: 'string',
+                type: 'string',
+                indexed: false,
+            },
+            {
+                name: '_id',
+                internalType: 'uint256',
+                type: 'uint256',
+                indexed: true,
+            },
         ],
         name: 'URI',
     },
@@ -2714,9 +4170,21 @@ export const yieldBoxABI = [
         inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
         name: 'assets',
         outputs: [
-            { name: 'tokenType', internalType: 'enum TokenType', type: 'uint8' },
-            { name: 'contractAddress', internalType: 'address', type: 'address' },
-            { name: 'strategy', internalType: 'contract IStrategy', type: 'address' },
+            {
+                name: 'tokenType',
+                internalType: 'enum TokenType',
+                type: 'uint8',
+            },
+            {
+                name: 'contractAddress',
+                internalType: 'address',
+                type: 'address',
+            },
+            {
+                name: 'strategy',
+                internalType: 'contract IStrategy',
+                type: 'address',
+            },
             { name: 'tokenId', internalType: 'uint256', type: 'uint256' },
         ],
     },
@@ -2738,7 +4206,9 @@ export const yieldBoxABI = [
             { name: 'ids', internalType: 'uint256[]', type: 'uint256[]' },
         ],
         name: 'balanceOfBatch',
-        outputs: [{ name: 'balances', internalType: 'uint256[]', type: 'uint256[]' }],
+        outputs: [
+            { name: 'balances', internalType: 'uint256[]', type: 'uint256[]' },
+        ],
     },
     {
         stateMutability: 'payable',
@@ -2825,9 +4295,21 @@ export const yieldBoxABI = [
         stateMutability: 'nonpayable',
         type: 'function',
         inputs: [
-            { name: 'tokenType', internalType: 'enum TokenType', type: 'uint8' },
-            { name: 'contractAddress', internalType: 'address', type: 'address' },
-            { name: 'strategy', internalType: 'contract IStrategy', type: 'address' },
+            {
+                name: 'tokenType',
+                internalType: 'enum TokenType',
+                type: 'uint8',
+            },
+            {
+                name: 'contractAddress',
+                internalType: 'address',
+                type: 'address',
+            },
+            {
+                name: 'strategy',
+                internalType: 'contract IStrategy',
+                type: 'address',
+            },
             { name: 'tokenId', internalType: 'uint256', type: 'uint256' },
             { name: 'from', internalType: 'address', type: 'address' },
             { name: 'to', internalType: 'address', type: 'address' },
@@ -2860,7 +4342,11 @@ export const yieldBoxABI = [
         stateMutability: 'payable',
         type: 'function',
         inputs: [
-            { name: 'strategy', internalType: 'contract IStrategy', type: 'address' },
+            {
+                name: 'strategy',
+                internalType: 'contract IStrategy',
+                type: 'address',
+            },
             { name: 'to', internalType: 'address', type: 'address' },
             { name: 'amount', internalType: 'uint256', type: 'uint256' },
         ],
@@ -3022,13 +4508,27 @@ export const yieldBoxABI = [
         stateMutability: 'nonpayable',
         type: 'function',
         inputs: [
-            { name: 'tokenType', internalType: 'enum TokenType', type: 'uint8' },
-            { name: 'contractAddress', internalType: 'address', type: 'address' },
-            { name: 'strategy', internalType: 'contract IStrategy', type: 'address' },
+            {
+                name: 'tokenType',
+                internalType: 'enum TokenType',
+                type: 'uint8',
+            },
+            {
+                name: 'contractAddress',
+                internalType: 'address',
+                type: 'address',
+            },
+            {
+                name: 'strategy',
+                internalType: 'contract IStrategy',
+                type: 'address',
+            },
             { name: 'tokenId', internalType: 'uint256', type: 'uint256' },
         ],
         name: 'registerAsset',
-        outputs: [{ name: 'assetId', internalType: 'uint256', type: 'uint256' }],
+        outputs: [
+            { name: 'assetId', internalType: 'uint256', type: 'uint256' },
+        ],
     },
     {
         stateMutability: 'nonpayable',
@@ -3069,7 +4569,9 @@ export const yieldBoxABI = [
     {
         stateMutability: 'pure',
         type: 'function',
-        inputs: [{ name: 'interfaceID', internalType: 'bytes4', type: 'bytes4' }],
+        inputs: [
+            { name: 'interfaceID', internalType: 'bytes4', type: 'bytes4' },
+        ],
         name: 'supportsInterface',
         outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
     },
@@ -3157,7 +4659,13 @@ export const yieldBoxABI = [
         type: 'function',
         inputs: [],
         name: 'uriBuilder',
-        outputs: [{ name: '', internalType: 'contract YieldBoxURIBuilder', type: 'address' }],
+        outputs: [
+            {
+                name: '',
+                internalType: 'contract YieldBoxURIBuilder',
+                type: 'address',
+            },
+        ],
     },
     {
         stateMutability: 'nonpayable',
@@ -3180,7 +4688,13 @@ export const yieldBoxABI = [
         type: 'function',
         inputs: [],
         name: 'wrappedNative',
-        outputs: [{ name: '', internalType: 'contract IWrappedNative', type: 'address' }],
+        outputs: [
+            {
+                name: '',
+                internalType: 'contract IWrappedNative',
+                type: 'address',
+            },
+        ],
     },
     { stateMutability: 'payable', type: 'receive' },
 ] as const;
@@ -3192,10 +4706,14 @@ export const yieldBoxABI = [
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link vestingABI}__.
  */
-export function readVesting<TAbi extends readonly unknown[] = typeof vestingABI, TFunctionName extends string = string>(
-    config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>,
-) {
-    return readContract({ abi: vestingABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
+export function readVesting<
+    TAbi extends readonly unknown[] = typeof vestingABI,
+    TFunctionName extends string = string,
+>(config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>) {
+    return readContract({
+        abi: vestingABI,
+        ...config,
+    } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -3203,10 +4721,19 @@ export function readVesting<TAbi extends readonly unknown[] = typeof vestingABI,
  */
 export function writeVesting<TFunctionName extends string>(
     config:
-        | Omit<WriteContractPreparedArgs<typeof vestingABI, TFunctionName>, 'abi'>
-        | Omit<WriteContractUnpreparedArgs<typeof vestingABI, TFunctionName>, 'abi'>,
+        | Omit<
+              WriteContractPreparedArgs<typeof vestingABI, TFunctionName>,
+              'abi'
+          >
+        | Omit<
+              WriteContractUnpreparedArgs<typeof vestingABI, TFunctionName>,
+              'abi'
+          >,
 ) {
-    return writeContract({ abi: vestingABI, ...config } as WriteContractArgs<typeof vestingABI, TFunctionName>);
+    return writeContract({ abi: vestingABI, ...config } as WriteContractArgs<
+        typeof vestingABI,
+        TFunctionName
+    >);
 }
 
 /**
@@ -3216,7 +4743,10 @@ export function readTapiocaOptionBroker<
     TAbi extends readonly unknown[] = typeof tapiocaOptionBrokerABI,
     TFunctionName extends string = string,
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>) {
-    return readContract({ abi: tapiocaOptionBrokerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
+    return readContract({
+        abi: tapiocaOptionBrokerABI,
+        ...config,
+    } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -3224,10 +4754,25 @@ export function readTapiocaOptionBroker<
  */
 export function writeTapiocaOptionBroker<TFunctionName extends string>(
     config:
-        | Omit<WriteContractPreparedArgs<typeof tapiocaOptionBrokerABI, TFunctionName>, 'abi'>
-        | Omit<WriteContractUnpreparedArgs<typeof tapiocaOptionBrokerABI, TFunctionName>, 'abi'>,
+        | Omit<
+              WriteContractPreparedArgs<
+                  typeof tapiocaOptionBrokerABI,
+                  TFunctionName
+              >,
+              'abi'
+          >
+        | Omit<
+              WriteContractUnpreparedArgs<
+                  typeof tapiocaOptionBrokerABI,
+                  TFunctionName
+              >,
+              'abi'
+          >,
 ) {
-    return writeContract({ abi: tapiocaOptionBrokerABI, ...config } as WriteContractArgs<typeof tapiocaOptionBrokerABI, TFunctionName>);
+    return writeContract({
+        abi: tapiocaOptionBrokerABI,
+        ...config,
+    } as WriteContractArgs<typeof tapiocaOptionBrokerABI, TFunctionName>);
 }
 
 /**
@@ -3237,30 +4782,51 @@ export function readTapiocaOptionLiquidityProvision<
     TAbi extends readonly unknown[] = typeof tapiocaOptionLiquidityProvisionABI,
     TFunctionName extends string = string,
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>) {
-    return readContract({ abi: tapiocaOptionLiquidityProvisionABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
+    return readContract({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        ...config,
+    } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
  * Wraps __{@link writeContract}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__.
  */
-export function writeTapiocaOptionLiquidityProvision<TFunctionName extends string>(
+export function writeTapiocaOptionLiquidityProvision<
+    TFunctionName extends string,
+>(
     config:
-        | Omit<WriteContractPreparedArgs<typeof tapiocaOptionLiquidityProvisionABI, TFunctionName>, 'abi'>
-        | Omit<WriteContractUnpreparedArgs<typeof tapiocaOptionLiquidityProvisionABI, TFunctionName>, 'abi'>,
+        | Omit<
+              WriteContractPreparedArgs<
+                  typeof tapiocaOptionLiquidityProvisionABI,
+                  TFunctionName
+              >,
+              'abi'
+          >
+        | Omit<
+              WriteContractUnpreparedArgs<
+                  typeof tapiocaOptionLiquidityProvisionABI,
+                  TFunctionName
+              >,
+              'abi'
+          >,
 ) {
-    return writeContract({ abi: tapiocaOptionLiquidityProvisionABI, ...config } as WriteContractArgs<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        TFunctionName
-    >);
+    return writeContract({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        ...config,
+    } as WriteContractArgs<typeof tapiocaOptionLiquidityProvisionABI, TFunctionName>);
 }
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link otapABI}__.
  */
-export function readOtap<TAbi extends readonly unknown[] = typeof otapABI, TFunctionName extends string = string>(
-    config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>,
-) {
-    return readContract({ abi: otapABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
+export function readOtap<
+    TAbi extends readonly unknown[] = typeof otapABI,
+    TFunctionName extends string = string,
+>(config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>) {
+    return readContract({
+        abi: otapABI,
+        ...config,
+    } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -3269,18 +4835,28 @@ export function readOtap<TAbi extends readonly unknown[] = typeof otapABI, TFunc
 export function writeOtap<TFunctionName extends string>(
     config:
         | Omit<WriteContractPreparedArgs<typeof otapABI, TFunctionName>, 'abi'>
-        | Omit<WriteContractUnpreparedArgs<typeof otapABI, TFunctionName>, 'abi'>,
+        | Omit<
+              WriteContractUnpreparedArgs<typeof otapABI, TFunctionName>,
+              'abi'
+          >,
 ) {
-    return writeContract({ abi: otapABI, ...config } as WriteContractArgs<typeof otapABI, TFunctionName>);
+    return writeContract({ abi: otapABI, ...config } as WriteContractArgs<
+        typeof otapABI,
+        TFunctionName
+    >);
 }
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link tapOftABI}__.
  */
-export function readTapOft<TAbi extends readonly unknown[] = typeof tapOftABI, TFunctionName extends string = string>(
-    config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>,
-) {
-    return readContract({ abi: tapOftABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
+export function readTapOft<
+    TAbi extends readonly unknown[] = typeof tapOftABI,
+    TFunctionName extends string = string,
+>(config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>) {
+    return readContract({
+        abi: tapOftABI,
+        ...config,
+    } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -3288,19 +4864,32 @@ export function readTapOft<TAbi extends readonly unknown[] = typeof tapOftABI, T
  */
 export function writeTapOft<TFunctionName extends string>(
     config:
-        | Omit<WriteContractPreparedArgs<typeof tapOftABI, TFunctionName>, 'abi'>
-        | Omit<WriteContractUnpreparedArgs<typeof tapOftABI, TFunctionName>, 'abi'>,
+        | Omit<
+              WriteContractPreparedArgs<typeof tapOftABI, TFunctionName>,
+              'abi'
+          >
+        | Omit<
+              WriteContractUnpreparedArgs<typeof tapOftABI, TFunctionName>,
+              'abi'
+          >,
 ) {
-    return writeContract({ abi: tapOftABI, ...config } as WriteContractArgs<typeof tapOftABI, TFunctionName>);
+    return writeContract({ abi: tapOftABI, ...config } as WriteContractArgs<
+        typeof tapOftABI,
+        TFunctionName
+    >);
 }
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link oracleMockABI}__.
  */
-export function readOracleMock<TAbi extends readonly unknown[] = typeof oracleMockABI, TFunctionName extends string = string>(
-    config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>,
-) {
-    return readContract({ abi: oracleMockABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
+export function readOracleMock<
+    TAbi extends readonly unknown[] = typeof oracleMockABI,
+    TFunctionName extends string = string,
+>(config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>) {
+    return readContract({
+        abi: oracleMockABI,
+        ...config,
+    } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -3308,10 +4897,19 @@ export function readOracleMock<TAbi extends readonly unknown[] = typeof oracleMo
  */
 export function writeOracleMock<TFunctionName extends string>(
     config:
-        | Omit<WriteContractPreparedArgs<typeof oracleMockABI, TFunctionName>, 'abi'>
-        | Omit<WriteContractUnpreparedArgs<typeof oracleMockABI, TFunctionName>, 'abi'>,
+        | Omit<
+              WriteContractPreparedArgs<typeof oracleMockABI, TFunctionName>,
+              'abi'
+          >
+        | Omit<
+              WriteContractUnpreparedArgs<typeof oracleMockABI, TFunctionName>,
+              'abi'
+          >,
 ) {
-    return writeContract({ abi: oracleMockABI, ...config } as WriteContractArgs<typeof oracleMockABI, TFunctionName>);
+    return writeContract({ abi: oracleMockABI, ...config } as WriteContractArgs<
+        typeof oracleMockABI,
+        TFunctionName
+    >);
 }
 
 /**
@@ -3321,7 +4919,10 @@ export function readTapiocaOptionBrokerMock<
     TAbi extends readonly unknown[] = typeof tapiocaOptionBrokerMockABI,
     TFunctionName extends string = string,
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>) {
-    return readContract({ abi: tapiocaOptionBrokerMockABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
+    return readContract({
+        abi: tapiocaOptionBrokerMockABI,
+        ...config,
+    } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -3329,22 +4930,38 @@ export function readTapiocaOptionBrokerMock<
  */
 export function writeTapiocaOptionBrokerMock<TFunctionName extends string>(
     config:
-        | Omit<WriteContractPreparedArgs<typeof tapiocaOptionBrokerMockABI, TFunctionName>, 'abi'>
-        | Omit<WriteContractUnpreparedArgs<typeof tapiocaOptionBrokerMockABI, TFunctionName>, 'abi'>,
+        | Omit<
+              WriteContractPreparedArgs<
+                  typeof tapiocaOptionBrokerMockABI,
+                  TFunctionName
+              >,
+              'abi'
+          >
+        | Omit<
+              WriteContractUnpreparedArgs<
+                  typeof tapiocaOptionBrokerMockABI,
+                  TFunctionName
+              >,
+              'abi'
+          >,
 ) {
-    return writeContract({ abi: tapiocaOptionBrokerMockABI, ...config } as WriteContractArgs<
-        typeof tapiocaOptionBrokerMockABI,
-        TFunctionName
-    >);
+    return writeContract({
+        abi: tapiocaOptionBrokerMockABI,
+        ...config,
+    } as WriteContractArgs<typeof tapiocaOptionBrokerMockABI, TFunctionName>);
 }
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link erc20MockABI}__.
  */
-export function readErc20Mock<TAbi extends readonly unknown[] = typeof erc20MockABI, TFunctionName extends string = string>(
-    config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>,
-) {
-    return readContract({ abi: erc20MockABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
+export function readErc20Mock<
+    TAbi extends readonly unknown[] = typeof erc20MockABI,
+    TFunctionName extends string = string,
+>(config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>) {
+    return readContract({
+        abi: erc20MockABI,
+        ...config,
+    } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -3352,19 +4969,32 @@ export function readErc20Mock<TAbi extends readonly unknown[] = typeof erc20Mock
  */
 export function writeErc20Mock<TFunctionName extends string>(
     config:
-        | Omit<WriteContractPreparedArgs<typeof erc20MockABI, TFunctionName>, 'abi'>
-        | Omit<WriteContractUnpreparedArgs<typeof erc20MockABI, TFunctionName>, 'abi'>,
+        | Omit<
+              WriteContractPreparedArgs<typeof erc20MockABI, TFunctionName>,
+              'abi'
+          >
+        | Omit<
+              WriteContractUnpreparedArgs<typeof erc20MockABI, TFunctionName>,
+              'abi'
+          >,
 ) {
-    return writeContract({ abi: erc20MockABI, ...config } as WriteContractArgs<typeof erc20MockABI, TFunctionName>);
+    return writeContract({ abi: erc20MockABI, ...config } as WriteContractArgs<
+        typeof erc20MockABI,
+        TFunctionName
+    >);
 }
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link yieldBoxABI}__.
  */
-export function readYieldBox<TAbi extends readonly unknown[] = typeof yieldBoxABI, TFunctionName extends string = string>(
-    config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>,
-) {
-    return readContract({ abi: yieldBoxABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
+export function readYieldBox<
+    TAbi extends readonly unknown[] = typeof yieldBoxABI,
+    TFunctionName extends string = string,
+>(config: Omit<ReadContractConfig<TAbi, TFunctionName>, 'abi'>) {
+    return readContract({
+        abi: yieldBoxABI,
+        ...config,
+    } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -3372,10 +5002,19 @@ export function readYieldBox<TAbi extends readonly unknown[] = typeof yieldBoxAB
  */
 export function writeYieldBox<TFunctionName extends string>(
     config:
-        | Omit<WriteContractPreparedArgs<typeof yieldBoxABI, TFunctionName>, 'abi'>
-        | Omit<WriteContractUnpreparedArgs<typeof yieldBoxABI, TFunctionName>, 'abi'>,
+        | Omit<
+              WriteContractPreparedArgs<typeof yieldBoxABI, TFunctionName>,
+              'abi'
+          >
+        | Omit<
+              WriteContractUnpreparedArgs<typeof yieldBoxABI, TFunctionName>,
+              'abi'
+          >,
 ) {
-    return writeContract({ abi: yieldBoxABI, ...config } as WriteContractArgs<typeof yieldBoxABI, TFunctionName>);
+    return writeContract({ abi: yieldBoxABI, ...config } as WriteContractArgs<
+        typeof yieldBoxABI,
+        TFunctionName
+    >);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3393,160 +5032,279 @@ export function useVesting(config: Omit<UseContractConfig, 'abi'> = {} as any) {
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__.
  */
 export function useVestingRead<TFunctionName extends string>(
-    config: Omit<UseContractReadConfig<typeof vestingABI, TFunctionName>, 'abi'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, TFunctionName>,
+        'abi'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: vestingABI, ...config } as UseContractReadConfig<typeof vestingABI, TFunctionName>);
+    return useContractRead({
+        abi: vestingABI,
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, TFunctionName>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"claimable"`.
  */
 export function useVestingClaimable(
-    config: Omit<UseContractReadConfig<typeof vestingABI, 'claimable'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'claimable'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: vestingABI, functionName: 'claimable', ...config } as UseContractReadConfig<
-        typeof vestingABI,
-        'claimable'
-    >);
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'claimable',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'claimable'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"cliff"`.
  */
-export function useVestingCliff(config: Omit<UseContractReadConfig<typeof vestingABI, 'cliff'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: vestingABI, functionName: 'cliff', ...config } as UseContractReadConfig<typeof vestingABI, 'cliff'>);
+export function useVestingCliff(
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'cliff'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'cliff',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'cliff'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"conservator"`.
  */
 export function useVestingConservator(
-    config: Omit<UseContractReadConfig<typeof vestingABI, 'conservator'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'conservator'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: vestingABI, functionName: 'conservator', ...config } as UseContractReadConfig<
-        typeof vestingABI,
-        'conservator'
-    >);
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'conservator',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'conservator'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"duration"`.
  */
-export function useVestingDuration(config: Omit<UseContractReadConfig<typeof vestingABI, 'duration'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: vestingABI, functionName: 'duration', ...config } as UseContractReadConfig<
-        typeof vestingABI,
-        'duration'
-    >);
+export function useVestingDuration(
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'duration'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'duration',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'duration'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"owner"`.
  */
-export function useVestingOwner(config: Omit<UseContractReadConfig<typeof vestingABI, 'owner'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: vestingABI, functionName: 'owner', ...config } as UseContractReadConfig<typeof vestingABI, 'owner'>);
+export function useVestingOwner(
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'owner'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'owner',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'owner'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"paused"`.
  */
-export function useVestingPaused(config: Omit<UseContractReadConfig<typeof vestingABI, 'paused'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: vestingABI, functionName: 'paused', ...config } as UseContractReadConfig<typeof vestingABI, 'paused'>);
+export function useVestingPaused(
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'paused'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'paused',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'paused'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"pendingOwner"`.
  */
 export function useVestingPendingOwner(
-    config: Omit<UseContractReadConfig<typeof vestingABI, 'pendingOwner'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'pendingOwner'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: vestingABI, functionName: 'pendingOwner', ...config } as UseContractReadConfig<
-        typeof vestingABI,
-        'pendingOwner'
-    >);
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'pendingOwner',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'pendingOwner'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"revokeRequestedAt"`.
  */
 export function useVestingRevokeRequestedAt(
-    config: Omit<UseContractReadConfig<typeof vestingABI, 'revokeRequestedAt'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'revokeRequestedAt'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: vestingABI, functionName: 'revokeRequestedAt', ...config } as UseContractReadConfig<
-        typeof vestingABI,
-        'revokeRequestedAt'
-    >);
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'revokeRequestedAt',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'revokeRequestedAt'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"revokeTimeWindow"`.
  */
 export function useVestingRevokeTimeWindow(
-    config: Omit<UseContractReadConfig<typeof vestingABI, 'revokeTimeWindow'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'revokeTimeWindow'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: vestingABI, functionName: 'revokeTimeWindow', ...config } as UseContractReadConfig<
-        typeof vestingABI,
-        'revokeTimeWindow'
-    >);
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'revokeTimeWindow',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'revokeTimeWindow'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"revoked"`.
  */
-export function useVestingRevoked(config: Omit<UseContractReadConfig<typeof vestingABI, 'revoked'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: vestingABI, functionName: 'revoked', ...config } as UseContractReadConfig<typeof vestingABI, 'revoked'>);
+export function useVestingRevoked(
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'revoked'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'revoked',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'revoked'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"seeded"`.
  */
-export function useVestingSeeded(config: Omit<UseContractReadConfig<typeof vestingABI, 'seeded'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: vestingABI, functionName: 'seeded', ...config } as UseContractReadConfig<typeof vestingABI, 'seeded'>);
+export function useVestingSeeded(
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'seeded'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'seeded',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'seeded'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"start"`.
  */
-export function useVestingStart(config: Omit<UseContractReadConfig<typeof vestingABI, 'start'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: vestingABI, functionName: 'start', ...config } as UseContractReadConfig<typeof vestingABI, 'start'>);
+export function useVestingStart(
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'start'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'start',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'start'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"token"`.
  */
-export function useVestingToken(config: Omit<UseContractReadConfig<typeof vestingABI, 'token'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: vestingABI, functionName: 'token', ...config } as UseContractReadConfig<typeof vestingABI, 'token'>);
+export function useVestingToken(
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'token'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'token',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'token'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"totalClaimed"`.
  */
 export function useVestingTotalClaimed(
-    config: Omit<UseContractReadConfig<typeof vestingABI, 'totalClaimed'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'totalClaimed'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: vestingABI, functionName: 'totalClaimed', ...config } as UseContractReadConfig<
-        typeof vestingABI,
-        'totalClaimed'
-    >);
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'totalClaimed',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'totalClaimed'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"users"`.
  */
-export function useVestingUsers(config: Omit<UseContractReadConfig<typeof vestingABI, 'users'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: vestingABI, functionName: 'users', ...config } as UseContractReadConfig<typeof vestingABI, 'users'>);
+export function useVestingUsers(
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'users'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'users',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'users'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vestingABI}__ and `functionName` set to `"vested"`.
  */
-export function useVestingVested(config: Omit<UseContractReadConfig<typeof vestingABI, 'vested'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: vestingABI, functionName: 'vested', ...config } as UseContractReadConfig<typeof vestingABI, 'vested'>);
+export function useVestingVested(
+    config: Omit<
+        UseContractReadConfig<typeof vestingABI, 'vested'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: vestingABI,
+        functionName: 'vested',
+        ...config,
+    } as UseContractReadConfig<typeof vestingABI, 'vested'>);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__.
  */
-export function useTapiocaOptionBroker(config: Omit<UseContractConfig, 'abi'> = {} as any) {
+export function useTapiocaOptionBroker(
+    config: Omit<UseContractConfig, 'abi'> = {} as any,
+) {
     return useContract({ abi: tapiocaOptionBrokerABI, ...config });
 }
 
@@ -3554,247 +5312,344 @@ export function useTapiocaOptionBroker(config: Omit<UseContractConfig, 'abi'> = 
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__.
  */
 export function useTapiocaOptionBrokerRead<TFunctionName extends string>(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, TFunctionName>, 'abi'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, TFunctionName>,
+        'abi'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        TFunctionName
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, TFunctionName>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"epoch"`.
  */
 export function useTapiocaOptionBrokerEpoch(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'epoch'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'epoch'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'epoch', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'epoch'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'epoch',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'epoch'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"epochTAPValuation"`.
  */
 export function useTapiocaOptionBrokerEpochTapValuation(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'epochTAPValuation'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerABI,
+            'epochTAPValuation'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'epochTAPValuation', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'epochTAPValuation'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'epochTAPValuation',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'epochTAPValuation'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"getOTCDealDetails"`.
  */
 export function useTapiocaOptionBrokerGetOtcDealDetails(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'getOTCDealDetails'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerABI,
+            'getOTCDealDetails'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'getOTCDealDetails', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'getOTCDealDetails'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'getOTCDealDetails',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'getOTCDealDetails'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"lastEpochUpdate"`.
  */
 export function useTapiocaOptionBrokerLastEpochUpdate(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'lastEpochUpdate'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'lastEpochUpdate'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'lastEpochUpdate', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'lastEpochUpdate'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'lastEpochUpdate',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'lastEpochUpdate'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"oTAP"`.
  */
 export function useTapiocaOptionBrokerOTap(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'oTAP'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'oTAP'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'oTAP', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'oTAP'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'oTAP',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'oTAP'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"oTAPCalls"`.
  */
 export function useTapiocaOptionBrokerOTapCalls(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'oTAPCalls'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'oTAPCalls'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'oTAPCalls', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'oTAPCalls'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'oTAPCalls',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'oTAPCalls'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"owner"`.
  */
 export function useTapiocaOptionBrokerOwner(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'owner'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'owner'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'owner', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'owner'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'owner',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'owner'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"participants"`.
  */
 export function useTapiocaOptionBrokerParticipants(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'participants'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'participants'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'participants', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'participants'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'participants',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'participants'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"paused"`.
  */
 export function useTapiocaOptionBrokerPaused(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'paused'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'paused'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'paused', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'paused'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'paused',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'paused'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"paymentTokenBeneficiary"`.
  */
 export function useTapiocaOptionBrokerPaymentTokenBeneficiary(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'paymentTokenBeneficiary'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerABI,
+            'paymentTokenBeneficiary'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'paymentTokenBeneficiary', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'paymentTokenBeneficiary'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'paymentTokenBeneficiary',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'paymentTokenBeneficiary'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"paymentTokens"`.
  */
 export function useTapiocaOptionBrokerPaymentTokens(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'paymentTokens'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'paymentTokens'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'paymentTokens', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'paymentTokens'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'paymentTokens',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'paymentTokens'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"pendingOwner"`.
  */
 export function useTapiocaOptionBrokerPendingOwner(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'pendingOwner'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'pendingOwner'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'pendingOwner', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'pendingOwner'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'pendingOwner',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'pendingOwner'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"singularityGauges"`.
  */
 export function useTapiocaOptionBrokerSingularityGauges(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'singularityGauges'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerABI,
+            'singularityGauges'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'singularityGauges', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'singularityGauges'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'singularityGauges',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'singularityGauges'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"tOLP"`.
  */
 export function useTapiocaOptionBrokerTOlp(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'tOLP'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'tOLP'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'tOLP', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'tOLP'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'tOLP',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'tOLP'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"tapOFT"`.
  */
 export function useTapiocaOptionBrokerTapOft(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'tapOFT'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'tapOFT'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'tapOFT', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'tapOFT'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'tapOFT',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'tapOFT'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"tapOracle"`.
  */
 export function useTapiocaOptionBrokerTapOracle(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'tapOracle'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'tapOracle'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'tapOracle', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'tapOracle'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'tapOracle',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'tapOracle'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"tapOracleData"`.
  */
 export function useTapiocaOptionBrokerTapOracleData(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'tapOracleData'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'tapOracleData'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'tapOracleData', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'tapOracleData'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'tapOracleData',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'tapOracleData'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerABI}__ and `functionName` set to `"twAML"`.
  */
 export function useTapiocaOptionBrokerTwAml(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'twAML'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'twAML'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerABI, functionName: 'twAML', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerABI,
-        'twAML'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerABI,
+        functionName: 'twAML',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerABI, 'twAML'>);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__.
  */
-export function useTapiocaOptionLiquidityProvision(config: Omit<UseContractConfig, 'abi'> = {} as any) {
+export function useTapiocaOptionLiquidityProvision(
+    config: Omit<UseContractConfig, 'abi'> = {} as any,
+) {
     return useContract({ abi: tapiocaOptionLiquidityProvisionABI, ...config });
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__.
  */
-export function useTapiocaOptionLiquidityProvisionRead<TFunctionName extends string>(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, TFunctionName>, 'abi'> = {} as any,
+export function useTapiocaOptionLiquidityProvisionRead<
+    TFunctionName extends string,
+>(
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            TFunctionName
+        >,
+        'abi'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        TFunctionName
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, TFunctionName>);
 }
 
 /**
@@ -3802,7 +5657,10 @@ export function useTapiocaOptionLiquidityProvisionRead<TFunctionName extends str
  */
 export function useTapiocaOptionLiquidityProvisionActiveSingularities(
     config: Omit<
-        UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'activeSingularities'>,
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'activeSingularities'
+        >,
         'abi' | 'functionName'
     > = {} as any,
 ) {
@@ -3817,43 +5675,70 @@ export function useTapiocaOptionLiquidityProvisionActiveSingularities(
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"balanceOf"`.
  */
 export function useTapiocaOptionLiquidityProvisionBalanceOf(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'balanceOf'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'balanceOf'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'balanceOf', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'balanceOf'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'balanceOf',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'balanceOf'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"getApproved"`.
  */
 export function useTapiocaOptionLiquidityProvisionGetApproved(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'getApproved'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'getApproved'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'getApproved', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'getApproved'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'getApproved',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'getApproved'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"getLock"`.
  */
 export function useTapiocaOptionLiquidityProvisionGetLock(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'getLock'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'getLock'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'getLock', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'getLock'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'getLock',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'getLock'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"getSingularities"`.
  */
 export function useTapiocaOptionLiquidityProvisionGetSingularities(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'getSingularities'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'getSingularities'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
     return useContractRead({
         abi: tapiocaOptionLiquidityProvisionABI,
@@ -3867,7 +5752,10 @@ export function useTapiocaOptionLiquidityProvisionGetSingularities(
  */
 export function useTapiocaOptionLiquidityProvisionGetSingularityPools(
     config: Omit<
-        UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'getSingularityPools'>,
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'getSingularityPools'
+        >,
         'abi' | 'functionName'
     > = {} as any,
 ) {
@@ -3883,7 +5771,10 @@ export function useTapiocaOptionLiquidityProvisionGetSingularityPools(
  */
 export function useTapiocaOptionLiquidityProvisionGetTotalPoolDeposited(
     config: Omit<
-        UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'getTotalPoolDeposited'>,
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'getTotalPoolDeposited'
+        >,
         'abi' | 'functionName'
     > = {} as any,
 ) {
@@ -3898,7 +5789,13 @@ export function useTapiocaOptionLiquidityProvisionGetTotalPoolDeposited(
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"isApprovedForAll"`.
  */
 export function useTapiocaOptionLiquidityProvisionIsApprovedForAll(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'isApprovedForAll'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'isApprovedForAll'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
     return useContractRead({
         abi: tapiocaOptionLiquidityProvisionABI,
@@ -3911,7 +5808,13 @@ export function useTapiocaOptionLiquidityProvisionIsApprovedForAll(
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"isApprovedOrOwner"`.
  */
 export function useTapiocaOptionLiquidityProvisionIsApprovedOrOwner(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'isApprovedOrOwner'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'isApprovedOrOwner'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
     return useContractRead({
         abi: tapiocaOptionLiquidityProvisionABI,
@@ -3924,31 +5827,51 @@ export function useTapiocaOptionLiquidityProvisionIsApprovedOrOwner(
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"lockPositions"`.
  */
 export function useTapiocaOptionLiquidityProvisionLockPositions(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'lockPositions'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'lockPositions'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'lockPositions', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'lockPositions'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'lockPositions',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'lockPositions'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"name"`.
  */
 export function useTapiocaOptionLiquidityProvisionName(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'name'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'name'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'name', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'name'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'name',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'name'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"onERC1155Received"`.
  */
 export function useTapiocaOptionLiquidityProvisionOnErc1155Received(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'onERC1155Received'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'onERC1155Received'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
     return useContractRead({
         abi: tapiocaOptionLiquidityProvisionABI,
@@ -3961,48 +5884,76 @@ export function useTapiocaOptionLiquidityProvisionOnErc1155Received(
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"owner"`.
  */
 export function useTapiocaOptionLiquidityProvisionOwner(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'owner'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'owner'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'owner', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'owner'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'owner',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'owner'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"ownerOf"`.
  */
 export function useTapiocaOptionLiquidityProvisionOwnerOf(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'ownerOf'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'ownerOf'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'ownerOf', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'ownerOf'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'ownerOf',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'ownerOf'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"paused"`.
  */
 export function useTapiocaOptionLiquidityProvisionPaused(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'paused'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'paused'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'paused', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'paused'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'paused',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'paused'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"pendingOwner"`.
  */
 export function useTapiocaOptionLiquidityProvisionPendingOwner(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'pendingOwner'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'pendingOwner'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'pendingOwner', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'pendingOwner'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'pendingOwner',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'pendingOwner'>);
 }
 
 /**
@@ -4010,7 +5961,10 @@ export function useTapiocaOptionLiquidityProvisionPendingOwner(
  */
 export function useTapiocaOptionLiquidityProvisionSglAssetIdToAddress(
     config: Omit<
-        UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'sglAssetIDToAddress'>,
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'sglAssetIDToAddress'
+        >,
         'abi' | 'functionName'
     > = {} as any,
 ) {
@@ -4025,19 +5979,32 @@ export function useTapiocaOptionLiquidityProvisionSglAssetIdToAddress(
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"singularities"`.
  */
 export function useTapiocaOptionLiquidityProvisionSingularities(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'singularities'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'singularities'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'singularities', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'singularities'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'singularities',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'singularities'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"supportsInterface"`.
  */
 export function useTapiocaOptionLiquidityProvisionSupportsInterface(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'supportsInterface'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'supportsInterface'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
     return useContractRead({
         abi: tapiocaOptionLiquidityProvisionABI,
@@ -4050,36 +6017,57 @@ export function useTapiocaOptionLiquidityProvisionSupportsInterface(
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"symbol"`.
  */
 export function useTapiocaOptionLiquidityProvisionSymbol(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'symbol'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'symbol'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'symbol', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'symbol'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'symbol',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'symbol'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"tokenCounter"`.
  */
 export function useTapiocaOptionLiquidityProvisionTokenCounter(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'tokenCounter'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'tokenCounter'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'tokenCounter', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'tokenCounter'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'tokenCounter',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'tokenCounter'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"tokenURI"`.
  */
 export function useTapiocaOptionLiquidityProvisionTokenUri(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'tokenURI'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'tokenURI'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'tokenURI', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'tokenURI'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'tokenURI',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'tokenURI'>);
 }
 
 /**
@@ -4087,7 +6075,10 @@ export function useTapiocaOptionLiquidityProvisionTokenUri(
  */
 export function useTapiocaOptionLiquidityProvisionTotalSingularityPoolWeights(
     config: Omit<
-        UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'totalSingularityPoolWeights'>,
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'totalSingularityPoolWeights'
+        >,
         'abi' | 'functionName'
     > = {} as any,
 ) {
@@ -4102,12 +6093,19 @@ export function useTapiocaOptionLiquidityProvisionTotalSingularityPoolWeights(
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionLiquidityProvisionABI}__ and `functionName` set to `"yieldBox"`.
  */
 export function useTapiocaOptionLiquidityProvisionYieldBox(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'yieldBox'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionLiquidityProvisionABI,
+            'yieldBox'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionLiquidityProvisionABI, functionName: 'yieldBox', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionLiquidityProvisionABI,
-        'yieldBox'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionLiquidityProvisionABI,
+        functionName: 'yieldBox',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionLiquidityProvisionABI, 'yieldBox'>);
 }
 
 /**
@@ -4121,139 +6119,271 @@ export function useOtap(config: Omit<UseContractConfig, 'abi'> = {} as any) {
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__.
  */
 export function useOtapRead<TFunctionName extends string>(
-    config: Omit<UseContractReadConfig<typeof otapABI, TFunctionName>, 'abi'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, TFunctionName>,
+        'abi'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: otapABI, ...config } as UseContractReadConfig<typeof otapABI, TFunctionName>);
+    return useContractRead({ abi: otapABI, ...config } as UseContractReadConfig<
+        typeof otapABI,
+        TFunctionName
+    >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"attributes"`.
  */
-export function useOtapAttributes(config: Omit<UseContractReadConfig<typeof otapABI, 'attributes'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'attributes', ...config } as UseContractReadConfig<typeof otapABI, 'attributes'>);
+export function useOtapAttributes(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'attributes'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'attributes',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'attributes'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"balanceOf"`.
  */
-export function useOtapBalanceOf(config: Omit<UseContractReadConfig<typeof otapABI, 'balanceOf'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'balanceOf', ...config } as UseContractReadConfig<typeof otapABI, 'balanceOf'>);
+export function useOtapBalanceOf(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'balanceOf'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'balanceOf',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'balanceOf'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"broker"`.
  */
-export function useOtapBroker(config: Omit<UseContractReadConfig<typeof otapABI, 'broker'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'broker', ...config } as UseContractReadConfig<typeof otapABI, 'broker'>);
+export function useOtapBroker(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'broker'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'broker',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'broker'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"exists"`.
  */
-export function useOtapExists(config: Omit<UseContractReadConfig<typeof otapABI, 'exists'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'exists', ...config } as UseContractReadConfig<typeof otapABI, 'exists'>);
+export function useOtapExists(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'exists'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'exists',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'exists'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"getApproved"`.
  */
-export function useOtapGetApproved(config: Omit<UseContractReadConfig<typeof otapABI, 'getApproved'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'getApproved', ...config } as UseContractReadConfig<
-        typeof otapABI,
-        'getApproved'
-    >);
+export function useOtapGetApproved(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'getApproved'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'getApproved',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'getApproved'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"isApprovedForAll"`.
  */
 export function useOtapIsApprovedForAll(
-    config: Omit<UseContractReadConfig<typeof otapABI, 'isApprovedForAll'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'isApprovedForAll'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: otapABI, functionName: 'isApprovedForAll', ...config } as UseContractReadConfig<
-        typeof otapABI,
-        'isApprovedForAll'
-    >);
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'isApprovedForAll',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'isApprovedForAll'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"isApprovedOrOwner"`.
  */
 export function useOtapIsApprovedOrOwner(
-    config: Omit<UseContractReadConfig<typeof otapABI, 'isApprovedOrOwner'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'isApprovedOrOwner'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: otapABI, functionName: 'isApprovedOrOwner', ...config } as UseContractReadConfig<
-        typeof otapABI,
-        'isApprovedOrOwner'
-    >);
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'isApprovedOrOwner',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'isApprovedOrOwner'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"mintedOTAP"`.
  */
-export function useOtapMintedOtap(config: Omit<UseContractReadConfig<typeof otapABI, 'mintedOTAP'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'mintedOTAP', ...config } as UseContractReadConfig<typeof otapABI, 'mintedOTAP'>);
+export function useOtapMintedOtap(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'mintedOTAP'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'mintedOTAP',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'mintedOTAP'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"mintedTAP"`.
  */
-export function useOtapMintedTap(config: Omit<UseContractReadConfig<typeof otapABI, 'mintedTAP'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'mintedTAP', ...config } as UseContractReadConfig<typeof otapABI, 'mintedTAP'>);
+export function useOtapMintedTap(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'mintedTAP'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'mintedTAP',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'mintedTAP'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"name"`.
  */
-export function useOtapName(config: Omit<UseContractReadConfig<typeof otapABI, 'name'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'name', ...config } as UseContractReadConfig<typeof otapABI, 'name'>);
+export function useOtapName(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'name'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'name',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'name'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"options"`.
  */
-export function useOtapOptions(config: Omit<UseContractReadConfig<typeof otapABI, 'options'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'options', ...config } as UseContractReadConfig<typeof otapABI, 'options'>);
+export function useOtapOptions(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'options'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'options',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'options'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"ownerOf"`.
  */
-export function useOtapOwnerOf(config: Omit<UseContractReadConfig<typeof otapABI, 'ownerOf'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'ownerOf', ...config } as UseContractReadConfig<typeof otapABI, 'ownerOf'>);
+export function useOtapOwnerOf(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'ownerOf'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'ownerOf',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'ownerOf'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"supportsInterface"`.
  */
 export function useOtapSupportsInterface(
-    config: Omit<UseContractReadConfig<typeof otapABI, 'supportsInterface'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'supportsInterface'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: otapABI, functionName: 'supportsInterface', ...config } as UseContractReadConfig<
-        typeof otapABI,
-        'supportsInterface'
-    >);
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'supportsInterface',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'supportsInterface'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"symbol"`.
  */
-export function useOtapSymbol(config: Omit<UseContractReadConfig<typeof otapABI, 'symbol'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'symbol', ...config } as UseContractReadConfig<typeof otapABI, 'symbol'>);
+export function useOtapSymbol(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'symbol'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'symbol',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'symbol'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"tokenURI"`.
  */
-export function useOtapTokenUri(config: Omit<UseContractReadConfig<typeof otapABI, 'tokenURI'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'tokenURI', ...config } as UseContractReadConfig<typeof otapABI, 'tokenURI'>);
+export function useOtapTokenUri(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'tokenURI'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'tokenURI',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'tokenURI'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link otapABI}__ and `functionName` set to `"tokenURIs"`.
  */
-export function useOtapTokenUrIs(config: Omit<UseContractReadConfig<typeof otapABI, 'tokenURIs'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: otapABI, functionName: 'tokenURIs', ...config } as UseContractReadConfig<typeof otapABI, 'tokenURIs'>);
+export function useOtapTokenUrIs(
+    config: Omit<
+        UseContractReadConfig<typeof otapABI, 'tokenURIs'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: otapABI,
+        functionName: 'tokenURIs',
+        ...config,
+    } as UseContractReadConfig<typeof otapABI, 'tokenURIs'>);
 }
 
 /**
@@ -4267,367 +6397,567 @@ export function useTapOft(config: Omit<UseContractConfig, 'abi'> = {} as any) {
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__.
  */
 export function useTapOftRead<TFunctionName extends string>(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, TFunctionName>, 'abi'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, TFunctionName>,
+        'abi'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, ...config } as UseContractReadConfig<typeof tapOftABI, TFunctionName>);
+    return useContractRead({
+        abi: tapOftABI,
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, TFunctionName>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"DEFAULT_PAYLOAD_SIZE_LIMIT"`.
  */
 export function useTapOftDefaultPayloadSizeLimit(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'DEFAULT_PAYLOAD_SIZE_LIMIT'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'DEFAULT_PAYLOAD_SIZE_LIMIT'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'DEFAULT_PAYLOAD_SIZE_LIMIT', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'DEFAULT_PAYLOAD_SIZE_LIMIT'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'DEFAULT_PAYLOAD_SIZE_LIMIT',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'DEFAULT_PAYLOAD_SIZE_LIMIT'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"INITIAL_SUPPLY"`.
  */
 export function useTapOftInitialSupply(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'INITIAL_SUPPLY'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'INITIAL_SUPPLY'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'INITIAL_SUPPLY', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'INITIAL_SUPPLY'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'INITIAL_SUPPLY',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'INITIAL_SUPPLY'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"NO_EXTRA_GAS"`.
  */
 export function useTapOftNoExtraGas(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'NO_EXTRA_GAS'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'NO_EXTRA_GAS'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'NO_EXTRA_GAS', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'NO_EXTRA_GAS'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'NO_EXTRA_GAS',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'NO_EXTRA_GAS'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"PT_SEND"`.
  */
-export function useTapOftPtSend(config: Omit<UseContractReadConfig<typeof tapOftABI, 'PT_SEND'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'PT_SEND', ...config } as UseContractReadConfig<typeof tapOftABI, 'PT_SEND'>);
+export function useTapOftPtSend(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'PT_SEND'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'PT_SEND',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'PT_SEND'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"WEEK"`.
  */
-export function useTapOftWeek(config: Omit<UseContractReadConfig<typeof tapOftABI, 'WEEK'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'WEEK', ...config } as UseContractReadConfig<typeof tapOftABI, 'WEEK'>);
+export function useTapOftWeek(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'WEEK'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'WEEK',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'WEEK'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"allowance"`.
  */
-export function useTapOftAllowance(config: Omit<UseContractReadConfig<typeof tapOftABI, 'allowance'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'allowance', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'allowance'
-    >);
+export function useTapOftAllowance(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'allowance'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'allowance',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'allowance'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"balanceOf"`.
  */
-export function useTapOftBalanceOf(config: Omit<UseContractReadConfig<typeof tapOftABI, 'balanceOf'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'balanceOf', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'balanceOf'
-    >);
+export function useTapOftBalanceOf(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'balanceOf'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'balanceOf',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'balanceOf'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"circulatingSupply"`.
  */
 export function useTapOftCirculatingSupply(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'circulatingSupply'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'circulatingSupply'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'circulatingSupply', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'circulatingSupply'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'circulatingSupply',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'circulatingSupply'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"decimals"`.
  */
-export function useTapOftDecimals(config: Omit<UseContractReadConfig<typeof tapOftABI, 'decimals'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'decimals', ...config } as UseContractReadConfig<typeof tapOftABI, 'decimals'>);
+export function useTapOftDecimals(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'decimals'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'decimals',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'decimals'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"dso_supply"`.
  */
 export function useTapOftDsoSupply(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'dso_supply'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'dso_supply'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'dso_supply', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'dso_supply'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'dso_supply',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'dso_supply'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"emissionsStartTime"`.
  */
 export function useTapOftEmissionsStartTime(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'emissionsStartTime'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'emissionsStartTime'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'emissionsStartTime', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'emissionsStartTime'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'emissionsStartTime',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'emissionsStartTime'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"estimateSendFee"`.
  */
 export function useTapOftEstimateSendFee(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'estimateSendFee'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'estimateSendFee'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'estimateSendFee', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'estimateSendFee'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'estimateSendFee',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'estimateSendFee'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"failedMessages"`.
  */
 export function useTapOftFailedMessages(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'failedMessages'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'failedMessages'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'failedMessages', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'failedMessages'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'failedMessages',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'failedMessages'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"getConfig"`.
  */
-export function useTapOftGetConfig(config: Omit<UseContractReadConfig<typeof tapOftABI, 'getConfig'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'getConfig', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'getConfig'
-    >);
+export function useTapOftGetConfig(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'getConfig'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'getConfig',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'getConfig'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"getCurrentWeekEmission"`.
  */
 export function useTapOftGetCurrentWeekEmission(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'getCurrentWeekEmission'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'getCurrentWeekEmission'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'getCurrentWeekEmission', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'getCurrentWeekEmission'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'getCurrentWeekEmission',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'getCurrentWeekEmission'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"getTrustedRemoteAddress"`.
  */
 export function useTapOftGetTrustedRemoteAddress(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'getTrustedRemoteAddress'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'getTrustedRemoteAddress'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'getTrustedRemoteAddress', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'getTrustedRemoteAddress'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'getTrustedRemoteAddress',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'getTrustedRemoteAddress'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"governanceChainIdentifier"`.
  */
 export function useTapOftGovernanceChainIdentifier(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'governanceChainIdentifier'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'governanceChainIdentifier'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'governanceChainIdentifier', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'governanceChainIdentifier'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'governanceChainIdentifier',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'governanceChainIdentifier'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"isTrustedRemote"`.
  */
 export function useTapOftIsTrustedRemote(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'isTrustedRemote'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'isTrustedRemote'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'isTrustedRemote', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'isTrustedRemote'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'isTrustedRemote',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'isTrustedRemote'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"lzEndpoint"`.
  */
 export function useTapOftLzEndpoint(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'lzEndpoint'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'lzEndpoint'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'lzEndpoint', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'lzEndpoint'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'lzEndpoint',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'lzEndpoint'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"minDstGasLookup"`.
  */
 export function useTapOftMinDstGasLookup(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'minDstGasLookup'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'minDstGasLookup'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'minDstGasLookup', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'minDstGasLookup'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'minDstGasLookup',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'minDstGasLookup'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"mintedInWeek"`.
  */
 export function useTapOftMintedInWeek(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'mintedInWeek'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'mintedInWeek'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'mintedInWeek', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'mintedInWeek'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'mintedInWeek',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'mintedInWeek'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"minter"`.
  */
-export function useTapOftMinter(config: Omit<UseContractReadConfig<typeof tapOftABI, 'minter'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'minter', ...config } as UseContractReadConfig<typeof tapOftABI, 'minter'>);
+export function useTapOftMinter(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'minter'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'minter',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'minter'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"name"`.
  */
-export function useTapOftName(config: Omit<UseContractReadConfig<typeof tapOftABI, 'name'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'name', ...config } as UseContractReadConfig<typeof tapOftABI, 'name'>);
+export function useTapOftName(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'name'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'name',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'name'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"owner"`.
  */
-export function useTapOftOwner(config: Omit<UseContractReadConfig<typeof tapOftABI, 'owner'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'owner', ...config } as UseContractReadConfig<typeof tapOftABI, 'owner'>);
+export function useTapOftOwner(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'owner'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'owner',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'owner'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"paused"`.
  */
-export function useTapOftPaused(config: Omit<UseContractReadConfig<typeof tapOftABI, 'paused'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'paused', ...config } as UseContractReadConfig<typeof tapOftABI, 'paused'>);
+export function useTapOftPaused(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'paused'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'paused',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'paused'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"payloadSizeLimitLookup"`.
  */
 export function useTapOftPayloadSizeLimitLookup(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'payloadSizeLimitLookup'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'payloadSizeLimitLookup'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'payloadSizeLimitLookup', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'payloadSizeLimitLookup'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'payloadSizeLimitLookup',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'payloadSizeLimitLookup'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"precrime"`.
  */
-export function useTapOftPrecrime(config: Omit<UseContractReadConfig<typeof tapOftABI, 'precrime'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'precrime', ...config } as UseContractReadConfig<typeof tapOftABI, 'precrime'>);
+export function useTapOftPrecrime(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'precrime'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'precrime',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'precrime'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"supportsInterface"`.
  */
 export function useTapOftSupportsInterface(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'supportsInterface'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'supportsInterface'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'supportsInterface', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'supportsInterface'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'supportsInterface',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'supportsInterface'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"symbol"`.
  */
-export function useTapOftSymbol(config: Omit<UseContractReadConfig<typeof tapOftABI, 'symbol'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'symbol', ...config } as UseContractReadConfig<typeof tapOftABI, 'symbol'>);
+export function useTapOftSymbol(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'symbol'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'symbol',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'symbol'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"timestampToWeek"`.
  */
 export function useTapOftTimestampToWeek(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'timestampToWeek'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'timestampToWeek'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'timestampToWeek', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'timestampToWeek'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'timestampToWeek',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'timestampToWeek'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"token"`.
  */
-export function useTapOftToken(config: Omit<UseContractReadConfig<typeof tapOftABI, 'token'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: tapOftABI, functionName: 'token', ...config } as UseContractReadConfig<typeof tapOftABI, 'token'>);
+export function useTapOftToken(
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'token'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'token',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'token'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"totalSupply"`.
  */
 export function useTapOftTotalSupply(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'totalSupply'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'totalSupply'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'totalSupply', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'totalSupply'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'totalSupply',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'totalSupply'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"trustedRemoteLookup"`.
  */
 export function useTapOftTrustedRemoteLookup(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'trustedRemoteLookup'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'trustedRemoteLookup'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'trustedRemoteLookup', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'trustedRemoteLookup'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'trustedRemoteLookup',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'trustedRemoteLookup'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapOftABI}__ and `functionName` set to `"useCustomAdapterParams"`.
  */
 export function useTapOftUseCustomAdapterParams(
-    config: Omit<UseContractReadConfig<typeof tapOftABI, 'useCustomAdapterParams'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapOftABI, 'useCustomAdapterParams'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapOftABI, functionName: 'useCustomAdapterParams', ...config } as UseContractReadConfig<
-        typeof tapOftABI,
-        'useCustomAdapterParams'
-    >);
+    return useContractRead({
+        abi: tapOftABI,
+        functionName: 'useCustomAdapterParams',
+        ...config,
+    } as UseContractReadConfig<typeof tapOftABI, 'useCustomAdapterParams'>);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link oracleMockABI}__.
  */
-export function useOracleMock(config: Omit<UseContractConfig, 'abi'> = {} as any) {
+export function useOracleMock(
+    config: Omit<UseContractConfig, 'abi'> = {} as any,
+) {
     return useContract({ abi: oracleMockABI, ...config });
 }
 
@@ -4635,75 +6965,119 @@ export function useOracleMock(config: Omit<UseContractConfig, 'abi'> = {} as any
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMockABI}__.
  */
 export function useOracleMockRead<TFunctionName extends string>(
-    config: Omit<UseContractReadConfig<typeof oracleMockABI, TFunctionName>, 'abi'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof oracleMockABI, TFunctionName>,
+        'abi'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: oracleMockABI, ...config } as UseContractReadConfig<typeof oracleMockABI, TFunctionName>);
+    return useContractRead({
+        abi: oracleMockABI,
+        ...config,
+    } as UseContractReadConfig<typeof oracleMockABI, TFunctionName>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMockABI}__ and `functionName` set to `"_name"`.
  */
-export function useOracleMockName(config: Omit<UseContractReadConfig<typeof oracleMockABI, '_name'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: oracleMockABI, functionName: '_name', ...config } as UseContractReadConfig<
-        typeof oracleMockABI,
-        '_name'
-    >);
+export function useOracleMockName(
+    config: Omit<
+        UseContractReadConfig<typeof oracleMockABI, '_name'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: oracleMockABI,
+        functionName: '_name',
+        ...config,
+    } as UseContractReadConfig<typeof oracleMockABI, '_name'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMockABI}__ and `functionName` set to `"get"`.
  */
-export function useOracleMockGet(config: Omit<UseContractReadConfig<typeof oracleMockABI, 'get'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: oracleMockABI, functionName: 'get', ...config } as UseContractReadConfig<typeof oracleMockABI, 'get'>);
+export function useOracleMockGet(
+    config: Omit<
+        UseContractReadConfig<typeof oracleMockABI, 'get'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: oracleMockABI,
+        functionName: 'get',
+        ...config,
+    } as UseContractReadConfig<typeof oracleMockABI, 'get'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMockABI}__ and `functionName` set to `"mockValue"`.
  */
 export function useOracleMockMockValue(
-    config: Omit<UseContractReadConfig<typeof oracleMockABI, 'mockValue'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof oracleMockABI, 'mockValue'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: oracleMockABI, functionName: 'mockValue', ...config } as UseContractReadConfig<
-        typeof oracleMockABI,
-        'mockValue'
-    >);
+    return useContractRead({
+        abi: oracleMockABI,
+        functionName: 'mockValue',
+        ...config,
+    } as UseContractReadConfig<typeof oracleMockABI, 'mockValue'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMockABI}__ and `functionName` set to `"peek"`.
  */
-export function useOracleMockPeek(config: Omit<UseContractReadConfig<typeof oracleMockABI, 'peek'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: oracleMockABI, functionName: 'peek', ...config } as UseContractReadConfig<typeof oracleMockABI, 'peek'>);
+export function useOracleMockPeek(
+    config: Omit<
+        UseContractReadConfig<typeof oracleMockABI, 'peek'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: oracleMockABI,
+        functionName: 'peek',
+        ...config,
+    } as UseContractReadConfig<typeof oracleMockABI, 'peek'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMockABI}__ and `functionName` set to `"peekSpot"`.
  */
 export function useOracleMockPeekSpot(
-    config: Omit<UseContractReadConfig<typeof oracleMockABI, 'peekSpot'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof oracleMockABI, 'peekSpot'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: oracleMockABI, functionName: 'peekSpot', ...config } as UseContractReadConfig<
-        typeof oracleMockABI,
-        'peekSpot'
-    >);
+    return useContractRead({
+        abi: oracleMockABI,
+        functionName: 'peekSpot',
+        ...config,
+    } as UseContractReadConfig<typeof oracleMockABI, 'peekSpot'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMockABI}__ and `functionName` set to `"symbol"`.
  */
 export function useOracleMockSymbol(
-    config: Omit<UseContractReadConfig<typeof oracleMockABI, 'symbol'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof oracleMockABI, 'symbol'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: oracleMockABI, functionName: 'symbol', ...config } as UseContractReadConfig<
-        typeof oracleMockABI,
-        'symbol'
-    >);
+    return useContractRead({
+        abi: oracleMockABI,
+        functionName: 'symbol',
+        ...config,
+    } as UseContractReadConfig<typeof oracleMockABI, 'symbol'>);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__.
  */
-export function useTapiocaOptionBrokerMock(config: Omit<UseContractConfig, 'abi'> = {} as any) {
+export function useTapiocaOptionBrokerMock(
+    config: Omit<UseContractConfig, 'abi'> = {} as any,
+) {
     return useContract({ abi: tapiocaOptionBrokerMockABI, ...config });
 }
 
@@ -4711,234 +7085,338 @@ export function useTapiocaOptionBrokerMock(config: Omit<UseContractConfig, 'abi'
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__.
  */
 export function useTapiocaOptionBrokerMockRead<TFunctionName extends string>(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, TFunctionName>, 'abi'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, TFunctionName>,
+        'abi'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        TFunctionName
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, TFunctionName>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"epoch"`.
  */
 export function useTapiocaOptionBrokerMockEpoch(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'epoch'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'epoch'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'epoch', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'epoch'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'epoch',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'epoch'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"epochTAPValuation"`.
  */
 export function useTapiocaOptionBrokerMockEpochTapValuation(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'epochTAPValuation'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerMockABI,
+            'epochTAPValuation'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'epochTAPValuation', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'epochTAPValuation'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'epochTAPValuation',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'epochTAPValuation'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"getOTCDealDetails"`.
  */
 export function useTapiocaOptionBrokerMockGetOtcDealDetails(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'getOTCDealDetails'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerMockABI,
+            'getOTCDealDetails'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'getOTCDealDetails', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'getOTCDealDetails'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'getOTCDealDetails',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'getOTCDealDetails'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"lastEpochUpdate"`.
  */
 export function useTapiocaOptionBrokerMockLastEpochUpdate(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'lastEpochUpdate'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerMockABI,
+            'lastEpochUpdate'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'lastEpochUpdate', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'lastEpochUpdate'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'lastEpochUpdate',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'lastEpochUpdate'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"oTAP"`.
  */
 export function useTapiocaOptionBrokerMockOTap(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'oTAP'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'oTAP'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'oTAP', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'oTAP'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'oTAP',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'oTAP'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"oTAPCalls"`.
  */
 export function useTapiocaOptionBrokerMockOTapCalls(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'oTAPCalls'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'oTAPCalls'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'oTAPCalls', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'oTAPCalls'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'oTAPCalls',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'oTAPCalls'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"owner"`.
  */
 export function useTapiocaOptionBrokerMockOwner(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'owner'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'owner'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'owner', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'owner'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'owner',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'owner'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"participants"`.
  */
 export function useTapiocaOptionBrokerMockParticipants(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'participants'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerMockABI,
+            'participants'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'participants', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'participants'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'participants',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'participants'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"paused"`.
  */
 export function useTapiocaOptionBrokerMockPaused(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'paused'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'paused'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'paused', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'paused'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'paused',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'paused'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"paymentTokenBeneficiary"`.
  */
 export function useTapiocaOptionBrokerMockPaymentTokenBeneficiary(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'paymentTokenBeneficiary'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerMockABI,
+            'paymentTokenBeneficiary'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'paymentTokenBeneficiary', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'paymentTokenBeneficiary'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'paymentTokenBeneficiary',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'paymentTokenBeneficiary'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"paymentTokens"`.
  */
 export function useTapiocaOptionBrokerMockPaymentTokens(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'paymentTokens'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerMockABI,
+            'paymentTokens'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'paymentTokens', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'paymentTokens'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'paymentTokens',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'paymentTokens'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"pendingOwner"`.
  */
 export function useTapiocaOptionBrokerMockPendingOwner(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'pendingOwner'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerMockABI,
+            'pendingOwner'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'pendingOwner', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'pendingOwner'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'pendingOwner',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'pendingOwner'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"singularityGauges"`.
  */
 export function useTapiocaOptionBrokerMockSingularityGauges(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'singularityGauges'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerMockABI,
+            'singularityGauges'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'singularityGauges', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'singularityGauges'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'singularityGauges',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'singularityGauges'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"tOLP"`.
  */
 export function useTapiocaOptionBrokerMockTOlp(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'tOLP'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'tOLP'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'tOLP', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'tOLP'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'tOLP',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'tOLP'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"tapOFT"`.
  */
 export function useTapiocaOptionBrokerMockTapOft(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'tapOFT'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'tapOFT'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'tapOFT', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'tapOFT'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'tapOFT',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'tapOFT'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"tapOracle"`.
  */
 export function useTapiocaOptionBrokerMockTapOracle(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'tapOracle'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'tapOracle'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'tapOracle', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'tapOracle'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'tapOracle',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'tapOracle'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"tapOracleData"`.
  */
 export function useTapiocaOptionBrokerMockTapOracleData(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'tapOracleData'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<
+            typeof tapiocaOptionBrokerMockABI,
+            'tapOracleData'
+        >,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'tapOracleData', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'tapOracleData'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'tapOracleData',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'tapOracleData'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link tapiocaOptionBrokerMockABI}__ and `functionName` set to `"twAML"`.
  */
 export function useTapiocaOptionBrokerMockTwAml(
-    config: Omit<UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'twAML'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'twAML'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: tapiocaOptionBrokerMockABI, functionName: 'twAML', ...config } as UseContractReadConfig<
-        typeof tapiocaOptionBrokerMockABI,
-        'twAML'
-    >);
+    return useContractRead({
+        abi: tapiocaOptionBrokerMockABI,
+        functionName: 'twAML',
+        ...config,
+    } as UseContractReadConfig<typeof tapiocaOptionBrokerMockABI, 'twAML'>);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link erc20MockABI}__.
  */
-export function useErc20Mock(config: Omit<UseContractConfig, 'abi'> = {} as any) {
+export function useErc20Mock(
+    config: Omit<UseContractConfig, 'abi'> = {} as any,
+) {
     return useContract({ abi: erc20MockABI, ...config });
 }
 
@@ -4946,109 +7424,167 @@ export function useErc20Mock(config: Omit<UseContractConfig, 'abi'> = {} as any)
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link erc20MockABI}__.
  */
 export function useErc20MockRead<TFunctionName extends string>(
-    config: Omit<UseContractReadConfig<typeof erc20MockABI, TFunctionName>, 'abi'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof erc20MockABI, TFunctionName>,
+        'abi'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: erc20MockABI, ...config } as UseContractReadConfig<typeof erc20MockABI, TFunctionName>);
+    return useContractRead({
+        abi: erc20MockABI,
+        ...config,
+    } as UseContractReadConfig<typeof erc20MockABI, TFunctionName>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link erc20MockABI}__ and `functionName` set to `"DOMAIN_SEPARATOR"`.
  */
 export function useErc20MockDomainSeparator(
-    config: Omit<UseContractReadConfig<typeof erc20MockABI, 'DOMAIN_SEPARATOR'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof erc20MockABI, 'DOMAIN_SEPARATOR'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: erc20MockABI, functionName: 'DOMAIN_SEPARATOR', ...config } as UseContractReadConfig<
-        typeof erc20MockABI,
-        'DOMAIN_SEPARATOR'
-    >);
+    return useContractRead({
+        abi: erc20MockABI,
+        functionName: 'DOMAIN_SEPARATOR',
+        ...config,
+    } as UseContractReadConfig<typeof erc20MockABI, 'DOMAIN_SEPARATOR'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link erc20MockABI}__ and `functionName` set to `"allowance"`.
  */
 export function useErc20MockAllowance(
-    config: Omit<UseContractReadConfig<typeof erc20MockABI, 'allowance'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof erc20MockABI, 'allowance'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: erc20MockABI, functionName: 'allowance', ...config } as UseContractReadConfig<
-        typeof erc20MockABI,
-        'allowance'
-    >);
+    return useContractRead({
+        abi: erc20MockABI,
+        functionName: 'allowance',
+        ...config,
+    } as UseContractReadConfig<typeof erc20MockABI, 'allowance'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link erc20MockABI}__ and `functionName` set to `"balanceOf"`.
  */
 export function useErc20MockBalanceOf(
-    config: Omit<UseContractReadConfig<typeof erc20MockABI, 'balanceOf'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof erc20MockABI, 'balanceOf'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: erc20MockABI, functionName: 'balanceOf', ...config } as UseContractReadConfig<
-        typeof erc20MockABI,
-        'balanceOf'
-    >);
+    return useContractRead({
+        abi: erc20MockABI,
+        functionName: 'balanceOf',
+        ...config,
+    } as UseContractReadConfig<typeof erc20MockABI, 'balanceOf'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link erc20MockABI}__ and `functionName` set to `"decimals"`.
  */
 export function useErc20MockDecimals(
-    config: Omit<UseContractReadConfig<typeof erc20MockABI, 'decimals'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof erc20MockABI, 'decimals'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: erc20MockABI, functionName: 'decimals', ...config } as UseContractReadConfig<
-        typeof erc20MockABI,
-        'decimals'
-    >);
+    return useContractRead({
+        abi: erc20MockABI,
+        functionName: 'decimals',
+        ...config,
+    } as UseContractReadConfig<typeof erc20MockABI, 'decimals'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link erc20MockABI}__ and `functionName` set to `"name"`.
  */
-export function useErc20MockName(config: Omit<UseContractReadConfig<typeof erc20MockABI, 'name'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: erc20MockABI, functionName: 'name', ...config } as UseContractReadConfig<typeof erc20MockABI, 'name'>);
+export function useErc20MockName(
+    config: Omit<
+        UseContractReadConfig<typeof erc20MockABI, 'name'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: erc20MockABI,
+        functionName: 'name',
+        ...config,
+    } as UseContractReadConfig<typeof erc20MockABI, 'name'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link erc20MockABI}__ and `functionName` set to `"nonces"`.
  */
-export function useErc20MockNonces(config: Omit<UseContractReadConfig<typeof erc20MockABI, 'nonces'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: erc20MockABI, functionName: 'nonces', ...config } as UseContractReadConfig<
-        typeof erc20MockABI,
-        'nonces'
-    >);
+export function useErc20MockNonces(
+    config: Omit<
+        UseContractReadConfig<typeof erc20MockABI, 'nonces'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: erc20MockABI,
+        functionName: 'nonces',
+        ...config,
+    } as UseContractReadConfig<typeof erc20MockABI, 'nonces'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link erc20MockABI}__ and `functionName` set to `"owner"`.
  */
-export function useErc20MockOwner(config: Omit<UseContractReadConfig<typeof erc20MockABI, 'owner'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: erc20MockABI, functionName: 'owner', ...config } as UseContractReadConfig<typeof erc20MockABI, 'owner'>);
+export function useErc20MockOwner(
+    config: Omit<
+        UseContractReadConfig<typeof erc20MockABI, 'owner'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: erc20MockABI,
+        functionName: 'owner',
+        ...config,
+    } as UseContractReadConfig<typeof erc20MockABI, 'owner'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link erc20MockABI}__ and `functionName` set to `"symbol"`.
  */
-export function useErc20MockSymbol(config: Omit<UseContractReadConfig<typeof erc20MockABI, 'symbol'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: erc20MockABI, functionName: 'symbol', ...config } as UseContractReadConfig<
-        typeof erc20MockABI,
-        'symbol'
-    >);
+export function useErc20MockSymbol(
+    config: Omit<
+        UseContractReadConfig<typeof erc20MockABI, 'symbol'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: erc20MockABI,
+        functionName: 'symbol',
+        ...config,
+    } as UseContractReadConfig<typeof erc20MockABI, 'symbol'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link erc20MockABI}__ and `functionName` set to `"totalSupply"`.
  */
 export function useErc20MockTotalSupply(
-    config: Omit<UseContractReadConfig<typeof erc20MockABI, 'totalSupply'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof erc20MockABI, 'totalSupply'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: erc20MockABI, functionName: 'totalSupply', ...config } as UseContractReadConfig<
-        typeof erc20MockABI,
-        'totalSupply'
-    >);
+    return useContractRead({
+        abi: erc20MockABI,
+        functionName: 'totalSupply',
+        ...config,
+    } as UseContractReadConfig<typeof erc20MockABI, 'totalSupply'>);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link yieldBoxABI}__.
  */
-export function useYieldBox(config: Omit<UseContractConfig, 'abi'> = {} as any) {
+export function useYieldBox(
+    config: Omit<UseContractConfig, 'abi'> = {} as any,
+) {
     return useContract({ abi: yieldBoxABI, ...config });
 }
 
@@ -5056,263 +7592,397 @@ export function useYieldBox(config: Omit<UseContractConfig, 'abi'> = {} as any) 
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__.
  */
 export function useYieldBoxRead<TFunctionName extends string>(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, TFunctionName>, 'abi'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, TFunctionName>,
+        'abi'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, ...config } as UseContractReadConfig<typeof yieldBoxABI, TFunctionName>);
+    return useContractRead({
+        abi: yieldBoxABI,
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, TFunctionName>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"amountOf"`.
  */
 export function useYieldBoxAmountOf(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'amountOf'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'amountOf'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'amountOf', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'amountOf'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'amountOf',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'amountOf'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"assetCount"`.
  */
 export function useYieldBoxAssetCount(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'assetCount'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'assetCount'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'assetCount', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'assetCount'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'assetCount',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'assetCount'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"assetTotals"`.
  */
 export function useYieldBoxAssetTotals(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'assetTotals'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'assetTotals'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'assetTotals', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'assetTotals'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'assetTotals',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'assetTotals'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"assets"`.
  */
-export function useYieldBoxAssets(config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'assets'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'assets', ...config } as UseContractReadConfig<typeof yieldBoxABI, 'assets'>);
+export function useYieldBoxAssets(
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'assets'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'assets',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'assets'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"balanceOf"`.
  */
 export function useYieldBoxBalanceOf(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'balanceOf'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'balanceOf'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'balanceOf', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'balanceOf'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'balanceOf',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'balanceOf'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"balanceOfBatch"`.
  */
 export function useYieldBoxBalanceOfBatch(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'balanceOfBatch'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'balanceOfBatch'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'balanceOfBatch', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'balanceOfBatch'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'balanceOfBatch',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'balanceOfBatch'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"decimals"`.
  */
 export function useYieldBoxDecimals(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'decimals'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'decimals'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'decimals', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'decimals'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'decimals',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'decimals'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"ids"`.
  */
-export function useYieldBoxIds(config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'ids'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'ids', ...config } as UseContractReadConfig<typeof yieldBoxABI, 'ids'>);
+export function useYieldBoxIds(
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'ids'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'ids',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'ids'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"isApprovedForAll"`.
  */
 export function useYieldBoxIsApprovedForAll(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'isApprovedForAll'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'isApprovedForAll'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'isApprovedForAll', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'isApprovedForAll'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'isApprovedForAll',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'isApprovedForAll'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"name"`.
  */
-export function useYieldBoxName(config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'name'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'name', ...config } as UseContractReadConfig<typeof yieldBoxABI, 'name'>);
+export function useYieldBoxName(
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'name'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'name',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'name'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"nativeTokens"`.
  */
 export function useYieldBoxNativeTokens(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'nativeTokens'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'nativeTokens'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'nativeTokens', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'nativeTokens'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'nativeTokens',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'nativeTokens'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"onERC1155BatchReceived"`.
  */
 export function useYieldBoxOnErc1155BatchReceived(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'onERC1155BatchReceived'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'onERC1155BatchReceived'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'onERC1155BatchReceived', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'onERC1155BatchReceived'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'onERC1155BatchReceived',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'onERC1155BatchReceived'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"onERC1155Received"`.
  */
 export function useYieldBoxOnErc1155Received(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'onERC1155Received'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'onERC1155Received'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'onERC1155Received', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'onERC1155Received'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'onERC1155Received',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'onERC1155Received'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"onERC721Received"`.
  */
 export function useYieldBoxOnErc721Received(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'onERC721Received'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'onERC721Received'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'onERC721Received', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'onERC721Received'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'onERC721Received',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'onERC721Received'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"owner"`.
  */
-export function useYieldBoxOwner(config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'owner'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'owner', ...config } as UseContractReadConfig<typeof yieldBoxABI, 'owner'>);
+export function useYieldBoxOwner(
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'owner'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'owner',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'owner'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"pendingOwner"`.
  */
 export function useYieldBoxPendingOwner(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'pendingOwner'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'pendingOwner'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'pendingOwner', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'pendingOwner'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'pendingOwner',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'pendingOwner'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"supportsInterface"`.
  */
 export function useYieldBoxSupportsInterface(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'supportsInterface'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'supportsInterface'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'supportsInterface', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'supportsInterface'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'supportsInterface',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'supportsInterface'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"symbol"`.
  */
-export function useYieldBoxSymbol(config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'symbol'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'symbol', ...config } as UseContractReadConfig<typeof yieldBoxABI, 'symbol'>);
+export function useYieldBoxSymbol(
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'symbol'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'symbol',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'symbol'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"toAmount"`.
  */
 export function useYieldBoxToAmount(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'toAmount'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'toAmount'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'toAmount', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'toAmount'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'toAmount',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'toAmount'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"toShare"`.
  */
-export function useYieldBoxToShare(config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'toShare'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'toShare', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'toShare'
-    >);
+export function useYieldBoxToShare(
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'toShare'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'toShare',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'toShare'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"totalSupply"`.
  */
 export function useYieldBoxTotalSupply(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'totalSupply'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'totalSupply'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'totalSupply', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'totalSupply'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'totalSupply',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'totalSupply'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"uri"`.
  */
-export function useYieldBoxUri(config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'uri'>, 'abi' | 'functionName'> = {} as any) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'uri', ...config } as UseContractReadConfig<typeof yieldBoxABI, 'uri'>);
+export function useYieldBoxUri(
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'uri'>,
+        'abi' | 'functionName'
+    > = {} as any,
+) {
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'uri',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'uri'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"uriBuilder"`.
  */
 export function useYieldBoxUriBuilder(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'uriBuilder'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'uriBuilder'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'uriBuilder', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'uriBuilder'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'uriBuilder',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'uriBuilder'>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link yieldBoxABI}__ and `functionName` set to `"wrappedNative"`.
  */
 export function useYieldBoxWrappedNative(
-    config: Omit<UseContractReadConfig<typeof yieldBoxABI, 'wrappedNative'>, 'abi' | 'functionName'> = {} as any,
+    config: Omit<
+        UseContractReadConfig<typeof yieldBoxABI, 'wrappedNative'>,
+        'abi' | 'functionName'
+    > = {} as any,
 ) {
-    return useContractRead({ abi: yieldBoxABI, functionName: 'wrappedNative', ...config } as UseContractReadConfig<
-        typeof yieldBoxABI,
-        'wrappedNative'
-    >);
+    return useContractRead({
+        abi: yieldBoxABI,
+        functionName: 'wrappedNative',
+        ...config,
+    } as UseContractReadConfig<typeof yieldBoxABI, 'wrappedNative'>);
 }

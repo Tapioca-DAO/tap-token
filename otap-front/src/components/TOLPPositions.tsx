@@ -26,7 +26,9 @@ const useGetTOLPs = () => {
                     network: Network.ETH_GOERLI,
                     apiKey: '631U-TWNMURg0u4lIqrjat0LraWguV6p',
                 });
-                const nfts = await alchemy.nft.getNftsForOwner(address, { contractAddresses: [ADDRESSES.tOLP as any] });
+                const nfts = await alchemy.nft.getNftsForOwner(address, {
+                    contractAddresses: [ADDRESSES.tOLP as any],
+                });
                 const filtered = nfts.ownedNfts.map((e) => e.tokenId);
                 setTokens(filtered);
             }
@@ -44,26 +46,38 @@ function TOLPLock(props: { id: string }) {
     const { data: signer } = useSigner();
     const provider = useProvider();
 
-    const tOB = useTapiocaOptionBrokerMock({ address: ADDRESSES.tOB as any, signerOrProvider: signer });
-    const tOLP = useTapiocaOptionLiquidityProvision({ address: ADDRESSES.tOLP as any, signerOrProvider: signer });
-    const { data: lock } = useTapiocaOptionLiquidityProvisionGetLock({ address: ADDRESSES.tOLP as any, args: [props.id] });
+    const tOB = useTapiocaOptionBrokerMock({
+        address: ADDRESSES.tOB as any,
+        signerOrProvider: signer,
+    });
+    const tOLP = useTapiocaOptionLiquidityProvision({
+        address: ADDRESSES.tOLP as any,
+        signerOrProvider: signer,
+    });
+    const { data: lock } = useTapiocaOptionLiquidityProvisionGetLock({
+        address: ADDRESSES.tOLP as any,
+        args: [props.id],
+    });
 
     const isTOBApproved = useTapiocaOptionLiquidityProvisionIsApprovedOrOwner({
         address: ADDRESSES.tOLP as any,
         args: [ADDRESSES.tOB, props.id],
     });
 
-    const { data: tknAddress } = useTapiocaOptionLiquidityProvisionSglAssetIdToAddress({
-        address: ADDRESSES.tOLP as any,
-        args: [lock?.[1].sglAssetID ?? ''],
-    });
+    const { data: tknAddress } =
+        useTapiocaOptionLiquidityProvisionSglAssetIdToAddress({
+            address: ADDRESSES.tOLP as any,
+            args: [lock?.[1].sglAssetID ?? ''],
+        });
     const { data: tknSymbol } = useErc20MockSymbol({ address: tknAddress });
     const [timeRemaining, setTimeRemaining] = useState(0);
 
     useEffect(() => {
         const fetchData = async () => {
             const block = await provider.getBlock('latest');
-            const remaining = lock[1]?.lockTime.add(lock?.[1].lockDuration).sub(block.timestamp);
+            const remaining = lock[1]?.lockTime
+                .add(lock?.[1].lockDuration)
+                .sub(block.timestamp);
             if (remaining.gt(0)) {
                 setTimeRemaining(Math.ceil(Number(remaining.toString()) / 60));
             } else {
@@ -76,7 +90,9 @@ function TOLPLock(props: { id: string }) {
     }, [lock]);
 
     const onUnlock = async () => {
-        await (await tOLP?.unlock(props.id, tknAddress ?? '', address ?? ''))?.wait();
+        await (
+            await tOLP?.unlock(props.id, tknAddress ?? '', address ?? '')
+        )?.wait();
     };
 
     const onParticipateTob = async () => {
@@ -90,7 +106,8 @@ function TOLPLock(props: { id: string }) {
 
     return (
         <Typography>
-            {tknSymbol} | Amount: {formatBigNumber(lock?.[1].amount)} | Duration: {Number(lock?.[1].lockDuration.toString()) / 60} minutes |{' '}
+            {tknSymbol} | Amount: {formatBigNumber(lock?.[1].amount)} |
+            Duration: {Number(lock?.[1].lockDuration.toString()) / 60} minutes |{' '}
             {timeRemaining > 0 ? (
                 <>
                     Remaining: {timeRemaining} minutes
