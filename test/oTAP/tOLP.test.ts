@@ -210,26 +210,13 @@ describe('TapiocaOptionLiquidityProvision', () => {
 
         // Requirements
         await expect(
-            tOLP.lock(
-                signer.address,
-                signer.address,
-                sglTokenMock.address,
-                0,
-                lockAmount,
-            ),
+            tOLP.lock(signer.address, sglTokenMock.address, 0, lockAmount),
         ).to.revertedWith('tOLP: lock duration must be > 0');
         await expect(
-            tOLP.lock(
-                signer.address,
-                signer.address,
-                sglTokenMock.address,
-                lockDuration,
-                0,
-            ),
+            tOLP.lock(signer.address, sglTokenMock.address, lockDuration, 0),
         ).to.revertedWith('tOLP: amount must be > 0');
         await expect(
             tOLP.lock(
-                signer.address,
                 signer.address,
                 sglTokenMock2.address,
                 lockDuration,
@@ -239,13 +226,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
 
         // Lock
         await expect(
-            tOLP.lock(
-                signer.address,
-                signer.address,
-                sglTokenMock.address,
-                lockDuration,
-                1e8,
-            ),
+            tOLP.lock(signer.address, sglTokenMock.address, lockDuration, 1e8),
         )
             .to.emit(tOLP, 'Mint')
             .withArgs(signer.address, sglTokenMockAsset, []);
@@ -304,7 +285,6 @@ describe('TapiocaOptionLiquidityProvision', () => {
         );
         await yieldBox.setApprovalForAll(tOLP.address, true);
         await tOLP.lock(
-            signer.address,
             signer.address,
             sglTokenMock.address,
             lockDuration,
@@ -414,7 +394,6 @@ describe('TapiocaOptionLiquidityProvision', () => {
         );
         await yieldBox.setApprovalForAll(tOLP.address, true);
         await tOLP.lock(
-            signer.address,
             signer.address,
             sglTokenMock.address,
             lockDuration,
