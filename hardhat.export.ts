@@ -16,6 +16,7 @@ import 'tapioca-sdk';
 // Utils
 import SDK from 'tapioca-sdk';
 import { HttpNetworkConfig } from 'hardhat/types';
+import { TAPIOCA_PROJECTS_NAME } from './gitsub_tapioca-sdk/src/api/config';
 
 dotenv.config();
 declare global {
@@ -63,7 +64,7 @@ const config: HardhatUserConfig & { dodoc: any } = {
             {
                 version: '0.8.18',
                 settings: {
-                    viaIR: true,
+                    viaIR: process.env.NODE_ENV == 'coverage' ? false : true,
                     optimizer: {
                         enabled: true,
                         runs: 1000,
@@ -85,7 +86,7 @@ const config: HardhatUserConfig & { dodoc: any } = {
         },
         ...supportedChains,
     },
-    SDK: { project: 'tap-token' },
+    SDK: { project: TAPIOCA_PROJECTS_NAME.TapToken },
     etherscan: {
         apiKey: {
             goerli: process.env.BLOCKSCAN_KEY ?? '',

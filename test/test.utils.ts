@@ -134,7 +134,7 @@ export function aml_computeMinWeight(
     return totalWeights.mul(minWeightFactor);
 }
 
-export function aml_computeDiscount(
+export function aml_computeTarget(
     magnitude: BigNumber,
     cumulative: BigNumber,
     dmin: BigNumber,
