@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity ^0.8.18;
 
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "tapioca-periph/contracts/interfaces/IOracle.sol";
 import "./TapiocaOptionLiquidityProvision.sol";
-import "../interfaces/IOracle.sol";
 import "../tokens/TapOFT.sol";
 import "../twAML.sol";
 import "./oTAP.sol";
@@ -251,9 +251,15 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
             // Compute and save new cumulative
             divergenceForce = lock.lockDuration > pool.cumulative;
-            pool.cumulative = divergenceForce
-                ? pool.cumulative + pool.averageMagnitude
-                : pool.cumulative - pool.averageMagnitude;
+            if (divergenceForce) {
+                pool.cumulative += pool.averageMagnitude;
+            } else {
+                if (pool.cumulative > pool.averageMagnitude) {
+                    pool.cumulative -= pool.averageMagnitude;
+                } else {
+                    pool.cumulative = 0;
+                }
+            }
 
             // Save new weight
             pool.totalDeposited += lock.amount;
@@ -312,9 +318,16 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         if (participation.hasVotingPower) {
             TWAMLPool memory pool = twAML[lock.sglAssetID];
 
-            pool.cumulative = participation.divergenceForce
-                ? pool.cumulative - participation.averageMagnitude
-                : pool.cumulative + participation.averageMagnitude;
+            if (participation.divergenceForce) {
+                if (pool.cumulative > pool.averageMagnitude) {
+                    pool.cumulative -= pool.averageMagnitude;
+                } else {
+                    pool.cumulative = 0;
+                }
+            } else {
+                pool.cumulative += pool.averageMagnitude;
+            }
+
             pool.totalDeposited -= lock.amount;
             pool.totalParticipants--;
 

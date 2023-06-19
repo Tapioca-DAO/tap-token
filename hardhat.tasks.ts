@@ -3,19 +3,19 @@ import { task } from 'hardhat/config';
 import {
     deployOracleMock__task,
     deployVesting__task,
-} from './tasks/contractDeployment';
+} from './tasks/deploy/contractDeployment';
 import {
     setOracleMockRate__task,
     setTOBPaymentToken__task,
     setTOLPRegisterSingularity__task,
     setTOLPUnregisterSingularity__task,
     setYieldBoxRegisterAsset__task,
-} from './tasks/setterTasks';
+} from './tasks/exec/setterTasks';
 
 import { glob } from 'typechain';
-import { configurePacketTypes__task } from './tasks/configurePacketTypes';
-import { deployStack__task } from './tasks/deployStack';
-import { deployTapOFT__task } from './tasks/deployTapOFT';
+import { configurePacketTypes__task } from './tasks/exec/configurePacketTypes';
+import { deployStack__task } from './tasks/deploy/deployStack';
+import { deployTapOFT__task } from './tasks/deploy/deployTapOFT';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();

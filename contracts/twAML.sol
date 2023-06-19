@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity ^0.8.18;
 
 abstract contract TWAML {
     /// @notice Compute the minimum weight to participate in the twAML voting mechanism

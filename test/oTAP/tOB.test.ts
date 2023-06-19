@@ -3,18 +3,8 @@ import {
     takeSnapshot,
     time,
 } from '@nomicfoundation/hardhat-network-helpers';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
 import hre from 'hardhat';
-import {
-    ERC20Mock,
-    OTAP,
-    TapOFT,
-    TapiocaOptionBroker,
-    TapiocaOptionLiquidityProvision,
-    YieldBox,
-} from '../../typechain';
 import {
     BN,
     aml_computeAverageMagnitude,
@@ -23,6 +13,16 @@ import {
     getERC721PermitSignature,
     time_travel,
 } from '../test.utils';
+import {
+    OTAP,
+    TapiocaOptionBroker,
+    TapiocaOptionLiquidityProvision,
+    TapOFT,
+} from '../../typechain';
+import { BigNumber } from 'ethers';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { ERC20Mock } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
+import { YieldBox } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
 import { setupFixture } from './fixtures';
 
 describe('TapiocaOptionBroker', () => {
@@ -577,7 +577,7 @@ describe('TapiocaOptionBroker', () => {
 
         // Register sgl
         const tapPrice = BN(1e18).mul(2);
-        await tapOracleMock.setRate(tapPrice);
+        await tapOracleMock.set(tapPrice);
         await tOLP.registerSingularity(
             sglTokenMock.address,
             sglTokenMockAsset,
@@ -709,7 +709,7 @@ describe('TapiocaOptionBroker', () => {
                 .div(userLock1.ybAmount.add(userLock2.ybAmount));
             const otcDealAmountInUSD = BN(33e7).mul(eligibleTapAmount);
             const rawPayment = otcDealAmountInUSD.div(
-                (await stableMockOracle.get('0x00'))._rate,
+                (await stableMockOracle.get('0x00'))[1],
             ); // USDC price at 1
             const discount = rawPayment.mul(50).div(100);
             const paymentTokenToSend = rawPayment.sub(discount).div(1e12);
@@ -734,7 +734,7 @@ describe('TapiocaOptionBroker', () => {
                 .div(userLock1.ybAmount.add(userLock2.ybAmount));
             const otcDealAmountInUSD = BN(33e7).mul(eligibleTapAmount);
             const rawPayment = otcDealAmountInUSD.div(
-                (await stableMockOracle.get('0x00'))._rate,
+                (await stableMockOracle.get('0x00'))[1],
             ); // USDC price at 1
             const discount = rawPayment
                 .mul(userLock2.oTAPOption.discount)
@@ -765,7 +765,7 @@ describe('TapiocaOptionBroker', () => {
                 .div(userLock1.ybAmount.add(userLock2.ybAmount));
             const otcDealAmountInUSD = BN(33e7).mul(eligibleTapAmount);
             const rawPayment = otcDealAmountInUSD.div(
-                (await ethMockOracle.get('0x00'))._rate,
+                (await ethMockOracle.get('0x00'))[1],
             ); // USDC price at 1
             const discount = rawPayment.mul(50).div(100);
             const paymentTokenToSend = rawPayment.sub(discount);
@@ -786,7 +786,7 @@ describe('TapiocaOptionBroker', () => {
                 .div(userLock1.ybAmount.add(userLock2.ybAmount));
             const otcDealAmountInUSD = BN(33e7).mul(eligibleTapAmount);
             const rawPayment = otcDealAmountInUSD.div(
-                (await ethMockOracle.get('0x00'))._rate,
+                (await ethMockOracle.get('0x00'))[1],
             ); // USDC price at 1
             const discount = rawPayment
                 .mul(userLock2.oTAPOption.discount)
@@ -810,7 +810,7 @@ describe('TapiocaOptionBroker', () => {
         {
             const otcDealAmountInUSD = BN(33e7).mul((1e18).toString());
             const rawPayment = otcDealAmountInUSD.div(
-                (await stableMockOracle.get('0x00'))._rate,
+                (await stableMockOracle.get('0x00'))[1],
             ); // USDC price at 1
             const discount = rawPayment.mul(50).div(100);
             const paymentTokenToSend = rawPayment.sub(discount).div(1e12);
@@ -831,7 +831,7 @@ describe('TapiocaOptionBroker', () => {
         {
             const otcDealAmountInUSD = BN(33e7).mul((1e18).toString());
             const rawPayment = otcDealAmountInUSD.div(
-                (await stableMockOracle.get('0x00'))._rate,
+                (await stableMockOracle.get('0x00'))[1],
             ); // USDC price at 1
             const discount = rawPayment
                 .mul(userLock2.oTAPOption.discount)
@@ -858,7 +858,7 @@ describe('TapiocaOptionBroker', () => {
         {
             const otcDealAmountInUSD = BN(33e7).mul((1e18).toString());
             const rawPayment = otcDealAmountInUSD.div(
-                (await ethMockOracle.get('0x00'))._rate,
+                (await ethMockOracle.get('0x00'))[1],
             ); // ETH price at 1200
             const discount = rawPayment.mul(50).div(100);
             const paymentTokenToSend = rawPayment.sub(discount);
@@ -878,7 +878,7 @@ describe('TapiocaOptionBroker', () => {
         {
             const otcDealAmountInUSD = BN(33e7).mul((1e18).toString());
             const rawPayment = otcDealAmountInUSD.div(
-                (await ethMockOracle.get('0x00'))._rate,
+                (await ethMockOracle.get('0x00'))[1],
             ); // ETH price at 1200
             const discount = rawPayment
                 .mul(userLock2.oTAPOption.discount)

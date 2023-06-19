@@ -3,3 +3,7 @@ artifacts
 cache
 coverage
 typechain
+gitsub_tapioca-sdk
+tapioca-periph
+deployments
+docs

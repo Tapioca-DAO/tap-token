@@ -9,12 +9,12 @@
     "clean": "rm -rf ./cache && rm -rf ./artifacts && rm -rf ./.openzeppelin",
     "generate-sdk": "npx hardhat exportSDK",
     "prepare": "husky install",
-    "lint:ts": "eslint ./scripts ./tasks ./test ./*.ts --fix",
+    "lint:ts": "eslint . --fix",
     "lint:sol": "prettier --write \"./contracts/**/*.sol\" && solhint \"./contracts/**/*.sol\" --fix",
     "lint": "npm run lint:ts && npm run lint:sol"
   },
   "devDependencies": {
-    "@boringcrypto/boring-solidity": "https://github.com/boringcrypto/BoringSolidity#e0ff4a7771edfa09a90694c4e0f891938cf62a43",
+    "@boringcrypto/boring-solidity": "git+https://github.com/boringcrypto/BoringSolidity#e0ff4a7771edfa09a90694c4e0f891938cf62a43",
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/providers": "^5.7.0",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
