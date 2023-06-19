@@ -13,6 +13,8 @@ import {
     aml_computeTarget,
 } from '../test.utils';
 import { setupTwTAPFixture } from './fixtures';
+import ERC20MockArtifact from 'tapioca-sdk/dist/artifacts/tapioca-mocks/ERC20Mock.json';
+import { ERC20Mock__factory } from 'tapioca-sdk/dist/typechain/tapioca-mocks';
 
 const { formatUnits } = hre.ethers.utils;
 
@@ -464,7 +466,9 @@ describe('TapiocaDAOPortal', () => {
         const [alice] = users;
 
         const mock = await (
-            await ethers.getContractFactory('ERC20Mock')
+            (await ethers.getContractFactoryFromArtifact(
+                ERC20MockArtifact,
+            )) as ERC20Mock__factory
         ).deploy('New Token', 'NEW', oneEth, 18, signer.address);
 
         await expect(

@@ -1,6 +1,8 @@
 import hre, { ethers } from 'hardhat';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { BN } from '../test.utils';
+import ERC20MockArtifact from 'tapioca-sdk/dist/artifacts/tapioca-mocks/ERC20Mock.json';
+import { ERC20Mock__factory } from 'tapioca-sdk/dist/typechain/tapioca-mocks';
 
 export const setupTwTAPFixture = async () => {
     const signer = (await hre.ethers.getSigners())[0];
@@ -10,18 +12,26 @@ export const setupTwTAPFixture = async () => {
     const one = BN(1e18);
     const hundredMil = one.mul(100_000_000);
     const tapOFT = await (
-        await ethers.getContractFactory('ERC20Mock')
+        (await ethers.getContractFactoryFromArtifact(
+            ERC20MockArtifact,
+        )) as ERC20Mock__factory
     ).deploy('TapOFT', 'TapOFT', hundredMil, 18, signer.address);
 
     // Mock tokens
     const mock0 = await (
-        await ethers.getContractFactory('ERC20Mock')
+        (await ethers.getContractFactoryFromArtifact(
+            ERC20MockArtifact,
+        )) as ERC20Mock__factory
     ).deploy('Mock Zero', 'MOCK0', hundredMil, 18, signer.address);
     const mock1 = await (
-        await ethers.getContractFactory('ERC20Mock')
+        (await ethers.getContractFactoryFromArtifact(
+            ERC20MockArtifact,
+        )) as ERC20Mock__factory
     ).deploy('Mock One', 'MOCK1', hundredMil, 18, signer.address);
     const mock2 = await (
-        await ethers.getContractFactory('ERC20Mock')
+        (await ethers.getContractFactoryFromArtifact(
+            ERC20MockArtifact,
+        )) as ERC20Mock__factory
     ).deploy('Mock Two', 'MOCK2', hundredMil, 18, signer.address);
 
     // Mock token distribution
