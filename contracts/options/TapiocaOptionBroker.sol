@@ -379,15 +379,15 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
             tOLPLockPosition.sglAssetID
         ];
-        uint256 otcTapAmount = muldiv(
+        uint256 eligibleTapAmount = muldiv(
             tOLPLockPosition.amount,
             gaugeTotalForEpoch,
             tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID)
         );
-        otcTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
-        require(otcTapAmount >= _tapAmount, "tOB: Too high");
+        eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
+        require(eligibleTapAmount >= _tapAmount, "tOB: Too high");
 
-        uint256 chosenAmount = _tapAmount == 0 ? otcTapAmount : _tapAmount;
+        uint256 chosenAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
         oTAPCalls[_oTAPTokenID][cachedEpoch] += chosenAmount; // Adds up exercised amount to current epoch
 
         // Finalize the deal
