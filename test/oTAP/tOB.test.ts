@@ -25,7 +25,7 @@ import { ERC20Mock } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks'
 import { YieldBox } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
 import { setupFixture } from './fixtures';
 
-describe.only('TapiocaOptionBroker', () => {
+describe('TapiocaOptionBroker', () => {
     const setupEnv = async (
         tOB: TapiocaOptionBroker,
         tOLP: TapiocaOptionLiquidityProvision,
@@ -162,11 +162,11 @@ describe.only('TapiocaOptionBroker', () => {
 
         // test tOB participation
         await expect(tOB.participate(29)).to.be.revertedWith(
-            'TapiocaOptionBroker: Position is not active',
+            'tOB: Position is not active',
         ); // invalid/inexistent tokenID
         await expect(
             tOB.connect(users[0]).participate(tokenID),
-        ).to.be.revertedWith('TapiocaOptionBroker: Not approved or owner'); // Not owner
+        ).to.be.revertedWith('tOB: Not approved or owner'); // Not owner
 
         const prevPoolState = await tOB.twAML(sglTokenMockAsset);
 
@@ -229,7 +229,7 @@ describe.only('TapiocaOptionBroker', () => {
 
         /// Check transfer of tOLP
         await expect(tOB.participate(tokenID)).to.be.revertedWith(
-            'TapiocaOptionBroker: Not approved or owner',
+            'tOB: Not approved or owner',
         );
         expect(await tOLP.ownerOf(tokenID)).to.be.equal(tOB.address);
 
@@ -322,9 +322,7 @@ describe.only('TapiocaOptionBroker', () => {
         await time.increase(lockDuration);
         await expect(
             tOB.exitPosition((await oTAP.mintedOTAP()).add(1)),
-        ).to.be.revertedWith(
-            'TapiocaOptionBroker: oTAP position does not exist',
-        );
+        ).to.be.revertedWith('tOB: oTAP position does not exist');
         await snapshot.restore();
 
         // Participate
@@ -336,7 +334,7 @@ describe.only('TapiocaOptionBroker', () => {
 
         // Test exit
         await expect(tOB.exitPosition(oTAPTknID)).to.be.revertedWith(
-            'TapiocaOptionBroker: Lock not expired',
+            'tOB: Lock not expired',
         );
         expect(await tOLP.ownerOf(tokenID)).to.be.equal(tOB.address);
 
@@ -470,9 +468,7 @@ describe.only('TapiocaOptionBroker', () => {
         await time.increase(lockDuration);
         await expect(
             tOB.exitPosition((await oTAP.mintedOTAP()).add(1)),
-        ).to.be.revertedWith(
-            'TapiocaOptionBroker: oTAP position does not exist',
-        );
+        ).to.be.revertedWith('tOB: oTAP position does not exist');
         await snapshot.restore();
 
         // Participate
@@ -572,7 +568,7 @@ describe.only('TapiocaOptionBroker', () => {
 
         // No singularities
         await expect(tOB.newEpoch()).to.be.revertedWith(
-            'TapiocaOptionBroker: No active singularities',
+            'tOB: No active singularities',
         );
 
         // Register sgl
@@ -898,7 +894,7 @@ describe.only('TapiocaOptionBroker', () => {
         }
     });
 
-    it.only('should exercise an option fully or partially per allowed epoch amount', async () => {
+    it('should exercise an option fully or partially per allowed epoch amount', async () => {
         const {
             users,
             yieldBox,
@@ -941,7 +937,7 @@ describe.only('TapiocaOptionBroker', () => {
         const userLock1 = await lockAndParticipate(
             users[0],
             3e8,
-            3600,
+            1_209_600, // 2 week
             tOLP,
             tOB,
             oTAP,
@@ -952,7 +948,7 @@ describe.only('TapiocaOptionBroker', () => {
         const userLock2 = await lockAndParticipate(
             users[1],
             1e8,
-            3600,
+            1_209_600, // 2 week
             tOLP,
             tOB,
             oTAP,
@@ -966,7 +962,7 @@ describe.only('TapiocaOptionBroker', () => {
             tOB
                 .connect(users[1])
                 .exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0),
-        ).to.be.rejectedWith('TapiocaOptionBroker: Not approved or owner');
+        ).to.be.rejectedWith('tOB: Not approved or owner');
         const snapshot = await takeSnapshot();
         await tOB.setPaymentToken(
             stableMock.address,
@@ -977,16 +973,14 @@ describe.only('TapiocaOptionBroker', () => {
             tOB
                 .connect(users[0])
                 .exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0),
-        ).to.be.rejectedWith(
-            'TapiocaOptionBroker: Payment token not supported',
-        );
+        ).to.be.rejectedWith('tOB: Payment token not supported');
         await snapshot.restore();
         await time.increase(userLock1.lockDuration);
         await expect(
             tOB
                 .connect(users[0])
                 .exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0),
-        ).to.be.rejectedWith('TapiocaOptionBroker: Option expired');
+        ).to.be.rejectedWith('tOB: Option expired');
         await snapshot.restore();
 
         // Gauge emission check
@@ -1073,6 +1067,10 @@ describe.only('TapiocaOptionBroker', () => {
                 paymentTokenToSend,
             ); // Check payment token transfer to TOB contract
 
+            expect(
+                await tOB.oTAPCalls(userLock1.oTAPTokenID, epoch),
+            ).to.be.equal(eligibleTapAmount);
+
             // end
             await expect(
                 tOB
@@ -1082,22 +1080,27 @@ describe.only('TapiocaOptionBroker', () => {
                         stableMock.address,
                         eligibleTapAmount,
                     ),
-            ).to.be.rejectedWith('TapiocaOptionBroker: Already exercised');
+            ).to.be.rejectedWith('tOB: Too high');
         }
 
+        let user2EligibleTapAmount;
+        let user2PaymentAmount;
         // Exercise option for user 2 for half eligible TAP amount
         {
             const { eligibleTapAmount: __fullEligibleTapAMount } = await tOB
                 .connect(users[1])
                 .getOTCDealDetails(userLock2.oTAPTokenID, ethMock.address, 0);
-            const eligibleTapAmount = __fullEligibleTapAMount.div(2);
-            const { paymentTokenAmount: paymentTokenToSend } = await tOB
+            const tapAmountWanted = __fullEligibleTapAMount.div(2);
+            const { paymentTokenAmount: fullPaymentTokenToSend } = await tOB
                 .connect(users[1])
                 .getOTCDealDetails(
                     userLock2.oTAPTokenID,
                     ethMock.address,
-                    eligibleTapAmount,
+                    __fullEligibleTapAMount,
                 );
+            const halfPaymentTokenToSend = fullPaymentTokenToSend.div(2);
+            user2EligibleTapAmount = tapAmountWanted;
+            user2PaymentAmount = halfPaymentTokenToSend;
 
             await expect(
                 tOB
@@ -1105,10 +1108,10 @@ describe.only('TapiocaOptionBroker', () => {
                     .exerciseOption(
                         userLock2.oTAPTokenID,
                         ethMock.address,
-                        eligibleTapAmount,
+                        tapAmountWanted,
                     ),
             ).to.be.rejectedWith('ERC20: insufficient allowance');
-            await ethMock.mintTo(users[1].address, paymentTokenToSend);
+            await ethMock.mintTo(users[1].address, fullPaymentTokenToSend);
 
             await expect(
                 tOB
@@ -1116,12 +1119,12 @@ describe.only('TapiocaOptionBroker', () => {
                     .exerciseOption(
                         userLock2.oTAPTokenID,
                         ethMock.address,
-                        eligibleTapAmount,
+                        tapAmountWanted,
                     ),
             ).to.be.rejectedWith('ERC20: insufficient allowance');
             await ethMock
                 .connect(users[1])
-                .approve(tOB.address, paymentTokenToSend);
+                .approve(tOB.address, fullPaymentTokenToSend);
 
             // Exercise option checks
             await expect(
@@ -1130,7 +1133,7 @@ describe.only('TapiocaOptionBroker', () => {
                     .exerciseOption(
                         userLock2.oTAPTokenID,
                         ethMock.address,
-                        eligibleTapAmount,
+                        tapAmountWanted,
                     ),
             )
                 .to.emit(tOB, 'ExerciseOption')
@@ -1139,32 +1142,126 @@ describe.only('TapiocaOptionBroker', () => {
                     users[1].address,
                     ethMock.address,
                     userLock2.oTAPTokenID,
-                    eligibleTapAmount,
+                    tapAmountWanted,
                 ); // Successful exercise
 
+            expect(
+                await tOB.oTAPCalls(userLock2.oTAPTokenID, epoch),
+            ).to.be.equal(tapAmountWanted); // Check exercised amount has been updated
+
             expect(await tapOFT.balanceOf(users[1].address)).to.be.equal(
-                eligibleTapAmount,
+                tapAmountWanted,
             ); // Check TAP transfer to user
+
             expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
                 (await tapOFT.mintedInWeek(epoch))
-                    .sub(eligibleTapAmount)
+                    .sub(tapAmountWanted)
                     .sub(user1EligibleTapAmount),
             ); // Check TAP subtraction from TAP contract
+
             expect(await ethMock.balanceOf(tOB.address)).to.be.equal(
-                paymentTokenToSend,
+                halfPaymentTokenToSend,
             ); // Check payment token transfer to TOB contract
 
-            // end
+            // Exercise option for user 2 for remaining eligible TAP amount
             await expect(
                 tOB
                     .connect(users[1])
                     .exerciseOption(
                         userLock2.oTAPTokenID,
                         ethMock.address,
-                        eligibleTapAmount,
+                        tapAmountWanted,
                     ),
-            ).to.be.rejectedWith('TapiocaOptionBroker: Already exercised');
+            )
+                .to.emit(tOB, 'ExerciseOption')
+                .withArgs(
+                    epoch,
+                    users[1].address,
+                    ethMock.address,
+                    userLock2.oTAPTokenID,
+                    tapAmountWanted,
+                ); // Successful exercise
+
+            expect(
+                await tOB.oTAPCalls(userLock2.oTAPTokenID, epoch),
+            ).to.be.equal(__fullEligibleTapAMount); // Check exercised amount has been updated
+
+            expect(await tapOFT.balanceOf(users[1].address)).to.be.equal(
+                __fullEligibleTapAMount,
+            ); // Check TAP transfer to user
+
+            expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
+                (await tapOFT.mintedInWeek(epoch))
+                    .sub(__fullEligibleTapAMount)
+                    .sub(user1EligibleTapAmount),
+            ); // Check TAP subtraction from TAP contract
+
+            expect(await ethMock.balanceOf(tOB.address)).to.be.closeTo(
+                fullPaymentTokenToSend,
+                1,
+            ); // Check payment token transfer to TOB contract
+
+            // Can't exercise option again for this epoch
+            await expect(
+                tOB
+                    .connect(users[1])
+                    .exerciseOption(
+                        userLock2.oTAPTokenID,
+                        ethMock.address,
+                        tapAmountWanted,
+                    ),
+            ).to.be.rejectedWith('tOB: Too high');
         }
+
+        // Jump to next epoch
+        await time_travel(604800); // 1 week
+        await tOB.newEpoch();
+
+        // Exercise option for user 1 for remaining eligible TAP amount
+        await stableMock.mintTo(users[0].address, user1PaymentAmount);
+        await stableMock
+            .connect(users[0])
+            .approve(tOB.address, user1PaymentAmount);
+        await expect(
+            tOB
+                .connect(users[0])
+                .exerciseOption(
+                    userLock1.oTAPTokenID,
+                    stableMock.address,
+                    user1EligibleTapAmount,
+                ),
+        )
+            .to.emit(tOB, 'ExerciseOption')
+            .withArgs(
+                epoch.add(1),
+                users[0].address,
+                stableMock.address,
+                userLock1.oTAPTokenID,
+                user1EligibleTapAmount,
+            ); // Successful exercise
+
+        // Exercise option for user 2 for remaining eligible TAP amount
+        await ethMock.mintTo(users[1].address, user2PaymentAmount);
+        await ethMock
+            .connect(users[1])
+            .approve(tOB.address, user2PaymentAmount);
+        await expect(
+            tOB
+                .connect(users[1])
+                .exerciseOption(
+                    userLock2.oTAPTokenID,
+                    ethMock.address,
+                    user2EligibleTapAmount,
+                ),
+        )
+            .to.emit(tOB, 'ExerciseOption')
+            .withArgs(
+                epoch.add(1),
+                users[1].address,
+                ethMock.address,
+                userLock2.oTAPTokenID,
+                user2EligibleTapAmount,
+            ); // Successful exercise
     });
 
     it('should set payment beneficiary', async () => {
