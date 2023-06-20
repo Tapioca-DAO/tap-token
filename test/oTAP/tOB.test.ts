@@ -25,7 +25,7 @@ import { ERC20Mock } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks'
 import { YieldBox } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
 import { setupFixture } from './fixtures';
 
-describe('TapiocaOptionBroker', () => {
+describe.only('TapiocaOptionBroker', () => {
     const setupEnv = async (
         tOB: TapiocaOptionBroker,
         tOLP: TapiocaOptionLiquidityProvision,
@@ -898,7 +898,7 @@ describe('TapiocaOptionBroker', () => {
         }
     });
 
-    it('should exercise an option', async () => {
+    it.only('should exercise an option fully or partially per allowed epoch amount', async () => {
         const {
             users,
             yieldBox,

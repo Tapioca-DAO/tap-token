@@ -68,7 +68,7 @@ export const setupFixture = async () => {
     ).deploy(yieldBox.address, signer.address);
     const oTAP = await (await ethers.getContractFactory('OTAP')).deploy();
     const tOB = await (
-        await ethers.getContractFactory('TapiocaOptionBroker')
+        await hre.ethers.getContractFactory('TapiocaOptionBroker')
     ).deploy(
         tOLP.address,
         oTAP.address,
