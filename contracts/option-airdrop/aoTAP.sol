@@ -28,9 +28,10 @@ import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 //         ####*  (((((((((((((((((((
 //                     ,**//*,.
 
-struct TapOption {
+struct AirdropTapOption {
     uint128 expiry; // timestamp, as once one wise man said, the sun will go dark before this overflows
     uint128 discount; // discount in basis points
+    uint256 amount; // amount eligible TAP
 }
 
 contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable {
@@ -38,7 +39,7 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     uint256 public mintedTAP; // total number of TAP minted
     address public broker; // address of the onlyBroker
 
-    mapping(uint256 => TapOption) public options; // tokenId => Option
+    mapping(uint256 => AirdropTapOption) public options; // tokenId => Option
     mapping(uint256 => string) public tokenURIs; // tokenId => tokenURI
 
     constructor()
@@ -54,8 +55,16 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     // ==========
     //   EVENTS
     // ==========
-    event Mint(address indexed to, uint256 indexed tokenId, TapOption option);
-    event Burn(address indexed from, uint256 indexed tokenId, TapOption option);
+    event Mint(
+        address indexed to,
+        uint256 indexed tokenId,
+        AirdropTapOption option
+    );
+    event Burn(
+        address indexed from,
+        uint256 indexed tokenId,
+        AirdropTapOption option
+    );
 
     // =========
     //    READ
@@ -77,7 +86,7 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     /// @notice Return the owner of the tokenId and the attributes of the option.
     function attributes(
         uint256 _tokenId
-    ) external view returns (address, TapOption memory) {
+    ) external view returns (address, AirdropTapOption memory) {
         return (ownerOf(_tokenId), options[_tokenId]);
     }
 
@@ -110,7 +119,7 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable {
         tokenId = ++mintedOTAP;
         _safeMint(_to, tokenId);
 
-        TapOption storage option = options[tokenId];
+        AirdropTapOption storage option = options[tokenId];
         option.expiry = _expiry;
         option.discount = _discount;
 
