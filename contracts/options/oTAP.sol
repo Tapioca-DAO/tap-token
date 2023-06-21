@@ -44,7 +44,6 @@ struct TapOption {
 
 contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     uint256 public mintedOTAP; // total number of OTAP minted
-    uint256 public mintedTAP; // total number of TAP minted
     address public broker; // address of the onlyBroker
 
     mapping(uint256 => TapOption) public options; // tokenId => Option
