@@ -69,11 +69,6 @@ contract AirdropBroker is Pausable, BoringOwnable {
 
     uint256 constant EPOCH_DURATION = 2 days;
 
-    uint256 public constant PHASE_1_3_DISCOUNT = 50 * 1e4; // 50%
-    uint256 public constant PHASE_2_DISCOUNT_MIN = 30 * 1e4;
-    uint256 public constant PHASE_2_DISCOUNT_MAX = PHASE_1_3_DISCOUNT;
-    uint256 public constant PHASE_3_DISCOUNT = 33 * 1e4;
-
     /// =====-------======
     constructor(
         address _aoTAP,

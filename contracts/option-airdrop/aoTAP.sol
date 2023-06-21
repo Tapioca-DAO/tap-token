@@ -2,8 +2,10 @@
 pragma solidity ^0.8.18;
 
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
+import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 
 //
@@ -34,7 +36,7 @@ struct AirdropTapOption {
     uint256 amount; // amount eligible TAP
 }
 
-contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable {
+contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
     uint256 public mintedOTAP; // total number of OTAP minted
     uint256 public mintedTAP; // total number of TAP minted
     address public broker; // address of the onlyBroker
@@ -42,10 +44,21 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     mapping(uint256 => AirdropTapOption) public options; // tokenId => Option
     mapping(uint256 => string) public tokenURIs; // tokenId => tokenURI
 
-    constructor()
-        ERC721("Airdrop Option TAP", "aoTAP")
-        ERC721Permit("Airdrop Option TAP")
-    {}
+    mapping(address => uint256) public phase1Users; // user address => eligible TAP amount
+
+    // [OG Pearls, Sushi Frens, Tapiocans, Oysters, Cassava]
+    bytes32[4] public phase2MerkleRoots; // merkle root of phase 2 airdrop
+
+    uint256 public constant PHASE_1_3_DISCOUNT = 50 * 1e4; // 50%
+    uint256 public constant PHASE_2_DISCOUNT_MIN = 30 * 1e4;
+    uint256 public constant PHASE_2_DISCOUNT_MAX = PHASE_1_3_DISCOUNT;
+    uint256 public constant PHASE_3_DISCOUNT = 33 * 1e4;
+
+    constructor(
+        address _owner
+    ) ERC721("Airdrop Option TAP", "aoTAP") ERC721Permit("Airdrop Option TAP") {
+        owner = _owner;
+    }
 
     modifier onlyBroker() {
         require(msg.sender == broker, "AOTAP: only onlyBroker");
@@ -142,5 +155,14 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     function brokerClaim() external {
         require(broker == address(0), "AOTAP: only once");
         broker = msg.sender;
+    }
+
+    // ==========
+    //    OWNER
+    // ==========
+    function setPhase2MerkleRoots(
+        bytes32[4] calldata _merkleRoots
+    ) external onlyOwner {
+        phase2MerkleRoots = _merkleRoots;
     }
 }
