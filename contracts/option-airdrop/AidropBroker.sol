@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
@@ -43,6 +44,11 @@ struct PaymentTokenOracle {
     bytes oracleData;
 }
 
+struct PhaseInfo {
+    uint128 initialTap; // Would be <1.5e24
+    uint128 availableTap; // Would be <=initialTap
+}
+
 /// @notice More details found here https://docs.tapioca.xyz/tapioca/launch/option-airdrop
 contract AirdropBroker is Pausable, BoringOwnable {
     bytes public tapOracleData;
@@ -50,19 +56,23 @@ contract AirdropBroker is Pausable, BoringOwnable {
     AOTAP public immutable aoTAP;
     IOracle public tapOracle;
 
-    uint256 public lastEpochUpdate; // timestamp of the last epoch update
-    uint256 public epochTAPValuation; // TAP price for the current epoch
-    uint256 public epoch; // Represents the number of weeks since the start of the contract
+    uint128 public epochTAPValuation; // TAP price for the current epoch
+    uint64 public lastEpochUpdate; // timestamp of the last epoch update
+    uint64 public epoch; // Represents the number of weeks since the start of the contract
 
-    mapping(uint256 => mapping(uint256 => bool)) public aoTAPCalls; // oTAPTokenID => epoch => hasExercised
+    mapping(uint256 => mapping(uint256 => uint256)) public aoTAPCalls; // oTAPTokenID => epoch => amountExercised
 
-    /// @notice 4 phases
-    mapping(uint256 => uint256) public availTapForPhase; // airdrop phase => availableTAP
+    mapping(uint256 => PhaseInfo) public phaseInfo; // airdrop phase => PhaseInfo
 
     mapping(ERC20 => PaymentTokenOracle) public paymentTokens; // Token address => PaymentTokenOracle
     address public paymentTokenBeneficiary; // Where to collect the payment tokens
 
     uint256 constant EPOCH_DURATION = 2 days;
+
+    uint256 public constant PHASE_1_3_DISCOUNT = 50 * 1e4; // 50%
+    uint256 public constant PHASE_2_DISCOUNT_MIN = 30 * 1e4;
+    uint256 public constant PHASE_2_DISCOUNT_MAX = PHASE_1_3_DISCOUNT;
+    uint256 public constant PHASE_3_DISCOUNT = 33 * 1e4;
 
     /// =====-------======
     constructor(
@@ -81,21 +91,15 @@ contract AirdropBroker is Pausable, BoringOwnable {
     //   EVENTS
     // ==========
     event Participate(
-        uint256 indexed phase,
+        uint256 indexed epoch,
         uint256 totalDeposited,
         uint256 discount
-    );
-    event AMLDivergence(
-        uint256 indexed epoch,
-        uint256 indexed cumulative,
-        uint256 indexed averageMagnitude,
-        uint256 totalParticipants
     );
     event ExerciseOption(
         uint256 indexed epoch,
         address indexed to,
         ERC20 indexed paymentToken,
-        uint256 oTapTokenID,
+        uint256 aoTapTokenID,
         uint256 amount
     );
     event NewEpoch(
@@ -103,11 +107,7 @@ contract AirdropBroker is Pausable, BoringOwnable {
         uint256 extractedTAP,
         uint256 epochTAPValuation
     );
-    event ExitPosition(
-        uint256 indexed epoch,
-        uint256 indexed tokenId,
-        uint256 amount
-    );
+
     event SetPaymentToken(ERC20 paymentToken, IOracle oracle, bytes oracleData);
     event SetTapOracle(IOracle oracle, bytes oracleData);
 
@@ -145,13 +145,10 @@ contract AirdropBroker is Pausable, BoringOwnable {
         // Check requirements
         require(
             paymentTokenOracle.oracle != IOracle(address(0)),
-            "TapiocaOptionBroker: Payment token not supported"
+            "adb: Payment token not supported"
         );
-        require(
-            aoTAPCalls[_oTAPTokenID][cachedEpoch] == false,
-            "TapiocaOptionBroker: Already exercised"
-        );
-        require(isPositionActive, "TapiocaOptionBroker: Option expired");
+
+        require(isPositionActive, "adb: Option expired");
 
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
@@ -162,6 +159,8 @@ contract AirdropBroker is Pausable, BoringOwnable {
             gaugeTotalForEpoch,
             tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID)
         );
+        eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
+        require(eligibleTapAmount >= _tapAmount, "adb: Too high");
 
         // Get TAP valuation
         uint256 otcAmountInUSD = (
@@ -193,16 +192,13 @@ contract AirdropBroker is Pausable, BoringOwnable {
         (bool isPositionActive, LockPosition memory lock) = tOLP.getLock(
             _tOLPTokenID
         );
-        require(
-            isPositionActive,
-            "TapiocaOptionBroker: Position is not active"
-        );
+        require(isPositionActive, "adb: Position is not active");
 
         TWAMLPool memory pool = twAML[lock.sglAssetID];
 
         require(
             tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID),
-            "TapiocaOptionBroker: Not approved or owner"
+            "adb: Not approved or owner"
         );
 
         // Transfer tOLP position to this contract
@@ -273,10 +269,7 @@ contract AirdropBroker is Pausable, BoringOwnable {
     /// @notice Exit a twAML participation and delete the voting power if existing
     /// @param _oTAPTokenID The tokenId of the oTAP position
     function exitPosition(uint256 _oTAPTokenID) external {
-        require(
-            oTAP.exists(_oTAPTokenID),
-            "TapiocaOptionBroker: oTAP position does not exist"
-        );
+        require(oTAP.exists(_oTAPTokenID), "adb: oTAP position does not exist");
 
         // Load data
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
@@ -284,7 +277,7 @@ contract AirdropBroker is Pausable, BoringOwnable {
 
         require(
             block.timestamp >= lock.lockTime + lock.lockDuration,
-            "TapiocaOptionBroker: Lock not expired"
+            "adb: Lock not expired"
         );
 
         Participation memory participation = participants[oTAPPosition.tOLP];
@@ -349,34 +342,28 @@ contract AirdropBroker is Pausable, BoringOwnable {
         // Check requirements
         require(
             paymentTokenOracle.oracle != IOracle(address(0)),
-            "TapiocaOptionBroker: Payment token not supported"
+            "adb: Payment token not supported"
         );
         require(
             oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID),
-            "TapiocaOptionBroker: Not approved or owner"
+            "adb: Not approved or owner"
         );
-        require(
-            aoTAPCalls[_oTAPTokenID][cachedEpoch] == false,
-            "TapiocaOptionBroker: Already exercised"
-        );
-        require(isPositionActive, "TapiocaOptionBroker: Option expired");
-
-        aoTAPCalls[_oTAPTokenID][cachedEpoch] = true; // Save exercise call of the option for this epoch
+        require(isPositionActive, "adb: Option expired");
 
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
             tOLPLockPosition.sglAssetID
         ];
-        uint256 otcTapAmount = muldiv(
+        uint256 eligibleTapAmount = muldiv(
             tOLPLockPosition.amount,
             gaugeTotalForEpoch,
             tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID)
         );
-        require(
-            _tapAmount <= otcTapAmount,
-            "TapiocaOptionBroker: Amount exceeds eligible TAP"
-        );
-        uint256 chosenAmount = _tapAmount == 0 ? otcTapAmount : _tapAmount;
+        eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
+        require(eligibleTapAmount >= _tapAmount, "adb: Too high");
+
+        uint256 chosenAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
+        oTAPCalls[_oTAPTokenID][cachedEpoch] += chosenAmount; // Adds up exercised amount to current epoch
 
         // Finalize the deal
         _processOTCDeal(
@@ -399,14 +386,10 @@ contract AirdropBroker is Pausable, BoringOwnable {
     ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
         require(
-            block.timestamp >= lastEpochUpdate + WEEK,
-            "TapiocaOptionBroker: too soon"
+            block.timestamp >= lastEpochUpdate + EPOCH_DURATION,
+            "adb: too soon"
         );
         uint256[] memory singularities = tOLP.getSingularities();
-        require(
-            singularities.length > 0,
-            "TapiocaOptionBroker: No active singularities"
-        );
 
         // Update epoch info
         lastEpochUpdate = block.timestamp;
@@ -421,14 +404,21 @@ contract AirdropBroker is Pausable, BoringOwnable {
         emit NewEpoch(epoch, epochTAP, epochTAPValuation);
     }
 
-    /// @notice Claim the Broker role of the oTAP contract
+    /// @notice Claim the Broker role of the aoTAP contract
     function oTAPBrokerClaim() external {
-        oTAP.brokerClaim();
+        aoTAP.brokerClaim();
     }
 
     // =========
     //   OWNER
     // =========
+
+    function setPhaseInfo(
+        uint256 _phase,
+        uint256 _initialTap
+    ) external onlyOwner {
+        phaseInfo[_phase] = PhaseInfo(_initialTap, _initialTap);
+    }
 
     /// @notice Set the TapOFT Oracle address and data
     /// @param _tapOracle The new TapOFT Oracle address
@@ -471,7 +461,7 @@ contract AirdropBroker is Pausable, BoringOwnable {
     ) external onlyOwner {
         require(
             paymentTokenBeneficiary != address(0),
-            "TapiocaOptionBroker: Payment token beneficiary not set"
+            "adb: Payment token beneficiary not set"
         );
         uint256 len = _paymentTokens.length;
 
