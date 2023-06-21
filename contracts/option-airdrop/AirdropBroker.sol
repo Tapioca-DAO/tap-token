@@ -4,6 +4,7 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/IERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "tapioca-periph/contracts/interfaces/IOracle.sol";
 import "../tokens/TapOFT.sol";
@@ -49,12 +50,18 @@ struct PhaseInfo {
     uint128 availableTap; // Would be <=initialTap
 }
 
+struct Phase2Info {
+    uint8[4] amountsPerUsers;
+    uint8[4] discountsPerUsers;
+}
+
 /// @notice More details found here https://docs.tapioca.xyz/tapioca/launch/option-airdrop
 contract AirdropBroker is Pausable, BoringOwnable {
     bytes public tapOracleData;
     TapOFT public immutable tapOFT;
     AOTAP public immutable aoTAP;
     IOracle public tapOracle;
+    IERC721 public immutable PCNFT;
 
     uint128 public epochTAPValuation; // TAP price for the current epoch
     uint64 public lastEpochUpdate; // timestamp of the last epoch update
@@ -63,6 +70,28 @@ contract AirdropBroker is Pausable, BoringOwnable {
     mapping(uint256 => mapping(uint256 => uint256)) public aoTAPCalls; // oTAPTokenID => epoch => amountExercised
 
     mapping(uint256 => PhaseInfo) public phaseInfo; // airdrop phase => PhaseInfo
+
+    /// @notice user address => eligible TAP amount, 0 means no eligibility
+    mapping(address => uint256) public phase1Users;
+    mapping(address => uint256) public phase4Users;
+
+    /// @notice Record of participation in phase 2 airdrop
+    /// Only applicable for phase 2. To get subphases on phase 2 we do userParticipation[_user][20+roles]
+    mapping(address => mapping(uint256 => bool)) public userParticipation; // user address => phase => participated
+
+    // [OG Pearls, Sushi Frens, Tapiocans, Oysters, Cassava]
+    bytes32[4] public phase2MerkleRoots; // merkle root of phase 2 airdrop
+    Phase2Info public constant PHASE_2_INFO =
+        Phase2Info({
+            amountsPerUsers: [200, 190, 200, 190],
+            discountsPerUsers: [50, 40, 40, 33]
+        });
+
+    uint256 public constant PHASE_3_AMOUNT_PER_USER = 714;
+
+    uint256 public constant PHASE_1_DISCOUNT = 50 * 1e4; // 50%
+    uint256 public constant PHASE_3_DISCOUNT = 50 * 1e4;
+    uint256 public constant PHASE_4_DISCOUNT = 33 * 1e4;
 
     mapping(ERC20 => PaymentTokenOracle) public paymentTokens; // Token address => PaymentTokenOracle
     address public paymentTokenBeneficiary; // Where to collect the payment tokens
@@ -73,12 +102,14 @@ contract AirdropBroker is Pausable, BoringOwnable {
     constructor(
         address _aoTAP,
         address _tapOFT,
+        address _pcnft,
         address _paymentTokenBeneficiary,
         address _owner
     ) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         tapOFT = TapOFT(_tapOFT);
         aoTAP = AOTAP(_aoTAP);
+        PCNFT = IERC721(_pcnft);
         owner = _owner;
     }
 
@@ -178,87 +209,23 @@ contract AirdropBroker is Pausable, BoringOwnable {
     //    WRITE
     // ===========
 
-    /// @notice Participate in twAMl voting and mint an oTAP position
-    /// @param _tOLPTokenID The tokenId of the tOLP position
+    /// @notice Participate in the airdrop
+    /// @param _data The data to be used for the participation, varies by phases
     function participate(
-        uint256 _tOLPTokenID
-    ) external returns (uint256 oTAPTokenID) {
-        // Compute option parameters
-        (bool isPositionActive, LockPosition memory lock) = tOLP.getLock(
-            _tOLPTokenID
-        );
-        require(isPositionActive, "adb: Position is not active");
+        bytes32 calldata _data
+    ) external returns (uint256 aoTAPTokenID) {
+        uint256 cachedEpoch = epoch;
 
-        TWAMLPool memory pool = twAML[lock.sglAssetID];
-
-        require(
-            tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID),
-            "adb: Not approved or owner"
-        );
-
-        // Transfer tOLP position to this contract
-        tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
-
-        uint256 magnitude = computeMagnitude(
-            uint256(lock.lockDuration),
-            pool.cumulative
-        );
-        bool divergenceForce;
-        uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
-
-        // Participate in twAMl voting
-        bool hasVotingPower = lock.amount >=
-            computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
-        if (hasVotingPower) {
-            pool.totalParticipants++; // Save participation
-            pool.averageMagnitude =
-                (pool.averageMagnitude + magnitude) /
-                pool.totalParticipants; // compute new average magnitude
-
-            // Compute and save new cumulative
-            divergenceForce = lock.lockDuration > pool.cumulative;
-            if (divergenceForce) {
-                pool.cumulative += pool.averageMagnitude;
-            } else {
-                if (pool.cumulative > pool.averageMagnitude) {
-                    pool.cumulative -= pool.averageMagnitude;
-                } else {
-                    pool.cumulative = 0;
-                }
-            }
-
-            // Save new weight
-            pool.totalDeposited += lock.amount;
-
-            twAML[lock.sglAssetID] = pool; // Save twAML participation
-            emit AMLDivergence(
-                epoch,
-                pool.cumulative,
-                pool.averageMagnitude,
-                pool.totalParticipants
-            ); // Register new voting power event
+        // Phase 1
+        if (cachedEpoch == 1) {
+            _participatePhase1(_data); // _data = (address _to)
+        } else if (cachedEpoch == 2) {
+            _participatePhase2(_data); // _data = (address _to, uint8 _role, bytes32 _merkleProof)
+        } else if (cachedEpoch == 3) {
+            _participatePhase3(_data); // _data = (uint256 _tokenID)
+        } else if (cachedEpoch == 4) {
+            _participatePhase4(_data); // _data = (uint256 _to)
         }
-        // Save twAML participation
-        participants[_tOLPTokenID] = Participation(
-            hasVotingPower,
-            divergenceForce,
-            pool.averageMagnitude
-        );
-
-        // Mint oTAP position
-        oTAPTokenID = oTAP.mint(
-            msg.sender,
-            lock.lockTime + lock.lockDuration,
-            uint128(target),
-            _tOLPTokenID
-        );
-        emit Participate(
-            epoch,
-            lock.sglAssetID,
-            pool.totalDeposited,
-            lock,
-            target
-        );
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
@@ -428,6 +395,12 @@ contract AirdropBroker is Pausable, BoringOwnable {
         emit SetTapOracle(_tapOracle, _tapOracleData);
     }
 
+    function setPhase2MerkleRoots(
+        bytes32[4] calldata _merkleRoots
+    ) external onlyOwner {
+        phase2MerkleRoots = _merkleRoots;
+    }
+
     /// @notice Activate or deactivate a payment token
     /// @dev set the oracle to address(0) to deactivate, expect the same decimal precision as TAP oracle
     function setPaymentToken(
@@ -474,6 +447,101 @@ contract AirdropBroker is Pausable, BoringOwnable {
     // ============
     //   INTERNAL
     // ============
+
+    /// @notice Participate in phase 1 of the Airdrop. LBP users are given aoTAP pro-rata.
+    function _participatePhase1() internal returns (uint256 oTAPTokenID) {
+        uint256 _eligibleAmount = phase1Users[msg.sender];
+        require(_eligibleAmount > 0, "adb: Not eligible");
+
+        // Close eligibility
+        phase1Users[msg.sender] = 0;
+
+        // Mint aoTAP
+        uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
+        oTAPTokenID = aoTAP.mint(
+            msg.sender,
+            expiry,
+            uint128(PHASE_1_DISCOUNT),
+            _eligibleAmount
+        );
+    }
+
+    /// @notice Participate in phase 2 of the Airdrop. Guild members will receive pre-defined discounts and TAP, based on role.
+    /// @param _data The calldata. Needs to be the address of the user.
+    /// _data = (uint256 role, bytes32[] _merkleProof). Refer to {phase2MerkleRoots} for role.
+    function _participatePhase2(
+        bytes32 _data
+    ) internal returns (uint256 oTAPTokenID) {
+        (uint256 _role, bytes32[] _merkleProof) = abi.decode(
+            _data,
+            (uint256, bytes32[])
+        );
+
+        bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
+        require(
+            MerkleProof.verify(_merkleProof, root, leaf),
+            "adb: Not eligible"
+        );
+
+        uint256 subPhase = 20 + _role;
+        require(
+            userParticipation[msg.sender][subPhase] == false,
+            "adb: Already participated"
+        );
+        // Close eligibility
+        userParticipation[msg.sender][subPhase] = true;
+
+        // Mint aoTAP
+        uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
+        uint256 eligibleAmount = phase2Info.amountsPerUsers[_role];
+        uint128 discount = phase2Info.discountsPerUsers[_role];
+        oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
+    }
+
+    /// @notice Participate in phase 1 of the Airdrop. PCNFT holder will receive pre-defined discount and TAP.
+    /// @param _data The calldata. Needs to be the address of the user.
+    /// _data = (uint256 _tokenID)
+    function _participatePhase3(
+        bytes32 _data
+    ) internal returns (uint256 oTAPTokenID) {
+        uint256 _tokenID = abi.decode(_data, (uint256));
+
+        require(PCNFT.ownerOf(_tokenID) == msg.sender, "adb: Not eligible");
+        require(
+            userParticipation[_to][3] == false,
+            "adb: Already participated"
+        );
+        // Close eligibility
+        // To avoid a potential attack vector, we cast token ID to an address instead of using _to,
+        // no conflict possible, tokenID goes from 0 ... 714.
+        userParticipation[address(uint160(_tokenID))][3] = true;
+
+        // Mint aoTAP
+        Phase2Info memory phase2Info = PHASE_2_INFO;
+
+        uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
+        uint256 eligibleAmount = PHASE_3_AMOUNT_PER_USER;
+        uint128 discount = PHASE_3_DISCOUNT;
+        oTAPTokenID = aoTAP.mint(_to, expiry, discount, eligibleAmount);
+    }
+
+    /// @notice Participate in phase 4 of the Airdrop. twTAP and Cassava guild's role are given TAP pro-rata.
+    function _participatePhase4() internal returns (uint256 oTAPTokenID) {
+        uint256 _eligibleAmount = phase4Users[msg.sender];
+        require(_eligibleAmount > 0, "adb: Not eligible");
+
+        // Close eligibility
+        phase4Users[msg.sender] = 0;
+
+        // Mint aoTAP
+        uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
+        oTAPTokenID = aoTAP.mint(
+            msg.sender,
+            expiry,
+            uint128(PHASE_4_DISCOUNT),
+            _eligibleAmount
+        );
+    }
 
     /// @notice Process the OTC deal, transfer the payment token to the broker and the TAP amount to the user
     /// @param _paymentToken The payment token
