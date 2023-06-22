@@ -35,15 +35,16 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
 
     //  Allocation:
     // =========
-    // * DSO: 56.5m
-    // * DAO: 10m
+    // * DSO: 53,313,405
+    // * DAO: 8m
     // * Contributors: 15m
-    // * Investors: 11m
+    // * Early supporters: 3,686,595
+    // * Supporters: 12.5m
     // * LBP: 5m
     // * Airdrop: 2.5m
     // == 100M ==
-    uint256 public constant INITIAL_SUPPLY = 43_500_000 * 1e18; // Everything minus DSO
-    uint256 public dso_supply = 56_500_000 * 1e18;
+    uint256 public constant INITIAL_SUPPLY = 46_686_595 * 1e18; // Everything minus DSO
+    uint256 public dso_supply = 53_313_405 * 1e18;
 
     /// @notice the a parameter used in the emission function;
     uint256 constant decay_rate = 8800000000000000; // 0.88%
@@ -100,17 +101,19 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
     /// @notice Creates a new TAP OFT type token
     /// @dev The initial supply of 100M is not minted here as we have the wrap method
     /// @param _lzEndpoint the layer zero address endpoint deployed on the current chain
-    /// @param _contributors address of the  contributors
-    /// @param _investors address of investors
-    /// @param _lbp address of the LBP
-    /// @param _dao address of the DAO
-    /// @param _airdrop address of the airdrop contract
+    /// @param _contributors address of the  contributors. 15m
+    /// @param _earlySupporters address of early supporters. 3,686,595
+    /// @param _supporters address of supporters. 12.5m
+    /// @param _lbp address of the LBP. 5m
+    /// @param _dao address of the DAO. 8m
+    /// @param _airdrop address of the airdrop contract. 2.5m
     /// @param _governanceChainId LayerZero governance chain identifier
     /// @param _conservator address of the conservator/owner
     constructor(
         address _lzEndpoint,
         address _contributors,
-        address _investors,
+        address _earlySupporters,
+        address _supporters,
         address _lbp,
         address _dao,
         address _airdrop,
@@ -121,9 +124,10 @@ contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
         governanceChainIdentifier = _governanceChainId;
         if (_getChainId() == governanceChainIdentifier) {
             _mint(_contributors, 1e18 * 15_000_000);
-            _mint(_investors, 1e18 * 11_000_000);
+            _mint(_earlySupporters, 1e18 * 3_686_595);
+            _mint(_supporters, 1e18 * 12_500_000);
             _mint(_lbp, 1e18 * 5_000_000);
-            _mint(_dao, 1e18 * 10_000_000);
+            _mint(_dao, 1e18 * 8_000_000);
             _mint(_airdrop, 1e18 * 2_500_000);
             require(
                 totalSupply() == INITIAL_SUPPLY,

@@ -25,7 +25,7 @@ import { ERC20Mock } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks'
 import { YieldBox } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
 import { setupFixture } from './fixtures';
 
-describe.only('TapiocaOptionBroker', () => {
+describe('TapiocaOptionBroker', () => {
     const setupEnv = async (
         oTAP: OTAP,
         tOB: TapiocaOptionBroker,

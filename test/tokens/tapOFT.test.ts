@@ -16,6 +16,7 @@ import {
     deployLZEndpointMock,
     deployTapiocaOFT,
     getERC20PermitSignature,
+    randomSigners,
     time_travel,
 } from '../test.utils';
 
@@ -58,6 +59,54 @@ describe('tapOFT', () => {
 
     beforeEach(async () => {
         await loadFixture(register);
+    });
+
+    it('Should send the correct amount of tokens to each receiver', async () => {
+        const [
+            _contributors,
+            _earlySupporters,
+            _supporters,
+            _lbp,
+            _dao,
+            _airdrop,
+        ] = (await randomSigners(6)).map((e) => e.address);
+
+        const tapFactory = await ethers.getContractFactory('TapOFT');
+        const tap = await tapFactory.deploy(
+            LZEndpointMockCurrentChain.address,
+            _contributors,
+            _earlySupporters,
+            _supporters,
+            _lbp,
+            _dao,
+            _airdrop,
+            await LZEndpointMockCurrentChain.getChainId(),
+            signer.address,
+        );
+
+        const [
+            balanceContributors,
+            balanceEarlySupporters,
+            balanceSupporters,
+            balanceLBP,
+            balanceDAO,
+            balanceAirdrop,
+        ] = await Promise.all([
+            await tap.balanceOf(_contributors),
+            await tap.balanceOf(_earlySupporters),
+            await tap.balanceOf(_supporters),
+            await tap.balanceOf(_lbp),
+            await tap.balanceOf(_dao),
+            await tap.balanceOf(_airdrop),
+        ]);
+
+        const pow18 = (n: any) => BN(n).mul((1e18).toString());
+        expect(balanceContributors).to.be.equal(pow18(15_000_000));
+        expect(balanceEarlySupporters).to.be.equal(pow18(3_686_595));
+        expect(balanceSupporters).to.be.equal(pow18(12_500_000));
+        expect(balanceLBP).to.be.equal(pow18(5_000_000));
+        expect(balanceDAO).to.be.equal(pow18(8_000_000));
+        expect(balanceAirdrop).to.be.equal(pow18(2_500_000));
     });
 
     describe('reverts', () => {
@@ -103,6 +152,7 @@ describe('tapOFT', () => {
             await expect(
                 factory.deploy(
                     ethers.constants.AddressZero,
+                    signer.address,
                     signer.address,
                     signer.address,
                     signer.address,
@@ -293,7 +343,7 @@ describe('tapOFT', () => {
     describe('burn', () => {
         it('should burn', async () => {
             const toBurn = BN(10_000_000).mul((1e18).toString());
-            const finalAmount = BN(33_500_000).mul((1e18).toString());
+            const finalAmount = BN(36_686_595).mul((1e18).toString());
 
             await expect(
                 tapiocaOFT0.connect(signer).setMinter(minter.address),
@@ -327,7 +377,7 @@ describe('tapOFT', () => {
             expect(await tapiocaOFT1.paused()).to.be.false;
 
             const signerBalance = await tapiocaOFT0.balanceOf(signer.address);
-            const totalSupply = BN(43_500_000).mul((1e18).toString());
+            const totalSupply = BN(46_686_595).mul((1e18).toString());
             expect(signerBalance).to.eq(totalSupply);
         });
     });
