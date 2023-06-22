@@ -27,7 +27,6 @@ import { setupFixture } from './fixtures';
 
 describe('TapiocaOptionBroker', () => {
     const setupEnv = async (
-        oTAP: OTAP,
         tOB: TapiocaOptionBroker,
         tOLP: TapiocaOptionLiquidityProvision,
         tapOFT: TapOFT,
@@ -36,7 +35,7 @@ describe('TapiocaOptionBroker', () => {
         sglTokenMock2: ERC20Mock,
         sglTokenMock2Asset: BigNumber,
     ) => {
-        await tOB.init(tapOFT.address, oTAP.address);
+        await tOB.oTAPBrokerClaim();
         await tapOFT.setMinter(tOB.address);
         await tOLP.registerSingularity(
             sglTokenMock.address,
@@ -104,29 +103,11 @@ describe('TapiocaOptionBroker', () => {
     it('should claim oTAP and TAP', async () => {
         const { tOB, oTAP, tapOFT } = await loadFixture(setupFixture);
 
-        await tOB.init(tapOFT.address, oTAP.address);
-
-        expect(await tOB.oTAP()).to.be.eq(oTAP.address);
-        expect(await tOB.tapOFT()).to.be.eq(tapOFT.address);
+        await tOB.oTAPBrokerClaim();
         expect(await oTAP.broker()).to.be.eq(tOB.address);
 
         await tapOFT.setMinter(tOB.address);
         expect(await tapOFT.minter()).to.be.eq(tOB.address);
-    });
-
-    it('should not be able to set payment token if not initialized', async () => {
-        const { tOB, oTAP, tapOFT, ethMock, ethMockOracle } = await loadFixture(
-            setupFixture,
-        );
-
-        await expect(
-            tOB.setPaymentToken(ethMock.address, ethMockOracle.address, '0x00'),
-        ).to.be.revertedWith('tOB: Not initialized');
-
-        await tOB.init(tapOFT.address, oTAP.address);
-        await expect(
-            tOB.setPaymentToken(ethMock.address, ethMockOracle.address, '0x00'),
-        ).to.not.be.reverted;
     });
 
     it('should participate', async () => {
@@ -143,7 +124,7 @@ describe('TapiocaOptionBroker', () => {
         } = await loadFixture(setupFixture);
 
         // Setup tOB
-        await tOB.init(tapOFT.address, oTAP.address);
+        await tOB.oTAPBrokerClaim();
         await tapOFT.setMinter(tOB.address);
 
         // Setup - register a singularity, mint and deposit in YB, lock in tOLP
@@ -300,7 +281,7 @@ describe('TapiocaOptionBroker', () => {
         } = await loadFixture(setupFixture);
 
         // Setup tOB
-        await tOB.init(tapOFT.address, oTAP.address);
+        await tOB.oTAPBrokerClaim();
         await tapOFT.setMinter(tOB.address);
 
         // Setup - register a singularity, mint and deposit in YB, lock in tOLP
@@ -434,7 +415,7 @@ describe('TapiocaOptionBroker', () => {
         } = await loadFixture(setupFixture);
 
         // Setup tOB
-        await tOB.init(tapOFT.address, oTAP.address);
+        await tOB.oTAPBrokerClaim();
         await tapOFT.setMinter(tOB.address);
 
         // Setup - register a singularity, mint and deposit in YB, lock in tOLP
@@ -522,10 +503,9 @@ describe('TapiocaOptionBroker', () => {
     });
 
     it('should set a payment token', async () => {
-        const { tOB, tapOFT, oTAP, users, stableMock, stableMockOracle } =
-            await loadFixture(setupFixture);
-
-        await tOB.init(tapOFT.address, oTAP.address);
+        const { tOB, users, stableMock, stableMockOracle } = await loadFixture(
+            setupFixture,
+        );
 
         await expect(
             tOB
@@ -575,7 +555,6 @@ describe('TapiocaOptionBroker', () => {
             tOB,
             tapOFT,
             tOLP,
-            oTAP,
             sglTokenMock,
             sglTokenMockAsset,
             tapOracleMock,
@@ -584,7 +563,7 @@ describe('TapiocaOptionBroker', () => {
         } = await loadFixture(setupFixture);
 
         // Setup tOB
-        await tOB.init(tapOFT.address, oTAP.address);
+        await tOB.oTAPBrokerClaim();
         await tapOFT.setMinter(tOB.address);
 
         // No singularities
@@ -669,7 +648,6 @@ describe('TapiocaOptionBroker', () => {
         } = await loadFixture(setupFixture);
 
         await setupEnv(
-            oTAP,
             tOB,
             tOLP,
             tapOFT,
@@ -937,7 +915,6 @@ describe('TapiocaOptionBroker', () => {
         } = await loadFixture(setupFixture);
 
         await setupEnv(
-            oTAP,
             tOB,
             tOLP,
             tapOFT,
@@ -1320,7 +1297,6 @@ describe('TapiocaOptionBroker', () => {
         } = await loadFixture(setupFixture);
 
         await setupEnv(
-            oTAP,
             tOB,
             tOLP,
             tapOFT,
@@ -1397,7 +1373,6 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2Asset,
         } = await loadFixture(setupFixture);
         await setupEnv(
-            oTAP,
             tOB,
             tOLP,
             tapOFT,
