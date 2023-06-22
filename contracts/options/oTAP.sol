@@ -49,7 +49,11 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     mapping(uint256 => TapOption) public options; // tokenId => Option
     mapping(uint256 => string) public tokenURIs; // tokenId => tokenURI
 
-    constructor() ERC721("Option TAP", "oTAP") ERC721Permit("Option TAP") {}
+    constructor(
+        address _broker
+    ) ERC721("Option TAP", "oTAP") ERC721Permit("Option TAP") {
+        broker = _broker;
+    }
 
     modifier onlyBroker() {
         require(msg.sender == broker, "OTAP: only onlyBroker");
@@ -135,11 +139,5 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
         _burn(_tokenId);
 
         emit Burn(msg.sender, _tokenId, options[_tokenId]);
-    }
-
-    /// @notice tOB claim
-    function brokerClaim() external {
-        require(broker == address(0), "OTAP: only once");
-        broker = msg.sender;
     }
 }
