@@ -21,7 +21,10 @@ import { setupFixture } from './fixture.aoTAP';
 describe.only('AirdropBroker', () => {
     const setupEnv = async (adb: AirdropBroker, tapOFT: TapOFT) => {
         await adb.aoTAPBrokerClaim();
-        await tapOFT.setMinter(adb.address);
+        await tapOFT.transfer(
+            adb.address,
+            BN((1e18).toString()).mul(2_5000_000),
+        );
     };
     const newEpoch = async (adb: AirdropBroker) => {
         await time_travel((await adb.EPOCH_DURATION()).toNumber());
@@ -214,7 +217,7 @@ describe.only('AirdropBroker', () => {
             }
         });
 
-        it('Should get correct OTC details', async () => {
+        it.only('Should get correct OTC details', async () => {
             const {
                 signer,
                 users: [rndSigner],
@@ -292,11 +295,16 @@ describe.only('AirdropBroker', () => {
 
             await snapshot.restore();
 
-            // Check OTC details
-            for (const registration of registrations) {
-                const otcDealAmountInUSD = BN(33e17).mul(
-                    registration.aoTAPOption.amount,
+            //---- Test With USDC as payment
+            {
+                await adb.setPaymentToken(
+                    stableMock.address,
+                    stableMockOracle.address,
+                    '0x00',
                 );
+                // Check OTC details
+                const registration = registrations[0];
+                const otcDealAmountInUSD = BN(33e17).mul((1e18).toString());
                 const rawPayment = otcDealAmountInUSD.div(
                     (await stableMockOracle.get('0x00'))[1],
                 ); // USDC price at 1
@@ -310,6 +318,41 @@ describe.only('AirdropBroker', () => {
                     .getOTCDealDetails(
                         registration.aoTAPTokenID,
                         stableMock.address,
+                        (1e18).toString(),
+                    );
+
+                expect(otcDetails.eligibleTapAmount).to.be.equal(
+                    registration.aoTAPOption.amount,
+                );
+                expect(otcDetails.paymentTokenAmount).to.be.equal(
+                    paymentTokenToSend,
+                );
+            }
+            // Check OTC details
+            //---- Test With USDC as payment
+            await adb.setPaymentToken(
+                ethMock.address,
+                ethMockOracle.address,
+                '0x00',
+            );
+
+            // Check OTC details
+            {
+                const registration = registrations[0];
+                const otcDealAmountInUSD = BN(33e17).mul(
+                    registration.aoTAPOption.amount,
+                );
+                const rawPayment = otcDealAmountInUSD.div(
+                    (await ethMockOracle.get('0x00'))[1],
+                ); // USDC price at 1
+                const discount = rawPayment.mul(50).div(100);
+                const paymentTokenToSend = rawPayment.sub(discount);
+
+                const otcDetails = await adb
+                    .connect(registration.user)
+                    .getOTCDealDetails(
+                        registration.aoTAPTokenID,
+                        ethMock.address,
                         0,
                     );
                 expect(otcDetails.eligibleTapAmount).to.be.equal(
@@ -320,354 +363,308 @@ describe.only('AirdropBroker', () => {
                 );
             }
         });
-    });
 
-    it('should participate', async () => {
-        const { signer, users, adb, tapOFT } = await loadFixture(setupFixture);
+        it('should exercise an option fully or partially per allowed amount', async () => {
+            const {
+                adb,
+                tapOFT,
+                aoTAP,
+                generatePhase1_4Signers,
+                stableMock,
+                stableMockOracle,
+                ethMock,
+                ethMockOracle,
+            } = await loadFixture(setupFixture);
+            setupEnv(adb, tapOFT);
 
-        // Setup adb
-        await setupEnv(adb, tapOFT);
-
-        // test adb participation
-        await expect(adb.participate(29)).to.be.revertedWith(
-            'adb: Position is not active',
-        ); // invalid/inexistent tokenID
-        await expect(
-            adb.connect(users[0]).participate(tokenID),
-        ).to.be.revertedWith('adb: Not approved or owner'); // Not owner
-
-        const prevPoolState = await adb.twAML(sglTokenMockAsset);
-
-        await tOLP.approve(adb.address, tokenID);
-        await adb.participate(tokenID);
-        const participation = await adb.participants(tokenID);
-
-        // Check participation
-        const computedAML = {
-            magnitude: BN(0),
-            averageMagnitude: BN(0),
-            discount: BN(0),
-        };
-        computedAML.magnitude = aml_computeMagnitude(BN(lockDuration), BN(0));
-        computedAML.averageMagnitude = aml_computeAverageMagnitude(
-            computedAML.magnitude,
-            BN(0),
-            prevPoolState.totalParticipants.add(1),
-        );
-        computedAML.discount = aml_computeTarget(
-            computedAML.magnitude,
-            BN(0),
-            BN(5e4),
-            BN(50e4),
-        );
-
-        expect(participation.hasVotingPower).to.be.true;
-        expect(participation.averageMagnitude).to.be.equal(
-            computedAML.averageMagnitude,
-        );
-
-        // Check AML state
-        const newPoolState = await adb.twAML(sglTokenMockAsset);
-
-        expect(newPoolState.totalParticipants).to.be.equal(
-            prevPoolState.totalParticipants.add(1),
-        );
-        expect(newPoolState.totalDeposited).to.be.equal(
-            prevPoolState.totalDeposited.add(amount),
-        );
-        expect(newPoolState.cumulative).to.be.equal(computedAML.magnitude);
-        expect(newPoolState.averageMagnitude).to.be.equal(
-            computedAML.averageMagnitude,
-        );
-
-        // Check oTAP minting
-        const oTAPTokenID = await oTAP.mintedOTAP();
-
-        expect(oTAPTokenID).to.be.equal(1);
-        expect(await oTAP.ownerOf(oTAPTokenID)).to.be.equal(signer.address);
-
-        const [, oTAPToken] = await oTAP.attributes(oTAPTokenID);
-
-        expect(oTAPToken.discount).to.be.equal(computedAML.discount);
-        expect(oTAPToken.tOLP).to.be.equal(tokenID);
-        expect(oTAPToken.expiry).to.be.equal(
-            (await hre.ethers.provider.getBlock(lockTx.blockNumber!))
-                .timestamp + lockDuration,
-        );
-
-        /// Check transfer of tOLP
-        await expect(adb.participate(tokenID)).to.be.revertedWith(
-            'adb: Not approved or owner',
-        );
-        expect(await tOLP.ownerOf(tokenID)).to.be.equal(adb.address);
-
-        // Check participation without enough voting power
-        const user = users[0];
-        const _amount = amount * 0.001 - 1; // < 0.1% of total weights
-        await sglTokenMock.mintTo(user.address, _amount);
-        await sglTokenMock.connect(user).approve(yieldBox.address, _amount);
-        await yieldBox
-            .connect(user)
-            .depositAsset(
-                sglTokenMockAsset,
-                user.address,
-                user.address,
-                _amount,
-                0,
+            // Gen users and register them
+            const users = await generatePhase1_4Signers({
+                initialAmount: 1_500_000,
+            });
+            const registrations = await adbRegisterAndParticipatePhase1(
+                users.map((e) => e.wallet),
+                users.map((e) => e.amount),
+                adb,
+                aoTAP,
             );
-        const _ybAmount = await yieldBox
-            .connect(user)
-            .toAmount(
-                sglTokenMockAsset,
-                await yieldBox.balanceOf(user.address, sglTokenMockAsset),
-                false,
+
+            const epoch = await adb.epoch();
+
+            await adb.setPaymentToken(
+                stableMock.address,
+                stableMockOracle.address,
+                '0x00',
             );
-        await yieldBox.connect(user).setApprovalForAll(tOLP.address, true);
-        await tOLP
-            .connect(user)
-            .lock(user.address, sglTokenMock.address, lockDuration, _ybAmount);
-        const _tokenID = await tOLP.tokenCounter();
-        await tOLP.connect(user).approve(adb.address, _tokenID);
-        await adb.connect(user).participate(_tokenID);
-
-        expect(await adb.twAML(sglTokenMockAsset)).to.be.deep.equal(
-            newPoolState,
-        ); // No change in AML state
-    });
-
-    it('should exit position', async () => {
-        const {
-            signer,
-            users,
-            tOLP,
-            adb,
-            tapOFT,
-            sglTokenMock,
-            sglTokenMockAsset,
-            yieldBox,
-            oTAP,
-        } = await loadFixture(setupFixture);
-
-        // Setup adb
-        await adb.oTAPBrokerClaim();
-        await tapOFT.setMinter(adb.address);
-
-        // Setup - register a singularity, mint and deposit in YB, lock in tOLP
-        const amount = 1e8;
-        const lockDuration = 10;
-        await tOLP.registerSingularity(
-            sglTokenMock.address,
-            sglTokenMockAsset,
-            0,
-        );
-
-        await sglTokenMock.freeMint(amount);
-        await sglTokenMock.approve(yieldBox.address, amount);
-        await yieldBox.depositAsset(
-            sglTokenMockAsset,
-            signer.address,
-            signer.address,
-            amount,
-            0,
-        );
-
-        const ybAmount = await yieldBox.toAmount(
-            sglTokenMockAsset,
-            await yieldBox.balanceOf(signer.address, sglTokenMockAsset),
-            false,
-        );
-        await yieldBox.setApprovalForAll(tOLP.address, true);
-        await tOLP.lock(
-            signer.address,
-            sglTokenMock.address,
-            lockDuration,
-            ybAmount,
-        );
-        const tokenID = await tOLP.tokenCounter();
-
-        // Check exit before participation
-        const snapshot = await takeSnapshot();
-        await time.increase(lockDuration);
-        await expect(
-            adb.exitPosition((await oTAP.mintedOTAP()).add(1)),
-        ).to.be.revertedWith('adb: oTAP position does not exist');
-        await snapshot.restore();
-
-        // Participate
-        await tOLP.approve(adb.address, tokenID);
-        await adb.participate(tokenID);
-        const oTAPTknID = await oTAP.mintedOTAP();
-        const participation = await adb.participants(tokenID);
-        const prevPoolState = await adb.twAML(sglTokenMockAsset);
-
-        // Test exit
-        await expect(adb.exitPosition(oTAPTknID)).to.be.revertedWith(
-            'adb: Lock not expired',
-        );
-        expect(await tOLP.ownerOf(tokenID)).to.be.equal(adb.address);
-
-        await time.increase(lockDuration);
-        await oTAP.approve(adb.address, oTAPTknID);
-        await adb.exitPosition(oTAPTknID);
-
-        // Check tokens transfer
-        expect(await tOLP.ownerOf(tokenID)).to.be.equal(signer.address);
-        expect(await oTAP.exists(oTAPTknID)).to.be.false;
-
-        // Check AML update
-        const newPoolState = await adb.twAML(sglTokenMockAsset);
-
-        expect(newPoolState.totalParticipants).to.be.equal(
-            prevPoolState.totalParticipants.sub(1),
-        );
-        expect(newPoolState.totalDeposited).to.be.equal(
-            prevPoolState.totalDeposited.sub(amount),
-        );
-        expect(newPoolState.cumulative).to.be.equal(
-            prevPoolState.cumulative.sub(participation.averageMagnitude),
-        );
-
-        // Do not remove participation if not participating
-        await snapshot.restore();
-
-        const user = users[0];
-        const _amount = amount * 0.001 - 1; // < 0.1% of total weights
-        await sglTokenMock.mintTo(user.address, _amount);
-        await sglTokenMock.connect(user).approve(yieldBox.address, _amount);
-        await yieldBox
-            .connect(user)
-            .depositAsset(
-                sglTokenMockAsset,
-                user.address,
-                user.address,
-                _amount,
-                0,
+            await adb.setPaymentToken(
+                ethMock.address,
+                ethMockOracle.address,
+                '0x00',
             );
-        const _ybAmount = await yieldBox
-            .connect(user)
-            .toAmount(
-                sglTokenMockAsset,
-                await yieldBox.balanceOf(user.address, sglTokenMockAsset),
-                false,
+            // Check requirements
+            await expect(
+                adb
+                    .connect(users[1].wallet)
+                    .exerciseOption(
+                        registrations[0].aoTAPTokenID,
+                        stableMock.address,
+                        0,
+                    ),
+            ).to.be.rejectedWith('adb: Not approved or owner');
+            const snapshot = await takeSnapshot();
+            await adb.setPaymentToken(
+                stableMock.address,
+                hre.ethers.constants.AddressZero,
+                '0x00',
             );
-        await yieldBox.connect(user).setApprovalForAll(tOLP.address, true);
-        await tOLP
-            .connect(user)
-            .lock(user.address, sglTokenMock.address, lockDuration, _ybAmount);
-        const _tokenID = await tOLP.tokenCounter();
-        await tOLP.connect(user).approve(adb.address, _tokenID);
-        await adb.connect(user).participate(_tokenID);
+            await expect(
+                adb
+                    .connect(users[0].wallet)
+                    .exerciseOption(
+                        registrations[0].aoTAPTokenID,
+                        stableMock.address,
+                        0,
+                    ),
+            ).to.be.rejectedWith('adb: Payment token not supported');
+            await snapshot.restore();
+            await time.increase(await adb.EPOCH_DURATION());
+            await expect(
+                adb
+                    .connect(users[0].wallet)
+                    .exerciseOption(
+                        registrations[0].aoTAPTokenID,
+                        stableMock.address,
+                        0,
+                    ),
+            ).to.be.rejectedWith('adb: Option expired');
+            await snapshot.restore();
 
-        await time.increase(lockDuration);
+            // Exercise option for user 1 for full eligible TAP amount
+            let user1EligibleTapAmount;
+            let user1PaymentAmount;
+            {
+                const otcDetails = await adb
+                    .connect(users[0].wallet)
+                    .getOTCDealDetails(
+                        registrations[0].aoTAPTokenID,
+                        stableMock.address,
+                        0,
+                    );
+                const eligibleTapAmount = otcDetails.eligibleTapAmount;
+                user1EligibleTapAmount = eligibleTapAmount;
+                const paymentTokenToSend = otcDetails.paymentTokenAmount;
+                user1PaymentAmount = paymentTokenToSend;
 
-        const _oTAPTknID = await oTAP.mintedOTAP();
-        await oTAP.connect(user).approve(adb.address, _oTAPTknID);
-        await adb.connect(user).exitPosition(_oTAPTknID);
+                // ERC20 checks
+                console.log(otcDetails);
+                hre.tracer.enabled = true;
+                await expect(
+                    adb
+                        .connect(users[0].wallet)
+                        .exerciseOption(
+                            registrations[0].aoTAPTokenID,
+                            stableMock.address,
+                            0,
+                        ),
+                ).to.be.rejectedWith('ERC20: insufficient allowance');
+                await stableMock.mintTo(
+                    users[0].wallet.address,
+                    paymentTokenToSend,
+                );
+                await expect(
+                    adb
+                        .connect(users[0].wallet)
+                        .exerciseOption(
+                            registrations[0].aoTAPTokenID,
+                            stableMock.address,
+                            0,
+                        ),
+                ).to.be.rejectedWith('ERC20: insufficient allowance');
+                await stableMock
+                    .connect(users[0].wallet)
+                    .approve(adb.address, paymentTokenToSend);
 
-        expect(await adb.twAML(sglTokenMockAsset)).to.be.deep.equal(
-            newPoolState,
-        ); // No change in AML state
-        expect((await adb.twAML(sglTokenMockAsset)).cumulative).to.be.equal(0);
-    });
+                // Exercise option checks
+                await expect(
+                    adb
+                        .connect(users[0].wallet)
+                        .exerciseOption(
+                            registrations[0].aoTAPTokenID,
+                            stableMock.address,
+                            0,
+                        ),
+                )
+                    .to.emit(adb, 'ExerciseOption')
+                    .withArgs(
+                        epoch,
+                        users[0].wallet.address,
+                        stableMock.address,
+                        registrations[0].aoTAPTokenID,
+                        eligibleTapAmount,
+                    ); // Successful exercise
 
-    it('should enter and exit multiple positions', async () => {
-        const {
-            signer,
-            tOLP,
-            adb,
-            tapOFT,
-            sglTokenMock,
-            sglTokenMockAsset,
-            yieldBox,
-            oTAP,
-        } = await loadFixture(setupFixture);
+                expect(
+                    await tapOFT.balanceOf(users[0].wallet.address),
+                ).to.be.equal(eligibleTapAmount); // Check TAP transfer to user
+                expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
+                    (await tapOFT.mintedInWeek(epoch)).sub(eligibleTapAmount),
+                ); // Check TAP subtraction from TAP contract
+                expect(await stableMock.balanceOf(adb.address)).to.be.equal(
+                    paymentTokenToSend,
+                ); // Check payment token transfer to adb contract
 
-        // Setup adb
-        await adb.oTAPBrokerClaim();
-        await tapOFT.setMinter(adb.address);
+                expect(
+                    await adb.aoTAPCalls(registrations[0].aoTAPTokenID, epoch),
+                ).to.be.equal(eligibleTapAmount);
 
-        // Setup - register a singularity, mint and deposit in YB, lock in tOLP
-        const amount = 3e8;
-        const lockDuration = 10;
-        await tOLP.registerSingularity(
-            sglTokenMock.address,
-            sglTokenMockAsset,
-            0,
-        );
+                // end
+                await expect(
+                    adb
+                        .connect(users[0].wallet)
+                        .exerciseOption(
+                            registrations[0].aoTAPTokenID,
+                            stableMock.address,
+                            eligibleTapAmount,
+                        ),
+                ).to.be.rejectedWith('adb: Too high');
+            }
 
-        await sglTokenMock.freeMint(amount);
-        await sglTokenMock.approve(yieldBox.address, amount);
-        await yieldBox.depositAsset(
-            sglTokenMockAsset,
-            signer.address,
-            signer.address,
-            amount,
-            0,
-        );
+            let user2EligibleTapAmount;
+            let user2PaymentAmount;
+            // Exercise option for user 2 for half eligible TAP amount
+            {
+                const { eligibleTapAmount: __fullEligibleTapAMount } = await adb
+                    .connect(users[1].wallet)
+                    .getOTCDealDetails(
+                        registrations[1].aoTAPTokenID,
+                        ethMock.address,
+                        0,
+                    );
+                const tapAmountWanted = __fullEligibleTapAMount.div(2);
+                const { paymentTokenAmount: fullPaymentTokenToSend } = await adb
+                    .connect(users[1].wallet)
+                    .getOTCDealDetails(
+                        registrations[1].aoTAPTokenID,
+                        ethMock.address,
+                        __fullEligibleTapAMount,
+                    );
+                const halfPaymentTokenToSend = fullPaymentTokenToSend.div(2);
+                user2EligibleTapAmount = tapAmountWanted;
+                user2PaymentAmount = halfPaymentTokenToSend;
 
-        const ybAmount = await yieldBox.toAmount(
-            sglTokenMockAsset,
-            await yieldBox.balanceOf(signer.address, sglTokenMockAsset),
-            false,
-        );
-        await yieldBox.setApprovalForAll(tOLP.address, true);
-        await tOLP.lock(
-            signer.address,
-            sglTokenMock.address,
-            lockDuration,
-            ybAmount.div(3),
-        );
-        await tOLP.lock(
-            signer.address,
-            sglTokenMock.address,
-            lockDuration,
-            ybAmount.div(3),
-        );
-        await tOLP.lock(
-            signer.address,
-            sglTokenMock.address,
-            lockDuration,
-            ybAmount.div(3),
-        );
-        const tokenID = await tOLP.tokenCounter();
+                await expect(
+                    adb
+                        .connect(users[1].wallet)
+                        .exerciseOption(
+                            registrations[1].aoTAPTokenID,
+                            ethMock.address,
+                            tapAmountWanted,
+                        ),
+                ).to.be.rejectedWith('ERC20: insufficient allowance');
+                await ethMock.mintTo(
+                    users[1].wallet.address,
+                    fullPaymentTokenToSend,
+                );
 
-        // Check exit before participation
-        const snapshot = await takeSnapshot();
-        await time.increase(lockDuration);
-        await expect(
-            adb.exitPosition((await oTAP.mintedOTAP()).add(1)),
-        ).to.be.revertedWith('adb: oTAP position does not exist');
-        await snapshot.restore();
+                await expect(
+                    adb
+                        .connect(users[1].wallet)
+                        .exerciseOption(
+                            registrations[1].aoTAPTokenID,
+                            ethMock.address,
+                            tapAmountWanted,
+                        ),
+                ).to.be.rejectedWith('ERC20: insufficient allowance');
+                await ethMock
+                    .connect(users[1].wallet)
+                    .approve(adb.address, fullPaymentTokenToSend);
 
-        // Participate
-        await tOLP.approve(adb.address, tokenID);
-        await tOLP.approve(adb.address, tokenID.sub(1));
-        await tOLP.approve(adb.address, tokenID.sub(2));
-        await adb.participate(tokenID);
-        await adb.participate(tokenID.sub(1));
-        await adb.participate(tokenID.sub(2));
+                // Exercise option checks
+                await expect(
+                    adb
+                        .connect(users[1].wallet)
+                        .exerciseOption(
+                            registrations[1].aoTAPTokenID,
+                            ethMock.address,
+                            tapAmountWanted,
+                        ),
+                )
+                    .to.emit(adb, 'ExerciseOption')
+                    .withArgs(
+                        epoch,
+                        users[1].wallet.address,
+                        ethMock.address,
+                        registrations[1].aoTAPTokenID,
+                        tapAmountWanted,
+                    ); // Successful exercise
 
-        const oTAPTknID = await oTAP.mintedOTAP();
+                expect(
+                    await adb.aoTAPCalls(registrations[1].aoTAPTokenID, epoch),
+                ).to.be.equal(tapAmountWanted); // Check exercised amount has been updated
 
-        await time.increase(lockDuration);
+                expect(
+                    await tapOFT.balanceOf(users[1].wallet.address),
+                ).to.be.equal(tapAmountWanted); // Check TAP transfer to user
 
-        {
-            // Exit 1
-            await oTAP.approve(adb.address, oTAPTknID);
-            await adb.exitPosition(oTAPTknID);
-        }
+                expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
+                    (await tapOFT.mintedInWeek(epoch))
+                        .sub(tapAmountWanted)
+                        .sub(user1EligibleTapAmount),
+                ); // Check TAP subtraction from TAP contract
 
-        {
-            // Exit 2
-            await oTAP.approve(adb.address, oTAPTknID.sub(1));
-            await adb.exitPosition(oTAPTknID.sub(1));
-        }
+                expect(await ethMock.balanceOf(adb.address)).to.be.equal(
+                    halfPaymentTokenToSend,
+                ); // Check payment token transfer to adb contract
 
-        {
-            // Exit 3
-            await oTAP.approve(adb.address, oTAPTknID.sub(2));
-            await adb.exitPosition(oTAPTknID.sub(2));
-        }
+                // Exercise option for user 2 for remaining eligible TAP amount
+                await expect(
+                    adb
+                        .connect(users[1].wallet)
+                        .exerciseOption(
+                            registrations[1].aoTAPTokenID,
+                            ethMock.address,
+                            tapAmountWanted,
+                        ),
+                )
+                    .to.emit(adb, 'ExerciseOption')
+                    .withArgs(
+                        epoch,
+                        users[1].wallet.address,
+                        ethMock.address,
+                        registrations[1].aoTAPTokenID,
+                        tapAmountWanted,
+                    ); // Successful exercise
+
+                expect(
+                    await adb.aoTAPCalls(registrations[1].aoTAPTokenID, epoch),
+                ).to.be.equal(__fullEligibleTapAMount); // Check exercised amount has been updated
+
+                expect(
+                    await tapOFT.balanceOf(users[1].wallet.address),
+                ).to.be.equal(__fullEligibleTapAMount); // Check TAP transfer to user
+
+                expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
+                    (await tapOFT.mintedInWeek(epoch))
+                        .sub(__fullEligibleTapAMount)
+                        .sub(user1EligibleTapAmount),
+                ); // Check TAP subtraction from TAP contract
+
+                expect(await ethMock.balanceOf(adb.address)).to.be.closeTo(
+                    fullPaymentTokenToSend,
+                    1,
+                ); // Check payment token transfer to adb contract
+
+                // Can't exercise option again for this epoch
+                await expect(
+                    adb
+                        .connect(users[1].wallet)
+                        .exerciseOption(
+                            registrations[1].aoTAPTokenID,
+                            ethMock.address,
+                            tapAmountWanted,
+                        ),
+                ).to.be.rejectedWith('adb: Too high');
+            }
+        });
     });
 
     it('should set a payment token', async () => {
@@ -719,36 +716,11 @@ describe.only('AirdropBroker', () => {
     });
 
     it('should increment the epoch', async () => {
-        const {
-            adb,
-            tapOFT,
-            tOLP,
-            sglTokenMock,
-            sglTokenMockAsset,
-            tapOracleMock,
-            sglTokenMock2,
-            sglTokenMock2Asset,
-        } = await loadFixture(setupFixture);
+        const { adb, tapOFT, tapOracleMock } = await loadFixture(setupFixture);
 
         // Setup adb
-        await adb.oTAPBrokerClaim();
-        await tapOFT.setMinter(adb.address);
+        await setupEnv(adb, tapOFT);
 
-        // No singularities
-        await expect(adb.newEpoch()).to.be.revertedWith(
-            'adb: No active singularities',
-        );
-
-        // Register sgl
-        const tapPrice = BN(1e18).mul(2);
-        await tapOracleMock.set(tapPrice);
-        await tOLP.registerSingularity(
-            sglTokenMock.address,
-            sglTokenMockAsset,
-            0,
-        );
-
-        const snapshot = await takeSnapshot();
         // Check epoch update
         const txNewEpoch = await adb.newEpoch();
         expect(await adb.epoch()).to.be.equal(1);
@@ -756,342 +728,27 @@ describe.only('AirdropBroker', () => {
             (await hre.ethers.provider.getBlock(txNewEpoch.blockNumber!))
                 .timestamp,
         );
+
+        const tapPrice = BN(1e18).mul(2);
+        await tapOracleMock.set(tapPrice);
         expect(await adb.epochTAPValuation()).to.be.equal(tapPrice);
 
-        const emittedTAP = await tapOFT.getCurrentWeekEmission();
-
-        // Check TAP minting for 1 SGL asset
-        expect(emittedTAP.gt(0)).to.be.true;
-        expect(await adb.singularityGauges(1, sglTokenMockAsset)).to.be.equal(
-            emittedTAP,
-        );
-
-        // Check TAP minting for 2 SGL assets with equal weights
-        await snapshot.restore();
-        await tOLP.registerSingularity(
-            sglTokenMock2.address,
-            sglTokenMock2Asset,
-            0,
-        );
         await adb.newEpoch();
-        expect(await adb.singularityGauges(1, sglTokenMockAsset)).to.be.equal(
-            emittedTAP.div(2),
-        );
-        expect(await adb.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(
-            emittedTAP.div(2),
-        );
-
-        // Check TAP minting for 2 SGL assets with different weights
-        await snapshot.restore();
-        await tOLP.registerSingularity(
-            sglTokenMock2.address,
-            sglTokenMock2Asset,
-            2,
-        );
-        await adb.newEpoch();
-        expect(await adb.singularityGauges(1, sglTokenMockAsset)).to.be.equal(
-            emittedTAP.div(3),
-        );
-        expect(await adb.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(
-            emittedTAP.mul(2).div(3),
-        );
-    });
-
-    it('should return correct OTC details', async () => {
-        const {
-            users,
-            yieldBox,
-            adb,
-            tapOFT,
-            tOLP,
-            oTAP,
-            sglTokenMock,
-            sglTokenMockAsset,
-            sglTokenMock2,
-            sglTokenMock2Asset,
-            stableMock,
-            stableMockOracle,
-            ethMock,
-            ethMockOracle,
-        } = await loadFixture(setupFixture);
-
-        await setupEnv(
-            adb,
-            tOLP,
-            tapOFT,
-            sglTokenMock,
-            sglTokenMockAsset,
-            sglTokenMock2,
-            sglTokenMock2Asset,
-        );
-        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
-        await adb.newEpoch();
-
-        await adb.setPaymentToken(
-            stableMock.address,
-            stableMockOracle.address,
-            '0x00',
-        );
-        await adb.setPaymentToken(
-            ethMock.address,
-            ethMockOracle.address,
-            '0x00',
-        );
-        const userLock1 = await lockAndParticipate(
-            users[0],
-            3e8,
-            3600,
-            tOLP,
-            adb,
-            oTAP,
-            yieldBox,
-            sglTokenMock,
-            sglTokenMockAsset,
-        );
-        const userLock2 = await lockAndParticipate(
-            users[1],
-            1e8,
-            3600,
-            tOLP,
-            adb,
-            oTAP,
-            yieldBox,
-            sglTokenMock,
-            sglTokenMockAsset,
-        );
-
-        const epoch = await adb.epoch();
-
-        const snapshot = await takeSnapshot();
-
-        /// FULL ELIGIBLE STABLE
-
-        // Exercise for full eligible TAP with 1e6 decimals stable, 50% discount
-        {
-            const eligibleTapAmount = userLock1.ybAmount
-                .mul(await adb.singularityGauges(epoch, sglTokenMockAsset))
-                .div(userLock1.ybAmount.add(userLock2.ybAmount));
-            const otcDealAmountInUSD = BN(33e17).mul(eligibleTapAmount);
-            const rawPayment = otcDealAmountInUSD.div(
-                (await stableMockOracle.get('0x00'))[1],
-            ); // USDC price at 1
-            const discount = rawPayment.mul(50).div(100);
-            const paymentTokenToSend = rawPayment
-                .sub(discount)
-                .div((1e12).toString());
-
-            const otcDetails = await adb
-                .connect(users[0])
-                .getOTCDealDetails(
-                    userLock1.oTAPTokenID,
-                    stableMock.address,
-                    0,
-                );
-            expect(otcDetails.eligibleTapAmount).to.be.equal(eligibleTapAmount);
-            expect(otcDetails.paymentTokenAmount).to.be.equal(
-                paymentTokenToSend,
-            );
-        }
-
-        // Exercise for full eligible TAP with 1e6 decimals stable, 20.7083% discount
-        {
-            const eligibleTapAmount = userLock2.ybAmount
-                .mul(await adb.singularityGauges(epoch, sglTokenMockAsset))
-                .div(userLock1.ybAmount.add(userLock2.ybAmount));
-            const otcDealAmountInUSD = BN(33e17).mul(eligibleTapAmount);
-            const rawPayment = otcDealAmountInUSD.div(
-                (await stableMockOracle.get('0x00'))[1],
-            ); // USDC price at 1
-            const discount = rawPayment
-                .mul(userLock2.oTAPOption.discount)
-                .div(1e6);
-            const paymentTokenToSend = rawPayment.sub(discount).div(1e12);
-
-            const otcDetails = await adb
-                .connect(users[1])
-                .getOTCDealDetails(
-                    userLock2.oTAPTokenID,
-                    stableMock.address,
-                    0,
-                );
-            expect(otcDetails.eligibleTapAmount).to.be.equal(eligibleTapAmount);
-            expect(otcDetails.paymentTokenAmount).to.be.equal(
-                paymentTokenToSend,
-            );
-        }
-
-        await snapshot.restore();
-
-        /// FULL ELIGIBLE WETH
-
-        // Exercise for full eligible TAP with 1e18 decimals ETH, 50% discount
-        {
-            const eligibleTapAmount = userLock1.ybAmount
-                .mul(await adb.singularityGauges(epoch, sglTokenMockAsset))
-                .div(userLock1.ybAmount.add(userLock2.ybAmount));
-            const otcDealAmountInUSD = BN(33e17).mul(eligibleTapAmount);
-            const rawPayment = otcDealAmountInUSD.div(
-                (await ethMockOracle.get('0x00'))[1],
-            ); // USDC price at 1
-            const discount = rawPayment.mul(50).div(100);
-            const paymentTokenToSend = rawPayment.sub(discount);
-
-            const otcDetails = await adb
-                .connect(users[0])
-                .getOTCDealDetails(userLock1.oTAPTokenID, ethMock.address, 0);
-            expect(otcDetails.eligibleTapAmount).to.be.equal(eligibleTapAmount);
-            expect(otcDetails.paymentTokenAmount).to.be.equal(
-                paymentTokenToSend,
-            );
-        }
-
-        // Exercise for full eligible TAP with 1e18 decimals token, 20.7083% discount
-        {
-            const eligibleTapAmount = userLock2.ybAmount
-                .mul(await adb.singularityGauges(epoch, sglTokenMockAsset))
-                .div(userLock1.ybAmount.add(userLock2.ybAmount));
-            const otcDealAmountInUSD = BN(33e17).mul(eligibleTapAmount);
-            const rawPayment = otcDealAmountInUSD.div(
-                (await ethMockOracle.get('0x00'))[1],
-            ); // USDC price at 1
-            const discount = rawPayment
-                .mul(userLock2.oTAPOption.discount)
-                .div(1e6);
-            const paymentTokenToSend = rawPayment.sub(discount);
-
-            const otcDetails = await adb
-                .connect(users[1])
-                .getOTCDealDetails(userLock2.oTAPTokenID, ethMock.address, 0);
-            expect(otcDetails.eligibleTapAmount).to.be.equal(eligibleTapAmount);
-            expect(otcDetails.paymentTokenAmount).to.be.equal(
-                paymentTokenToSend,
-            );
-        }
-
-        await snapshot.restore();
-
-        /// 1 TAP STABLE
-
-        // Exercise for 1 TAP with 1e6 decimals stable, 50% discount
-        {
-            const otcDealAmountInUSD = BN(33e17).mul((1e18).toString());
-            const rawPayment = otcDealAmountInUSD.div(
-                (await stableMockOracle.get('0x00'))[1],
-            ); // USDC price at 1
-            const discount = rawPayment.mul(50).div(100);
-            const paymentTokenToSend = rawPayment.sub(discount).div(1e12);
-
-            const otcDetails = await adb
-                .connect(users[0])
-                .getOTCDealDetails(
-                    userLock1.oTAPTokenID,
-                    stableMock.address,
-                    (1e18).toString(),
-                );
-            expect(otcDetails.paymentTokenAmount).to.be.equal(
-                paymentTokenToSend,
-            );
-        }
-
-        // Exercise for 1 TAP with 1e6 decimals stable, 20.7083% discount
-        {
-            const otcDealAmountInUSD = BN(33e17).mul((1e18).toString());
-            const rawPayment = otcDealAmountInUSD.div(
-                (await stableMockOracle.get('0x00'))[1],
-            ); // USDC price at 1
-            const discount = rawPayment
-                .mul(userLock2.oTAPOption.discount)
-                .div(1e6);
-            const paymentTokenToSend = rawPayment.sub(discount).div(1e12);
-
-            const otcDetails = await adb
-                .connect(users[1])
-                .getOTCDealDetails(
-                    userLock2.oTAPTokenID,
-                    stableMock.address,
-                    (1e18).toString(),
-                );
-            expect(otcDetails.paymentTokenAmount).to.be.equal(
-                paymentTokenToSend,
-            );
-        }
-
-        await snapshot.restore();
-
-        /// 1 TAP ETH
-
-        // Exercise for 1 TAP with 1e18 decimals token, 50% discount
-        {
-            const otcDealAmountInUSD = BN(33e17).mul((1e18).toString());
-            const rawPayment = otcDealAmountInUSD.div(
-                (await ethMockOracle.get('0x00'))[1],
-            ); // ETH price at 1200
-            const discount = rawPayment.mul(50).div(100);
-            const paymentTokenToSend = rawPayment.sub(discount);
-
-            const otcDetails = await adb
-                .connect(users[0])
-                .getOTCDealDetails(
-                    userLock1.oTAPTokenID,
-                    ethMock.address,
-                    (1e18).toString(),
-                );
-            expect(otcDetails.paymentTokenAmount).to.be.equal(
-                paymentTokenToSend,
-            );
-        }
-        // Exercise for 1 TAP with 1e18 decimals token, 20.7083% discount
-        {
-            const otcDealAmountInUSD = BN(33e17).mul((1e18).toString());
-            const rawPayment = otcDealAmountInUSD.div(
-                (await ethMockOracle.get('0x00'))[1],
-            ); // ETH price at 1200
-            const discount = rawPayment
-                .mul(userLock2.oTAPOption.discount)
-                .div(1e4 * 100);
-            const paymentTokenToSend = rawPayment.sub(discount);
-
-            const otcDetails = await adb
-                .connect(users[1])
-                .getOTCDealDetails(
-                    userLock2.oTAPTokenID,
-                    ethMock.address,
-                    (1e18).toString(),
-                );
-            expect(otcDetails.paymentTokenAmount).to.be.equal(
-                paymentTokenToSend,
-            );
-        }
+        expect(await adb.epoch()).to.be.equal(2);
     });
 
     it('should exercise an option fully or partially per allowed epoch amount', async () => {
         const {
             users,
-            yieldBox,
             adb,
             tapOFT,
-            tOLP,
-            oTAP,
-            sglTokenMock,
-            sglTokenMockAsset,
-            sglTokenMock2,
-            sglTokenMock2Asset,
             stableMock,
             stableMockOracle,
             ethMock,
             ethMockOracle,
         } = await loadFixture(setupFixture);
 
-        await setupEnv(
-            adb,
-            tOLP,
-            tapOFT,
-            sglTokenMock,
-            sglTokenMockAsset,
-            sglTokenMock2,
-            sglTokenMock2Asset,
-        );
-        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await setupEnv(adb, tapOFT);
         await adb.newEpoch();
 
         await adb.setPaymentToken(
@@ -1104,29 +761,6 @@ describe.only('AirdropBroker', () => {
             ethMockOracle.address,
             '0x00',
         );
-        const userLock1 = await lockAndParticipate(
-            users[0],
-            3e8,
-            1_209_600, // 2 week
-            tOLP,
-            adb,
-            oTAP,
-            yieldBox,
-            sglTokenMock,
-            sglTokenMockAsset,
-        );
-        const userLock2 = await lockAndParticipate(
-            users[1],
-            1e8,
-            1_209_600, // 2 week
-            tOLP,
-            adb,
-            oTAP,
-            yieldBox,
-            sglTokenMock,
-            sglTokenMockAsset,
-        );
-
         // Check requirements
         await expect(
             adb
@@ -1451,29 +1085,13 @@ describe.only('AirdropBroker', () => {
             signer,
             users,
             paymentTokenBeneficiary,
-            yieldBox,
             adb,
             tapOFT,
-            tOLP,
-            oTAP,
-            sglTokenMock,
-            sglTokenMockAsset,
-            sglTokenMock2,
-            sglTokenMock2Asset,
             stableMock,
             stableMockOracle,
         } = await loadFixture(setupFixture);
 
-        await setupEnv(
-            adb,
-            tOLP,
-            tapOFT,
-            sglTokenMock,
-            sglTokenMockAsset,
-            sglTokenMock2,
-            sglTokenMock2Asset,
-        );
-        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await setupEnv(adb, tapOFT);
         await adb.newEpoch();
 
         await adb.setPaymentToken(

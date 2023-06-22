@@ -148,6 +148,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
     /// @param _tapAmount The amount of TAP to be exchanged. If 0 it will use the full amount of TAP eligible for the deal
     /// @return eligibleTapAmount The amount of TAP eligible for the deal
     /// @return paymentTokenAmount The amount of payment tokens required for the deal
+    /// @return tapAmount The amount of TAP to be exchanged
+
     function getOTCDealDetails(
         uint256 _aoTAPTokenID,
         ERC20 _paymentToken,
@@ -155,7 +157,11 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
     )
         external
         view
-        returns (uint256 eligibleTapAmount, uint256 paymentTokenAmount)
+        returns (
+            uint256 eligibleTapAmount,
+            uint256 paymentTokenAmount,
+            uint256 tapAmount
+        )
     {
         // Load data
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(
@@ -178,11 +184,11 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
         eligibleTapAmount = aoTapOption.amount;
         eligibleTapAmount -= aoTAPCalls[_aoTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "adb: Too high");
+        require(_tapAmount >= 1e18, "adb: Too low");
 
+        tapAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
         // Get TAP valuation
-        uint256 otcAmountInUSD = (
-            _tapAmount == 0 ? eligibleTapAmount : _tapAmount
-        ) * epochTAPValuation; // Divided by TAP decimals
+        uint256 otcAmountInUSD = tapAmount * epochTAPValuation; // Divided by TAP decimals
         // Get payment token valuation
         (, uint256 paymentTokenValuation) = paymentTokenOracle.oracle.peek(
             paymentTokenOracle.oracleData
@@ -259,6 +265,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
         uint256 eligibleTapAmount = aoTapOption.amount;
         eligibleTapAmount -= aoTAPCalls[_aoTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "adb: Too high");
+        require(_tapAmount >= 1e18, "adb: Too low");
 
         uint256 chosenAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
         aoTAPCalls[_aoTAPTokenID][cachedEpoch] += chosenAmount; // Adds up exercised amount to current epoch
@@ -515,7 +522,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
             address(this),
             discountedPaymentAmount
         );
-        tapOFT.extractTAP(msg.sender, tapAmount);
+        tapOFT.transfer(msg.sender, tapAmount);
     }
 
     /// @notice Computes the discounted payment amount for a given OTC amount in USD
@@ -535,6 +542,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
         paymentAmount =
             rawPaymentAmount -
             muldiv(rawPaymentAmount, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
+
         paymentAmount = paymentAmount / (10 ** (18 - _paymentTokenDecimals));
     }
 }
