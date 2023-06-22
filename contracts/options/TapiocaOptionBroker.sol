@@ -61,8 +61,8 @@ struct PaymentTokenOracle {
 contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     TapiocaOptionLiquidityProvision public immutable tOLP;
     bytes public tapOracleData;
-    TapOFT public immutable tapOFT;
-    OTAP public immutable oTAP;
+    TapOFT public tapOFT;
+    OTAP public oTAP;
     IOracle public tapOracle;
 
     uint256 public lastEpochUpdate; // timestamp of the last epoch update
@@ -88,15 +88,11 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     /// =====-------======
     constructor(
         address _tOLP,
-        address _oTAP,
-        address _tapOFT,
         address _paymentTokenBeneficiary,
         address _owner
     ) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         tOLP = TapiocaOptionLiquidityProvision(_tOLP);
-        tapOFT = TapOFT(_tapOFT);
-        oTAP = OTAP(_oTAP);
         owner = _owner;
     }
 
@@ -427,14 +423,20 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         emit NewEpoch(epoch, epochTAP, epochTAPValuation);
     }
 
-    /// @notice Claim the Broker role of the oTAP contract
-    function oTAPBrokerClaim() external {
-        oTAP.brokerClaim();
-    }
-
     // =========
     //   OWNER
     // =========
+
+    function init(TapOFT _tapOFT, OTAP _oTAP) external onlyOwner {
+        require(address(tapOFT) == address(0), "tOB: Already initialized");
+        require(address(oTAP) == address(0), "tOB: Already initialized");
+
+        require(address(_tapOFT) != address(0), "tOB: Incorrect address");
+        require(address(_oTAP) != address(0), "tOB: Incorrect address");
+
+        tapOFT = _tapOFT;
+        oTAP = _oTAP;
+    }
 
     /// @notice Set the TapOFT Oracle address and data
     /// @param _tapOracle The new TapOFT Oracle address
@@ -456,6 +458,9 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         IOracle _oracle,
         bytes calldata _oracleData
     ) external onlyOwner {
+        require(address(tapOFT) != address(0), "tOB: Not initialized");
+        require(address(oTAP) != address(0), "tOB: Not initialized");
+
         paymentTokens[_paymentToken].oracle = _oracle;
         paymentTokens[_paymentToken].oracleData = _oracleData;
 

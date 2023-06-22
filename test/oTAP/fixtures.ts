@@ -66,16 +66,12 @@ export const setupFixture = async () => {
     const tOLP = await (
         await ethers.getContractFactory('TapiocaOptionLiquidityProvision')
     ).deploy(yieldBox.address, signer.address);
-    const oTAP = await (await ethers.getContractFactory('OTAP')).deploy();
     const tOB = await (
         await hre.ethers.getContractFactory('TapiocaOptionBroker')
-    ).deploy(
-        tOLP.address,
-        oTAP.address,
-        tapOFT.address,
-        paymentTokenBeneficiary.address,
-        signer.address,
-    );
+    ).deploy(tOLP.address, paymentTokenBeneficiary.address, signer.address);
+    const oTAP = await (
+        await ethers.getContractFactory('OTAP')
+    ).deploy(tOB.address);
     await tOB.setTapOracle(tapOracleMock.address, '0x00');
 
     // Deploy a "virtual" market
