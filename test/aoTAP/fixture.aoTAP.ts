@@ -138,8 +138,8 @@ export const setupFixture = async () => {
     };
 };
 
-const generatePhase1_4Signers = async (initialAmount: number) => {
-    let remainingAmount = initialAmount;
+const generatePhase1_4Signers = async (props: { initialAmount: number }) => {
+    let remainingAmount = props.initialAmount;
 
     const signers: { wallet: Wallet; amount: BigNumberish }[] = [];
     const rndSigners = await randomSigners(100); // pre-computed random signers

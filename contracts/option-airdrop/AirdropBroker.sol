@@ -174,12 +174,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
             paymentTokenOracle.oracle != IOracle(address(0)),
             "adb: Payment token not supported"
         );
-        require(
-            aoTAP.isApprovedOrOwner(msg.sender, _aoTAPTokenID),
-            "adb: Not approved or owner"
-        );
 
-        uint256 eligibleTapAmount = aoTapOption.amount;
+        eligibleTapAmount = aoTapOption.amount;
         eligibleTapAmount -= aoTAPCalls[_aoTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "adb: Too high");
 
@@ -215,13 +211,13 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
 
         // Phase 1
         if (cachedEpoch == 1) {
-            _participatePhase1();
+            aoTAPTokenID = _participatePhase1();
         } else if (cachedEpoch == 2) {
-            _participatePhase2(_data); // _data = (uint256 role, bytes32[] _merkleProof)
+            aoTAPTokenID = _participatePhase2(_data); // _data = (uint256 role, bytes32[] _merkleProof)
         } else if (cachedEpoch == 3) {
-            _participatePhase3(_data); // _data = (uint256 _tokenID)
+            aoTAPTokenID = _participatePhase3(_data); // _data = (uint256 _tokenID)
         } else if (cachedEpoch == 4) {
-            _participatePhase4();
+            aoTAPTokenID = _participatePhase4();
         }
 
         emit Participate(cachedEpoch, aoTAPTokenID);

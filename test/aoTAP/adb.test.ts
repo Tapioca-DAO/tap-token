@@ -14,7 +14,7 @@ import {
     time_travel,
 } from '../test.utils';
 import { AOTAP, AirdropBroker, TapOFT } from '../../typechain';
-import { BigNumber, BigNumberish, BytesLike } from 'ethers';
+import { BigNumber, BigNumberish, BytesLike, Wallet } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { setupFixture } from './fixture.aoTAP';
 
@@ -27,21 +27,35 @@ describe.only('AirdropBroker', () => {
         await time_travel((await adb.EPOCH_DURATION()).toNumber());
         await adb.newEpoch();
     };
-    const adbParticipate = async (
-        signer: SignerWithAddress,
-        data: BytesLike,
+    const adbRegisterAndParticipatePhase1 = async (
+        users: Wallet[],
+        amounts: BigNumberish[],
         adb: AirdropBroker,
         aoTAP: AOTAP,
     ) => {
-        await adb.connect(signer).participate(data);
+        await adb.registerUserForPhase(
+            1,
+            users.map((e) => e.address),
+            amounts,
+        );
 
-        const aoTAPTokenID = await aoTAP.mintedAOTAP();
-        const aoTAPOption = await aoTAP.options(aoTAPTokenID);
+        await newEpoch(adb);
+        expect(await adb.epoch()).to.be.eq(BN(1));
 
-        return {
-            aoTAPTokenID,
-            aoTAPOption,
-        };
+        const registrations = [];
+        for (const user of users) {
+            await adb.connect(user).participate(user.address);
+            // Get aoTAP tokenID and check aoTAP option
+            const aoTAPTokenID = await aoTAP.mintedAOTAP();
+            const aoTAPOption = await aoTAP.options(aoTAPTokenID);
+            registrations.push({
+                user,
+                aoTAPTokenID,
+                aoTAPOption,
+            });
+        }
+
+        return registrations;
     };
 
     it('should claim oTAP and TAP', async () => {
@@ -99,7 +113,9 @@ describe.only('AirdropBroker', () => {
                 adb,
                 generatePhase1_4Signers,
             } = await loadFixture(setupFixture);
-            const users = await generatePhase1_4Signers(100);
+            const users = await generatePhase1_4Signers({
+                initialAmount: 1_500_000,
+            });
             await expect(
                 adb
                     .connect(rndSigner)
@@ -135,7 +151,9 @@ describe.only('AirdropBroker', () => {
             setupEnv(adb, tapOFT);
 
             // Gen users and register them
-            const users = await generatePhase1_4Signers(100);
+            const users = await generatePhase1_4Signers({
+                initialAmount: 1_500_000,
+            });
             await adb.registerUserForPhase(
                 1,
                 users.map((e) => e.wallet.address),
@@ -167,16 +185,16 @@ describe.only('AirdropBroker', () => {
             expect(await adb.epoch()).to.be.eq(BN(1));
 
             for (const user of users) {
-                const mintedOTAP = await aoTAP.mintedAOTAP();
+                const mintedAOTAP = await aoTAP.mintedAOTAP();
                 // Participate
                 await expect(
                     adb.connect(user.wallet).participate(user.wallet.address),
                 )
                     .to.emit(adb, 'Participate')
-                    .withArgs(1, mintedOTAP);
+                    .withArgs(1, mintedAOTAP.add(1));
 
                 // Get aoTAP tokenID and check aoTAP option
-                const aoTAPTokenID = mintedOTAP.add(1);
+                const aoTAPTokenID = mintedAOTAP.add(1);
                 const aoTAPOption = await aoTAP.options(aoTAPTokenID);
 
                 // Validate aoTAP option
@@ -193,6 +211,113 @@ describe.only('AirdropBroker', () => {
                 await expect(
                     adb.connect(user.wallet).participate(user.wallet.address),
                 ).to.revertedWith('adb: Not eligible');
+            }
+        });
+
+        it('Should get correct OTC details', async () => {
+            const {
+                signer,
+                users: [rndSigner],
+                adb,
+                tapOFT,
+                aoTAP,
+                generatePhase1_4Signers,
+                stableMock,
+                stableMockOracle,
+                ethMock,
+                ethMockOracle,
+            } = await loadFixture(setupFixture);
+            setupEnv(adb, tapOFT);
+
+            //---- User registration and participation
+            const users = await generatePhase1_4Signers({
+                initialAmount: 1_500_000,
+            });
+            const registrations = await adbRegisterAndParticipatePhase1(
+                users.map((e) => e.wallet),
+                users.map((e) => e.amount),
+                adb,
+                aoTAP,
+            );
+
+            //---- Test With USDC as payment
+            await adb.setPaymentToken(
+                stableMock.address,
+                stableMockOracle.address,
+                '0x00',
+            );
+
+            // Verify requirements
+            const snapshot = await takeSnapshot();
+            await expect(
+                adb
+                    .connect(registrations[0].user)
+                    .getOTCDealDetails(
+                        registrations[0].aoTAPTokenID,
+                        stableMock.address,
+                        0,
+                    ),
+            ).to.not.be.reverted;
+
+            await expect(
+                adb
+                    .connect(registrations[0].user)
+                    .getOTCDealDetails(
+                        registrations[0].aoTAPTokenID,
+                        ethMock.address,
+                        0,
+                    ),
+            ).to.be.revertedWith('adb: Payment token not supported');
+
+            await expect(
+                adb
+                    .connect(registrations[0].user)
+                    .getOTCDealDetails(
+                        registrations[0].aoTAPTokenID,
+                        stableMock.address,
+                        registrations[0].aoTAPOption.amount.add(1),
+                    ),
+            ).to.be.revertedWith('adb: Too high');
+
+            await time_travel((await adb.EPOCH_DURATION()).toNumber());
+            await expect(
+                adb
+                    .connect(registrations[0].user)
+                    .getOTCDealDetails(
+                        registrations[0].aoTAPTokenID,
+                        stableMock.address,
+                        0,
+                    ),
+            ).to.be.revertedWith('adb: Option expired');
+
+            await snapshot.restore();
+
+            // Check OTC details
+            for (const registration of registrations) {
+                const otcDealAmountInUSD = BN(33e17).mul(
+                    registration.aoTAPOption.amount,
+                );
+                const rawPayment = otcDealAmountInUSD.div(
+                    (await stableMockOracle.get('0x00'))[1],
+                ); // USDC price at 1
+                const discount = rawPayment.mul(50).div(100);
+                const paymentTokenToSend = rawPayment
+                    .sub(discount)
+                    .div((1e12).toString());
+
+                const otcDetails = await adb
+                    .connect(registration.user)
+                    .getOTCDealDetails(
+                        registration.aoTAPTokenID,
+                        stableMock.address,
+                        0,
+                    );
+                expect(otcDetails.eligibleTapAmount).to.be.equal(
+                    registration.aoTAPOption.amount,
+                );
+                expect(otcDetails.paymentTokenAmount).to.be.equal(
+                    paymentTokenToSend,
+                );
             }
         });
     });
