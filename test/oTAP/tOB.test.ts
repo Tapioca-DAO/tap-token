@@ -968,17 +968,6 @@ describe('TapiocaOptionBroker', () => {
                 .connect(users[1])
                 .exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0),
         ).to.be.rejectedWith('tOB: Not approved or owner');
-        const snapshot = await takeSnapshot();
-        await tOB.setPaymentToken(
-            stableMock.address,
-            hre.ethers.constants.AddressZero,
-            '0x00',
-        );
-        await expect(
-            tOB
-                .connect(users[0])
-                .exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0),
-        ).to.be.rejectedWith('tOB: Payment token not supported');
         await expect(
             tOB
                 .connect(users[0])
@@ -997,6 +986,17 @@ describe('TapiocaOptionBroker', () => {
                     BN((1e18).toString()).sub(1),
                 ),
         ).to.be.rejectedWith('tOB: Too low');
+        const snapshot = await takeSnapshot();
+        await tOB.setPaymentToken(
+            stableMock.address,
+            hre.ethers.constants.AddressZero,
+            '0x00',
+        );
+        await expect(
+            tOB
+                .connect(users[0])
+                .exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0),
+        ).to.be.rejectedWith('tOB: Payment token not supported');
         await snapshot.restore();
         await time.increase(userLock1.lockDuration);
         await expect(
