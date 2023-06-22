@@ -143,9 +143,13 @@ contract AirdropBroker is Pausable, BoringOwnable {
         returns (uint256 eligibleTapAmount, uint256 paymentTokenAmount)
     {
         // Load data
-        (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
-        (bool isPositionActive, LockPosition memory tOLPLockPosition) = tOLP
-            .getLock(oTAPPosition.tOLP);
+        (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(
+            _aoTAPTokenID
+        );
+        require(
+            aoTapOption.expiration > block.timestamp,
+            "adb: Option expired"
+        );
 
         uint256 cachedEpoch = epoch;
 
@@ -158,19 +162,13 @@ contract AirdropBroker is Pausable, BoringOwnable {
             paymentTokenOracle.oracle != IOracle(address(0)),
             "adb: Payment token not supported"
         );
-
-        require(isPositionActive, "adb: Option expired");
-
-        // Get eligible OTC amount
-        uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
-            tOLPLockPosition.sglAssetID
-        ];
-        eligibleTapAmount = muldiv(
-            tOLPLockPosition.amount,
-            gaugeTotalForEpoch,
-            tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID)
+        require(
+            aoTAP.isApprovedOrOwner(msg.sender, _aoTAPTokenID),
+            "adb: Not approved or owner"
         );
-        eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
+
+        uint256 eligibleTapAmount = aoTapOption.amount;
+        eligibleTapAmount -= aoTAPCalls[_aoTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "adb: Too high");
 
         // Get TAP valuation
