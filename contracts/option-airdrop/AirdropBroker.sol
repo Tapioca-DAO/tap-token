@@ -45,11 +45,6 @@ struct PaymentTokenOracle {
     bytes oracleData;
 }
 
-struct PhaseInfo {
-    uint128 initialTap; // Would be <1.5e24
-    uint128 availableTap; // Would be <=initialTap
-}
-
 struct Phase2Info {
     uint8[4] amountsPerUsers;
     uint8[4] discountsPerUsers;
@@ -68,8 +63,6 @@ contract AirdropBroker is Pausable, BoringOwnable {
     uint64 public epoch; // Represents the number of weeks since the start of the contract
 
     mapping(uint256 => mapping(uint256 => uint256)) public aoTAPCalls; // oTAPTokenID => epoch => amountExercised
-
-    mapping(uint256 => PhaseInfo) public phaseInfo; // airdrop phase => PhaseInfo
 
     /// @notice user address => eligible TAP amount, 0 means no eligibility
     mapping(address => uint256) public phase1Users;
@@ -116,11 +109,7 @@ contract AirdropBroker is Pausable, BoringOwnable {
     // ==========
     //   EVENTS
     // ==========
-    event Participate(
-        uint256 indexed epoch,
-        uint256 totalDeposited,
-        uint256 discount
-    );
+    event Participate(uint256 indexed epoch, uint256 aoTAPTokenID);
     event ExerciseOption(
         uint256 indexed epoch,
         address indexed to,
@@ -128,11 +117,7 @@ contract AirdropBroker is Pausable, BoringOwnable {
         uint256 aoTapTokenID,
         uint256 amount
     );
-    event NewEpoch(
-        uint256 indexed epoch,
-        uint256 extractedTAP,
-        uint256 epochTAPValuation
-    );
+    event NewEpoch(uint256 indexed epoch, uint256 epochTAPValuation);
 
     event SetPaymentToken(ERC20 paymentToken, IOracle oracle, bytes oracleData);
     event SetTapOracle(IOracle oracle, bytes oracleData);
@@ -226,74 +211,27 @@ contract AirdropBroker is Pausable, BoringOwnable {
         } else if (cachedEpoch == 4) {
             _participatePhase4(_data); // _data = (uint256 _to)
         }
+
+        emit Participate(cachedEpoch, aoTAPTokenID);
     }
 
-    /// @notice Exit a twAML participation and delete the voting power if existing
-    /// @param _oTAPTokenID The tokenId of the oTAP position
-    function exitPosition(uint256 _oTAPTokenID) external {
-        require(oTAP.exists(_oTAPTokenID), "adb: oTAP position does not exist");
-
-        // Load data
-        (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
-        (, LockPosition memory lock) = tOLP.getLock(oTAPPosition.tOLP);
-
-        require(
-            block.timestamp >= lock.lockTime + lock.lockDuration,
-            "adb: Lock not expired"
-        );
-
-        Participation memory participation = participants[oTAPPosition.tOLP];
-
-        // Remove participation
-        if (participation.hasVotingPower) {
-            TWAMLPool memory pool = twAML[lock.sglAssetID];
-
-            if (participation.divergenceForce) {
-                if (pool.cumulative > pool.averageMagnitude) {
-                    pool.cumulative -= pool.averageMagnitude;
-                } else {
-                    pool.cumulative = 0;
-                }
-            } else {
-                pool.cumulative += pool.averageMagnitude;
-            }
-
-            pool.totalDeposited -= lock.amount;
-            pool.totalParticipants--;
-
-            twAML[lock.sglAssetID] = pool; // Save twAML exit
-            emit AMLDivergence(
-                epoch,
-                pool.cumulative,
-                pool.averageMagnitude,
-                pool.totalParticipants
-            ); // Register new voting power event
-        }
-
-        // Delete participation and burn oTAP position
-        address otapOwner = oTAP.ownerOf(_oTAPTokenID);
-        delete participants[oTAPPosition.tOLP];
-        oTAP.burn(_oTAPTokenID);
-
-        // Transfer position back to oTAP owner
-        tOLP.transferFrom(address(this), otapOwner, oTAPPosition.tOLP);
-
-        emit ExitPosition(epoch, oTAPPosition.tOLP, lock.amount);
-    }
-
-    /// @notice Exercise an oTAP position
-    /// @param _oTAPTokenID tokenId of the oTAP position, position must be active
+    /// @notice Exercise an aoTAP position
+    /// @param _aoTAPTokenID tokenId of the aoTAP position, position must be active
     /// @param _paymentToken Address of the payment token to use, must be whitelisted
     /// @param _tapAmount Amount of TAP to exercise. If 0, the full amount is exercised
     function exerciseOption(
-        uint256 _oTAPTokenID,
+        uint256 _aoTAPTokenID,
         ERC20 _paymentToken,
         uint256 _tapAmount
     ) external {
         // Load data
-        (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
-        (bool isPositionActive, LockPosition memory tOLPLockPosition) = tOLP
-            .getLock(oTAPPosition.tOLP);
+        (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(
+            _aoTAPTokenID
+        );
+        require(
+            aoTapOption.expiration > block.timestamp,
+            "adb: Option expired"
+        );
 
         uint256 cachedEpoch = epoch;
 
@@ -307,25 +245,18 @@ contract AirdropBroker is Pausable, BoringOwnable {
             "adb: Payment token not supported"
         );
         require(
-            oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID),
+            aoTAP.isApprovedOrOwner(msg.sender, _aoTAPTokenID),
             "adb: Not approved or owner"
         );
-        require(isPositionActive, "adb: Option expired");
 
         // Get eligible OTC amount
-        uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
-            tOLPLockPosition.sglAssetID
-        ];
-        uint256 eligibleTapAmount = muldiv(
-            tOLPLockPosition.amount,
-            gaugeTotalForEpoch,
-            tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID)
-        );
-        eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
+
+        uint256 eligibleTapAmount = aoTapOption.amount;
+        eligibleTapAmount -= aoTAPCalls[_aoTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "adb: Too high");
 
         uint256 chosenAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
-        oTAPCalls[_oTAPTokenID][cachedEpoch] += chosenAmount; // Adds up exercised amount to current epoch
+        aoTAPCalls[_aoTAPTokenID][cachedEpoch] += chosenAmount; // Adds up exercised amount to current epoch
 
         // Finalize the deal
         _processOTCDeal(
@@ -339,7 +270,7 @@ contract AirdropBroker is Pausable, BoringOwnable {
             cachedEpoch,
             msg.sender,
             _paymentToken,
-            _oTAPTokenID,
+            _aoTAPTokenID,
             chosenAmount
         );
     }
@@ -351,15 +282,10 @@ contract AirdropBroker is Pausable, BoringOwnable {
             block.timestamp >= lastEpochUpdate + EPOCH_DURATION,
             "adb: too soon"
         );
-        uint256[] memory singularities = tOLP.getSingularities();
 
         // Update epoch info
         lastEpochUpdate = block.timestamp;
         epoch++;
-
-        // Extract TAP
-        uint256 epochTAP = tapOFT.emitForWeek();
-        _emitToGauges(epochTAP);
 
         // Get epoch TAP valuation
         (, epochTAPValuation) = tapOracle.get(tapOracleData);
@@ -374,13 +300,6 @@ contract AirdropBroker is Pausable, BoringOwnable {
     // =========
     //   OWNER
     // =========
-
-    function setPhaseInfo(
-        uint256 _phase,
-        uint256 _initialTap
-    ) external onlyOwner {
-        phaseInfo[_phase] = PhaseInfo(_initialTap, _initialTap);
-    }
 
     /// @notice Set the TapOFT Oracle address and data
     /// @param _tapOracle The new TapOFT Oracle address
@@ -399,6 +318,24 @@ contract AirdropBroker is Pausable, BoringOwnable {
         bytes32[4] calldata _merkleRoots
     ) external onlyOwner {
         phase2MerkleRoots = _merkleRoots;
+    }
+
+    function setPhaseInfo(
+        uint256 _phase,
+        address[] _users,
+        uint256[] _amounts
+    ) external onlyOwner {
+        require(_users.length == _amounts.length, "adb: invalid input");
+
+        if (_phase == 1) {
+            for (uint256 i = 0; i < _users.length; i++) {
+                phase1Users[_users[i]] = _amounts[i];
+            }
+        } else if (_phase == 4) {
+            for (uint256 i = 0; i < _users.length; i++) {
+                phase4Users[_users[i]] = _amounts[i];
+            }
+        }
     }
 
     /// @notice Activate or deactivate a payment token
@@ -579,8 +516,8 @@ contract AirdropBroker is Pausable, BoringOwnable {
     }
 
     /// @notice Computes the discounted payment amount for a given OTC amount in USD
-    /// @param _otcAmountInUSD The OTC amount in USD, 8 decimals
-    /// @param _paymentTokenValuation The payment token valuation in USD, 8 decimals
+    /// @param _otcAmountInUSD The OTC amount in USD, 18 decimals
+    /// @param _paymentTokenValuation The payment token valuation in USD, 18 decimals
     /// @param _discount The discount in BPS
     /// @param _paymentTokenDecimals The payment token decimals
     /// @return paymentAmount The discounted payment amount
@@ -596,26 +533,5 @@ contract AirdropBroker is Pausable, BoringOwnable {
             rawPaymentAmount -
             muldiv(rawPaymentAmount, _discount, 1e6); // 1e4 is discount decimals, 100 is discount percentage
         paymentAmount = paymentAmount / (10 ** (18 - _paymentTokenDecimals));
-    }
-
-    /// @notice Emit TAP to the gauges equitably
-    function _emitToGauges(uint256 _epochTAP) internal {
-        SingularityPool[] memory sglPools = tOLP.getSingularityPools();
-        uint256 totalWeights = tOLP.totalSingularityPoolWeights();
-
-        uint256 len = sglPools.length;
-        unchecked {
-            for (uint256 i = 0; i < len; ++i) {
-                uint256 currentPoolWeight = sglPools[i].poolWeight;
-                uint256 quotaPerSingularity = muldiv(
-                    currentPoolWeight,
-                    _epochTAP,
-                    totalWeights
-                );
-                singularityGauges[epoch][
-                    sglPools[i].sglAssetID
-                ] = quotaPerSingularity;
-            }
-        }
     }
 }
