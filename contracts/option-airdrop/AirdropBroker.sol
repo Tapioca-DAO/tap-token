@@ -184,9 +184,9 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
         eligibleTapAmount = aoTapOption.amount;
         eligibleTapAmount -= aoTAPCalls[_aoTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "adb: Too high");
-        require(_tapAmount >= 1e18, "adb: Too low");
 
         tapAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
+        require(tapAmount >= 1e18, "adb: Too low");
         // Get TAP valuation
         uint256 otcAmountInUSD = tapAmount * epochTAPValuation; // Divided by TAP decimals
         // Get payment token valuation
@@ -265,9 +265,9 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
         uint256 eligibleTapAmount = aoTapOption.amount;
         eligibleTapAmount -= aoTAPCalls[_aoTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "adb: Too high");
-        require(_tapAmount >= 1e18, "adb: Too low");
 
         uint256 chosenAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
+        require(chosenAmount >= 1e18, "adb: Too low");
         aoTAPCalls[_aoTAPTokenID][cachedEpoch] += chosenAmount; // Adds up exercised amount to current epoch
 
         // Finalize the deal
