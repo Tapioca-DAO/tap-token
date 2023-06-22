@@ -25,7 +25,7 @@ import { ERC20Mock } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks'
 import { YieldBox } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
 import { setupFixture } from './fixtures';
 
-describe('TapiocaOptionBroker', () => {
+describe.only('TapiocaOptionBroker', () => {
     const setupEnv = async (
         tOB: TapiocaOptionBroker,
         tOLP: TapiocaOptionLiquidityProvision,
@@ -703,12 +703,14 @@ describe('TapiocaOptionBroker', () => {
             const eligibleTapAmount = userLock1.ybAmount
                 .mul(await tOB.singularityGauges(epoch, sglTokenMockAsset))
                 .div(userLock1.ybAmount.add(userLock2.ybAmount));
-            const otcDealAmountInUSD = BN(33e7).mul(eligibleTapAmount);
+            const otcDealAmountInUSD = BN(33e17).mul(eligibleTapAmount);
             const rawPayment = otcDealAmountInUSD.div(
                 (await stableMockOracle.get('0x00'))[1],
             ); // USDC price at 1
             const discount = rawPayment.mul(50).div(100);
-            const paymentTokenToSend = rawPayment.sub(discount).div(1e12);
+            const paymentTokenToSend = rawPayment
+                .sub(discount)
+                .div((1e12).toString());
 
             const otcDetails = await tOB
                 .connect(users[0])
@@ -728,7 +730,7 @@ describe('TapiocaOptionBroker', () => {
             const eligibleTapAmount = userLock2.ybAmount
                 .mul(await tOB.singularityGauges(epoch, sglTokenMockAsset))
                 .div(userLock1.ybAmount.add(userLock2.ybAmount));
-            const otcDealAmountInUSD = BN(33e7).mul(eligibleTapAmount);
+            const otcDealAmountInUSD = BN(33e17).mul(eligibleTapAmount);
             const rawPayment = otcDealAmountInUSD.div(
                 (await stableMockOracle.get('0x00'))[1],
             ); // USDC price at 1
@@ -759,7 +761,7 @@ describe('TapiocaOptionBroker', () => {
             const eligibleTapAmount = userLock1.ybAmount
                 .mul(await tOB.singularityGauges(epoch, sglTokenMockAsset))
                 .div(userLock1.ybAmount.add(userLock2.ybAmount));
-            const otcDealAmountInUSD = BN(33e7).mul(eligibleTapAmount);
+            const otcDealAmountInUSD = BN(33e17).mul(eligibleTapAmount);
             const rawPayment = otcDealAmountInUSD.div(
                 (await ethMockOracle.get('0x00'))[1],
             ); // USDC price at 1
@@ -780,7 +782,7 @@ describe('TapiocaOptionBroker', () => {
             const eligibleTapAmount = userLock2.ybAmount
                 .mul(await tOB.singularityGauges(epoch, sglTokenMockAsset))
                 .div(userLock1.ybAmount.add(userLock2.ybAmount));
-            const otcDealAmountInUSD = BN(33e7).mul(eligibleTapAmount);
+            const otcDealAmountInUSD = BN(33e17).mul(eligibleTapAmount);
             const rawPayment = otcDealAmountInUSD.div(
                 (await ethMockOracle.get('0x00'))[1],
             ); // USDC price at 1
@@ -804,7 +806,7 @@ describe('TapiocaOptionBroker', () => {
 
         // Exercise for 1 TAP with 1e6 decimals stable, 50% discount
         {
-            const otcDealAmountInUSD = BN(33e7).mul((1e18).toString());
+            const otcDealAmountInUSD = BN(33e17).mul((1e18).toString());
             const rawPayment = otcDealAmountInUSD.div(
                 (await stableMockOracle.get('0x00'))[1],
             ); // USDC price at 1
@@ -825,7 +827,7 @@ describe('TapiocaOptionBroker', () => {
 
         // Exercise for 1 TAP with 1e6 decimals stable, 20.7083% discount
         {
-            const otcDealAmountInUSD = BN(33e7).mul((1e18).toString());
+            const otcDealAmountInUSD = BN(33e17).mul((1e18).toString());
             const rawPayment = otcDealAmountInUSD.div(
                 (await stableMockOracle.get('0x00'))[1],
             ); // USDC price at 1
@@ -852,7 +854,7 @@ describe('TapiocaOptionBroker', () => {
 
         // Exercise for 1 TAP with 1e18 decimals token, 50% discount
         {
-            const otcDealAmountInUSD = BN(33e7).mul((1e18).toString());
+            const otcDealAmountInUSD = BN(33e17).mul((1e18).toString());
             const rawPayment = otcDealAmountInUSD.div(
                 (await ethMockOracle.get('0x00'))[1],
             ); // ETH price at 1200
@@ -872,7 +874,7 @@ describe('TapiocaOptionBroker', () => {
         }
         // Exercise for 1 TAP with 1e18 decimals token, 20.7083% discount
         {
-            const otcDealAmountInUSD = BN(33e7).mul((1e18).toString());
+            const otcDealAmountInUSD = BN(33e17).mul((1e18).toString());
             const rawPayment = otcDealAmountInUSD.div(
                 (await ethMockOracle.get('0x00'))[1],
             ); // ETH price at 1200

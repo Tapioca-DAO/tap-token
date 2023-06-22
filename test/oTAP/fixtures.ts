@@ -62,7 +62,7 @@ export const setupFixture = async () => {
     const OracleMock = new OracleMock__factory(signer);
 
     // oTAP
-    const tapOracleMock = await OracleMock.deploy('TAP', 'TAP', BN(33e7));
+    const tapOracleMock = await OracleMock.deploy('TAP', 'TAP', BN(33e17));
     const tOLP = await (
         await ethers.getContractFactory('TapiocaOptionLiquidityProvision')
     ).deploy(yieldBox.address, signer.address);
@@ -137,12 +137,12 @@ export const setupFixture = async () => {
     const stableMockOracle = await OracleMock.deploy(
         'StableMockOracle',
         'SMO',
-        1e8,
+        (1e18).toString(),
     );
     const ethMockOracle = await OracleMock.deploy(
         'WETHMockOracle',
         'WMO',
-        BN(1e8).mul(1200),
+        BN(1e18).mul(1200),
     );
 
     return {
