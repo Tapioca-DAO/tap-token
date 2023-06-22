@@ -532,8 +532,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     }
 
     /// @notice Computes the discounted payment amount for a given OTC amount in USD
-    /// @param _otcAmountInUSD The OTC amount in USD, 8 decimals
-    /// @param _paymentTokenValuation The payment token valuation in USD, 8 decimals
+    /// @param _otcAmountInUSD The OTC amount in USD, 18 decimals
+    /// @param _paymentTokenValuation The payment token valuation in USD, 18 decimals
     /// @param _discount The discount in BPS
     /// @param _paymentTokenDecimals The payment token decimals
     /// @return paymentAmount The discounted payment amount
@@ -547,7 +547,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         uint256 rawPaymentAmount = _otcAmountInUSD / _paymentTokenValuation;
         paymentAmount =
             rawPaymentAmount -
-            muldiv(rawPaymentAmount, _discount, 1e6); // 1e4 is discount decimals, 100 is discount percentage
+            muldiv(rawPaymentAmount, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
         paymentAmount = paymentAmount / (10 ** (18 - _paymentTokenDecimals));
     }
 
