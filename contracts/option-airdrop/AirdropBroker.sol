@@ -104,7 +104,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
     mapping(address => uint256) public phase4Users;
     uint256 public constant PHASE_4_DISCOUNT = 33 * 1e4;
 
-    uint256 constant EPOCH_DURATION = 2 days;
+    uint256 public constant EPOCH_DURATION = 2 days;
 
     /// =====-------======
     constructor(
@@ -215,7 +215,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
         if (cachedEpoch == 1) {
             _participatePhase1();
         } else if (cachedEpoch == 2) {
-            _participatePhase2(_data); // _data = (address _to, uint8 _role, bytes32 _merkleProof)
+            _participatePhase2(_data); // _data = (uint256 role, bytes32[] _merkleProof)
         } else if (cachedEpoch == 3) {
             _participatePhase3(_data); // _data = (uint256 _tokenID)
         } else if (cachedEpoch == 4) {
@@ -301,7 +301,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
     }
 
     /// @notice Claim the Broker role of the aoTAP contract
-    function oTAPBrokerClaim() external {
+    function aoTAPBrokerClaim() external {
         aoTAP.brokerClaim();
     }
 

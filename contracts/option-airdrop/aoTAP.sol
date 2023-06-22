@@ -37,8 +37,7 @@ struct AirdropTapOption {
 }
 
 contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
-    uint256 public mintedOTAP; // total number of OTAP minted
-    uint256 public mintedTAP; // total number of TAP minted
+    uint256 public mintedAOTAP; // total number of AOTAP minted
     address public broker; // address of the onlyBroker
 
     mapping(uint256 => AirdropTapOption) public options; // tokenId => Option
@@ -110,7 +109,7 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
         tokenURIs[_tokenId] = _tokenURI;
     }
 
-    /// @notice mints an OTAP
+    /// @notice mints an AOTAP
     /// @param _to address to mint to
     /// @param _expiry timestamp
     /// @param _discount TAP discount in basis points
@@ -120,7 +119,7 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
         uint128 _discount,
         uint256 _amount
     ) external onlyBroker returns (uint256 tokenId) {
-        tokenId = ++mintedOTAP;
+        tokenId = ++mintedAOTAP;
         _safeMint(_to, tokenId);
 
         AirdropTapOption storage option = options[tokenId];
@@ -131,7 +130,7 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
         emit Mint(_to, tokenId, option);
     }
 
-    /// @notice burns an OTAP
+    /// @notice burns an AOTAP
     /// @param _tokenId tokenId to burn
     function burn(uint256 _tokenId) external {
         require(
@@ -143,7 +142,7 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
         emit Burn(msg.sender, _tokenId, options[_tokenId]);
     }
 
-    /// @notice tOB claim
+    /// @notice ADB claim
     function brokerClaim() external {
         require(broker == address(0), "AOTAP: only once");
         broker = msg.sender;
