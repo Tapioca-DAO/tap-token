@@ -210,6 +210,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
         bytes calldata _data
     ) external returns (uint256 aoTAPTokenID) {
         uint256 cachedEpoch = epoch;
+        require(cachedEpoch > 0, "adb: Airdrop not started");
+        require(cachedEpoch <= 4, "adb: Airdrop ended");
 
         // Phase 1
         if (cachedEpoch == 1) {
@@ -328,7 +330,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
         phase2MerkleRoots = _merkleRoots;
     }
 
-    function setPhaseInfo(
+    function registerUserForPhase(
         uint256 _phase,
         address[] calldata _users,
         uint256[] calldata _amounts

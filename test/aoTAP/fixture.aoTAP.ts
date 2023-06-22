@@ -10,6 +10,15 @@ import { BigNumberish, Wallet } from 'ethers';
 import { ERC721Mock } from 'tapioca-sdk/dist/typechain/tapioca-mocks';
 import { BN, randomSigners } from '../test.utils';
 import MerkleTree from 'merkletreejs';
+import PHASE2_ALLOW_LIST from '../../output.json';
+
+interface IPhase2AllowList {
+    signers: {
+        address: string;
+        pk: string;
+    }[];
+    role: number;
+}
 
 export const setupFixture = async () => {
     const signer = (await hre.ethers.getSigners())[0];
@@ -95,16 +104,13 @@ export const setupFixture = async () => {
         BN(1e18).mul(1200),
     );
 
-    const phase2Users = await generatePhase2Signers();
+    const phase2Users: IPhase2AllowList[] = PHASE2_ALLOW_LIST;
     return {
         // signers
         signer,
         users,
         paymentTokenBeneficiary,
-        phase1Users: generatePhase1_4Signers(1_500_000),
         phase2Users,
-        phase2MerkleTree: await generatePhase2MerkleTree(phase2Users),
-        phase3Users: await generatePhase3Signers(pcnft),
 
         // vars
         LZEndpointMockCurrentChain,
@@ -124,7 +130,6 @@ export const setupFixture = async () => {
 
         // Functions
         generatePhase1_4Signers,
-        generatePhase2Signers,
         generatePhase2MerkleTree,
         generatePhase3Signers,
 
@@ -136,16 +141,16 @@ export const setupFixture = async () => {
 const generatePhase1_4Signers = async (initialAmount: number) => {
     let remainingAmount = initialAmount;
 
-    const signers: { address: Wallet; amount: BigNumberish }[] = [];
+    const signers: { wallet: Wallet; amount: BigNumberish }[] = [];
     const rndSigners = await randomSigners(100); // pre-computed random signers
 
     while (remainingAmount > 0) {
         const amount = Math.floor(Math.random() * 100_000);
         remainingAmount -= amount;
-        const address = rndSigners.pop();
-        if (address === undefined) break;
+        const wallet = rndSigners.pop();
+        if (wallet === undefined) break;
         signers.push({
-            address,
+            wallet,
             amount,
         });
     }
@@ -153,35 +158,9 @@ const generatePhase1_4Signers = async (initialAmount: number) => {
     return signers;
 };
 
-// Using https://docs.tapioca.xyz/tapioca/launch/option-airdrop#phase-two-core-tapioca-guild numbers
-const generatePhase2Signers = async () => {
-    return [
-        {
-            role: 0, // OG Pearls
-            addresses: await randomSigners(45),
-        },
-        {
-            role: 1, // Sushi Frens
-            addresses: await randomSigners(365),
-        },
-        {
-            role: 2, // Tapiocans
-            addresses: await randomSigners(416),
-        },
-        {
-            role: 3, // Oysters
-            addresses: await randomSigners(1870),
-        },
-    ];
-};
-
-const generatePhase2MerkleTree = async (
-    users: Awaited<ReturnType<typeof generatePhase2Signers>>,
-) => {
-    const merkleTree = (users: Wallet[]) => {
-        const leaves = users.map((user) => {
-            hre.ethers.utils.keccak256(user.address);
-        });
+const generatePhase2MerkleTree = async (users: IPhase2AllowList[]) => {
+    const merkleTree = (_users: string[]) => {
+        const leaves = _users.map((user) => hre.ethers.utils.keccak256(user));
         const merkleTree = new MerkleTree(leaves, hre.ethers.utils.keccak256, {
             sortPairs: true,
         });
@@ -193,19 +172,19 @@ const generatePhase2MerkleTree = async (
     return [
         {
             role: 0, // OG Pearls
-            ...merkleTree(users[0].addresses),
+            ...merkleTree(users[0].signers.map((s) => s.address)),
         },
         {
             role: 1, // Sushi Frens
-            ...merkleTree(users[1].addresses),
+            ...merkleTree(users[1].signers.map((s) => s.address)),
         },
         {
             role: 2, // Tapiocans
-            ...merkleTree(users[2].addresses),
+            ...merkleTree(users[2].signers.map((s) => s.address)),
         },
         {
             role: 3, // Oysters
-            ...merkleTree(users[3].addresses),
+            ...merkleTree(users[3].signers.map((s) => s.address)),
         },
     ];
 };

@@ -23,6 +23,10 @@ describe.only('AirdropBroker', () => {
         await adb.aoTAPBrokerClaim();
         await tapOFT.setMinter(adb.address);
     };
+    const newEpoch = async (adb: AirdropBroker) => {
+        await time_travel((await adb.EPOCH_DURATION()).toNumber());
+        await adb.newEpoch();
+    };
     const adbParticipate = async (
         signer: SignerWithAddress,
         data: BytesLike,
@@ -42,12 +46,16 @@ describe.only('AirdropBroker', () => {
 
     it('should claim oTAP and TAP', async () => {
         const { adb, aoTAP, tapOFT } = await loadFixture(setupFixture);
+
+        await adb.aoTAPBrokerClaim();
+        expect(await aoTAP.broker()).to.be.eq(adb.address);
+
+        await tapOFT.setMinter(adb.address);
+        expect(await tapOFT.minter()).to.be.eq(adb.address);
     });
 
     it('should check initial values', async () => {
-        const { signer, users, adb, tapOFT, aoTAP } = await loadFixture(
-            setupFixture,
-        );
+        const { adb, tapOFT, aoTAP } = await loadFixture(setupFixture);
 
         // ---- Setup adb
         await adb.aoTAPBrokerClaim();
@@ -83,10 +91,114 @@ describe.only('AirdropBroker', () => {
         expect(adb.EPOCH_DURATION()).to.be.eq(BN(2 * 24 * 60 * 60)); // 2 days
     });
 
+    describe.only('Phase 1', () => {
+        it('Should register users', async () => {
+            const {
+                signer,
+                users: [rndSigner],
+                adb,
+                generatePhase1_4Signers,
+            } = await loadFixture(setupFixture);
+            const users = await generatePhase1_4Signers(100);
+            await expect(
+                adb
+                    .connect(rndSigner)
+                    .registerUserForPhase(
+                        1,
+                        [users[0].wallet.address],
+                        [users[0].amount],
+                    ),
+            ).to.be.revertedWith('Ownable: caller is not the owner');
+
+            await adb.registerUserForPhase(
+                1,
+                users.map((e) => e.wallet.address),
+                users.map((e) => e.amount),
+            );
+
+            for (const user of users) {
+                expect(await adb.phase1Users(user.wallet.address)).to.be.eq(
+                    user.amount,
+                );
+            }
+        });
+
+        it('Should participate', async () => {
+            const {
+                signer,
+                users: [rndSigner],
+                adb,
+                tapOFT,
+                aoTAP,
+                generatePhase1_4Signers,
+            } = await loadFixture(setupFixture);
+            setupEnv(adb, tapOFT);
+
+            // Gen users and register them
+            const users = await generatePhase1_4Signers(100);
+            await adb.registerUserForPhase(
+                1,
+                users.map((e) => e.wallet.address),
+                users.map((e) => e.amount),
+            );
+            await adb.registerUserForPhase(
+                4,
+                users.map((e) => e.wallet.address),
+                users.map((e) => e.amount),
+            );
+
+            //---- Can't participate if epoch is not started or finished
+            await expect(
+                adb.connect(users[0].wallet).participate('0x00'),
+            ).to.be.revertedWith('adb: Airdrop not started');
+
+            // Get snapshot and go to epoch 5, which is incorrect
+            const snapshot = await takeSnapshot();
+            for (let i = 0; i < 5; i++) {
+                await newEpoch(adb);
+            }
+            await expect(
+                adb.connect(users[0].wallet).participate('0x00'),
+            ).to.be.revertedWith('adb: Airdrop ended');
+            await snapshot.restore();
+
+            //---- test adb participation
+            await newEpoch(adb);
+            expect(await adb.epoch()).to.be.eq(BN(1));
+
+            for (const user of users) {
+                const mintedOTAP = await aoTAP.mintedAOTAP();
+                // Participate
+                await expect(
+                    adb.connect(user.wallet).participate(user.wallet.address),
+                )
+                    .to.emit(adb, 'Participate')
+                    .withArgs(1, mintedOTAP);
+
+                // Get aoTAP tokenID and check aoTAP option
+                const aoTAPTokenID = mintedOTAP.add(1);
+                const aoTAPOption = await aoTAP.options(aoTAPTokenID);
+
+                // Validate aoTAP option
+                expect(aoTAPOption.amount).to.be.eq(user.amount); // Entitled amount
+                expect(aoTAPOption.expiry).to.be.eq(
+                    (await adb.lastEpochUpdate()).add(
+                        await adb.EPOCH_DURATION(),
+                    ),
+                ); // Expiry 2 days after epoch start
+                expect(aoTAPOption.discount).to.be.eq(BN(50e4)); // 50% discount
+
+                // Close eligibility
+                expect(await adb.phase1Users(user.wallet.address)).to.be.eq(0);
+                await expect(
+                    adb.connect(user.wallet).participate(user.wallet.address),
+                ).to.revertedWith('adb: Not eligible');
+            }
+        });
+    });
+
     it('should participate', async () => {
-        const { signer, users, adb, tapOFT, aoTAP } = await loadFixture(
-            setupFixture,
-        );
+        const { signer, users, adb, tapOFT } = await loadFixture(setupFixture);
 
         // Setup adb
         await setupEnv(adb, tapOFT);
