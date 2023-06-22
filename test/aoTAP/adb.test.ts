@@ -4,18 +4,10 @@ import {
     time,
 } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
+import { BigNumberish, Wallet } from 'ethers';
 import hre from 'hardhat';
-import {
-    BN,
-    aml_computeAverageMagnitude,
-    aml_computeTarget,
-    aml_computeMagnitude,
-    getERC721PermitSignature,
-    time_travel,
-} from '../test.utils';
 import { AOTAP, AirdropBroker, TapOFT } from '../../typechain';
-import { BigNumber, BigNumberish, BytesLike, Wallet } from 'ethers';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { BN, time_travel } from '../test.utils';
 import { setupFixture } from './fixture.aoTAP';
 
 describe.only('AirdropBroker', () => {
@@ -23,7 +15,7 @@ describe.only('AirdropBroker', () => {
         await adb.aoTAPBrokerClaim();
         await tapOFT.transfer(
             adb.address,
-            BN((1e18).toString()).mul(2_5000_000),
+            BN((1e18).toString()).mul(2_500_000),
         );
     };
     const newEpoch = async (adb: AirdropBroker) => {
@@ -84,31 +76,33 @@ describe.only('AirdropBroker', () => {
         // ---- Check initial values
 
         // Epoch related
-        expect(adb.epochTAPValuation()).to.be.eq(BN(0));
-        expect(adb.lastEpochUpdate()).to.be.eq(BN(0));
-        expect(adb.epoch()).to.be.eq(BN(0));
+        expect(await adb.epochTAPValuation()).to.be.eq(0);
+        expect(await adb.lastEpochUpdate()).to.be.eq(0);
+        expect(await adb.epoch()).to.be.eq(0);
 
         // Phase 1
-        expect(adb.PHASE_1_DISCOUNT()).to.be.eq(BN(50 * 1e4));
+        expect(await adb.PHASE_1_DISCOUNT()).to.be.eq(BN(50 * 1e4));
 
         // Phase2
-        expect(adb.phase2MerkleRoots(0)).to.be.eq(BN(0));
-        expect(adb.PHASE_2_AMOUNT_PER_USER(0)).to.be.eq(BN(200));
-        expect(adb.PHASE_2_AMOUNT_PER_USER(1)).to.be.eq(BN(190));
-        expect(adb.PHASE_2_AMOUNT_PER_USER(2)).to.be.eq(BN(200));
-        expect(adb.PHASE_2_AMOUNT_PER_USER(3)).to.be.eq(BN(190));
+        expect(await adb.phase2MerkleRoots(0)).to.be.eq(
+            hre.ethers.utils.hexZeroPad(hre.ethers.utils.hexlify(0), 32),
+        );
+        expect(await adb.PHASE_2_AMOUNT_PER_USER(0)).to.be.eq(BN(200));
+        expect(await adb.PHASE_2_AMOUNT_PER_USER(1)).to.be.eq(BN(190));
+        expect(await adb.PHASE_2_AMOUNT_PER_USER(2)).to.be.eq(BN(200));
+        expect(await adb.PHASE_2_AMOUNT_PER_USER(3)).to.be.eq(BN(190));
 
         // Phase3
-        expect(adb.PHASE_3_AMOUNT_PER_USER()).to.be.eq(BN(714));
-        expect(adb.PHASE_3_DISCOUNT()).to.be.eq(BN(50 * 1e4));
+        expect(await adb.PHASE_3_AMOUNT_PER_USER()).to.be.eq(BN(714));
+        expect(await adb.PHASE_3_DISCOUNT()).to.be.eq(BN(50 * 1e4));
 
         // Phase4
-        expect(adb.PHASE_4_DISCOUNT()).to.be.eq(BN(33 * 1e4));
+        expect(await adb.PHASE_4_DISCOUNT()).to.be.eq(BN(33 * 1e4));
 
-        expect(adb.EPOCH_DURATION()).to.be.eq(BN(2 * 24 * 60 * 60)); // 2 days
+        expect(await adb.EPOCH_DURATION()).to.be.eq(BN(2 * 24 * 60 * 60)); // 2 days
     });
 
-    describe.only('Phase 1', () => {
+    describe('Phase 1', () => {
         it('Should register users', async () => {
             const {
                 signer,
@@ -217,7 +211,7 @@ describe.only('AirdropBroker', () => {
             }
         });
 
-        it.only('Should get correct OTC details', async () => {
+        it('Should get correct OTC details', async () => {
             const {
                 signer,
                 users: [rndSigner],
@@ -466,8 +460,6 @@ describe.only('AirdropBroker', () => {
                 user1PaymentAmount = paymentTokenToSend;
 
                 // ERC20 checks
-                console.log(otcDetails);
-                hre.tracer.enabled = true;
                 await expect(
                     adb
                         .connect(users[0].wallet)
@@ -495,6 +487,17 @@ describe.only('AirdropBroker', () => {
                     .approve(adb.address, paymentTokenToSend);
 
                 // Exercise option checks
+
+                await expect(
+                    adb
+                        .connect(users[0].wallet)
+                        .exerciseOption(
+                            registrations[0].aoTAPTokenID,
+                            stableMock.address,
+                            BN((1e18).toString()).sub(1),
+                        ),
+                ).to.be.rejectedWith('adb: Too low');
+
                 await expect(
                     adb
                         .connect(users[0].wallet)
@@ -516,9 +519,9 @@ describe.only('AirdropBroker', () => {
                 expect(
                     await tapOFT.balanceOf(users[0].wallet.address),
                 ).to.be.equal(eligibleTapAmount); // Check TAP transfer to user
-                expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
-                    (await tapOFT.mintedInWeek(epoch)).sub(eligibleTapAmount),
-                ); // Check TAP subtraction from TAP contract
+                expect(await tapOFT.balanceOf(adb.address)).to.be.equal(
+                    BN(2_500_000).mul((1e18).toString()).sub(eligibleTapAmount),
+                ); // Check TAP subtracted from ADB contract
                 expect(await stableMock.balanceOf(adb.address)).to.be.equal(
                     paymentTokenToSend,
                 ); // Check payment token transfer to adb contract
@@ -596,6 +599,16 @@ describe.only('AirdropBroker', () => {
                         .exerciseOption(
                             registrations[1].aoTAPTokenID,
                             ethMock.address,
+                            BN((1e18).toString()).sub(1),
+                        ),
+                ).to.be.rejectedWith('adb: Too low');
+
+                await expect(
+                    adb
+                        .connect(users[1].wallet)
+                        .exerciseOption(
+                            registrations[1].aoTAPTokenID,
+                            ethMock.address,
                             tapAmountWanted,
                         ),
                 )
@@ -616,11 +629,12 @@ describe.only('AirdropBroker', () => {
                     await tapOFT.balanceOf(users[1].wallet.address),
                 ).to.be.equal(tapAmountWanted); // Check TAP transfer to user
 
-                expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
-                    (await tapOFT.mintedInWeek(epoch))
+                expect(await tapOFT.balanceOf(adb.address)).to.be.equal(
+                    BN(2_500_000)
+                        .mul((1e18).toString())
                         .sub(tapAmountWanted)
                         .sub(user1EligibleTapAmount),
-                ); // Check TAP subtraction from TAP contract
+                ); // Check TAP subtraction from ADB contract
 
                 expect(await ethMock.balanceOf(adb.address)).to.be.equal(
                     halfPaymentTokenToSend,
@@ -653,8 +667,9 @@ describe.only('AirdropBroker', () => {
                     await tapOFT.balanceOf(users[1].wallet.address),
                 ).to.be.equal(__fullEligibleTapAMount); // Check TAP transfer to user
 
-                expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
-                    (await tapOFT.mintedInWeek(epoch))
+                expect(await tapOFT.balanceOf(adb.address)).to.be.equal(
+                    BN(2_500_000)
+                        .mul((1e18).toString())
                         .sub(__fullEligibleTapAMount)
                         .sub(user1EligibleTapAmount),
                 ); // Check TAP subtraction from TAP contract
@@ -664,7 +679,7 @@ describe.only('AirdropBroker', () => {
                     1,
                 ); // Check payment token transfer to adb contract
 
-                // Can't exercise option again for this epoch
+                // Can't exercise more than eligible
                 await expect(
                     adb
                         .connect(users[1].wallet)
@@ -740,343 +755,14 @@ describe.only('AirdropBroker', () => {
                 .timestamp,
         );
 
-        const tapPrice = BN(1e18).mul(2);
+        expect(await adb.epochTAPValuation()).to.be.equal((33e17).toString());
+
+        await time_travel((await adb.EPOCH_DURATION()).toNumber());
+        const tapPrice = BN((1e18).toString()).mul(2);
         await tapOracleMock.set(tapPrice);
+        await adb.newEpoch();
         expect(await adb.epochTAPValuation()).to.be.equal(tapPrice);
-
-        await adb.newEpoch();
         expect(await adb.epoch()).to.be.equal(2);
-    });
-
-    it('should exercise an option fully or partially per allowed epoch amount', async () => {
-        const {
-            users,
-            adb,
-            tapOFT,
-            stableMock,
-            stableMockOracle,
-            ethMock,
-            ethMockOracle,
-        } = await loadFixture(setupFixture);
-
-        await setupEnv(adb, tapOFT);
-        await adb.newEpoch();
-
-        await adb.setPaymentToken(
-            stableMock.address,
-            stableMockOracle.address,
-            '0x00',
-        );
-        await adb.setPaymentToken(
-            ethMock.address,
-            ethMockOracle.address,
-            '0x00',
-        );
-        // Check requirements
-        await expect(
-            adb
-                .connect(users[1])
-                .exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0),
-        ).to.be.rejectedWith('adb: Not approved or owner');
-        const snapshot = await takeSnapshot();
-        await adb.setPaymentToken(
-            stableMock.address,
-            hre.ethers.constants.AddressZero,
-            '0x00',
-        );
-        await expect(
-            adb
-                .connect(users[0])
-                .exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0),
-        ).to.be.rejectedWith('adb: Payment token not supported');
-        await snapshot.restore();
-        await time.increase(userLock1.lockDuration);
-        await expect(
-            adb
-                .connect(users[0])
-                .exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0),
-        ).to.be.rejectedWith('adb: Option expired');
-        await snapshot.restore();
-
-        // Gauge emission check
-        const epoch = await adb.epoch();
-        const sglGaugeTokenMock1 = (await tapOFT.getCurrentWeekEmission())
-            .mul(2)
-            .div(3);
-        const sglGaugeTokenMock2 = (await tapOFT.getCurrentWeekEmission())
-            .mul(1)
-            .div(3);
-        expect(await adb.singularityGauges(epoch, sglTokenMockAsset)).to.equal(
-            sglGaugeTokenMock1,
-        );
-        expect(await adb.singularityGauges(epoch, sglTokenMock2Asset)).to.equal(
-            sglGaugeTokenMock2,
-        );
-
-        // Exercise option for user 1 for full eligible TAP amount
-        let user1EligibleTapAmount;
-        let user1PaymentAmount;
-        {
-            const otcDetails = await adb
-                .connect(users[0])
-                .getOTCDealDetails(
-                    userLock1.oTAPTokenID,
-                    stableMock.address,
-                    0,
-                );
-            const eligibleTapAmount = otcDetails.eligibleTapAmount;
-            user1EligibleTapAmount = eligibleTapAmount;
-            const paymentTokenToSend = otcDetails.paymentTokenAmount;
-            user1PaymentAmount = paymentTokenToSend;
-
-            // ERC20 checks
-            await expect(
-                adb
-                    .connect(users[0])
-                    .exerciseOption(
-                        userLock1.oTAPTokenID,
-                        stableMock.address,
-                        0,
-                    ),
-            ).to.be.rejectedWith('ERC20: insufficient allowance');
-            await stableMock.mintTo(users[0].address, paymentTokenToSend);
-            await expect(
-                adb
-                    .connect(users[0])
-                    .exerciseOption(
-                        userLock1.oTAPTokenID,
-                        stableMock.address,
-                        0,
-                    ),
-            ).to.be.rejectedWith('ERC20: insufficient allowance');
-            await stableMock
-                .connect(users[0])
-                .approve(adb.address, paymentTokenToSend);
-
-            // Exercise option checks
-            await expect(
-                adb
-                    .connect(users[0])
-                    .exerciseOption(
-                        userLock1.oTAPTokenID,
-                        stableMock.address,
-                        eligibleTapAmount,
-                    ),
-            )
-                .to.emit(adb, 'ExerciseOption')
-                .withArgs(
-                    epoch,
-                    users[0].address,
-                    stableMock.address,
-                    userLock1.oTAPTokenID,
-                    eligibleTapAmount,
-                ); // Successful exercise
-
-            expect(await tapOFT.balanceOf(users[0].address)).to.be.equal(
-                eligibleTapAmount,
-            ); // Check TAP transfer to user
-            expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
-                (await tapOFT.mintedInWeek(epoch)).sub(eligibleTapAmount),
-            ); // Check TAP subtraction from TAP contract
-            expect(await stableMock.balanceOf(adb.address)).to.be.equal(
-                paymentTokenToSend,
-            ); // Check payment token transfer to adb contract
-
-            expect(
-                await adb.oTAPCalls(userLock1.oTAPTokenID, epoch),
-            ).to.be.equal(eligibleTapAmount);
-
-            // end
-            await expect(
-                adb
-                    .connect(users[0])
-                    .exerciseOption(
-                        userLock1.oTAPTokenID,
-                        stableMock.address,
-                        eligibleTapAmount,
-                    ),
-            ).to.be.rejectedWith('adb: Too high');
-        }
-
-        let user2EligibleTapAmount;
-        let user2PaymentAmount;
-        // Exercise option for user 2 for half eligible TAP amount
-        {
-            const { eligibleTapAmount: __fullEligibleTapAMount } = await adb
-                .connect(users[1])
-                .getOTCDealDetails(userLock2.oTAPTokenID, ethMock.address, 0);
-            const tapAmountWanted = __fullEligibleTapAMount.div(2);
-            const { paymentTokenAmount: fullPaymentTokenToSend } = await adb
-                .connect(users[1])
-                .getOTCDealDetails(
-                    userLock2.oTAPTokenID,
-                    ethMock.address,
-                    __fullEligibleTapAMount,
-                );
-            const halfPaymentTokenToSend = fullPaymentTokenToSend.div(2);
-            user2EligibleTapAmount = tapAmountWanted;
-            user2PaymentAmount = halfPaymentTokenToSend;
-
-            await expect(
-                adb
-                    .connect(users[1])
-                    .exerciseOption(
-                        userLock2.oTAPTokenID,
-                        ethMock.address,
-                        tapAmountWanted,
-                    ),
-            ).to.be.rejectedWith('ERC20: insufficient allowance');
-            await ethMock.mintTo(users[1].address, fullPaymentTokenToSend);
-
-            await expect(
-                adb
-                    .connect(users[1])
-                    .exerciseOption(
-                        userLock2.oTAPTokenID,
-                        ethMock.address,
-                        tapAmountWanted,
-                    ),
-            ).to.be.rejectedWith('ERC20: insufficient allowance');
-            await ethMock
-                .connect(users[1])
-                .approve(adb.address, fullPaymentTokenToSend);
-
-            // Exercise option checks
-            await expect(
-                adb
-                    .connect(users[1])
-                    .exerciseOption(
-                        userLock2.oTAPTokenID,
-                        ethMock.address,
-                        tapAmountWanted,
-                    ),
-            )
-                .to.emit(adb, 'ExerciseOption')
-                .withArgs(
-                    epoch,
-                    users[1].address,
-                    ethMock.address,
-                    userLock2.oTAPTokenID,
-                    tapAmountWanted,
-                ); // Successful exercise
-
-            expect(
-                await adb.oTAPCalls(userLock2.oTAPTokenID, epoch),
-            ).to.be.equal(tapAmountWanted); // Check exercised amount has been updated
-
-            expect(await tapOFT.balanceOf(users[1].address)).to.be.equal(
-                tapAmountWanted,
-            ); // Check TAP transfer to user
-
-            expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
-                (await tapOFT.mintedInWeek(epoch))
-                    .sub(tapAmountWanted)
-                    .sub(user1EligibleTapAmount),
-            ); // Check TAP subtraction from TAP contract
-
-            expect(await ethMock.balanceOf(adb.address)).to.be.equal(
-                halfPaymentTokenToSend,
-            ); // Check payment token transfer to adb contract
-
-            // Exercise option for user 2 for remaining eligible TAP amount
-            await expect(
-                adb
-                    .connect(users[1])
-                    .exerciseOption(
-                        userLock2.oTAPTokenID,
-                        ethMock.address,
-                        tapAmountWanted,
-                    ),
-            )
-                .to.emit(adb, 'ExerciseOption')
-                .withArgs(
-                    epoch,
-                    users[1].address,
-                    ethMock.address,
-                    userLock2.oTAPTokenID,
-                    tapAmountWanted,
-                ); // Successful exercise
-
-            expect(
-                await adb.oTAPCalls(userLock2.oTAPTokenID, epoch),
-            ).to.be.equal(__fullEligibleTapAMount); // Check exercised amount has been updated
-
-            expect(await tapOFT.balanceOf(users[1].address)).to.be.equal(
-                __fullEligibleTapAMount,
-            ); // Check TAP transfer to user
-
-            expect(await tapOFT.balanceOf(tapOFT.address)).to.be.equal(
-                (await tapOFT.mintedInWeek(epoch))
-                    .sub(__fullEligibleTapAMount)
-                    .sub(user1EligibleTapAmount),
-            ); // Check TAP subtraction from TAP contract
-
-            expect(await ethMock.balanceOf(adb.address)).to.be.closeTo(
-                fullPaymentTokenToSend,
-                1,
-            ); // Check payment token transfer to adb contract
-
-            // Can't exercise option again for this epoch
-            await expect(
-                adb
-                    .connect(users[1])
-                    .exerciseOption(
-                        userLock2.oTAPTokenID,
-                        ethMock.address,
-                        tapAmountWanted,
-                    ),
-            ).to.be.rejectedWith('adb: Too high');
-        }
-
-        // Jump to next epoch
-        await time_travel(604800); // 1 week
-        await adb.newEpoch();
-
-        // Exercise option for user 1 for remaining eligible TAP amount
-        await stableMock.mintTo(users[0].address, user1PaymentAmount);
-        await stableMock
-            .connect(users[0])
-            .approve(adb.address, user1PaymentAmount);
-        await expect(
-            adb
-                .connect(users[0])
-                .exerciseOption(
-                    userLock1.oTAPTokenID,
-                    stableMock.address,
-                    user1EligibleTapAmount,
-                ),
-        )
-            .to.emit(adb, 'ExerciseOption')
-            .withArgs(
-                epoch.add(1),
-                users[0].address,
-                stableMock.address,
-                userLock1.oTAPTokenID,
-                user1EligibleTapAmount,
-            ); // Successful exercise
-
-        // Exercise option for user 2 for remaining eligible TAP amount
-        await ethMock.mintTo(users[1].address, user2PaymentAmount);
-        await ethMock
-            .connect(users[1])
-            .approve(adb.address, user2PaymentAmount);
-        await expect(
-            adb
-                .connect(users[1])
-                .exerciseOption(
-                    userLock2.oTAPTokenID,
-                    ethMock.address,
-                    user2EligibleTapAmount,
-                ),
-        )
-            .to.emit(adb, 'ExerciseOption')
-            .withArgs(
-                epoch.add(1),
-                users[1].address,
-                ethMock.address,
-                userLock2.oTAPTokenID,
-                user2EligibleTapAmount,
-            ); // Successful exercise
     });
 
     it('should set payment beneficiary', async () => {
@@ -1094,172 +780,68 @@ describe.only('AirdropBroker', () => {
     it('should collect payment token', async () => {
         const {
             signer,
-            users,
+
             paymentTokenBeneficiary,
             adb,
             tapOFT,
+            aoTAP,
             stableMock,
             stableMockOracle,
+            generatePhase1_4Signers,
         } = await loadFixture(setupFixture);
-
         await setupEnv(adb, tapOFT);
-        await adb.newEpoch();
+
+        const users = await generatePhase1_4Signers({
+            initialAmount: 1_500_000,
+        });
+        const registrations = await adbRegisterAndParticipatePhase1(
+            users.map((e) => e.wallet),
+            users.map((e) => e.amount),
+            adb,
+            aoTAP,
+        );
+
+        const epoch = await adb.epoch();
 
         await adb.setPaymentToken(
             stableMock.address,
             stableMockOracle.address,
             '0x00',
         );
-        const userLock1 = await lockAndParticipate(
-            users[0],
-            3e8,
-            3600,
-            tOLP,
-            adb,
-            oTAP,
-            yieldBox,
-            sglTokenMock,
-            sglTokenMockAsset,
-        );
+
         const otcDetails = await adb.getOTCDealDetails(
-            userLock1.oTAPTokenID,
+            registrations[0].aoTAPTokenID,
             stableMock.address,
             0,
         );
 
         // Exercise
         await stableMock.mintTo(
-            users[0].address,
+            users[0].wallet.address,
             otcDetails.paymentTokenAmount,
         );
 
         await stableMock
-            .connect(users[0])
+            .connect(users[0].wallet)
             .approve(adb.address, otcDetails.paymentTokenAmount);
         await adb
-            .connect(users[0])
+            .connect(users[0].wallet)
             .exerciseOption(
-                userLock1.oTAPTokenID,
+                registrations[0].aoTAPTokenID,
                 stableMock.address,
                 otcDetails.eligibleTapAmount,
             );
 
         // Collect
         await expect(
-            adb.connect(users[0]).collectPaymentTokens([stableMock.address]),
+            adb
+                .connect(users[0].wallet)
+                .collectPaymentTokens([stableMock.address]),
         ).to.be.rejectedWith('Ownable: caller is not the owner');
         await adb.collectPaymentTokens([stableMock.address]);
         expect(await stableMock.balanceOf(adb.address)).to.be.equal(0);
         expect(
             await stableMock.balanceOf(paymentTokenBeneficiary.address),
         ).to.be.equal(otcDetails.paymentTokenAmount);
-    });
-
-    it('Should be able to use permit on TapOFT', async () => {
-        const {
-            signer,
-            users,
-            oTAP,
-            tOLP,
-            adb,
-            tapOFT,
-            yieldBox,
-            sglTokenMock,
-            sglTokenMockAsset,
-            sglTokenMock2,
-            sglTokenMock2Asset,
-        } = await loadFixture(setupFixture);
-        await setupEnv(
-            adb,
-            tOLP,
-            tapOFT,
-            sglTokenMock,
-            sglTokenMockAsset,
-            sglTokenMock2,
-            sglTokenMock2Asset,
-        );
-
-        // Setup
-        const userLock1 = await lockAndParticipate(
-            signer,
-            3e8,
-            3600,
-            tOLP,
-            adb,
-            oTAP,
-            yieldBox,
-            sglTokenMock,
-            sglTokenMockAsset,
-        );
-        const tokenID = userLock1.oTAPTokenID;
-
-        const [normalUser, otherAddress] = users;
-
-        const deadline =
-            (await hre.ethers.provider.getBlock('latest')).timestamp + 10_000;
-        const { v, r, s } = await getERC721PermitSignature(
-            signer,
-            oTAP,
-            normalUser.address,
-            tokenID,
-            BN(deadline),
-        );
-
-        // Check if it works
-        const snapshot = await takeSnapshot();
-        await expect(
-            oTAP.permit(normalUser.address, tokenID, deadline, v, r, s),
-        )
-            .to.emit(oTAP, 'Approval')
-            .withArgs(signer.address, normalUser.address, tokenID);
-
-        // Check that it can't be used twice
-        await expect(
-            oTAP.permit(normalUser.address, tokenID, deadline, v, r, s),
-        ).to.be.reverted;
-        await snapshot.restore();
-
-        // Check that it can't be used after deadline
-        await time_travel(10_001);
-        await expect(
-            oTAP.permit(normalUser.address, tokenID, deadline, v, r, s),
-        ).to.be.reverted;
-        await snapshot.restore();
-
-        // Check that it can't be used with wrong signature
-        const {
-            v: v2,
-            r: r2,
-            s: s2,
-        } = await getERC721PermitSignature(
-            signer,
-            oTAP,
-            otherAddress.address,
-            tokenID,
-            BN(deadline),
-        );
-        await expect(
-            oTAP.permit(normalUser.address, tokenID, deadline, v2, r2, s2),
-        ).to.be.reverted;
-        await snapshot.restore();
-
-        // Check that it can be batch called
-        const permit = oTAP.interface.encodeFunctionData('permit', [
-            normalUser.address,
-            tokenID,
-            deadline,
-            v,
-            r,
-            s,
-        ]);
-        const transfer = oTAP.interface.encodeFunctionData('transferFrom', [
-            signer.address,
-            normalUser.address,
-            tokenID,
-        ]);
-
-        await expect(oTAP.connect(normalUser).batch([permit, transfer], true))
-            .to.emit(oTAP, 'Transfer')
-            .withArgs(signer.address, normalUser.address, tokenID);
     });
 });
