@@ -531,7 +531,7 @@ contract AirdropBroker is Pausable, BoringOwnable {
         uint256 rawPaymentAmount = _otcAmountInUSD / _paymentTokenValuation;
         paymentAmount =
             rawPaymentAmount -
-            muldiv(rawPaymentAmount, _discount, 1e6); // 1e4 is discount decimals, 100 is discount percentage
+            muldiv(rawPaymentAmount, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
         paymentAmount = paymentAmount / (10 ** (18 - _paymentTokenDecimals));
     }
 }
