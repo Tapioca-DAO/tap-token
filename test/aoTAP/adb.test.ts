@@ -282,6 +282,16 @@ describe.only('AirdropBroker', () => {
                     ),
             ).to.be.revertedWith('adb: Too high');
 
+            await expect(
+                adb
+                    .connect(registrations[0].user)
+                    .getOTCDealDetails(
+                        registrations[0].aoTAPTokenID,
+                        stableMock.address,
+                        BN((1e18).toString()).sub(1),
+                    ),
+            ).to.be.revertedWith('adb: Too low');
+
             await time_travel((await adb.EPOCH_DURATION()).toNumber());
             await expect(
                 adb
@@ -355,6 +365,7 @@ describe.only('AirdropBroker', () => {
                         ethMock.address,
                         0,
                     );
+
                 expect(otcDetails.eligibleTapAmount).to.be.equal(
                     registration.aoTAPOption.amount,
                 );
