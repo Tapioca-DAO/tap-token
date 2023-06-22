@@ -960,6 +960,9 @@ describe('TapiocaOptionBroker', () => {
         );
 
         // Check requirements
+        const _otcDetails = await tOB
+            .connect(users[0])
+            .getOTCDealDetails(userLock1.oTAPTokenID, stableMock.address, 0);
         await expect(
             tOB
                 .connect(users[1])
@@ -976,6 +979,24 @@ describe('TapiocaOptionBroker', () => {
                 .connect(users[0])
                 .exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0),
         ).to.be.rejectedWith('tOB: Payment token not supported');
+        await expect(
+            tOB
+                .connect(users[0])
+                .exerciseOption(
+                    userLock1.oTAPTokenID,
+                    stableMock.address,
+                    _otcDetails.eligibleTapAmount.add(1),
+                ),
+        ).to.be.rejectedWith('tOB: Too high');
+        await expect(
+            tOB
+                .connect(users[0])
+                .exerciseOption(
+                    userLock1.oTAPTokenID,
+                    stableMock.address,
+                    BN((1e18).toString()).sub(1),
+                ),
+        ).to.be.rejectedWith('tOB: Too low');
         await snapshot.restore();
         await time.increase(userLock1.lockDuration);
         await expect(

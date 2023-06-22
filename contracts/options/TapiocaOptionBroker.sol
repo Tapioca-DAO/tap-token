@@ -147,6 +147,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     /// @param _tapAmount The amount of TAP to be exchanged. If 0 it will use the full amount of TAP eligible for the deal
     /// @return eligibleTapAmount The amount of TAP eligible for the deal
     /// @return paymentTokenAmount The amount of payment tokens required for the deal
+    /// @return tapAmount The amount of TAP to be exchanged
     function getOTCDealDetails(
         uint256 _oTAPTokenID,
         ERC20 _paymentToken,
@@ -154,7 +155,11 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     )
         external
         view
-        returns (uint256 eligibleTapAmount, uint256 paymentTokenAmount)
+        returns (
+            uint256 eligibleTapAmount,
+            uint256 paymentTokenAmount,
+            uint256 tapAmount
+        )
     {
         // Load data
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
@@ -186,11 +191,11 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         );
         eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "tOB: Too high");
+        require(_tapAmount >= 1e18, "adb: Too low");
 
+        tapAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
         // Get TAP valuation
-        uint256 otcAmountInUSD = (
-            _tapAmount == 0 ? eligibleTapAmount : _tapAmount
-        ) * epochTAPValuation; // Divided by TAP decimals
+        uint256 otcAmountInUSD = tapAmount * epochTAPValuation; // Divided by TAP decimals
         // Get payment token valuation
         (, uint256 paymentTokenValuation) = paymentTokenOracle.oracle.peek(
             paymentTokenOracle.oracleData
@@ -386,6 +391,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         );
         eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "tOB: Too high");
+        require(_tapAmount >= 1e18, "adb: Too low");
 
         uint256 chosenAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
         oTAPCalls[_oTAPTokenID][cachedEpoch] += chosenAmount; // Adds up exercised amount to current epoch
