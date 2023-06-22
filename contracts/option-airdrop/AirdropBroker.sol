@@ -4,10 +4,11 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/IERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "tapioca-periph/contracts/interfaces/IOracle.sol";
 import "../tokens/TapOFT.sol";
+import "../twAML.sol";
 import "./aoTAP.sol";
 
 // ********************************************************************************
@@ -51,7 +52,7 @@ struct Phase2Info {
 }
 
 /// @notice More details found here https://docs.tapioca.xyz/tapioca/launch/option-airdrop
-contract AirdropBroker is Pausable, BoringOwnable {
+contract AirdropBroker is Pausable, BoringOwnable, FullMath {
     bytes public tapOracleData;
     TapOFT public immutable tapOFT;
     AOTAP public immutable aoTAP;
@@ -62,32 +63,46 @@ contract AirdropBroker is Pausable, BoringOwnable {
     uint64 public lastEpochUpdate; // timestamp of the last epoch update
     uint64 public epoch; // Represents the number of weeks since the start of the contract
 
-    mapping(uint256 => mapping(uint256 => uint256)) public aoTAPCalls; // oTAPTokenID => epoch => amountExercised
+    mapping(ERC20 => PaymentTokenOracle) public paymentTokens; // Token address => PaymentTokenOracle
+    address public paymentTokenBeneficiary; // Where to collect the payment tokens
 
-    /// @notice user address => eligible TAP amount, 0 means no eligibility
-    mapping(address => uint256) public phase1Users;
-    mapping(address => uint256) public phase4Users;
+    mapping(uint256 => mapping(uint256 => uint256)) public aoTAPCalls; // oTAPTokenID => epoch => amountExercised
 
     /// @notice Record of participation in phase 2 airdrop
     /// Only applicable for phase 2. To get subphases on phase 2 we do userParticipation[_user][20+roles]
     mapping(address => mapping(uint256 => bool)) public userParticipation; // user address => phase => participated
 
+    /// =====-------======
+    ///      Phase 1
+    /// =====-------======
+
+    /// @notice user address => eligible TAP amount, 0 means no eligibility
+    mapping(address => uint256) public phase1Users;
+    uint256 public constant PHASE_1_DISCOUNT = 50 * 1e4; // 50%
+
+    /// =====-------======
+    ///      Phase 2
+    /// =====-------======
+
     // [OG Pearls, Sushi Frens, Tapiocans, Oysters, Cassava]
     bytes32[4] public phase2MerkleRoots; // merkle root of phase 2 airdrop
-    Phase2Info public constant PHASE_2_INFO =
-        Phase2Info({
-            amountsPerUsers: [200, 190, 200, 190],
-            discountsPerUsers: [50, 40, 40, 33]
-        });
+    uint8[4] public PHASE_2_AMOUNT_PER_USER = [200, 190, 200, 190];
+    uint8[4] public PHASE_2_DISCOUNT_PER_USER = [50, 40, 40, 33];
+
+    /// =====-------======
+    ///      Phase 3
+    /// =====-------======
 
     uint256 public constant PHASE_3_AMOUNT_PER_USER = 714;
-
-    uint256 public constant PHASE_1_DISCOUNT = 50 * 1e4; // 50%
     uint256 public constant PHASE_3_DISCOUNT = 50 * 1e4;
-    uint256 public constant PHASE_4_DISCOUNT = 33 * 1e4;
 
-    mapping(ERC20 => PaymentTokenOracle) public paymentTokens; // Token address => PaymentTokenOracle
-    address public paymentTokenBeneficiary; // Where to collect the payment tokens
+    /// =====-------======
+    ///      Phase 4
+    /// =====-------======
+
+    /// @notice user address => eligible TAP amount, 0 means no eligibility
+    mapping(address => uint256) public phase4Users;
+    uint256 public constant PHASE_4_DISCOUNT = 33 * 1e4;
 
     uint256 constant EPOCH_DURATION = 2 days;
 
@@ -128,13 +143,13 @@ contract AirdropBroker is Pausable, BoringOwnable {
 
     /// @notice Returns the details of an OTC deal for a given oTAP token ID and a payment token.
     ///         The oracle uses the last peeked value, and not the latest one, so the payment amount may be different.
-    /// @param _oTAPTokenID The oTAP token ID
+    /// @param _aoTAPTokenID The aoTAP token ID
     /// @param _paymentToken The payment token
     /// @param _tapAmount The amount of TAP to be exchanged. If 0 it will use the full amount of TAP eligible for the deal
     /// @return eligibleTapAmount The amount of TAP eligible for the deal
     /// @return paymentTokenAmount The amount of payment tokens required for the deal
     function getOTCDealDetails(
-        uint256 _oTAPTokenID,
+        uint256 _aoTAPTokenID,
         ERC20 _paymentToken,
         uint256 _tapAmount
     )
@@ -146,10 +161,7 @@ contract AirdropBroker is Pausable, BoringOwnable {
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(
             _aoTAPTokenID
         );
-        require(
-            aoTapOption.expiration > block.timestamp,
-            "adb: Option expired"
-        );
+        require(aoTapOption.expiry > block.timestamp, "adb: Option expired");
 
         uint256 cachedEpoch = epoch;
 
@@ -183,7 +195,7 @@ contract AirdropBroker is Pausable, BoringOwnable {
         paymentTokenAmount = _getDiscountedPaymentAmount(
             otcAmountInUSD,
             paymentTokenValuation,
-            oTAPPosition.discount,
+            aoTapOption.discount,
             _paymentToken.decimals()
         );
     }
@@ -195,19 +207,19 @@ contract AirdropBroker is Pausable, BoringOwnable {
     /// @notice Participate in the airdrop
     /// @param _data The data to be used for the participation, varies by phases
     function participate(
-        bytes32 calldata _data
+        bytes calldata _data
     ) external returns (uint256 aoTAPTokenID) {
         uint256 cachedEpoch = epoch;
 
         // Phase 1
         if (cachedEpoch == 1) {
-            _participatePhase1(_data); // _data = (address _to)
+            _participatePhase1();
         } else if (cachedEpoch == 2) {
             _participatePhase2(_data); // _data = (address _to, uint8 _role, bytes32 _merkleProof)
         } else if (cachedEpoch == 3) {
             _participatePhase3(_data); // _data = (uint256 _tokenID)
         } else if (cachedEpoch == 4) {
-            _participatePhase4(_data); // _data = (uint256 _to)
+            _participatePhase4();
         }
 
         emit Participate(cachedEpoch, aoTAPTokenID);
@@ -226,10 +238,7 @@ contract AirdropBroker is Pausable, BoringOwnable {
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(
             _aoTAPTokenID
         );
-        require(
-            aoTapOption.expiration > block.timestamp,
-            "adb: Option expired"
-        );
+        require(aoTapOption.expiry > block.timestamp, "adb: Option expired");
 
         uint256 cachedEpoch = epoch;
 
@@ -261,7 +270,7 @@ contract AirdropBroker is Pausable, BoringOwnable {
             _paymentToken,
             paymentTokenOracle,
             chosenAmount,
-            oTAPPosition.discount
+            aoTapOption.discount
         );
 
         emit ExerciseOption(
@@ -282,12 +291,13 @@ contract AirdropBroker is Pausable, BoringOwnable {
         );
 
         // Update epoch info
-        lastEpochUpdate = block.timestamp;
+        lastEpochUpdate = uint64(block.timestamp);
         epoch++;
 
         // Get epoch TAP valuation
-        (, epochTAPValuation) = tapOracle.get(tapOracleData);
-        emit NewEpoch(epoch, epochTAP, epochTAPValuation);
+        (, uint256 _epochTAPValuation) = tapOracle.get(tapOracleData);
+        epochTAPValuation = uint128(_epochTAPValuation);
+        emit NewEpoch(epoch, epochTAPValuation);
     }
 
     /// @notice Claim the Broker role of the aoTAP contract
@@ -320,8 +330,8 @@ contract AirdropBroker is Pausable, BoringOwnable {
 
     function setPhaseInfo(
         uint256 _phase,
-        address[] _users,
-        uint256[] _amounts
+        address[] calldata _users,
+        uint256[] calldata _amounts
     ) external onlyOwner {
         require(_users.length == _amounts.length, "adb: invalid input");
 
@@ -405,16 +415,16 @@ contract AirdropBroker is Pausable, BoringOwnable {
     /// @param _data The calldata. Needs to be the address of the user.
     /// _data = (uint256 role, bytes32[] _merkleProof). Refer to {phase2MerkleRoots} for role.
     function _participatePhase2(
-        bytes32 _data
+        bytes calldata _data
     ) internal returns (uint256 oTAPTokenID) {
-        (uint256 _role, bytes32[] _merkleProof) = abi.decode(
+        (uint256 _role, bytes32[] memory _merkleProof) = abi.decode(
             _data,
             (uint256, bytes32[])
         );
 
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
         require(
-            MerkleProof.verify(_merkleProof, root, leaf),
+            MerkleProof.verify(_merkleProof, phase2MerkleRoots[_role], leaf),
             "adb: Not eligible"
         );
 
@@ -428,8 +438,8 @@ contract AirdropBroker is Pausable, BoringOwnable {
 
         // Mint aoTAP
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
-        uint256 eligibleAmount = phase2Info.amountsPerUsers[_role];
-        uint128 discount = phase2Info.discountsPerUsers[_role];
+        uint256 eligibleAmount = PHASE_2_AMOUNT_PER_USER[_role];
+        uint128 discount = PHASE_2_DISCOUNT_PER_USER[_role];
         oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
     }
 
@@ -437,13 +447,13 @@ contract AirdropBroker is Pausable, BoringOwnable {
     /// @param _data The calldata. Needs to be the address of the user.
     /// _data = (uint256 _tokenID)
     function _participatePhase3(
-        bytes32 _data
+        bytes calldata _data
     ) internal returns (uint256 oTAPTokenID) {
         uint256 _tokenID = abi.decode(_data, (uint256));
 
         require(PCNFT.ownerOf(_tokenID) == msg.sender, "adb: Not eligible");
         require(
-            userParticipation[_to][3] == false,
+            userParticipation[msg.sender][3] == false,
             "adb: Already participated"
         );
         // Close eligibility
@@ -451,13 +461,10 @@ contract AirdropBroker is Pausable, BoringOwnable {
         // no conflict possible, tokenID goes from 0 ... 714.
         userParticipation[address(uint160(_tokenID))][3] = true;
 
-        // Mint aoTAP
-        Phase2Info memory phase2Info = PHASE_2_INFO;
-
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
         uint256 eligibleAmount = PHASE_3_AMOUNT_PER_USER;
-        uint128 discount = PHASE_3_DISCOUNT;
-        oTAPTokenID = aoTAP.mint(_to, expiry, discount, eligibleAmount);
+        uint128 discount = uint128(PHASE_3_DISCOUNT);
+        oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
     }
 
     /// @notice Participate in phase 4 of the Airdrop. twTAP and Cassava guild's role are given TAP pro-rata.
