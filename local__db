@@ -65,13 +65,24 @@
         ],
         "421613": [
             {
-                "address": "0x977651f5acE20fCEB6bEc4320eA49E64250408f7",
+                "address": "0x88632ff61d7682c0760Aaa247322092750ee6417",
+                "name": "USDOOracleMock",
+                "meta": {
+                    "args": [
+                        "USDOOracleMock",
+                        "USDOOracleMock",
+                        1000000000000000000
+                    ]
+                }
+            },
+            {
+                "address": "0x6BcCff02372249799bc4387C9409eDEaf2Db3001",
                 "name": "TapOracleMock",
                 "meta": {
                     "args": [
                         "TapOracleMock",
                         "TapOracleMock",
-                        1000000000000000000
+                        3300000000000000000
                     ]
                 }
             },

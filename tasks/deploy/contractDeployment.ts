@@ -39,12 +39,12 @@ export const deployERC20Mock__task = async (
 };
 
 export const deployOracleMock__task = async (
-    taskArgs: { deploymentName: string; erc20Name: string },
+    taskArgs: { deploymentName: string; erc20Name: string; rate: string },
     hre: HardhatRuntimeEnvironment,
 ) => {
     const oracleMock = await new OracleMock__factory()
         .connect((await hre.ethers.getSigners())[0])
-        .deploy(taskArgs.erc20Name, taskArgs.erc20Name, (1e18).toString());
+        .deploy(taskArgs.erc20Name, taskArgs.erc20Name, taskArgs.rate);
 
     console.log(`[+] Tx: ${oracleMock.deployTransaction.hash}}`);
     await oracleMock.deployed();
@@ -55,7 +55,7 @@ export const deployOracleMock__task = async (
             address: oracleMock.address,
             name: taskArgs.deploymentName,
             meta: {
-                args: [taskArgs.erc20Name, taskArgs.erc20Name, 1e18],
+                args: [taskArgs.erc20Name, taskArgs.erc20Name, taskArgs.rate],
             },
         },
     ]);
