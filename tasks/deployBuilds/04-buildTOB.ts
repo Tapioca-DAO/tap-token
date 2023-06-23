@@ -7,9 +7,7 @@ export const buildTOB = async (
     paymentTokenBeneficiary: string,
     signer: string,
 ): Promise<IDeployerVMAdd<TapiocaOptionBroker__factory>> => {
-    const deploymentName = hre.network.tags['testnet']
-        ? 'TapiocaOptionBrokerMock'
-        : 'TapiocaOptionBroker';
+    const deploymentName = 'TapiocaOptionBroker';
     return {
         contract: (await hre.ethers.getContractFactory(
             deploymentName,

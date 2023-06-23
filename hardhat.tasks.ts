@@ -16,6 +16,9 @@ import { glob } from 'typechain';
 import { configurePacketTypes__task } from './tasks/exec/configurePacketTypes';
 import { deployStack__task } from './tasks/deploy/deployStack';
 import { deployTapOFT__task } from './tasks/deploy/deployTapOFT';
+import { setRegisterSGL__task } from './tasks/exec/setRegisterSGL';
+import { setPaymentToken__task } from './tasks/exec/setPaymentToken';
+import { setRegisterTapOracle__task } from './tasks/exec/setRegisterTapOracle';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -112,3 +115,14 @@ task(
 ).addFlag('load', 'Load the contracts from the local database.');
 
 task('deployTapOFT', 'Deploys just the TapOFT contract', deployTapOFT__task);
+
+// ---- toLP
+task('setRegisterSGL', 'Register an SGL on tOLP', setRegisterSGL__task);
+
+// ---- tOB
+task(
+    'setRegisterTapOracle',
+    'Register an oracle on tOB',
+    setRegisterTapOracle__task,
+);
+task('setPaymentToken', 'Register an oracle on tOB', setPaymentToken__task);
