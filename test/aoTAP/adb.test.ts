@@ -11,7 +11,7 @@ import { BN, time_travel } from '../test.utils';
 import { setupADBPhase2Fixtures, setupFixture } from './fixture.aoTAP';
 import MerkleTree from 'merkletreejs';
 
-describe.only('AirdropBroker', () => {
+describe('AirdropBroker', () => {
     const setupEnv = async (adb: AirdropBroker, tapOFT: TapOFT) => {
         await adb.aoTAPBrokerClaim();
         await tapOFT.transfer(
