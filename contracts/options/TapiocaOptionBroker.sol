@@ -83,7 +83,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
     uint256 constant dMAX = 50 * 1e4; // 5% - 50% discount
     uint256 constant dMIN = 5 * 1e4;
-    uint256 constant WEEK = 7 days;
+    uint256 public immutable EPOCH_DURATION; // 7 days = 604800
 
     /// =====-------======
     constructor(
@@ -91,12 +91,14 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         address _oTAP,
         address _tapOFT,
         address _paymentTokenBeneficiary,
+        uint256 _epochDuration,
         address _owner
     ) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         tOLP = TapiocaOptionLiquidityProvision(_tOLP);
         tapOFT = TapOFT(_tapOFT);
         oTAP = OTAP(_oTAP);
+        EPOCH_DURATION = _epochDuration;
         owner = _owner;
     }
 
@@ -223,6 +225,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
             _tOLPTokenID
         );
         require(isPositionActive, "tOB: Position is not active");
+        require(lock.lockDuration >= EPOCH_DURATION, "tOB: Duration too short");
 
         TWAMLPool memory pool = twAML[lock.sglAssetID];
 
@@ -416,7 +419,10 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     /// @notice Start a new epoch, extract TAP from the TapOFT contract,
     ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
-        require(block.timestamp >= lastEpochUpdate + WEEK, "tOB: too soon");
+        require(
+            block.timestamp >= lastEpochUpdate + EPOCH_DURATION,
+            "tOB: too soon"
+        );
         uint256[] memory singularities = tOLP.getSingularities();
         require(singularities.length > 0, "tOB: No active singularities");
 

@@ -21,6 +21,7 @@ export const buildTOB = async (
             // To be replaced by VM
             hre.ethers.constants.AddressZero,
             paymentTokenBeneficiary,
+            604800, // 7 days
             signer,
         ],
         dependsOn: [
