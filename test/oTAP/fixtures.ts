@@ -75,6 +75,7 @@ export const setupFixture = async () => {
         oTAP.address,
         tapOFT.address,
         paymentTokenBeneficiary.address,
+        604800,
         signer.address,
     );
     await tOB.setTapOracle(tapOracleMock.address, '0x00');
