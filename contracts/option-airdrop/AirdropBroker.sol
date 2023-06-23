@@ -443,8 +443,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
 
         // Mint aoTAP
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
-        uint256 eligibleAmount = PHASE_2_AMOUNT_PER_USER[_role];
-        uint128 discount = PHASE_2_DISCOUNT_PER_USER[_role];
+        uint256 eligibleAmount = uint256(PHASE_2_AMOUNT_PER_USER[_role]) * 1e18;
+        uint128 discount = uint128(PHASE_2_DISCOUNT_PER_USER[_role]) * 1e4;
         oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
     }
 

@@ -104,13 +104,11 @@ export const setupFixture = async () => {
         BN(1e18).mul(1200),
     );
 
-    const phase2Users: IPhase2AllowList[] = PHASE2_ALLOW_LIST;
     return {
         // signers
         signer,
         users,
         paymentTokenBeneficiary,
-        phase2Users,
 
         // vars
         LZEndpointMockCurrentChain,
@@ -130,11 +128,21 @@ export const setupFixture = async () => {
 
         // Functions
         generatePhase1_4Signers,
-        generatePhase2MerkleTree,
+
         generatePhase3Signers,
 
         generatePhase2Data,
         generatePhase3Data,
+    };
+};
+
+export const setupADBPhase2Fixtures = async () => {
+    const phase2Users: IPhase2AllowList[] = PHASE2_ALLOW_LIST;
+    const phase2MerkleTree = await generatePhase2MerkleTree(phase2Users);
+
+    return {
+        phase2Users,
+        phase2MerkleTree,
     };
 };
 
@@ -168,7 +176,7 @@ const generatePhase2MerkleTree = async (users: IPhase2AllowList[]) => {
         });
         const root = merkleTree.getRoot().toString('hex');
 
-        return { leaves, merkleTree, root };
+        return { merkleTree, root };
     };
 
     return [
