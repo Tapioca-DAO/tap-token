@@ -11,7 +11,8 @@ export const buildTapOFT = async (
 
     const lzEndpoint = constants[chainId as '5'].address as string;
     const contributorAddress = constants.teamAddress;
-    const investorAddress = constants.advisorAddress;
+    const earlySupportersAddress = constants.earlySupportersAddress;
+    const supportersAddress = constants.supportersAddress;
     const lbpAddress = constants.daoAddress;
     const airdropAddress = constants.seedAddress;
     const daoAddress = constants.daoAddress;
@@ -23,7 +24,8 @@ export const buildTapOFT = async (
         args: [
             lzEndpoint,
             contributorAddress,
-            investorAddress,
+            earlySupportersAddress,
+            supportersAddress,
             lbpAddress,
             daoAddress,
             airdropAddress,

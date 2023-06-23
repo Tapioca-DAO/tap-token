@@ -6,7 +6,7 @@ import { buildOTAP } from '../deployBuilds/03-buildOTAP';
 import { buildTOB } from '../deployBuilds/04-buildTOB';
 import { buildAfterDepSetup } from '../deployBuilds/05-buildAfterDepSetup';
 import { loadVM } from '../utils';
-import { buildTestnetAfterDepSetup } from '../deployBuilds/99-buildTestnetAfterDepSetup';
+import { TAPIOCA_PROJECTS_NAME } from '../../gitsub_tapioca-sdk/src/api/config';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
@@ -30,7 +30,11 @@ export const deployStack__task = async (
         VM.load(data);
     } else {
         const yieldBox = hre.SDK.db
-            .loadGlobalDeployment(tag, 'tapioca-bar', chainInfo.chainId)
+            .loadGlobalDeployment(
+                tag,
+                TAPIOCA_PROJECTS_NAME.TapiocaBar,
+                chainInfo!.chainId,
+            )
             .find((e) => e.name === 'YieldBox');
 
         if (!yieldBox) {
@@ -46,7 +50,7 @@ export const deployStack__task = async (
         // Add and execute
         await VM.execute(3);
         VM.save();
-        // await VM.verify();
+        await VM.verify();
     }
 
     const vmList = VM.list();
@@ -54,9 +58,6 @@ export const deployStack__task = async (
 
     const calls: Multicall3.Call3Struct[] = [
         // Build testnet related calls
-        ...(hre.network.tags['testnet']
-            ? await buildTestnetAfterDepSetup(hre, vmList)
-            : []),
         ...(await buildAfterDepSetup(hre, vmList)),
     ];
 
@@ -64,7 +65,7 @@ export const deployStack__task = async (
     console.log('[+] After deployment setup calls number: ', calls.length);
     try {
         const multicall = await VM.getMulticall();
-        const tx = await (await multicall.aggregate3(calls)).wait(1);
+        const tx = await (await multicall.multicall(calls)).wait(1);
         console.log(
             '[+] After deployment setup multicall Tx: ',
             tx.transactionHash,

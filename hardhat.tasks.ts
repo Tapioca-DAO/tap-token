@@ -9,13 +9,15 @@ import {
     setTOBPaymentToken__task,
     setTOLPRegisterSingularity__task,
     setTOLPUnregisterSingularity__task,
-    setYieldBoxRegisterAsset__task,
 } from './tasks/exec/setterTasks';
 
 import { glob } from 'typechain';
 import { configurePacketTypes__task } from './tasks/exec/configurePacketTypes';
 import { deployStack__task } from './tasks/deploy/deployStack';
 import { deployTapOFT__task } from './tasks/deploy/deployTapOFT';
+import { setRegisterSGL__task } from './tasks/exec/setRegisterSGL';
+import { setPaymentToken__task } from './tasks/exec/setPaymentToken';
+import { setRegisterTapOracle__task } from './tasks/exec/setRegisterTapOracle';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -49,7 +51,8 @@ task(
     deployOracleMock__task,
 )
     .addParam('deploymentName', 'The name of the deployment')
-    .addParam('erc20Name', 'Initial amount of tokens');
+    .addParam('erc20Name', 'Initial amount of tokens')
+    .addParam('rate', 'Exchange rate, 1e18 dec');
 
 task(
     'setOracleMockRate',
@@ -84,20 +87,6 @@ task(
 ).addParam('sglAddress', 'Address of the SGL receipt token');
 
 task(
-    'setYieldBoxRegisterAsset',
-    'Register an SGL on tOLP ',
-    setYieldBoxRegisterAsset__task,
-)
-    .addParam('tknAddress', 'Address of the SGL receipt token')
-    .addOptionalParam(
-        'tknType',
-        'YieldBox type of the token. 0 for natives, 1 for ERC20, 2 for ERC721, 3 for ERC1155, 4 for none',
-    )
-    .addOptionalParam('tknId', 'ID of the token, 0 if ERC20, others if ERC721')
-    .addOptionalParam('strategy', 'Address of the strategy contract')
-    .addOptionalParam('strategyName', 'Name of the strategy contract')
-    .addOptionalParam('strategyDesc', 'Description of the strategy contract');
-task(
     'configurePacketTypes',
     'Cofigures min destination gas and the usage of custom adapters',
     configurePacketTypes__task,
@@ -112,3 +101,14 @@ task(
 ).addFlag('load', 'Load the contracts from the local database.');
 
 task('deployTapOFT', 'Deploys just the TapOFT contract', deployTapOFT__task);
+
+// ---- toLP
+task('setRegisterSGL', 'Register an SGL on tOLP', setRegisterSGL__task);
+
+// ---- tOB
+task(
+    'setRegisterTapOracle',
+    'Register an oracle on tOB',
+    setRegisterTapOracle__task,
+);
+task('setPaymentToken', 'Register an oracle on tOB', setPaymentToken__task);
