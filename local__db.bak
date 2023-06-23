@@ -65,6 +65,17 @@
         ],
         "421613": [
             {
+                "address": "0x6BcCff02372249799bc4387C9409eDEaf2Db3001",
+                "name": "TapOracleMock",
+                "meta": {
+                    "args": [
+                        "TapOracleMock",
+                        "TapOracleMock",
+                        1000000000000000000
+                    ]
+                }
+            },
+            {
                 "name": "TapOFT",
                 "address": "0x10BB70bbaEe3c1Fc1B358C3D634983Af9B9f9f9b",
                 "meta": {
