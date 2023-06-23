@@ -1,5 +1,18 @@
 {
     "default": {
+        "5": [
+            {
+                "address": "0x8864f2118Ecad69F480763891465714Bd75Ab564",
+                "name": "TapOracleMock",
+                "meta": {
+                    "args": [
+                        "TapOracleMock",
+                        "TapOracleMock",
+                        1000000000000000000
+                    ]
+                }
+            }
+        ],
         "43113": [
             {
                 "name": "TapOFT",
@@ -51,6 +64,17 @@
             }
         ],
         "421613": [
+            {
+                "address": "0x977651f5acE20fCEB6bEc4320eA49E64250408f7",
+                "name": "TapOracleMock",
+                "meta": {
+                    "args": [
+                        "TapOracleMock",
+                        "TapOracleMock",
+                        1000000000000000000
+                    ]
+                }
+            },
             {
                 "name": "TapOFT",
                 "address": "0x10BB70bbaEe3c1Fc1B358C3D634983Af9B9f9f9b",

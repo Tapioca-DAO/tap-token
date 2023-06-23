@@ -1,5 +1,18 @@
 {
     "default": {
+        "5": [
+            {
+                "address": "0x8864f2118Ecad69F480763891465714Bd75Ab564",
+                "name": "TapOracleMock",
+                "meta": {
+                    "args": [
+                        "TapOracleMock",
+                        "TapOracleMock",
+                        1000000000000000000
+                    ]
+                }
+            }
+        ],
         "43113": [
             {
                 "name": "TapOFT",
@@ -53,7 +66,7 @@
         "421613": [
             {
                 "name": "TapOFT",
-                "address": "0x39691fFe632Ee4b92f010e7eF4519D62878467a9",
+                "address": "0x10BB70bbaEe3c1Fc1B358C3D634983Af9B9f9f9b",
                 "meta": {
                     "args": [
                         "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
@@ -62,10 +75,47 @@
                         "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                         "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                         "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                         "421613",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                     ],
-                    "salt": "0x539c3d34eb7061fce8522a4f32d192ca631bc9d83aeefaf7d5450e0dd6e4f9d0",
+                    "salt": "0x8a9a9b91e04ea9979a51f43f14cd78562568fe91836826e6b4f540141dda541b",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapiocaOptionLiquidityProvision",
+                "address": "0x1ca1ac5B378F475CDBf182d3bcfD849B84c4a521",
+                "meta": {
+                    "args": [
+                        "0x2e2D0CB0fF8Aee700a044bd03745cC7800E876a2",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0x27d147a3bd642ab4c3a8351407a1185211cd78711e8fac7e4c8435f3ca7d6beb",
+                    "create2": true
+                }
+            },
+            {
+                "name": "OTAP",
+                "address": "0x981A550C19aA9B9b53e7A7eA2E04516f0453c892",
+                "meta": {
+                    "args": [],
+                    "salt": "0x0b8b8fb06614ddf66b1605c7a459129c174044f9b052371b0a33ca2c025da2a0",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapiocaOptionBroker",
+                "address": "0xeE591eef6E28205aF81d019CAc1b47135C657917",
+                "meta": {
+                    "args": [
+                        "0x1ca1ac5B378F475CDBf182d3bcfD849B84c4a521",
+                        "0x981A550C19aA9B9b53e7A7eA2E04516f0453c892",
+                        "0x10BB70bbaEe3c1Fc1B358C3D634983Af9B9f9f9b",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0x6dd9523bce2d4b613dcfff56f1ad62e4ae7b02bc5d5dc98b9976938ef3203dc5",
                     "create2": true
                 }
             },

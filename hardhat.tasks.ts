@@ -9,7 +9,6 @@ import {
     setTOBPaymentToken__task,
     setTOLPRegisterSingularity__task,
     setTOLPUnregisterSingularity__task,
-    setYieldBoxRegisterAsset__task,
 } from './tasks/exec/setterTasks';
 
 import { glob } from 'typechain';
@@ -86,20 +85,6 @@ task(
     setTOLPUnregisterSingularity__task,
 ).addParam('sglAddress', 'Address of the SGL receipt token');
 
-task(
-    'setYieldBoxRegisterAsset',
-    'Register an SGL on tOLP ',
-    setYieldBoxRegisterAsset__task,
-)
-    .addParam('tknAddress', 'Address of the SGL receipt token')
-    .addOptionalParam(
-        'tknType',
-        'YieldBox type of the token. 0 for natives, 1 for ERC20, 2 for ERC721, 3 for ERC1155, 4 for none',
-    )
-    .addOptionalParam('tknId', 'ID of the token, 0 if ERC20, others if ERC721')
-    .addOptionalParam('strategy', 'Address of the strategy contract')
-    .addOptionalParam('strategyName', 'Name of the strategy contract')
-    .addOptionalParam('strategyDesc', 'Description of the strategy contract');
 task(
     'configurePacketTypes',
     'Cofigures min destination gas and the usage of custom adapters',
