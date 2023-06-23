@@ -44,6 +44,9 @@ export const setRegisterSGL__task = async (
             hre.ethers.provider,
         );
         const assetID = await sgl.collateralId();
-        await tOLP.registerSingularity(sgl.address, assetID, 1);
+        const tx = await tOLP.registerSingularity(sgl.address, assetID, 1);
+        console.log('[+] Registering Singularity market: ', e.name);
+        console.log('[+] Transaction hash: ', tx.hash);
+        await tx.wait(3);
     }
 };
