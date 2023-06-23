@@ -778,46 +778,45 @@ describe.only('AirdropBroker', () => {
                     string,
                 ],
             );
-
-            const rndPhase2User = {
-                wallet: await loadPhase2UserWallet(
-                    adb,
-                    phase2Users[0].signers[0].pk,
-                ),
-                role: phase2Users[0].role,
-                merkleProof: phase2MerkleTree[0].merkleTree.getHexProof(
-                    hre.ethers.utils.keccak256(
-                        phase2Users[0].signers[0].address,
-                    ),
-                ),
-            };
-
-            //---- Can't participate if epoch is not started or finished
-            await expect(
-                adb
-                    .connect(rndPhase2User.wallet)
-                    .participate(
-                        encodePhase2Data(
-                            rndPhase2User.role,
-                            rndPhase2User.merkleProof,
-                        ),
-                    ),
-            ).to.be.revertedWith('adb: Airdrop not started');
-
-            //---- test adb participation
-            await newEpoch(adb);
-            expect(await adb.epoch()).to.be.eq(BN(1));
-            await newEpoch(adb);
-            expect(await adb.epoch()).to.be.eq(BN(2));
-
             const snapshot = await takeSnapshot();
 
-            // Test participation with 1 user
-            {
+            const testParticipationByRole = async (role: number) => {
+                await snapshot.restore();
+
+                const rndPhase2User = {
+                    wallet: await loadPhase2UserWallet(
+                        adb,
+                        phase2Users[role].signers[0].pk,
+                    ),
+                    role: phase2Users[role].role,
+                    merkleProof: phase2MerkleTree[role].merkleTree.getHexProof(
+                        hre.ethers.utils.keccak256(
+                            phase2Users[role].signers[0].address,
+                        ),
+                    ),
+                };
+
+                //---- Can't participate if epoch is not started or finished
+                await expect(
+                    adb
+                        .connect(rndPhase2User.wallet)
+                        .participate(
+                            encodePhase2Data(
+                                rndPhase2User.role,
+                                rndPhase2User.merkleProof,
+                            ),
+                        ),
+                ).to.be.revertedWith('adb: Airdrop not started');
+
+                //---- test adb participation
+                await newEpoch(adb);
+                expect(await adb.epoch()).to.be.eq(BN(1));
+                await newEpoch(adb);
+                expect(await adb.epoch()).to.be.eq(BN(2));
                 expect(
                     await adb.userParticipation(
                         rndPhase2User.wallet.address,
-                        20,
+                        20 + role,
                     ),
                 ).to.be.false; // Check if user is registered
 
@@ -825,7 +824,10 @@ describe.only('AirdropBroker', () => {
                     adb
                         .connect(rndPhase2User.wallet)
                         .participate(
-                            encodePhase2Data(1, rndPhase2User.merkleProof),
+                            encodePhase2Data(
+                                [0, 1, 2, 3].filter((e) => e != role)[0],
+                                rndPhase2User.merkleProof,
+                            ),
                         ),
                 ).to.revertedWith('adb: Not eligible'); // False proof with wrong role
 
@@ -835,9 +837,11 @@ describe.only('AirdropBroker', () => {
                         .participate(
                             encodePhase2Data(
                                 rndPhase2User.role,
-                                phase2MerkleTree[1].merkleTree.getHexProof(
+                                phase2MerkleTree[
+                                    [0, 1, 2, 3].filter((e) => e != role)[0]
+                                ].merkleTree.getHexProof(
                                     hre.ethers.utils.keccak256(
-                                        phase2Users[0].signers[0].address,
+                                        phase2Users[role].signers[0].address,
                                     ),
                                 ),
                             ),
@@ -850,9 +854,9 @@ describe.only('AirdropBroker', () => {
                         .participate(
                             encodePhase2Data(
                                 rndPhase2User.role,
-                                phase2MerkleTree[0].merkleTree.getHexProof(
+                                phase2MerkleTree[role].merkleTree.getHexProof(
                                     hre.ethers.utils.keccak256(
-                                        phase2Users[0].signers[1].address,
+                                        phase2Users[role].signers[1].address,
                                     ),
                                 ),
                             ),
@@ -886,7 +890,7 @@ describe.only('AirdropBroker', () => {
                 expect(
                     await adb.userParticipation(
                         rndPhase2User.wallet.address,
-                        20,
+                        20 + role,
                     ),
                 ).to.be.true; // Check if user is registered
 
@@ -894,84 +898,26 @@ describe.only('AirdropBroker', () => {
                 const aoTAPTokenID = await aoTAP.mintedAOTAP();
                 const aoTAPOption = await aoTAP.options(aoTAPTokenID);
 
-                expect(aoTAPOption.amount).to.be.eq(BN(1e18).mul(200)); // 200 per user for role 0
+                const amountPerUser = [200, 190, 200, 190].map((e) =>
+                    BN(1e18).mul(e),
+                );
+                const discountPerUser = [50, 40, 40, 33].map((e) =>
+                    BN(e * 1e4),
+                );
+
+                expect(aoTAPOption.amount).to.be.eq(amountPerUser[role]); // 200 per user for role 0
                 expect(aoTAPOption.expiry).to.be.eq(
                     (await adb.lastEpochUpdate()).add(
                         await adb.EPOCH_DURATION(),
                     ),
                 ); // 1 epoch after last epoch update
-                expect(aoTAPOption.discount).to.be.eq(50e4); // 50%
-            }
-            //---- Test participation with all users
-            await snapshot.restore();
+                expect(aoTAPOption.discount).to.be.eq(discountPerUser[role]);
+            };
 
-            let mintedAOTAP = await aoTAP.mintedAOTAP();
-            for (const role of [0, 1, 2, 3]) {
-                const roleAmount = BN(1e18).mul([200, 190, 200, 190][role]);
-                const roleDiscount = BN(1e4).mul([50, 40, 40, 33][role]);
-                for (const user of phase2Users[role].signers) {
-                    const userMeta = {
-                        wallet: await loadPhase2UserWallet(adb, user.pk),
-                        role,
-                        merkleProof: phase2MerkleTree[
-                            role
-                        ].merkleTree.getHexProof(
-                            hre.ethers.utils.keccak256(user.address),
-                        ),
-                    };
-
-                    expect(
-                        await adb.userParticipation(
-                            userMeta.wallet.address,
-                            20,
-                        ),
-                    ).to.be.false; // Check if user is registered
-
-                    mintedAOTAP = mintedAOTAP.add(1);
-                    await expect(
-                        adb
-                            .connect(userMeta.wallet)
-                            .participate(
-                                encodePhase2Data(
-                                    userMeta.role,
-                                    userMeta.merkleProof,
-                                ),
-                            ),
-                    )
-                        .to.emit(adb, 'Participate')
-                        .withArgs(2, mintedAOTAP);
-
-                    await expect(
-                        adb
-                            .connect(userMeta.wallet)
-                            .participate(
-                                encodePhase2Data(
-                                    userMeta.role,
-                                    userMeta.merkleProof,
-                                ),
-                            ),
-                    ).to.revertedWith('adb: Already participated');
-
-                    expect(
-                        await adb.userParticipation(
-                            userMeta.wallet.address,
-                            20 + role,
-                        ),
-                    ).to.be.true; // Check if user is registered
-
-                    // Check minted aoTAP
-                    const aoTAPTokenID = await aoTAP.mintedAOTAP();
-                    const aoTAPOption = await aoTAP.options(aoTAPTokenID);
-
-                    expect(aoTAPOption.amount).to.be.eq(roleAmount); // 200 per user for role 0
-                    expect(aoTAPOption.expiry).to.be.eq(
-                        (await adb.lastEpochUpdate()).add(
-                            await adb.EPOCH_DURATION(),
-                        ),
-                    ); // 1 epoch after last epoch update
-                    expect(aoTAPOption.discount).to.be.eq(roleDiscount);
-                }
-            }
+            await testParticipationByRole(0);
+            await testParticipationByRole(1);
+            await testParticipationByRole(2);
+            await testParticipationByRole(3);
         });
 
         it('Should get correct OTC details', async () => {
