@@ -17,11 +17,8 @@ export const buildAfterDepSetup = async (
             e.name === 'TapiocaOptionBroker' ||
             e.name === 'TapiocaOptionBrokerMock',
     )?.address;
-    const tapOFTOracleMockAddr = deps.find(
-        (e) => e.name === 'TapOFTOracleMock',
-    )?.address;
 
-    if (!tapAddr || !tOBAddr || !tapOFTOracleMockAddr) {
+    if (!tapAddr || !tOBAddr) {
         throw new Error('[-] One address not found');
     }
 
@@ -30,10 +27,6 @@ export const buildAfterDepSetup = async (
      */
     const tap = await hre.ethers.getContractAt('TapOFT', tapAddr);
     const tob = await hre.ethers.getContractAt('TapiocaOptionBroker', tOBAddr);
-    const TapOFTOracleMock = await hre.ethers.getContractAt(
-        'OracleMock',
-        tapOFTOracleMockAddr,
-    );
 
     /**
      * Set tOB as minter for TapOFT
@@ -44,33 +37,14 @@ export const buildAfterDepSetup = async (
         await (await tap.setMinter(tOBAddr)).wait(1);
     }
 
+    /**
+     * Set tOB Broker role for tOB on oTAP
+     */
     console.log('[+] +Call queue: oTAP broker claim');
     calls.push({
         target: tOBAddr,
         allowFailure: false,
         callData: tob.interface.encodeFunctionData('oTAPBrokerClaim'),
     });
-
-    /**
-     * Set tOB TapOFT oracle
-     */
-
-    if ((await tob.tapOracle()) !== tapOFTOracleMockAddr) {
-        console.log('[+] Setting tOB TapOFT oracle');
-        await (await tob.setTapOracle(tapOFTOracleMockAddr, '0x00')).wait(1);
-    }
-
-    /**
-     * Set TapOFT oracle rate
-     */
-    console.log('[+] +Call queue: TapOFT oracle rate');
-    calls.push({
-        target: tapOFTOracleMockAddr,
-        callData: TapOFTOracleMock.interface.encodeFunctionData('setRate', [
-            12e7,
-        ]),
-        allowFailure: false,
-    });
-
     return calls;
 };
