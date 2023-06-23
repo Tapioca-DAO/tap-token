@@ -457,14 +457,15 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
         uint256 _tokenID = abi.decode(_data, (uint256));
 
         require(PCNFT.ownerOf(_tokenID) == msg.sender, "adb: Not eligible");
+        address tokenIDToAddress = address(uint160(_tokenID));
         require(
-            userParticipation[msg.sender][3] == false,
+            userParticipation[tokenIDToAddress][3] == false,
             "adb: Already participated"
         );
         // Close eligibility
         // To avoid a potential attack vector, we cast token ID to an address instead of using _to,
         // no conflict possible, tokenID goes from 0 ... 714.
-        userParticipation[address(uint160(_tokenID))][3] = true;
+        userParticipation[tokenIDToAddress][3] = true;
 
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
         uint256 eligibleAmount = PHASE_3_AMOUNT_PER_USER;

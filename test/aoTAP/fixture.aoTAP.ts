@@ -133,6 +133,7 @@ export const setupFixture = async () => {
 
         generatePhase2Data,
         generatePhase3Data,
+        getEncodedAddressOfToken,
     };
 };
 
@@ -200,7 +201,7 @@ const generatePhase2MerkleTree = async (users: IPhase2AllowList[]) => {
 };
 
 const generatePhase3Signers = async (pcnft: ERC721Mock) => {
-    const signers = await randomSigners(714);
+    const signers = await randomSigners(14);
     for (const signer of signers) {
         await pcnft.mint(signer.address);
     }
@@ -216,4 +217,8 @@ const generatePhase2Data = (role: number, merkleProof: string[]) => {
 
 const generatePhase3Data = (tokenID: number) => {
     return hre.ethers.utils.defaultAbiCoder.encode(['uint256'], [tokenID]);
+};
+
+const getEncodedAddressOfToken = (tokenID: number) => {
+    return hre.ethers.utils.hexZeroPad(hre.ethers.utils.hexlify(tokenID), 20);
 };
