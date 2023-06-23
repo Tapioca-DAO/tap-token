@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 
-import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ONFT721} from "tapioca-sdk/src/contracts/token/onft/ONFT721.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 import "../tokens/TapOFT.sol";
 import "../twAML.sol";
@@ -77,13 +76,7 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TwTAP is
-    BoringOwnable,
-    TWAML,
-    ERC721,
-    ERC721Permit,
-    BaseBoringBatchable
-{
+contract TwTAP is TWAML, ONFT721, ERC721Permit, BaseBoringBatchable {
     using SafeERC20 for IERC20;
 
     TapOFT public immutable tapOFT;
@@ -99,7 +92,7 @@ contract TwTAP is
     uint256 constant WEEK = 7 days;
 
     // If we assume 128 bit balances for the reward token -- which fit 1e40
-    // "tokens" at the most comonly used 1e18 precision -- then we can use the
+    // "tokens" at the most commonly used 1e18 precision -- then we can use the
     // other 128 bits to store the tokens allotted to a single vote more
     // accurately. Votes in turn are proportional to the amount of TAP locked,
     // weighted by a multiplier. This number is at most 107 bits long (see
@@ -122,14 +115,26 @@ contract TwTAP is
     uint256 public lastProcessedWeek;
     mapping(uint256 => WeekTotals) public weekTotals;
 
+    uint256 public immutable HOST_CHAIN_ID;
+    string private baseURI;
+
     /// =====-------======
     constructor(
         address _tapOFT,
-        address _owner
-    ) ERC721("Time Weighted TAP", "twTAP") ERC721Permit("Time Weighted TAP") {
+        address _owner,
+        address _layerZeroEndpoint,
+        uint256 _hostChainID,
+        string memory __baseURI,
+        uint256 _minGas
+    )
+        ONFT721("Time Weighted TAP", "twTAP", _minGas, _layerZeroEndpoint)
+        ERC721Permit("Time Weighted TAP")
+    {
         tapOFT = TapOFT(_tapOFT);
-        owner = _owner;
+        transferOwnership(_owner);
         creation = block.timestamp;
+        baseURI = __baseURI;
+        HOST_CHAIN_ID = _hostChainID;
     }
 
     // ==========
@@ -520,5 +525,23 @@ contract TwTAP is
         tapOFT.transfer(_to, amount);
 
         emit ExitPosition(_tokenId, amount);
+    }
+
+    /// @dev Returns the chain ID of the current network
+    function _getChainId() internal view virtual returns (uint256) {
+        uint256 chainId;
+        assembly {
+            chainId := chainid()
+        }
+        return chainId;
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ONFT721, ERC721) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 }
