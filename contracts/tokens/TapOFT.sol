@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
-import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-import "tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol";
-import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
+import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import {ILayerZeroEndpoint} from "tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol";
+import {LzLib} from "tapioca-sdk/dist/contracts/libraries/LzLib.sol";
 import "tapioca-sdk/dist/contracts/token/oft/v2/OFTV2.sol";
-import "tapioca-sdk/dist/contracts/libraries/LzLib.sol";
 
 /*
 
@@ -25,7 +24,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 /// @notice OFT compatible TAP token
 /// @dev Latest size: 17.663  KiB
 /// @dev Emissions E(x)= E(x-1) - E(x-1) * D with E being total supply a x week, and D the initial decay rate
-contract TapOFT is OFTV2, ERC20Permit, BaseBoringBatchable {
+contract TapOFT is OFTV2, ERC20Permit {
     using ExcessivelySafeCall for address;
     using BytesLib for bytes;
 

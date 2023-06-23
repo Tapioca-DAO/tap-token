@@ -76,7 +76,7 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TwTAP is TWAML, ONFT721, ERC721Permit, BaseBoringBatchable {
+contract TwTAP is TWAML, ONFT721, ERC721Permit {
     using SafeERC20 for IERC20;
 
     TapOFT public immutable tapOFT;
