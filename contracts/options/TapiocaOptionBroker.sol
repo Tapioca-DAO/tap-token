@@ -225,6 +225,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
             _tOLPTokenID
         );
         require(isPositionActive, "tOB: Position is not active");
+        require(lock.lockDuration >= EPOCH_DURATION, "tOB: Duration too short");
 
         TWAMLPool memory pool = twAML[lock.sglAssetID];
 

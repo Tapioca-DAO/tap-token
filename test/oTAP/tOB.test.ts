@@ -129,7 +129,7 @@ describe('TapiocaOptionBroker', () => {
 
         // Setup - register a singularity, mint and deposit in YB, lock in tOLP
         const amount = 1e8;
-        const lockDuration = 10;
+        let lockDuration = BN(4);
         await tOLP.registerSingularity(
             sglTokenMock.address,
             sglTokenMockAsset,
@@ -152,6 +152,7 @@ describe('TapiocaOptionBroker', () => {
             false,
         );
         await yieldBox.setApprovalForAll(tOLP.address, true);
+        const snapshot = await takeSnapshot();
         const lockTx = await tOLP.lock(
             signer.address,
             sglTokenMock.address,
@@ -164,6 +165,20 @@ describe('TapiocaOptionBroker', () => {
         await expect(tOB.participate(29)).to.be.revertedWith(
             'tOB: Position is not active',
         ); // invalid/inexistent tokenID
+
+        await expect(tOB.participate(tokenID)).to.be.revertedWith(
+            'tOB: Duration too short',
+        ); // Too short lock duration
+
+        await snapshot.restore();
+        lockDuration = await tOB.EPOCH_DURATION();
+        await tOLP.lock(
+            signer.address,
+            sglTokenMock.address,
+            lockDuration,
+            ybAmount,
+        );
+
         await expect(
             tOB.connect(users[0]).participate(tokenID),
         ).to.be.revertedWith('tOB: Not approved or owner'); // Not owner
@@ -223,8 +238,10 @@ describe('TapiocaOptionBroker', () => {
         expect(oTAPToken.discount).to.be.equal(computedAML.discount);
         expect(oTAPToken.tOLP).to.be.equal(tokenID);
         expect(oTAPToken.expiry).to.be.equal(
-            (await hre.ethers.provider.getBlock(lockTx.blockNumber!))
-                .timestamp + lockDuration,
+            lockDuration.add(
+                (await hre.ethers.provider.getBlock(lockTx.blockNumber!))
+                    .timestamp,
+            ),
         );
 
         /// Check transfer of tOLP
