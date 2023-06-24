@@ -2,9 +2,7 @@
 pragma solidity ^0.8.18;
 
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-import {ILayerZeroEndpoint} from "tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol";
-import {LzLib} from "tapioca-sdk/dist/contracts/libraries/LzLib.sol";
-import "tapioca-sdk/dist/contracts/token/oft/v2/OFTV2.sol";
+import "./BaseTapOFT.sol";
 
 /*
 
@@ -24,10 +22,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 /// @notice OFT compatible TAP token
 /// @dev Latest size: 17.663  KiB
 /// @dev Emissions E(x)= E(x-1) - E(x-1) * D with E being total supply a x week, and D the initial decay rate
-contract TapOFT is OFTV2, ERC20Permit {
-    using ExcessivelySafeCall for address;
-    using BytesLib for bytes;
-
+contract TapOFT is BaseTapOFT, ERC20Permit {
     // ==========
     // *DATA*
     // ==========
@@ -118,7 +113,7 @@ contract TapOFT is OFTV2, ERC20Permit {
         address _airdrop,
         uint256 _governanceChainId,
         address _conservator
-    ) OFTV2("Tapioca", "TAP", 8, _lzEndpoint) ERC20Permit("Tapioca") {
+    ) BaseTapOFT("Tapioca", "TAP", 8, _lzEndpoint) ERC20Permit("TapOFT") {
         require(_lzEndpoint != address(0), "LZ endpoint not valid");
         governanceChainIdentifier = _governanceChainId;
         if (_getChainId() == governanceChainIdentifier) {
