@@ -89,7 +89,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
     uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
     uint256 constant dMAX = 100 * 1e4; // 10% - 100% voting power multiplier
     uint256 constant dMIN = 10 * 1e4;
-    uint256 constant WEEK = 7 days;
+    uint256 public constant EPOCH_DURATION = 7 days;
 
     // If we assume 128 bit balances for the reward token -- which fit 1e40
     // "tokens" at the most commonly used 1e18 precision -- then we can use the
@@ -157,7 +157,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
     // ==========
 
     function currentWeek() public view returns (uint256) {
-        return (block.timestamp - creation) / WEEK;
+        return (block.timestamp - creation) / EPOCH_DURATION;
     }
 
     /// @notice Return the participation of a token. Returns 0 votes for expired tokens.
@@ -263,7 +263,10 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         uint256 _amount,
         uint256 _duration
     ) external returns (uint256 tokenId) {
-        require(_duration >= WEEK, "TapiocaDAOPortal: Lock not a week");
+        require(
+            _duration >= EPOCH_DURATION,
+            "TapiocaDAOPortal: Lock not a week"
+        );
 
         // Transfer TAP to this contract
         tapOFT.transferFrom(msg.sender, address(this), _amount);
@@ -329,7 +332,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         // price for this maneuver is a lower multiplier, and loss of voting
         // power in the DAO after the lock expires.
         uint256 w0 = currentWeek();
-        uint256 w1 = (expiry - creation) / WEEK;
+        uint256 w1 = (expiry - creation) / EPOCH_DURATION;
 
         // Save twAML participation
         // Casts are safe: see struct definition
