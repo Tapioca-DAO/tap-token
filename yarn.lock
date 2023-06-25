@@ -3616,11 +3616,13 @@ hardhat-gas-reporter@^1.0.8:
     eth-gas-reporter "^0.2.25"
     sha1 "^1.1.1"
 
-hardhat-tracer@^1.2.1:
-  version "1.3.0"
-  resolved "https://registry.npmjs.org/hardhat-tracer/-/hardhat-tracer-1.3.0.tgz"
-  integrity sha512-mUYuRJWlxCwY4R2urCpNM4ecVSq/iMLiVP9YZKlfXyv4R8T+4HAcTfumilUOXHGe6wHI+8Ki2EaTon3KgzATDA==
+hardhat-tracer@^2.5.0:
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/hardhat-tracer/-/hardhat-tracer-2.5.0.tgz#58e4fbc7edc6d6cd1f38e8e21d4d8f8fdbaa675d"
+  integrity sha512-D0C7jvYcrnPHP7kXOCjOMx4r0716Le/9nWGBNbRn8X3AewsTYczj38UOjGygZnPbjS0be7vdF5YizUbjv9J3zA==
   dependencies:
+    chalk "^4.1.2"
+    debug "^4.3.4"
     ethers "^5.6.1"
 
 hardhat@^2.13.0:
