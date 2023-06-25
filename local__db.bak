@@ -65,19 +65,8 @@
         ],
         "421613": [
             {
-                "address": "0x6BcCff02372249799bc4387C9409eDEaf2Db3001",
-                "name": "TapOracleMock",
-                "meta": {
-                    "args": [
-                        "TapOracleMock",
-                        "TapOracleMock",
-                        1000000000000000000
-                    ]
-                }
-            },
-            {
                 "name": "TapOFT",
-                "address": "0x10BB70bbaEe3c1Fc1B358C3D634983Af9B9f9f9b",
+                "address": "0x4C4C097Cfb8F36bb95912958791154BFf71D881B",
                 "meta": {
                     "args": [
                         "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
@@ -90,44 +79,67 @@
                         "421613",
                         "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                     ],
-                    "salt": "0x8a9a9b91e04ea9979a51f43f14cd78562568fe91836826e6b4f540141dda541b",
+                    "salt": "0x2a8aa3b9b3bb141cf3c8268a5d404c6c6229e77506e996063ec7f3e48e04953a",
                     "create2": true
                 }
             },
             {
                 "name": "TapiocaOptionLiquidityProvision",
-                "address": "0x1ca1ac5B378F475CDBf182d3bcfD849B84c4a521",
+                "address": "0x4a4Bd0692e79A4209a9cD3A575de70ed2FA65F6D",
                 "meta": {
                     "args": [
                         "0x2e2D0CB0fF8Aee700a044bd03745cC7800E876a2",
                         "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                     ],
-                    "salt": "0x27d147a3bd642ab4c3a8351407a1185211cd78711e8fac7e4c8435f3ca7d6beb",
+                    "salt": "0xb732c5293d14fe6e127fa36a10f24c59ed7640cbfc8ee745b7f1f145d08a7194",
                     "create2": true
                 }
             },
             {
                 "name": "OTAP",
-                "address": "0x981A550C19aA9B9b53e7A7eA2E04516f0453c892",
+                "address": "0xF01A705d8AFb1A2187e17CE34757E728adE55951",
                 "meta": {
                     "args": [],
-                    "salt": "0x0b8b8fb06614ddf66b1605c7a459129c174044f9b052371b0a33ca2c025da2a0",
+                    "salt": "0x100efdf1a39e8e6ca167c7ea678862967c087fcbc16ca30b393316cb0a51d36c",
                     "create2": true
                 }
             },
             {
                 "name": "TapiocaOptionBroker",
-                "address": "0xeE591eef6E28205aF81d019CAc1b47135C657917",
+                "address": "0xEcaf24E14819b9dB2871a6543fdE171B034BAf26",
                 "meta": {
                     "args": [
-                        "0x1ca1ac5B378F475CDBf182d3bcfD849B84c4a521",
-                        "0x981A550C19aA9B9b53e7A7eA2E04516f0453c892",
-                        "0x10BB70bbaEe3c1Fc1B358C3D634983Af9B9f9f9b",
+                        "0x4a4Bd0692e79A4209a9cD3A575de70ed2FA65F6D",
+                        "0xF01A705d8AFb1A2187e17CE34757E728adE55951",
+                        "0x4C4C097Cfb8F36bb95912958791154BFf71D881B",
                         "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F",
+                        604800,
                         "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                     ],
-                    "salt": "0x6dd9523bce2d4b613dcfff56f1ad62e4ae7b02bc5d5dc98b9976938ef3203dc5",
+                    "salt": "0x4294d4682c09eff84c408731043e1cead89061a508d3eeb61b8b20ea107bfa44",
                     "create2": true
+                }
+            },
+            {
+                "address": "0x88632ff61d7682c0760Aaa247322092750ee6417",
+                "name": "USDOOracleMock",
+                "meta": {
+                    "args": [
+                        "USDOOracleMock",
+                        "USDOOracleMock",
+                        1000000000000000000
+                    ]
+                }
+            },
+            {
+                "address": "0x6BcCff02372249799bc4387C9409eDEaf2Db3001",
+                "name": "TapOracleMock",
+                "meta": {
+                    "args": [
+                        "TapOracleMock",
+                        "TapOracleMock",
+                        3300000000000000000
+                    ]
                 }
             },
             {
