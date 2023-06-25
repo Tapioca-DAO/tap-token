@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 import "../tokens/TapOFT.sol";
 import "../twAML.sol";
-
+import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol";
 // ********************************************************************************
 // *******************************,                 ,******************************
 // *************************                               ************************
@@ -383,6 +383,23 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         _releaseTap(_tokenId, to);
     }
 
+    /// @notice Exit a twAML participation and send the withdrawn TAP to the dst chain of the holder address.
+    /// @param _tokenId The tokenId of the twTAP position
+    /// @param _dstChainId The destination chain id
+    /// @param _to The address of the holder on the destination chain
+    /// @param _lzCallParams The LZ call params
+    function exitPositionAndSendTap(
+        uint256 _tokenId,
+        uint16 _dstChainId,
+        bytes32 _to,
+        ICommonOFT.LzCallParams memory _lzCallParams
+    ) external {
+        address to = ownerOf(_tokenId);
+        uint256 amount = _releaseTap(_tokenId, address(this));
+
+        tapOFT.sendFrom(address(this), _dstChainId, _to, amount, _lzCallParams);
+    }
+
     /// @notice Indicate that (a) week(s) have passed and update running totals
     /// @notice Reverts if called in week 0. Let it.
     /// @param _limit Maximum number of weeks to process in one call
@@ -482,17 +499,20 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         }
     }
 
-    function _releaseTap(uint256 _tokenId, address _to) internal {
+    function _releaseTap(
+        uint256 _tokenId,
+        address _to
+    ) internal returns (uint256 releasedAmount) {
         Participation memory position = participants[_tokenId];
         if (position.tapReleased) {
-            return;
+            return 0;
         }
         require(
             position.expiry <= block.timestamp,
             "TapiocaDAOPortal: Lock not expired"
         );
 
-        uint256 amount = position.tapAmount;
+        releasedAmount = position.tapAmount;
 
         // Remove participation
         if (position.hasVotingPower) {
@@ -525,9 +545,9 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         }
 
         participants[_tokenId].tapReleased = true;
-        tapOFT.transfer(_to, amount);
+        tapOFT.transfer(_to, releasedAmount);
 
-        emit ExitPosition(_tokenId, amount);
+        emit ExitPosition(_tokenId, releasedAmount);
     }
 
     /// @dev Returns the chain ID of the current network

@@ -27,6 +27,7 @@ abstract contract BaseTapOFT is OFTV2 {
     TwTAP public twTap;
 
     uint16 internal constant PT_LOCK_TWTAP = 870;
+    uint16 internal constant PT_UNLOCK_TWTAP = 871;
 
     constructor(
         string memory _name,
@@ -46,6 +47,8 @@ abstract contract BaseTapOFT is OFTV2 {
 
         if (packetType == PT_LOCK_TWTAP) {
             _lockTwTapPosition(_srcChainId, _payload);
+        } else if (packetType == PT_UNLOCK_TWTAP) {
+            _unlockTwTapPosition(_srcChainId, _payload);
         } else {
             packetType = _payload.toUint8(0);
             if (packetType == PT_SEND) {
@@ -58,28 +61,29 @@ abstract contract BaseTapOFT is OFTV2 {
         }
     }
 
+    /// --------------------------
+    /// ------- LOCK TWTAP -------
+    /// --------------------------
+
     /// @notice Opens a twTAP by participating in twAML.
     /// @param to The address to add the twTAP position to.
-    /// @param amount The amount to add or remove.
+    /// @param amount The amount to add.
     /// @param lzDstChainId The destination chain id.
-    /// @param zroPaymentAddress The address to send the payment to.
+    /// @param zroPaymentAddress The address to send the ZRO payment to.
     /// @param adapterParams The adapter params.
-    /// @param twTapSendBackAdapterParams The adapter params to send back the twTAP/TAP token, depending on the action.
     function lockTwTapPosition(
         address to,
-        uint256 amount, // Amount to add or remove
-        uint256 duration, // Duration of the position. 0 if remove action
+        uint256 amount, // Amount to add
+        uint256 duration, // Duration of the position.
         uint16 lzDstChainId,
         address zroPaymentAddress,
-        bytes calldata adapterParams,
-        bytes calldata twTapSendBackAdapterParams
+        bytes calldata adapterParams
     ) external payable {
         bytes memory lzPayload = abi.encode(
             PT_LOCK_TWTAP, // packet type
             msg.sender,
             to,
-            amount,
-            twTapSendBackAdapterParams
+            amount
         );
 
         require(duration > 0, "TapOFT: Small duration");
@@ -107,37 +111,86 @@ abstract contract BaseTapOFT is OFTV2 {
         uint16 _srcChainId,
         bytes memory _payload
     ) internal virtual {
-        (
-            ,
-            ,
-            address to,
-            uint256 amount,
-            uint duration,
-            bytes memory twTapSendBackAdapterParams
-        ) = abi.decode(
-                _payload,
-                (uint16, address, address, uint256, uint256, bytes)
-            );
+        (, , address to, uint256 amount, uint duration) = abi.decode(
+            _payload,
+            (uint16, address, address, uint256, uint256)
+        );
 
         // We participate and mint with TapOFT as a receiver
         try twTap.participate(address(this), amount, duration) returns (
             uint256 tokenID
-        ) {
-            // We transfer the minted tokens to the user
-            twTap.sendFrom(
-                address(this),
-                _srcChainId,
-                abi.encode(LzLib.addressToBytes32(to)),
-                tokenID,
-                payable(to),
-                address(0),
-                twTapSendBackAdapterParams
-            );
-        } catch {
+        ) {} catch {
             // If the process fails, we send back the funds to the user
             // We send back the funds to the user
             _creditTo(_srcChainId, to, amount);
         }
+    }
+
+    /// --------------------------
+    /// ------- UNLOCK TWTAP -------
+    /// --------------------------
+
+    /// @notice Exit a twTAP by participating in twAML.
+    /// @param to The address to add the twTAP position to.
+    /// @param tokenID Token ID of the twTAP position.
+    /// @param lzDstChainId The destination chain id.
+    /// @param zroPaymentAddress The address to send the ZRO payment to.
+    /// @param adapterParams The adapter params.
+    /// @param twTapSendBackAdapterParams The adapter params to send back the TAP token.
+    function unlockTwTapPosition(
+        address to,
+        uint256 tokenID,
+        uint16 lzDstChainId,
+        address zroPaymentAddress,
+        bytes calldata adapterParams,
+        LzCallParams calldata twTapSendBackAdapterParams
+    ) external payable {
+        bytes memory lzPayload = abi.encode(
+            PT_UNLOCK_TWTAP, // packet type
+            msg.sender,
+            to,
+            tokenID,
+            twTapSendBackAdapterParams
+        );
+
+        _lzSend(
+            lzDstChainId,
+            lzPayload,
+            payable(msg.sender),
+            zroPaymentAddress,
+            adapterParams,
+            msg.value
+        );
+
+        emit SendToChain(
+            lzDstChainId,
+            msg.sender,
+            LzLib.addressToBytes32(to),
+            0
+        );
+    }
+
+    function _unlockTwTapPosition(
+        uint16 _srcChainId,
+        bytes memory _payload
+    ) internal virtual {
+        (
+            ,
+            ,
+            ,
+            uint256 tokenID,
+            LzCallParams memory twTapSendBackAdapterParams
+        ) = abi.decode(
+                _payload,
+                (uint16, address, address, uint256, LzCallParams)
+            );
+
+        twTap.exitPositionAndSendTap(
+            tokenID,
+            _srcChainId,
+            LzLib.addressToBytes32(msg.sender),
+            twTapSendBackAdapterParams
+        );
     }
 
     function setTwTap(address _twTap) external onlyOwner {
