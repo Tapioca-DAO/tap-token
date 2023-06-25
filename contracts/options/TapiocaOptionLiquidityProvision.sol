@@ -129,13 +129,14 @@ contract TapiocaOptionLiquidityProvision is
         view
         returns (SingularityPool[] memory)
     {
-        uint256 len = singularities.length;
+        uint256[] memory _singularities = singularities;
+        uint256 len = _singularities.length;
 
         SingularityPool[] memory pools = new SingularityPool[](len);
         unchecked {
             for (uint256 i = 0; i < len; ++i) {
                 pools[i] = activeSingularities[
-                    sglAssetIDToAddress[singularities[i]]
+                    sglAssetIDToAddress[_singularities[i]]
                 ];
             }
         }
@@ -306,22 +307,21 @@ contract TapiocaOptionLiquidityProvision is
             uint256 sglLastIndex = sglLength - 1;
 
             for (uint256 i = 0; i < sglLength; i++) {
-                // If in the middle, delete data and move last element to the deleted position, then pop
-                if (_singularities[i] == sglAssetID && i < sglLastIndex) {
+                // If last element, just pop
+                if (i == sglLastIndex) {
                     delete activeSingularities[singularity];
                     delete sglAssetIDToAddress[sglAssetID];
-                    delete singularities[i];
+                    singularities.pop();
+                } else if (
+                    _singularities[i] == sglAssetID && i < sglLastIndex
+                ) {
+                    // If in the middle, copy last element on deleted element, then pop
+                    delete activeSingularities[singularity];
+                    delete sglAssetIDToAddress[sglAssetID];
 
                     singularities[i] = _singularities[sglLastIndex];
                     singularities.pop();
-
                     break;
-                } else {
-                    // If last element, just pop
-                    delete activeSingularities[singularity];
-                    delete sglAssetIDToAddress[sglAssetID];
-                    delete singularities[sglLastIndex];
-                    singularities.pop();
                 }
             }
         }

@@ -1,6 +1,8 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TapiocaOptionBroker } from '../../typechain';
+import { ERC20WithoutStrategy__factory } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
+import { YieldBox__factory } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
 
 export const setOracleMockRate__task = async (
     taskArgs: { rate: string; oracleAddress: string },
@@ -48,12 +50,13 @@ export const setTOBPaymentToken__task = async (
 export const setTOLPRegisterSingularity__task = async (
     taskArgs: {
         sglAddress: string;
-        assetId: string;
         weight: string;
         tag?: string;
     },
     hre: HardhatRuntimeEnvironment,
 ) => {
+    const signer = (await hre.ethers.getSigners())[0];
+
     const tOLPAdress = SDK.API.db.getLocalDeployment(
         await hre.getChainId(),
         'TapiocaOptionLiquidityProvision',
@@ -66,10 +69,36 @@ export const setTOLPRegisterSingularity__task = async (
         tOLPAdress,
     );
 
+    const yieldBox = YieldBox__factory.connect(await tOLP.yieldBox(), signer);
+
+    const strategy = await new ERC20WithoutStrategy__factory(signer).deploy(
+        yieldBox.address,
+        taskArgs.sglAddress,
+    );
+
+    await (
+        await yieldBox.registerAsset(
+            1,
+            taskArgs.sglAddress,
+            strategy.address,
+            0,
+        )
+    ).wait();
+
+    const assetID = await yieldBox.ids(
+        1,
+        taskArgs.sglAddress,
+        (
+            await strategy
+        ).address,
+        0,
+    );
+    console.log('assetID', assetID);
+
     await (
         await tOLP.registerSingularity(
             taskArgs.sglAddress,
-            taskArgs.assetId,
+            assetID,
             taskArgs.weight,
         )
     ).wait();

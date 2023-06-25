@@ -62,7 +62,7 @@
     "@prb/math": "^2.5.0",
     "@types/inquirer": "^9.0.3",
     "bignumber.js": "^9.1.1",
-    "hardhat-tracer": "^1.2.1",
+    "hardhat-tracer": "^2.5.0",
     "husky": "^8.0.1",
     "inquirer": "^8.2.5",
     "lodash": "^4.17.21",
