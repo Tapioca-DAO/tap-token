@@ -77,7 +77,6 @@ task(
     setTOLPRegisterSingularity__task,
 )
     .addParam('sglAddress', 'Address of the SGL receipt token')
-    .addParam('assetId', 'YieldBox asset ID of the SGL receipt token')
     .addParam('weight', 'Weight of the gauge');
 
 task(
