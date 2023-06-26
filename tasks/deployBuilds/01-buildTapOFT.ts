@@ -5,32 +5,11 @@ import { TapOFT__factory } from '../../typechain';
 
 export const buildTapOFT = async (
     hre: HardhatRuntimeEnvironment,
-    signer: string,
+    args: Parameters<TapOFT__factory['deploy']>,
 ): Promise<IDeployerVMAdd<TapOFT__factory>> => {
-    const chainId = await hre.getChainId();
-
-    const lzEndpoint = constants[chainId as '5'].address as string;
-    const contributorAddress = constants.teamAddress;
-    const earlySupportersAddress = constants.earlySupportersAddress;
-    const supportersAddress = constants.supportersAddress;
-    const lbpAddress = constants.daoAddress;
-    const airdropAddress = constants.seedAddress;
-    const daoAddress = constants.daoAddress;
-    const governanceChainId = constants.governanceChainId.toString();
-
     return {
         contract: await hre.ethers.getContractFactory('TapOFT'),
         deploymentName: 'TapOFT',
-        args: [
-            lzEndpoint,
-            contributorAddress,
-            earlySupportersAddress,
-            supportersAddress,
-            lbpAddress,
-            daoAddress,
-            airdropAddress,
-            governanceChainId,
-            signer,
-        ],
+        args,
     };
 };

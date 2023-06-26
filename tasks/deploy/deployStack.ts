@@ -7,6 +7,7 @@ import { buildTOB } from '../deployBuilds/04-buildTOB';
 import { buildAfterDepSetup } from '../deployBuilds/05-buildAfterDepSetup';
 import { loadVM } from '../utils';
 import { TAPIOCA_PROJECTS_NAME } from '../../gitsub_tapioca-sdk/src/api/config';
+import { constants } from '../../scripts/deployment.utils';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
@@ -42,7 +43,28 @@ export const deployStack__task = async (
         }
 
         // Build contracts
-        VM.add(await buildTapOFT(hre, signer.address))
+        const chainId = await hre.getChainId();
+        const lzEndpoint = constants[chainId as '5'].address as string;
+        const contributorAddress = constants.teamAddress;
+        const earlySupportersAddress = constants.earlySupportersAddress;
+        const supportersAddress = constants.supportersAddress;
+        const lbpAddress = constants.daoAddress;
+        const airdropAddress = constants.seedAddress;
+        const daoAddress = constants.daoAddress;
+        const governanceChainId = constants.governanceChainId.toString();
+        VM.add(
+            await buildTapOFT(hre, [
+                lzEndpoint,
+                contributorAddress,
+                earlySupportersAddress,
+                supportersAddress,
+                lbpAddress,
+                daoAddress,
+                airdropAddress,
+                governanceChainId,
+                signer.address,
+            ]),
+        )
             .add(await buildTOLP(hre, signer.address, yieldBox?.address))
             .add(await buildOTAP(hre))
             .add(await buildTOB(hre, signer.address, signer.address));
