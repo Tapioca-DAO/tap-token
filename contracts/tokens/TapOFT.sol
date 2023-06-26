@@ -113,7 +113,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
         address _airdrop,
         uint256 _governanceChainId,
         address _conservator
-    ) BaseTapOFT("Tapioca", "TAP", 8, _lzEndpoint) ERC20Permit("TapOFT") {
+    ) BaseTapOFT("TapOFT", "TAP", 8, _lzEndpoint) ERC20Permit("TapOFT") {
         require(_lzEndpoint != address(0), "LZ endpoint not valid");
         governanceChainIdentifier = _governanceChainId;
         if (_getChainId() == governanceChainIdentifier) {
