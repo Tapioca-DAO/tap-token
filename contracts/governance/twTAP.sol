@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 
+import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol";
 import {ONFT721} from "tapioca-sdk/src/contracts/token/onft/ONFT721.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 import "../tokens/TapOFT.sol";
 import "../twAML.sol";
-import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol";
 // ********************************************************************************
 // *******************************,                 ,******************************
 // *************************                               ************************
@@ -84,7 +84,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
     /// ===== TWAML ======
     TWAMLPool public twAML; // sglAssetId => twAMLPool
 
-    mapping(uint256 => Participation) private participants; // tokenId => part.
+    mapping(uint256 => Participation) public participants; // tokenId => part.
 
     uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
     uint256 constant dMAX = 100 * 1e4; // 10% - 100% voting power multiplier
@@ -124,7 +124,6 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         address _owner,
         address _layerZeroEndpoint,
         uint256 _hostChainID,
-        string memory __baseURI,
         uint256 _minGas
     )
         ONFT721("Time Weighted TAP", "twTAP", _minGas, _layerZeroEndpoint)
@@ -133,7 +132,6 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         tapOFT = TapOFT(_tapOFT);
         transferOwnership(_owner);
         creation = block.timestamp;
-        baseURI = __baseURI;
         HOST_CHAIN_ID = _hostChainID;
     }
 
@@ -393,11 +391,15 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         uint16 _dstChainId,
         bytes32 _to,
         ICommonOFT.LzCallParams memory _lzCallParams
-    ) external {
-        address to = ownerOf(_tokenId);
+    ) external payable {
         uint256 amount = _releaseTap(_tokenId, address(this));
-
-        tapOFT.sendFrom(address(this), _dstChainId, _to, amount, _lzCallParams);
+        tapOFT.sendFrom{value: address(this).balance}(
+            address(this),
+            _dstChainId,
+            _to,
+            amount,
+            _lzCallParams
+        );
     }
 
     /// @notice Indicate that (a) week(s) have passed and update running totals

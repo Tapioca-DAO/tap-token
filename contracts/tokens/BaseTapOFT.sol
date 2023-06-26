@@ -29,6 +29,9 @@ abstract contract BaseTapOFT is OFTV2 {
     uint16 internal constant PT_LOCK_TWTAP = 870;
     uint16 internal constant PT_UNLOCK_TWTAP = 871;
 
+    event CallFailedStr(uint16 _srcChainId, bytes _payload, string _reason);
+    event CallFailedBytes(uint16 _srcChainId, bytes _payload, bytes _reason);
+
     constructor(
         string memory _name,
         string memory _symbol,
@@ -83,7 +86,8 @@ abstract contract BaseTapOFT is OFTV2 {
             PT_LOCK_TWTAP, // packet type
             msg.sender,
             to,
-            amount
+            amount,
+            duration
         );
 
         require(duration > 0, "TapOFT: Small duration");
@@ -116,13 +120,20 @@ abstract contract BaseTapOFT is OFTV2 {
             (uint16, address, address, uint256, uint256)
         );
 
+        _creditTo(_srcChainId, address(this), amount);
+        approve(address(twTap), amount);
+
         // We participate and mint with TapOFT as a receiver
-        try twTap.participate(address(this), amount, duration) returns (
-            uint256 tokenID
-        ) {} catch {
+        try twTap.participate(to, amount, duration) {} catch Error(
+            string memory _reason
+        ) {
             // If the process fails, we send back the funds to the user
             // We send back the funds to the user
-            _creditTo(_srcChainId, to, amount);
+            emit CallFailedStr(_srcChainId, _payload, _reason);
+            _transferFrom(address(this), to, amount);
+        } catch (bytes memory _reason) {
+            emit CallFailedBytes(_srcChainId, _payload, _reason);
+            _transferFrom(address(this), to, amount);
         }
     }
 
@@ -177,7 +188,7 @@ abstract contract BaseTapOFT is OFTV2 {
         (
             ,
             ,
-            ,
+            address to,
             uint256 tokenID,
             LzCallParams memory twTapSendBackAdapterParams
         ) = abi.decode(
@@ -185,12 +196,18 @@ abstract contract BaseTapOFT is OFTV2 {
                 (uint16, address, address, uint256, LzCallParams)
             );
 
-        twTap.exitPositionAndSendTap(
-            tokenID,
-            _srcChainId,
-            LzLib.addressToBytes32(msg.sender),
-            twTapSendBackAdapterParams
-        );
+        try
+            twTap.exitPositionAndSendTap{value: address(this).balance}(
+                tokenID,
+                _srcChainId,
+                LzLib.addressToBytes32(to),
+                twTapSendBackAdapterParams
+            )
+        {} catch Error(string memory _reason) {
+            emit CallFailedStr(_srcChainId, _payload, _reason);
+        } catch (bytes memory _reason) {
+            emit CallFailedBytes(_srcChainId, _payload, _reason);
+        }
     }
 
     function setTwTap(address _twTap) external onlyOwner {
