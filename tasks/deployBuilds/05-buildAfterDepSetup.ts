@@ -12,13 +12,14 @@ export const buildAfterDepSetup = async (
      * Load addresses
      */
     const tapAddr = deps.find((e) => e.name === 'TapOFT')?.address;
+    const twTapAddr = deps.find((e) => e.name === 'TwTAP')?.address;
     const tOBAddr = deps.find(
         (e) =>
             e.name === 'TapiocaOptionBroker' ||
             e.name === 'TapiocaOptionBrokerMock',
     )?.address;
 
-    if (!tapAddr || !tOBAddr) {
+    if (!tapAddr || !tOBAddr || !twTapAddr) {
         throw new Error('[-] One address not found');
     }
 
@@ -45,6 +46,16 @@ export const buildAfterDepSetup = async (
         target: tOBAddr,
         allowFailure: false,
         callData: tob.interface.encodeFunctionData('oTAPBrokerClaim'),
+    });
+
+    /**
+     * Set twTAP in TapOFT
+     */
+    console.log('[+] +Call queue: set twTAP in TapOFT');
+    calls.push({
+        target: tapAddr,
+        allowFailure: false,
+        callData: tap.interface.encodeFunctionData('setTwTap', [twTapAddr]),
     });
     return calls;
 };

@@ -8,6 +8,7 @@ import { buildAfterDepSetup } from '../deployBuilds/05-buildAfterDepSetup';
 import { loadVM } from '../utils';
 import { TAPIOCA_PROJECTS_NAME } from '../../gitsub_tapioca-sdk/src/api/config';
 import { constants } from '../../scripts/deployment.utils';
+import { buildTwTap } from '../deployBuilds/04-deployTwTap';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
@@ -67,7 +68,17 @@ export const deployStack__task = async (
         )
             .add(await buildTOLP(hre, signer.address, yieldBox?.address))
             .add(await buildOTAP(hre))
-            .add(await buildTOB(hre, signer.address, signer.address));
+            .add(await buildTOB(hre, signer.address, signer.address))
+            .add(
+                await buildTwTap(hre, [
+                    // To be replaced by VM
+                    hre.ethers.constants.AddressZero,
+                    signer.address,
+                    lzEndpoint,
+                    await hre.getChainId(),
+                    200_000,
+                ]),
+            );
 
         // Add and execute
         await VM.execute(3);
