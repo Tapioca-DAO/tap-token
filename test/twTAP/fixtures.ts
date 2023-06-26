@@ -1,6 +1,6 @@
 import hre, { ethers } from 'hardhat';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
-import { BN } from '../test.utils';
+import { BN, deployLZEndpointMock } from '../test.utils';
 import ERC20MockArtifact from 'tapioca-sdk/dist/artifacts/tapioca-mocks/ERC20Mock.json';
 import { ERC20Mock__factory } from 'tapioca-sdk/dist/typechain/tapioca-mocks';
 
@@ -52,10 +52,20 @@ export const setupTwTAPFixture = async () => {
         await time.increase(86400);
     }
 
+    const LZEndpointMockCurrentChain = await deployLZEndpointMock(
+        Number(await hre.getChainId()),
+    );
+
     // twtap
     const twtap = await (
         await ethers.getContractFactory('TwTAP')
-    ).deploy(tapOFT.address, signer.address);
+    ).deploy(
+        tapOFT.address,
+        signer.address,
+        LZEndpointMockCurrentChain.address,
+        await hre.getChainId(),
+        200_000,
+    );
 
     // Approvals and reward token setup
     for (const tok of tokens) {
