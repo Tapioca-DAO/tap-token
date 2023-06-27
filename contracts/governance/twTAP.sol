@@ -120,7 +120,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
 
     /// =====-------======
     constructor(
-        address _tapOFT,
+        address payable _tapOFT,
         address _owner,
         address _layerZeroEndpoint,
         uint256 _hostChainID,

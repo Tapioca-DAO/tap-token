@@ -213,4 +213,6 @@ abstract contract BaseTapOFT is OFTV2 {
     function setTwTap(address _twTap) external onlyOwner {
         twTap = TwTAP(_twTap);
     }
+
+    receive() external payable virtual {}
 }

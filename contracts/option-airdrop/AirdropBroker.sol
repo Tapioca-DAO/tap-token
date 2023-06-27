@@ -109,7 +109,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
     /// =====-------======
     constructor(
         address _aoTAP,
-        address _tapOFT,
+        address payable _tapOFT,
         address _pcnft,
         address _paymentTokenBeneficiary,
         address _owner

@@ -89,7 +89,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     constructor(
         address _tOLP,
         address _oTAP,
-        address _tapOFT,
+        address payable _tapOFT,
         address _paymentTokenBeneficiary,
         uint256 _epochDuration,
         address _owner
