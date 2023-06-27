@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 
-import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol";
+import {ONFT721} from "tapioca-sdk/src/contracts/token/onft/ONFT721.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 import "../tokens/TapOFT.sol";
 import "../twAML.sol";
-
 // ********************************************************************************
 // *******************************,                 ,******************************
 // *************************                               ************************
@@ -77,13 +76,7 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TwTAP is
-    BoringOwnable,
-    TWAML,
-    ERC721,
-    ERC721Permit,
-    BaseBoringBatchable
-{
+contract TwTAP is TWAML, ONFT721, ERC721Permit {
     using SafeERC20 for IERC20;
 
     TapOFT public immutable tapOFT;
@@ -91,15 +84,15 @@ contract TwTAP is
     /// ===== TWAML ======
     TWAMLPool public twAML; // sglAssetId => twAMLPool
 
-    mapping(uint256 => Participation) private participants; // tokenId => part.
+    mapping(uint256 => Participation) public participants; // tokenId => part.
 
     uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
     uint256 constant dMAX = 100 * 1e4; // 10% - 100% voting power multiplier
     uint256 constant dMIN = 10 * 1e4;
-    uint256 constant WEEK = 7 days;
+    uint256 public constant EPOCH_DURATION = 7 days;
 
     // If we assume 128 bit balances for the reward token -- which fit 1e40
-    // "tokens" at the most comonly used 1e18 precision -- then we can use the
+    // "tokens" at the most commonly used 1e18 precision -- then we can use the
     // other 128 bits to store the tokens allotted to a single vote more
     // accurately. Votes in turn are proportional to the amount of TAP locked,
     // weighted by a multiplier. This number is at most 107 bits long (see
@@ -122,14 +115,24 @@ contract TwTAP is
     uint256 public lastProcessedWeek;
     mapping(uint256 => WeekTotals) public weekTotals;
 
+    uint256 public immutable HOST_CHAIN_ID;
+    string private baseURI;
+
     /// =====-------======
     constructor(
-        address _tapOFT,
-        address _owner
-    ) ERC721("Time Weighted TAP", "twTAP") ERC721Permit("Time Weighted TAP") {
+        address payable _tapOFT,
+        address _owner,
+        address _layerZeroEndpoint,
+        uint256 _hostChainID,
+        uint256 _minGas
+    )
+        ONFT721("Time Weighted TAP", "twTAP", _minGas, _layerZeroEndpoint)
+        ERC721Permit("Time Weighted TAP")
+    {
         tapOFT = TapOFT(_tapOFT);
-        owner = _owner;
+        transferOwnership(_owner);
         creation = block.timestamp;
+        HOST_CHAIN_ID = _hostChainID;
     }
 
     // ==========
@@ -152,7 +155,7 @@ contract TwTAP is
     // ==========
 
     function currentWeek() public view returns (uint256) {
-        return (block.timestamp - creation) / WEEK;
+        return (block.timestamp - creation) / EPOCH_DURATION;
     }
 
     /// @notice Return the participation of a token. Returns 0 votes for expired tokens.
@@ -258,7 +261,10 @@ contract TwTAP is
         uint256 _amount,
         uint256 _duration
     ) external returns (uint256 tokenId) {
-        require(_duration >= WEEK, "TapiocaDAOPortal: Lock not a week");
+        require(
+            _duration >= EPOCH_DURATION,
+            "TapiocaDAOPortal: Lock not a week"
+        );
 
         // Transfer TAP to this contract
         tapOFT.transferFrom(msg.sender, address(this), _amount);
@@ -324,7 +330,7 @@ contract TwTAP is
         // price for this maneuver is a lower multiplier, and loss of voting
         // power in the DAO after the lock expires.
         uint256 w0 = currentWeek();
-        uint256 w1 = (expiry - creation) / WEEK;
+        uint256 w1 = (expiry - creation) / EPOCH_DURATION;
 
         // Save twAML participation
         // Casts are safe: see struct definition
@@ -373,6 +379,27 @@ contract TwTAP is
     function exitPosition(uint256 _tokenId) external {
         address to = ownerOf(_tokenId);
         _releaseTap(_tokenId, to);
+    }
+
+    /// @notice Exit a twAML participation and send the withdrawn TAP to the dst chain of the holder address.
+    /// @param _tokenId The tokenId of the twTAP position
+    /// @param _dstChainId The destination chain id
+    /// @param _to The address of the holder on the destination chain
+    /// @param _lzCallParams The LZ call params
+    function exitPositionAndSendTap(
+        uint256 _tokenId,
+        uint16 _dstChainId,
+        bytes32 _to,
+        ICommonOFT.LzCallParams memory _lzCallParams
+    ) external payable {
+        uint256 amount = _releaseTap(_tokenId, address(this));
+        tapOFT.sendFrom{value: address(this).balance}(
+            address(this),
+            _dstChainId,
+            _to,
+            amount,
+            _lzCallParams
+        );
     }
 
     /// @notice Indicate that (a) week(s) have passed and update running totals
@@ -474,17 +501,20 @@ contract TwTAP is
         }
     }
 
-    function _releaseTap(uint256 _tokenId, address _to) internal {
+    function _releaseTap(
+        uint256 _tokenId,
+        address _to
+    ) internal returns (uint256 releasedAmount) {
         Participation memory position = participants[_tokenId];
         if (position.tapReleased) {
-            return;
+            return 0;
         }
         require(
             position.expiry <= block.timestamp,
             "TapiocaDAOPortal: Lock not expired"
         );
 
-        uint256 amount = position.tapAmount;
+        releasedAmount = position.tapAmount;
 
         // Remove participation
         if (position.hasVotingPower) {
@@ -517,8 +547,26 @@ contract TwTAP is
         }
 
         participants[_tokenId].tapReleased = true;
-        tapOFT.transfer(_to, amount);
+        tapOFT.transfer(_to, releasedAmount);
 
-        emit ExitPosition(_tokenId, amount);
+        emit ExitPosition(_tokenId, releasedAmount);
+    }
+
+    /// @dev Returns the chain ID of the current network
+    function _getChainId() internal view virtual returns (uint256) {
+        uint256 chainId;
+        assembly {
+            chainId := chainid()
+        }
+        return chainId;
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ONFT721, ERC721) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 }

@@ -18,6 +18,8 @@ import { deployTapOFT__task } from './tasks/deploy/deployTapOFT';
 import { setRegisterSGL__task } from './tasks/exec/setRegisterSGL';
 import { setPaymentToken__task } from './tasks/exec/setPaymentToken';
 import { setRegisterTapOracle__task } from './tasks/exec/setRegisterTapOracle';
+import { testParticipateCrossChain__task } from './tasks/exec/tests/test-participateCrossChain';
+import { testExitCrossChain__task } from './tasks/exec/tests/test-exitCrossChain';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -111,3 +113,15 @@ task(
     setRegisterTapOracle__task,
 );
 task('setPaymentToken', 'Register an oracle on tOB', setPaymentToken__task);
+
+// Tests
+task(
+    'testParticipateCrossChain',
+    'Test a cross-chain participation in twTAP',
+    testParticipateCrossChain__task,
+);
+task(
+    'testExitCrossChain',
+    'Test a cross-chain exit in twTAP',
+    testExitCrossChain__task,
+);
