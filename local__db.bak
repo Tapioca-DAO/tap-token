@@ -16,7 +16,7 @@
         "43113": [
             {
                 "name": "TapOFT",
-                "address": "0x85FB02f090cFa15c7D37A1dD074ac6e7CA976E21",
+                "address": "0xe4874670cB4fA59a90dcf913f86aceDC56DdDB58",
                 "meta": {
                     "args": [
                         "0x93f54D755A063cE7bB9e6Ac47Eccc8e33411d706",
@@ -25,10 +25,11 @@
                         "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                         "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                         "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
                         "421613",
-                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                     ],
-                    "salt": "0x27e2f7e32c783cdb62470eda01fa25385a6df1a90c7a676b6afa94cfc00b0cd1",
+                    "salt": "0x2950a13a68b4e676cfd523ef05976e054b44069676797ec9f7d5781ee4885d4c",
                     "create2": true
                 }
             },
@@ -66,7 +67,7 @@
         "421613": [
             {
                 "name": "TapOFT",
-                "address": "0x4C4C097Cfb8F36bb95912958791154BFf71D881B",
+                "address": "0xAc63494599ad2B476B954C18e82CF1CB8d456844",
                 "meta": {
                     "args": [
                         "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
@@ -79,44 +80,59 @@
                         "421613",
                         "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                     ],
-                    "salt": "0x2a8aa3b9b3bb141cf3c8268a5d404c6c6229e77506e996063ec7f3e48e04953a",
+                    "salt": "0xc66d48da59db67c865441b850d19e9bc3784a6a19bc4bb581b6a81116d744aec",
                     "create2": true
                 }
             },
             {
                 "name": "TapiocaOptionLiquidityProvision",
-                "address": "0x4a4Bd0692e79A4209a9cD3A575de70ed2FA65F6D",
+                "address": "0x054a4Dc6B2b9F2a081Eebd6397E00753837301df",
                 "meta": {
                     "args": [
                         "0x2e2D0CB0fF8Aee700a044bd03745cC7800E876a2",
                         "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                     ],
-                    "salt": "0xb732c5293d14fe6e127fa36a10f24c59ed7640cbfc8ee745b7f1f145d08a7194",
+                    "salt": "0x84b2aaaed72e035a2b1e76c26ec62ff734d74bf7a58e5bc9449208436159ff7c",
                     "create2": true
                 }
             },
             {
                 "name": "OTAP",
-                "address": "0xF01A705d8AFb1A2187e17CE34757E728adE55951",
+                "address": "0xC30AeA48bCa11496149647eeBcD0F43C4D7Bf8A0",
                 "meta": {
                     "args": [],
-                    "salt": "0x100efdf1a39e8e6ca167c7ea678862967c087fcbc16ca30b393316cb0a51d36c",
+                    "salt": "0xec57d28680661b5a6595ac16f139a26c2d5261ca46a90940350a423ca904fb72",
                     "create2": true
                 }
             },
             {
                 "name": "TapiocaOptionBroker",
-                "address": "0xEcaf24E14819b9dB2871a6543fdE171B034BAf26",
+                "address": "0x1104581f6892E8A89BE4B9aB2473B20211947Ae1",
                 "meta": {
                     "args": [
-                        "0x4a4Bd0692e79A4209a9cD3A575de70ed2FA65F6D",
-                        "0xF01A705d8AFb1A2187e17CE34757E728adE55951",
-                        "0x4C4C097Cfb8F36bb95912958791154BFf71D881B",
+                        "0x054a4Dc6B2b9F2a081Eebd6397E00753837301df",
+                        "0xC30AeA48bCa11496149647eeBcD0F43C4D7Bf8A0",
+                        "0xAc63494599ad2B476B954C18e82CF1CB8d456844",
                         "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F",
                         604800,
                         "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
                     ],
-                    "salt": "0x4294d4682c09eff84c408731043e1cead89061a508d3eeb61b8b20ea107bfa44",
+                    "salt": "0x283a2f0e06e7d5e6f878574e74bccc74e1f88fa5156630a8dffb6f460d92667d",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TwTAP",
+                "address": "0xc204F0f0d218cBE91783E615FE21d6ed5E549191",
+                "meta": {
+                    "args": [
+                        "0xAc63494599ad2B476B954C18e82CF1CB8d456844",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F",
+                        "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
+                        "421613",
+                        200000
+                    ],
+                    "salt": "0x0bc2f9f9ad0a2ff977e5bf00c5ffafbe723d8db0bb1480d8f0a10c8f0eb4672b",
                     "create2": true
                 }
             },
