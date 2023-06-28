@@ -510,7 +510,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         uint256[] memory amounts = claimable(_tokenId);
         unchecked {
             uint256 len = _rewardTokens.length;
-            for (uint256 i = 0; i < len; ++i) {
+            for (uint256 i = 0; i < len; ) {
                 uint256 claimableIndex = rewardTokenIndexes[_rewardTokens[i]];
                 uint256 amount = amounts[i];
 
@@ -519,6 +519,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
                     claimed[_tokenId][claimableIndex] += amount;
                     rewardTokens[claimableIndex].safeTransfer(_to, amount);
                 }
+                ++i;
             }
         }
     }
