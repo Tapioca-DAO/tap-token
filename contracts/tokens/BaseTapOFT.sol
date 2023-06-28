@@ -2,7 +2,9 @@
 pragma solidity ^0.8.18;
 
 import {ILayerZeroEndpoint} from "tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import {LzLib} from "tapioca-sdk/dist/contracts/libraries/LzLib.sol";
+import "tapioca-periph/contracts/interfaces/ITapiocaOFT.sol";
 import "tapioca-sdk/dist/contracts/token/oft/v2/OFTV2.sol";
 import {TwTAP} from "../governance/twTAP.sol";
 
@@ -196,23 +198,57 @@ abstract contract BaseTapOFT is OFTV2 {
                 (uint16, address, address, uint256, LzCallParams)
             );
 
-        try
-            twTap.exitPositionAndSendTap{value: address(this).balance}(
-                tokenID,
-                _srcChainId,
-                LzLib.addressToBytes32(to),
-                twTapSendBackAdapterParams
-            )
-        {} catch Error(string memory _reason) {
+        // Exit and receive tokens to this contract
+        try twTap.exitPositionAndSendTap(tokenID) returns (uint256 _amount) {
+            // Transfer them to the user
+            this.sendFrom{value: address(this).balance}(
+                address(this),
+                _srcChainID,
+                _to,
+                _amount,
+                _twTapSendBackAdapterParams
+            );
+        } catch Error(string memory _reason) {
             emit CallFailedStr(_srcChainId, _payload, _reason);
         } catch (bytes memory _reason) {
             emit CallFailedBytes(_srcChainId, _payload, _reason);
         }
     }
 
+    function __unlockAndSend(
+        uint16 _srcChainID,
+        bytes32 _to,
+        uint256 _amount,
+        LzCallParams memory _twTapSendBackAdapterParams
+    ) internal {}
+
     function setTwTap(address _twTap) external onlyOwner {
         twTap = TwTAP(_twTap);
     }
 
     receive() external payable virtual {}
+
+    function _callApproval(ITapiocaOFT.IApproval[] memory approvals) private {
+        for (uint256 i = 0; i < approvals.length; ) {
+            try
+                IERC20Permit(approvals[i].target).permit(
+                    approvals[i].owner,
+                    approvals[i].spender,
+                    approvals[i].value,
+                    approvals[i].deadline,
+                    approvals[i].v,
+                    approvals[i].r,
+                    approvals[i].s
+                )
+            {} catch Error(string memory reason) {
+                if (!approvals[i].allowFailure) {
+                    revert(reason);
+                }
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
 }
