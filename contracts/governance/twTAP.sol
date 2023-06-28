@@ -103,6 +103,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
     uint256 constant DIST_PRECISION = 2 ** 128;
 
     IERC20[] public rewardTokens;
+    mapping(IERC20 => uint256) public rewardTokenIndex;
     // tokenId -> rewardTokens index -> amount
     mapping(uint256 => mapping(uint256 => uint256)) public claimed;
 
@@ -364,26 +365,13 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
 
     /// @notice claims all rewards distributed since token mint or last claim, and send them to another chain.
     /// @param _tokenId The tokenId of the twTAP position
-    /// @param _dstChainId The destination chain id
-    /// @param _to The address of the holder on the destination chain
-    /// @param _lzCallParams The LZ call params
+    /// @param _rewardTokens The address of the reward token
     function claimAndSendRewards(
         uint256 _tokenId,
-        address[] memory _rewardTokens,
-        address _to,
-        uint256 _dstChainId,
-        ICommonOFT.LzCallParams memory _lzCallParams
+        IERC20[] _rewardTokens
     ) external {
         require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
-        _claimRewards(_tokenId, address(this));
-
-        for (uint256 i = 0; i < _rewardTokens.length; i++) {
-            address rewardToken = _rewardTokens[i];
-            uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-            if (balance > 0) {
-                IERC20(rewardToken).safeTransfer(_to, balance);
-            }
-        }
+        _claimRewardsOn(_tokenId, address(tapOFT));
     }
 
     /// @notice claims the TAP locked in a position whose votes have expired,
@@ -475,6 +463,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
     function addRewardToken(IERC20 token) external onlyOwner returns (uint256) {
         uint256 i = rewardTokens.length;
         rewardTokens.push(token);
+        rewardTokenIndexes[token] = i;
         return i;
     }
 
@@ -508,6 +497,27 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
                     // Math is safe: `amount` calculated safely in `claimable()`
                     claimed[_tokenId][i] += amount;
                     rewardTokens[i].safeTransfer(_to, amount);
+                }
+            }
+        }
+    }
+
+    function _claimRewardsOn(
+        uint256 _tokenId,
+        address _to,
+        IERC20[] _rewardTokens
+    ) internal {
+        uint256[] memory amounts = claimable(_tokenId);
+        unchecked {
+            uint256 len = _rewardTokens.length;
+            for (uint256 i = 0; i < len; ++i) {
+                uint256 claimableIndex = rewardTokenIndexes[_rewardTokens[i]];
+                uint256 amount = amounts[i];
+
+                if (amount > 0) {
+                    // Math is safe: `amount` calculated safely in `claimable()`
+                    claimed[_tokenId][claimableIndex] += amount;
+                    rewardTokens[claimableIndex].safeTransfer(_to, amount);
                 }
             }
         }
