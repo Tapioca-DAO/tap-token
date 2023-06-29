@@ -1,14 +1,14 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { Multicall3 } from 'tapioca-sdk/dist/typechain/utils/MultiCall';
+import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
+import { TAPIOCA_PROJECTS_NAME } from '../../gitsub_tapioca-sdk/src/api/config';
+import { constants } from '../../scripts/deployment.utils';
 import { buildTapOFT } from '../deployBuilds/01-buildTapOFT';
 import { buildTOLP } from '../deployBuilds/02-buildTOLP';
 import { buildOTAP } from '../deployBuilds/03-buildOTAP';
 import { buildTOB } from '../deployBuilds/04-buildTOB';
+import { buildTwTap } from '../deployBuilds/04-deployTwTap';
 import { buildAfterDepSetup } from '../deployBuilds/05-buildAfterDepSetup';
 import { loadVM } from '../utils';
-import { TAPIOCA_PROJECTS_NAME } from '../../gitsub_tapioca-sdk/src/api/config';
-import { constants } from '../../scripts/deployment.utils';
-import { buildTwTap } from '../deployBuilds/04-deployTwTap';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
@@ -89,7 +89,7 @@ export const deployStack__task = async (
     const vmList = VM.list();
     // After deployment setup
 
-    const calls: Multicall3.Call3Struct[] = [
+    const calls: Multicall3.CallStruct[] = [
         // Build testnet related calls
         ...(await buildAfterDepSetup(hre, vmList)),
     ];

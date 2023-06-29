@@ -328,7 +328,7 @@ abstract contract BaseTapOFT is OFTV2 {
 
     receive() external payable virtual {}
 
-    function _callApproval(ITapiocaOFT.IApproval[] memory approvals) private {
+    function _callApproval(ICommonData.IApproval[] memory approvals) private {
         for (uint256 i = 0; i < approvals.length; ) {
             try
                 IERC20Permit(approvals[i].target).permit(
