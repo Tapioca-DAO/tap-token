@@ -368,10 +368,10 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
     /// @param _rewardTokens The address of the reward token
     function claimAndSendRewards(
         uint256 _tokenId,
-        IERC20[] _rewardTokens
+        IERC20[] memory _rewardTokens
     ) external {
         require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
-        _claimRewardsOn(_tokenId, address(tapOFT));
+        _claimRewardsOn(_tokenId, address(tapOFT), _rewardTokens);
     }
 
     /// @notice claims the TAP locked in a position whose votes have expired,
@@ -463,7 +463,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
     function addRewardToken(IERC20 token) external onlyOwner returns (uint256) {
         uint256 i = rewardTokens.length;
         rewardTokens.push(token);
-        rewardTokenIndexes[token] = i;
+        rewardTokenIndex[token] = i;
         return i;
     }
 
@@ -505,13 +505,13 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
     function _claimRewardsOn(
         uint256 _tokenId,
         address _to,
-        IERC20[] _rewardTokens
+        IERC20[] memory _rewardTokens
     ) internal {
         uint256[] memory amounts = claimable(_tokenId);
         unchecked {
             uint256 len = _rewardTokens.length;
             for (uint256 i = 0; i < len; ) {
-                uint256 claimableIndex = rewardTokenIndexes[_rewardTokens[i]];
+                uint256 claimableIndex = rewardTokenIndex[_rewardTokens[i]];
                 uint256 amount = amounts[i];
 
                 if (amount > 0) {

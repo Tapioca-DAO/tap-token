@@ -24,7 +24,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 struct IRewardClaimSendFromParams {
     uint256 ethValue;
-    LzCallParams callParams;
+    ITapiocaOFT.LzCallParams callParams;
 }
 
 abstract contract BaseTapOFT is OFTV2 {
@@ -158,11 +158,11 @@ abstract contract BaseTapOFT is OFTV2 {
     /// @param lzDstChainId The destination chain id.
     /// @param zroPaymentAddress The address to send the ZRO payment to.
     /// @param adapterParams The adapter params.
-    /// @param twTapSendBackAdapterParams The adapter params to send back the TAP token.
+    /// @param rewardClaimSendParams The adapter params to send back the TAP token.
     function claimRewards(
         address to,
         uint256 tokenID,
-        address[] rewardTokens,
+        address[] memory rewardTokens,
         uint16 lzDstChainId,
         address zroPaymentAddress,
         bytes calldata adapterParams,
@@ -174,7 +174,7 @@ abstract contract BaseTapOFT is OFTV2 {
             to,
             tokenID,
             rewardTokens,
-            twTapSendBackAdapterParams
+            rewardClaimSendParams
         );
 
         _lzSend(
@@ -212,29 +212,26 @@ abstract contract BaseTapOFT is OFTV2 {
                     address,
                     address,
                     uint256,
-                    address[],
+                    IERC20[],
                     IRewardClaimSendFromParams[]
                 )
             );
 
         // Only the owner can unlock
-        require(twTap.ownerOf(tokenID) == _to, "TapOFT: Not owner");
+        require(twTap.ownerOf(tokenID) == to, "TapOFT: Not owner");
 
         // Exit and receive tokens to this contract
-        try twTap.claimAndSendRewards(tokenID, rewardTokens) returns (
-            uint256 _amount
-        ) {
+        try twTap.claimAndSendRewards(tokenID, rewardTokens) {
             // Transfer them to the user
             uint256 len = rewardTokens.length;
             for (uint i = 0; i < len; ) {
-                rewardTokens[i].transfer(to, _amount);
                 ISendFrom(address(rewardTokens[i])).sendFrom{
                     value: rewardClaimSendParams[i].ethValue
                 }(
                     address(this),
-                    _srcChainID,
-                    _to,
-                    _amount,
+                    _srcChainId,
+                    LzLib.addressToBytes32(to),
+                    IERC20(rewardTokens[i]).balanceOf(address(this)),
                     rewardClaimSendParams[i].callParams
                 );
                 ++i;
@@ -306,17 +303,17 @@ abstract contract BaseTapOFT is OFTV2 {
             );
 
         // Only the owner can unlock
-        require(twTap.ownerOf(tokenID) == _to, "TapOFT: Not owner");
+        require(twTap.ownerOf(tokenID) == to, "TapOFT: Not owner");
 
         // Exit and receive tokens to this contract
         try twTap.exitPositionAndSendTap(tokenID) returns (uint256 _amount) {
             // Transfer them to the user
             this.sendFrom{value: address(this).balance}(
                 address(this),
-                _srcChainID,
-                _to,
+                _srcChainId,
+                LzLib.addressToBytes32(to),
                 _amount,
-                _twTapSendBackAdapterParams
+                twTapSendBackAdapterParams
             );
         } catch Error(string memory _reason) {
             emit CallFailedStr(_srcChainId, _payload, _reason);
