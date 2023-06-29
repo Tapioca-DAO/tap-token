@@ -21,6 +21,7 @@ import { setRegisterTapOracle__task } from './tasks/exec/setRegisterTapOracle';
 import { testParticipateCrossChain__task } from './tasks/exec/tests/test-participateCrossChain';
 import { testExitCrossChain__task } from './tasks/exec/tests/test-exitCrossChain';
 import { setTwTapRewardToken__task } from './tasks/exec/setTwTapRewardToken';
+import { testClaimRewards__task } from './tasks/exec/tests/test-claimRewards';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -132,4 +133,9 @@ task(
     'testExitCrossChain',
     'Test a cross-chain exit in twTAP',
     testExitCrossChain__task,
+);
+task(
+    'testClaimRewards',
+    'Test a cross-chain reward claim in twTAP',
+    testClaimRewards__task,
 );
