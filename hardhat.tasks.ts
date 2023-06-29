@@ -20,6 +20,7 @@ import { setPaymentToken__task } from './tasks/exec/setPaymentToken';
 import { setRegisterTapOracle__task } from './tasks/exec/setRegisterTapOracle';
 import { testParticipateCrossChain__task } from './tasks/exec/tests/test-participateCrossChain';
 import { testExitCrossChain__task } from './tasks/exec/tests/test-exitCrossChain';
+import { setTwTapRewardToken__task } from './tasks/exec/setTwTapRewardToken';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -102,6 +103,13 @@ task(
 ).addFlag('load', 'Load the contracts from the local database.');
 
 task('deployTapOFT', 'Deploys just the TapOFT contract', deployTapOFT__task);
+
+// ---- twTAP
+task(
+    'setTwTapRewardToken',
+    'Set the reward token for twTAP',
+    setTwTapRewardToken__task,
+);
 
 // ---- toLP
 task('setRegisterSGL', 'Register an SGL on tOLP', setRegisterSGL__task);
