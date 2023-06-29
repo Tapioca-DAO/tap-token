@@ -41,13 +41,13 @@ export const testClaimRewards__task = async (
     const { tokenID } = await inquirer.prompt({
         type: 'input',
         name: 'tokenID',
-        message: 'Choose the tokenID to unlock',
+        message: 'Choose the tokenID',
     });
 
-    const { rewardToken } = await inquirer.prompt({
+    const { rewardTokenAddy } = await inquirer.prompt({
         type: 'input',
-        name: 'rewardToken',
-        message: 'Choose the reward token',
+        name: 'rewardTokenAddy',
+        message: 'Choose the reward token address',
     });
 
     const lzEndpoint = await hre.ethers.getContractAt(
@@ -61,7 +61,7 @@ export const testClaimRewards__task = async (
         dstChain.name,
         dstChain.address,
         {
-            iSendFrom: await hre.ethers.getContractAt('OFTV2', rewardToken),
+            iSendFrom: await hre.ethers.getContractAt('OFTV2', rewardTokenAddy),
             signerAddress: signer.address,
             tokenID: tokenID,
             dstLZChainID: srcChain.lzChainId,
@@ -79,7 +79,7 @@ export const testClaimRewards__task = async (
     const payload = tapOFTSrc.interface.encodeFunctionData('claimRewards', [
         signer.address,
         tokenID,
-        [rewardToken],
+        [rewardTokenAddy],
         dstChain.lzChainId,
         hre.ethers.constants.AddressZero,
         adapterParamsForPayload,
@@ -107,17 +107,17 @@ export const testClaimRewards__task = async (
         hre.ethers.utils.formatEther(nativeFee.toString()),
     );
 
-    console.log('[+] Unlocking TAP');
+    console.log('[+] Claiming rewards...');
     const tx = await tapOFTSrc.claimRewards(
         signer.address,
         tokenID,
-        [rewardToken],
+        [rewardTokenAddy],
         dstChain.lzChainId,
         hre.ethers.constants.AddressZero,
         adapterParamsForPayload,
         [
             {
-                ethValue: nativeFee,
+                ethValue: dstSendFromFees,
                 callParams: {
                     adapterParams: adapterParamsForSendBack,
                     refundAddress: signer.address,
@@ -191,24 +191,7 @@ async function computeDstSendFromValue(
         false,
         hre.ethers.utils.solidityPack(['uint16', 'uint256'], [1, 200_000]),
     );
-    console.log(
-        hre.ethers.utils.formatEther(
-            (
-                await data.iSendFrom
-                    .connect(dstNetwork.provider)
-                    .estimateSendFee(
-                        data.dstLZChainID,
-                        `0x${data.signerAddress.slice(2).padStart(64, '0')}`,
-                        amounts[0],
-                        false,
-                        hre.ethers.utils.solidityPack(
-                            ['uint16', 'uint256'],
-                            [1, 200_000],
-                        ),
-                    )
-            ).nativeFee.toString(),
-        ),
-    );
+
     console.log(
         '[+] Estimated gas for send back: ',
         hre.ethers.utils.formatEther(nativeFee.toString()),

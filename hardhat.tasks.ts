@@ -22,6 +22,8 @@ import { testParticipateCrossChain__task } from './tasks/exec/tests/test-partici
 import { testExitCrossChain__task } from './tasks/exec/tests/test-exitCrossChain';
 import { setTwTapRewardToken__task } from './tasks/exec/setTwTapRewardToken';
 import { testClaimRewards__task } from './tasks/exec/tests/test-claimRewards';
+import { setDistributeTwTapRewards__task } from './tasks/exec/setDistributeTwTapRewards';
+import { setAdvanceWeek__task } from './tasks/exec/setAdvanceWeek';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -111,6 +113,13 @@ task(
     'Set the reward token for twTAP',
     setTwTapRewardToken__task,
 );
+
+task(
+    'setDistributeTwTapRewards',
+    'Distribute rewards for twTAP',
+    setDistributeTwTapRewards__task,
+);
+task('setAdvanceWeek', 'Advance by 1 week', setAdvanceWeek__task);
 
 // ---- toLP
 task('setRegisterSGL', 'Register an SGL on tOLP', setRegisterSGL__task);
