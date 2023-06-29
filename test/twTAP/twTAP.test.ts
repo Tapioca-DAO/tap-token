@@ -23,7 +23,7 @@ const EIGHT_DAYS = 86400 * 7;
 
 const oneEth = BN(1e18);
 
-describe('TapiocaDAOPortal', () => {
+describe('twTAP', () => {
     it('should participate', async () => {
         const { signer, users, twtap, tapOFT } = await loadFixture(
             setupTwTAPFixture,
@@ -37,7 +37,7 @@ describe('TapiocaDAOPortal', () => {
         // test tDP participation
         await expect(
             twtap.participate(signer.address, toMint, WEEK - 1),
-        ).to.be.revertedWith('TapiocaDAOPortal: Lock not a week');
+        ).to.be.revertedWith('twTAP: Lock not a week');
         await expect(
             twtap.participate(signer.address, toMint, lockDuration),
         ).to.be.revertedWith('ERC20: insufficient allowance');
@@ -152,7 +152,7 @@ describe('TapiocaDAOPortal', () => {
 
         // Test exit
         await expect(twtap.exitPosition(twTAPTokenID)).to.be.revertedWith(
-            'TapiocaDAOPortal: Lock not expired',
+            'twTAP: Lock not expired',
         );
         expect(await tapOFT.balanceOf(twtap.address)).to.be.equal(toMint);
 
@@ -339,7 +339,7 @@ describe('TapiocaDAOPortal', () => {
         await mock0.connect(bob).approve(twtap.address, distAmount);
         await expect(
             twtap.connect(bob).distributeReward(0, distAmount),
-        ).to.be.revertedWith('Advance week first');
+        ).to.be.revertedWith('twTAP: Advance week first');
     });
 
     it('Should tally up votes up to current week', async () => {
@@ -752,10 +752,10 @@ describe('TapiocaDAOPortal', () => {
         // Carol can claim the reward for Alice, but only to Alice's address:
         await expect(
             twtap.connect(carol).claimRewards(aliceId, bob.address),
-        ).to.be.revertedWith('TapiocaDAOPortal: cannot claim');
+        ).to.be.revertedWith('twTAP: cannot claim');
         await expect(
             twtap.connect(carol).claimRewards(aliceId, carol.address),
-        ).to.be.revertedWith('TapiocaDAOPortal: cannot claim');
+        ).to.be.revertedWith('twTAP: cannot claim');
         await twtap.connect(carol).claimRewards(aliceId, alice.address);
 
         const aliceAfter = await mock0.balanceOf(alice.address);
@@ -792,14 +792,14 @@ describe('TapiocaDAOPortal', () => {
         // Carol can claim Alice's reward for herself if Alice approved Carol:
         await expect(
             twtap.connect(carol).claimRewards(aliceId, bob.address),
-        ).to.be.revertedWith('TapiocaDAOPortal: cannot claim');
+        ).to.be.revertedWith('twTAP: cannot claim');
         await twtap.connect(alice).approve(carol.address, aliceId);
         await twtap.connect(carol).claimRewards(aliceId, carol.address);
 
         // Carol can claim Bob's reward if Bob approved Carol for all tokens:
         await expect(
             twtap.connect(carol).claimRewards(bobId, carol.address),
-        ).to.be.revertedWith('TapiocaDAOPortal: cannot claim');
+        ).to.be.revertedWith('twTAP: cannot claim');
         await twtap.connect(bob).setApprovalForAll(carol.address, 1);
         await twtap.connect(carol).claimRewards(bobId, carol.address);
 
@@ -924,7 +924,7 @@ describe('TapiocaDAOPortal', () => {
         // Bob cannot take Alice's TAP (without permission. TODO: Test?)
         await expect(
             twtap.connect(bob).releaseTap(aliceId, bob.address),
-        ).to.be.revertedWith('TapiocaDAOPortal: cannot claim');
+        ).to.be.revertedWith('twTAP: cannot claim');
 
         // Alice can send TAP to Bob:
         await twtap.connect(alice).releaseTap(aliceId, bob.address);
@@ -1010,6 +1010,6 @@ describe('TapiocaDAOPortal', () => {
             twtap
                 .connect(alice)
                 .participate(alice.address, oneEth.mul(100), tooMuch),
-        ).to.be.revertedWith('TapiocaDAOPortal: too long');
+        ).to.be.revertedWith('twTAP: too long');
     });
 });
