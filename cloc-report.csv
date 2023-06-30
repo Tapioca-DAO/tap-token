@@ -1,0 +1,13 @@
+language,filename,blank,comment,code,"github.com/AlDanial/cloc v 1.96"
+Solidity,./contracts/options/TapiocaOptionBroker.sol,73,115,398
+Solidity,./contracts/governance/twTAP.sol,63,188,341
+Solidity,./contracts/option-airdrop/AirdropBroker.sol,77,134,338
+Solidity,./contracts/tokens/BaseTapOFT.sol,37,52,264
+Solidity,./contracts/options/TapiocaOptionLiquidityProvision.sol,50,74,248
+Solidity,./contracts/tokens/TapOFT.sol,38,90,127
+Solidity,./contracts/Vesting.sol,29,49,94
+Solidity,./contracts/twAML.sol,14,49,94
+Solidity,./contracts/option-airdrop/aoTAP.sol,22,40,88
+Solidity,./contracts/options/oTAP.sol,21,49,75
+Solidity,./contracts/tokens/LTap.sol,9,18,30
+SUM,,433,858,2097

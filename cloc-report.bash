@@ -1,1 +1,1 @@
-cloc ./contracts/**/*.sol --by-file --csv --quiet > cloc-report.csv
+cloc ./contracts/**/*.sol --by-file --csv --quiet --hide-rate > cloc-report.csv
