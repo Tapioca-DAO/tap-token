@@ -103,6 +103,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
     uint256 constant DIST_PRECISION = 2 ** 128;
 
     IERC20[] public rewardTokens;
+    mapping(IERC20 => uint256) public rewardTokenIndex;
     // tokenId -> rewardTokens index -> amount
     mapping(uint256 => mapping(uint256 => uint256)) public claimed;
 
@@ -261,10 +262,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         uint256 _amount,
         uint256 _duration
     ) external returns (uint256 tokenId) {
-        require(
-            _duration >= EPOCH_DURATION,
-            "TapiocaDAOPortal: Lock not a week"
-        );
+        require(_duration >= EPOCH_DURATION, "twTAP: Lock not a week");
 
         // Transfer TAP to this contract
         tapOFT.transferFrom(msg.sender, address(this), _amount);
@@ -320,7 +318,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         _safeMint(_participant, tokenId);
 
         uint256 expiry = block.timestamp + _duration;
-        require(expiry < type(uint56).max, "TapiocaDAOPortal: too long");
+        require(expiry < type(uint56).max, "twTAP: too long");
         // Eligibility starts NEXT week, and lasts until the week that the lock
         // expires. This is guaranteed to be at least one week later by the
         // check on `_duration`.
@@ -365,6 +363,17 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         _claimRewards(_tokenId, _to);
     }
 
+    /// @notice claims all rewards distributed since token mint or last claim, and send them to another chain.
+    /// @param _tokenId The tokenId of the twTAP position
+    /// @param _rewardTokens The address of the reward token
+    function claimAndSendRewards(
+        uint256 _tokenId,
+        IERC20[] memory _rewardTokens
+    ) external {
+        require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
+        _claimRewardsOn(_tokenId, address(tapOFT), _rewardTokens);
+    }
+
     /// @notice claims the TAP locked in a position whose votes have expired,
     /// @notice and undoes the effect on the twAML calculations.
     /// @param _tokenId tokenId whose locked TAP to claim
@@ -381,25 +390,13 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         _releaseTap(_tokenId, to);
     }
 
-    /// @notice Exit a twAML participation and send the withdrawn TAP to the dst chain of the holder address.
+    /// @notice Exit a twAML participation and send the withdrawn TAP to tapOFT to send it to another chain.
     /// @param _tokenId The tokenId of the twTAP position
-    /// @param _dstChainId The destination chain id
-    /// @param _to The address of the holder on the destination chain
-    /// @param _lzCallParams The LZ call params
     function exitPositionAndSendTap(
-        uint256 _tokenId,
-        uint16 _dstChainId,
-        bytes32 _to,
-        ICommonOFT.LzCallParams memory _lzCallParams
-    ) external payable {
-        uint256 amount = _releaseTap(_tokenId, address(this));
-        tapOFT.sendFrom{value: address(this).balance}(
-            address(this),
-            _dstChainId,
-            _to,
-            amount,
-            _lzCallParams
-        );
+        uint256 _tokenId
+    ) external returns (uint256) {
+        require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
+        return _releaseTap(_tokenId, address(tapOFT));
     }
 
     /// @notice Indicate that (a) week(s) have passed and update running totals
@@ -441,7 +438,10 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         uint256 _rewardTokenId,
         uint256 _amount
     ) external {
-        require(lastProcessedWeek == currentWeek(), "Advance week first");
+        require(
+            lastProcessedWeek == currentWeek(),
+            "twTAP: Advance week first"
+        );
         WeekTotals storage totals = weekTotals[lastProcessedWeek];
         IERC20 rewardToken = rewardTokens[_rewardTokenId];
         // If this is a DBZ then there are no positions to give the reward to.
@@ -463,6 +463,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
     function addRewardToken(IERC20 token) external onlyOwner returns (uint256) {
         uint256 i = rewardTokens.length;
         rewardTokens.push(token);
+        rewardTokenIndex[token] = i;
         return i;
     }
 
@@ -482,7 +483,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
                 _to == tokenOwner ||
                 isApprovedForAll(tokenOwner, msg.sender) ||
                 getApproved(_tokenId) == msg.sender,
-            "TapiocaDAOPortal: cannot claim"
+            "twTAP: cannot claim"
         );
     }
 
@@ -501,6 +502,28 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         }
     }
 
+    function _claimRewardsOn(
+        uint256 _tokenId,
+        address _to,
+        IERC20[] memory _rewardTokens
+    ) internal {
+        uint256[] memory amounts = claimable(_tokenId);
+        unchecked {
+            uint256 len = _rewardTokens.length;
+            for (uint256 i = 0; i < len; ) {
+                uint256 claimableIndex = rewardTokenIndex[_rewardTokens[i]];
+                uint256 amount = amounts[i];
+
+                if (amount > 0) {
+                    // Math is safe: `amount` calculated safely in `claimable()`
+                    claimed[_tokenId][claimableIndex] += amount;
+                    rewardTokens[claimableIndex].safeTransfer(_to, amount);
+                }
+                ++i;
+            }
+        }
+    }
+
     function _releaseTap(
         uint256 _tokenId,
         address _to
@@ -509,10 +532,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         if (position.tapReleased) {
             return 0;
         }
-        require(
-            position.expiry <= block.timestamp,
-            "TapiocaDAOPortal: Lock not expired"
-        );
+        require(position.expiry <= block.timestamp, "twTAP: Lock not expired");
 
         releasedAmount = position.tapAmount;
 

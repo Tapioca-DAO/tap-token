@@ -2,10 +2,11 @@
 pragma solidity ^0.8.18;
 
 import {ILayerZeroEndpoint} from "tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import {LzLib} from "tapioca-sdk/dist/contracts/libraries/LzLib.sol";
+import "tapioca-periph/contracts/interfaces/ITapiocaOFT.sol";
 import "tapioca-sdk/dist/contracts/token/oft/v2/OFTV2.sol";
 import {TwTAP} from "../governance/twTAP.sol";
-
 /*
 
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -20,6 +21,11 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 */
 
+struct IRewardClaimSendFromParams {
+    uint256 ethValue;
+    ITapiocaOFT.LzCallParams callParams;
+}
+
 abstract contract BaseTapOFT is OFTV2 {
     using ExcessivelySafeCall for address;
     using BytesLib for bytes;
@@ -28,6 +34,7 @@ abstract contract BaseTapOFT is OFTV2 {
 
     uint16 internal constant PT_LOCK_TWTAP = 870;
     uint16 internal constant PT_UNLOCK_TWTAP = 871;
+    uint16 internal constant PT_CLAIM_REWARDS = 872;
 
     event CallFailedStr(uint16 _srcChainId, bytes _payload, string _reason);
     event CallFailedBytes(uint16 _srcChainId, bytes _payload, bytes _reason);
@@ -52,6 +59,8 @@ abstract contract BaseTapOFT is OFTV2 {
             _lockTwTapPosition(_srcChainId, _payload);
         } else if (packetType == PT_UNLOCK_TWTAP) {
             _unlockTwTapPosition(_srcChainId, _payload);
+        } else if (packetType == PT_CLAIM_REWARDS) {
+            _claimRewards(_srcChainId, _payload);
         } else {
             packetType = _payload.toUint8(0);
             if (packetType == PT_SEND) {
@@ -137,6 +146,102 @@ abstract contract BaseTapOFT is OFTV2 {
         }
     }
 
+    /// ------------------------------
+    /// ------- CLAIM REWARDS --------
+    /// ------------------------------
+
+    /// @notice Claim rewards from a twTAP position.
+    /// @param to The address to add the twTAP position to.
+    /// @param tokenID Token ID of the twTAP position.
+    /// @param rewardTokens The address of the reward tokens.
+    /// @param lzDstChainId The destination chain id.
+    /// @param zroPaymentAddress The address to send the ZRO payment to.
+    /// @param adapterParams The adapter params.
+    /// @param rewardClaimSendParams The adapter params to send back the TAP token.
+    function claimRewards(
+        address to,
+        uint256 tokenID,
+        address[] memory rewardTokens,
+        uint16 lzDstChainId,
+        address zroPaymentAddress,
+        bytes calldata adapterParams,
+        IRewardClaimSendFromParams[] calldata rewardClaimSendParams
+    ) external payable {
+        bytes memory lzPayload = abi.encode(
+            PT_CLAIM_REWARDS, // packet type
+            msg.sender,
+            to,
+            tokenID,
+            rewardTokens,
+            rewardClaimSendParams
+        );
+
+        _lzSend(
+            lzDstChainId,
+            lzPayload,
+            payable(msg.sender),
+            zroPaymentAddress,
+            adapterParams,
+            msg.value
+        );
+
+        emit SendToChain(
+            lzDstChainId,
+            msg.sender,
+            LzLib.addressToBytes32(to),
+            0
+        );
+    }
+
+    function _claimRewards(
+        uint16 _srcChainId,
+        bytes memory _payload
+    ) internal virtual {
+        (
+            ,
+            ,
+            address to,
+            uint256 tokenID,
+            IERC20[] memory rewardTokens,
+            IRewardClaimSendFromParams[] memory rewardClaimSendParams
+        ) = abi.decode(
+                _payload,
+                (
+                    uint16,
+                    address,
+                    address,
+                    uint256,
+                    IERC20[],
+                    IRewardClaimSendFromParams[]
+                )
+            );
+
+        // Only the owner can unlock
+        require(twTap.ownerOf(tokenID) == to, "TapOFT: Not owner");
+
+        // Exit and receive tokens to this contract
+        try twTap.claimAndSendRewards(tokenID, rewardTokens) {
+            // Transfer them to the user
+            uint256 len = rewardTokens.length;
+            for (uint i = 0; i < len; ) {
+                ISendFrom(address(rewardTokens[i])).sendFrom{
+                    value: rewardClaimSendParams[i].ethValue
+                }(
+                    address(this),
+                    _srcChainId,
+                    LzLib.addressToBytes32(to),
+                    IERC20(rewardTokens[i]).balanceOf(address(this)),
+                    rewardClaimSendParams[i].callParams
+                );
+                ++i;
+            }
+        } catch Error(string memory _reason) {
+            emit CallFailedStr(_srcChainId, _payload, _reason);
+        } catch (bytes memory _reason) {
+            emit CallFailedBytes(_srcChainId, _payload, _reason);
+        }
+    }
+
     /// --------------------------
     /// ------- UNLOCK TWTAP -------
     /// --------------------------
@@ -196,14 +301,20 @@ abstract contract BaseTapOFT is OFTV2 {
                 (uint16, address, address, uint256, LzCallParams)
             );
 
-        try
-            twTap.exitPositionAndSendTap{value: address(this).balance}(
-                tokenID,
+        // Only the owner can unlock
+        require(twTap.ownerOf(tokenID) == to, "TapOFT: Not owner");
+
+        // Exit and receive tokens to this contract
+        try twTap.exitPositionAndSendTap(tokenID) returns (uint256 _amount) {
+            // Transfer them to the user
+            this.sendFrom{value: address(this).balance}(
+                address(this),
                 _srcChainId,
                 LzLib.addressToBytes32(to),
+                _amount,
                 twTapSendBackAdapterParams
-            )
-        {} catch Error(string memory _reason) {
+            );
+        } catch Error(string memory _reason) {
             emit CallFailedStr(_srcChainId, _payload, _reason);
         } catch (bytes memory _reason) {
             emit CallFailedBytes(_srcChainId, _payload, _reason);
@@ -215,4 +326,28 @@ abstract contract BaseTapOFT is OFTV2 {
     }
 
     receive() external payable virtual {}
+
+    function _callApproval(ICommonData.IApproval[] memory approvals) private {
+        for (uint256 i = 0; i < approvals.length; ) {
+            try
+                IERC20Permit(approvals[i].target).permit(
+                    approvals[i].owner,
+                    approvals[i].spender,
+                    approvals[i].value,
+                    approvals[i].deadline,
+                    approvals[i].v,
+                    approvals[i].r,
+                    approvals[i].s
+                )
+            {} catch Error(string memory reason) {
+                if (!approvals[i].allowFailure) {
+                    revert(reason);
+                }
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
 }

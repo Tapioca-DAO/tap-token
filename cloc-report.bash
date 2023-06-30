@@ -1,0 +1,1 @@
+cloc ./contracts/**/*.sol --by-file --csv --quiet > cloc-report.csv
