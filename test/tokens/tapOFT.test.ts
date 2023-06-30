@@ -20,6 +20,7 @@ import {
     randomSigners,
     time_travel,
 } from '../test.utils';
+import { TapiocaOFT } from 'tapioca-sdk/dist/typechain/tapiocaz';
 
 describe('tapOFT', () => {
     let signer: SignerWithAddress;
@@ -31,6 +32,9 @@ describe('tapOFT', () => {
 
     let tapiocaOFT0: TapOFT;
     let tapiocaOFT1: TapOFT;
+
+    let toft0: TapiocaOFT;
+    let toft1: TapiocaOFT;
 
     async function register() {
         signer = (await ethers.getSigners())[0];
@@ -57,6 +61,17 @@ describe('tapOFT', () => {
             signer.address,
         )) as TapOFT;
 
+        toft0 = (await deployTapiocaOFT(
+            signer,
+            LZEndpointMockCurrentChain.address,
+            normalUser.address,
+        )) as any as TapiocaOFT;
+        toft1 = (await deployTapiocaOFT(
+            signer,
+            LZEndpointMockGovernance.address,
+            normalUser.address,
+        )) as any as TapiocaOFT;
+
         // OFT Setup
         await tapiocaOFT0.setUseCustomAdapterParams(true);
         await tapiocaOFT0.setMinDstGas(11, 870, 550_00);
@@ -68,7 +83,13 @@ describe('tapOFT', () => {
         await tapiocaOFT1.setMinDstGas(chainId, 871, 550_00);
         await tapiocaOFT1.setMinDstGas(chainId, 0, 200_000);
 
-        // ---- LZ Setup
+        await toft0.setUseCustomAdapterParams(true);
+        await toft0.setMinDstGas(11, 0, 200_000);
+
+        await toft1.setUseCustomAdapterParams(true);
+        await toft1.setMinDstGas(chainId, 0, 200_000);
+
+        // ---- Endpoint setup
         await LZEndpointMockCurrentChain.setDestLzEndpoint(
             tapiocaOFT1.address,
             LZEndpointMockGovernance.address,
@@ -78,6 +99,16 @@ describe('tapOFT', () => {
             LZEndpointMockCurrentChain.address,
         );
 
+        await LZEndpointMockCurrentChain.setDestLzEndpoint(
+            toft1.address,
+            LZEndpointMockGovernance.address,
+        );
+        await LZEndpointMockGovernance.setDestLzEndpoint(
+            toft0.address,
+            LZEndpointMockCurrentChain.address,
+        );
+
+        // ---- Trusted remote setup
         await tapiocaOFT0.setTrustedRemote(
             11,
             ethers.utils.solidityPack(
@@ -90,6 +121,21 @@ describe('tapOFT', () => {
             ethers.utils.solidityPack(
                 ['address', 'address'],
                 [tapiocaOFT0.address, tapiocaOFT1.address],
+            ),
+        );
+
+        await toft0.setTrustedRemote(
+            11,
+            ethers.utils.solidityPack(
+                ['address', 'address'],
+                [toft1.address, toft0.address],
+            ),
+        );
+        await toft1.setTrustedRemote(
+            chainId,
+            ethers.utils.solidityPack(
+                ['address', 'address'],
+                [toft0.address, toft1.address],
             ),
         );
     }
@@ -671,15 +717,6 @@ describe('tapOFT', () => {
 
             await time_travel((await twTAP.EPOCH_DURATION()).toNumber());
 
-            // Emulate msg.value sent to contract
-            await setBalance(
-                tapiocaOFT1.address,
-                hre.ethers.utils.defaultAbiCoder.encode(
-                    ['uint256'],
-                    [(10e18).toString()],
-                ),
-            );
-
             await expect(
                 tapiocaOFT0.unlockTwTapPosition(
                     signer.address,
@@ -687,8 +724,8 @@ describe('tapOFT', () => {
                     11,
                     ethers.constants.AddressZero,
                     hre.ethers.utils.solidityPack(
-                        ['uint16', 'uint256'],
-                        [1, 750_000], // Should use ~514_227 + sendBack 200_000
+                        ['uint16', 'uint', 'uint', 'address'],
+                        [2, 750_000, (1e18).toString(), tapiocaOFT1.address], // Should use ~514_227 + sendBack 200_000
                     ),
                     {
                         adapterParams: hre.ethers.utils.solidityPack(
@@ -705,6 +742,88 @@ describe('tapOFT', () => {
             // Check TAP was transferred back
             expect(await tapiocaOFT0.balanceOf(signer.address)).to.be.equal(
                 tapBefore_chain_0,
+            );
+        });
+
+        it('Should make a cross-chain twTAP reward claim', async () => {
+            const twTAPFactory = await ethers.getContractFactory('TwTAP');
+            const twTAP = await twTAPFactory.deploy(
+                tapiocaOFT1.address,
+                signer.address,
+                LZEndpointMockGovernance.address,
+                11,
+                200_000,
+            );
+            const rewardToClaim = (1e18).toString();
+
+            await tapiocaOFT1.setTwTap(twTAP.address);
+
+            tapiocaOFT0.lockTwTapPosition(
+                signer.address,
+                (1e18).toString(),
+                await twTAP.EPOCH_DURATION(),
+                11,
+                ethers.constants.AddressZero,
+                hre.ethers.utils.solidityPack(
+                    ['uint16', 'uint256'],
+                    [1, 550_000], // Should use ~514_227
+                ),
+                { value: (1e18).toString() },
+            );
+            const tokenID = await twTAP.mintedTWTap();
+
+            await time_travel((await twTAP.EPOCH_DURATION()).toNumber());
+
+            // Distribute rewards
+            {
+                await twTAP.addRewardToken(toft1.address);
+                await twTAP.advanceWeek(2);
+
+                await toft1
+                    .connect(normalUser)
+                    .approve(twTAP.address, rewardToClaim);
+                await twTAP
+                    .connect(normalUser)
+                    .distributeReward(0, rewardToClaim);
+            }
+
+            expect((await twTAP.claimable(tokenID))[0]).to.be.approximately(
+                rewardToClaim,
+                1,
+            );
+
+            await expect(
+                tapiocaOFT0.claimRewards(
+                    signer.address,
+                    1,
+                    [toft1.address],
+                    11,
+                    ethers.constants.AddressZero,
+                    hre.ethers.utils.solidityPack(
+                        ['uint16', 'uint', 'uint', 'address'],
+                        [2, 1_000_000, (1e18).toString(), tapiocaOFT1.address],
+                    ),
+                    [
+                        {
+                            ethValue: (1e18).toString(),
+                            callParams: {
+                                adapterParams: hre.ethers.utils.solidityPack(
+                                    ['uint16', 'uint256'],
+                                    [1, 200_000],
+                                ),
+                                refundAddress: signer.address,
+                                zroPaymentAddress: ethers.constants.AddressZero,
+                            },
+                        },
+                    ],
+                    { value: (2e18).toString() },
+                ),
+            ).to.not.be.reverted;
+
+            // Check reward was transferred back
+            expect(await toft0.balanceOf(signer.address)).to.be.approximately(
+                rewardToClaim,
+                1,
             );
         });
     });
