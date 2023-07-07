@@ -3,6 +3,7 @@ pragma solidity ^0.8.18;
 
 import {ILayerZeroEndpoint} from "tapioca-sdk/dist/contracts/interfaces/ILayerZeroEndpoint.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {LzLib} from "tapioca-sdk/dist/contracts/libraries/LzLib.sol";
 import "tapioca-periph/contracts/interfaces/ITapiocaOFT.sol";
 import "tapioca-sdk/dist/contracts/token/oft/v2/OFTV2.sol";
@@ -29,6 +30,7 @@ struct IRewardClaimSendFromParams {
 abstract contract BaseTapOFT is OFTV2 {
     using ExcessivelySafeCall for address;
     using BytesLib for bytes;
+    using SafeERC20 for IERC20;
 
     TwTAP public twTap;
 
@@ -91,16 +93,19 @@ abstract contract BaseTapOFT is OFTV2 {
         address zroPaymentAddress,
         bytes calldata adapterParams
     ) external payable {
+        (amount, ) = _removeDust(amount);
+
         bytes memory lzPayload = abi.encode(
             PT_LOCK_TWTAP, // packet type
             msg.sender,
             to,
-            amount,
+            _ld2sd(amount),
             duration
         );
 
         require(duration > 0, "TapOFT: Small duration");
         bytes32 senderBytes = LzLib.addressToBytes32(msg.sender);
+
         _debitFrom(msg.sender, lzEndpoint.getChainId(), senderBytes, amount);
 
         _lzSend(
@@ -124,11 +129,12 @@ abstract contract BaseTapOFT is OFTV2 {
         uint16 _srcChainId,
         bytes memory _payload
     ) internal virtual {
-        (, , address to, uint256 amount, uint duration) = abi.decode(
+        (, , address to, uint64 amountSD, uint duration) = abi.decode(
             _payload,
-            (uint16, address, address, uint256, uint256)
+            (uint16, address, address, uint64, uint256)
         );
 
+        uint256 amount = _sd2ld(amountSD);
         _creditTo(_srcChainId, address(this), amount);
         approve(address(twTap), amount);
 
@@ -224,13 +230,23 @@ abstract contract BaseTapOFT is OFTV2 {
             // Transfer them to the user
             uint256 len = rewardTokens.length;
             for (uint i = 0; i < len; ) {
+                uint256 amountToSend = IERC20(rewardTokens[i]).balanceOf(
+                    address(this)
+                );
+                (uint256 amountWithoutDust, ) = _removeDust(amountToSend);
+                if (amountWithoutDust < amountToSend) {
+                    IERC20(rewardTokens[i]).safeTransfer(
+                        to,
+                        amountToSend - amountWithoutDust
+                    );
+                }
                 ISendFrom(address(rewardTokens[i])).sendFrom{
                     value: rewardClaimSendParams[i].ethValue
                 }(
                     address(this),
                     _srcChainId,
                     LzLib.addressToBytes32(to),
-                    IERC20(rewardTokens[i]).balanceOf(address(this)),
+                    amountWithoutDust,
                     rewardClaimSendParams[i].callParams
                 );
                 ++i;
@@ -306,12 +322,20 @@ abstract contract BaseTapOFT is OFTV2 {
 
         // Exit and receive tokens to this contract
         try twTap.exitPositionAndSendTap(tokenID) returns (uint256 _amount) {
+            (uint256 amountWithoutDust, ) = _removeDust(_amount);
+            if (amountWithoutDust < _amount) {
+                IERC20(address(this)).safeTransfer(
+                    to,
+                    _amount - amountWithoutDust
+                );
+            }
+
             // Transfer them to the user
             this.sendFrom{value: address(this).balance}(
                 address(this),
                 _srcChainId,
                 LzLib.addressToBytes32(to),
-                _amount,
+                amountWithoutDust,
                 twTapSendBackAdapterParams
             );
         } catch Error(string memory _reason) {
