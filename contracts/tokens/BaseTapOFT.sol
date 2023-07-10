@@ -38,8 +38,16 @@ abstract contract BaseTapOFT is OFTV2 {
     uint16 internal constant PT_UNLOCK_TWTAP = 871;
     uint16 internal constant PT_CLAIM_REWARDS = 872;
 
-    event CallFailedStr(uint16 _srcChainId, bytes _payload, string _reason);
-    event CallFailedBytes(uint16 _srcChainId, bytes _payload, bytes _reason);
+    event CallFailedStr(
+        uint16 indexed _srcChainId,
+        bytes _payload,
+        string _reason
+    );
+    event CallFailedBytes(
+        uint16 indexed _srcChainId,
+        bytes _payload,
+        bytes _reason
+    );
 
     constructor(
         string memory _name,
@@ -173,6 +181,11 @@ abstract contract BaseTapOFT is OFTV2 {
         bytes calldata adapterParams,
         IRewardClaimSendFromParams[] calldata rewardClaimSendParams
     ) external payable {
+        require(
+            rewardTokens.length == rewardClaimSendParams.length,
+            "TapOFT: length mismatch"
+        );
+
         bytes memory lzPayload = abi.encode(
             PT_CLAIM_REWARDS, // packet type
             msg.sender,
@@ -343,6 +356,14 @@ abstract contract BaseTapOFT is OFTV2 {
         } catch (bytes memory _reason) {
             emit CallFailedBytes(_srcChainId, _payload, _reason);
         }
+    }
+
+    /// @notice rescues unused ETH from the contract
+    /// @param amount the amount to rescue
+    /// @param to the recipient
+    function rescueEth(uint256 amount, address to) external onlyOwner {
+        (bool success, ) = to.call{value: amount}("");
+        require(success, "TapOFT: failed to rescue");
     }
 
     function setTwTap(address _twTap) external onlyOwner {

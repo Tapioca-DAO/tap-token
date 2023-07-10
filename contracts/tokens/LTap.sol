@@ -3,6 +3,7 @@ pragma solidity ^0.8.18;
 
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /*
 
@@ -21,6 +22,8 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 /// @title LTAP
 /// @notice Locked TAP
 contract LTap is BoringOwnable, ERC20Permit {
+    using SafeERC20 for IERC20;
+
     IERC20 tapToken;
     uint256 public lockedUntil;
     uint256 public maxLockedUntil;
@@ -39,7 +42,7 @@ contract LTap is BoringOwnable, ERC20Permit {
     }
 
     function deposit(uint256 amount) external {
-        tapToken.transferFrom(msg.sender, address(this), amount);
+        tapToken.safeTransferFrom(msg.sender, address(this), amount);
         _mint(msg.sender, amount);
     }
 
@@ -47,7 +50,7 @@ contract LTap is BoringOwnable, ERC20Permit {
         require(block.timestamp > lockedUntil, "Still locked");
         uint256 amount = balanceOf(msg.sender);
         _burn(msg.sender, amount);
-        tapToken.transfer(msg.sender, amount);
+        tapToken.safeTransfer(msg.sender, amount);
     }
 
     function setLockedUntil(uint256 _lockedUntil) external onlyOwner {

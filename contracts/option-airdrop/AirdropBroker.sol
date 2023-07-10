@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "tapioca-periph/contracts/interfaces/IOracle.sol";
 import "../tokens/TapOFT.sol";
@@ -52,7 +54,9 @@ struct Phase2Info {
 }
 
 /// @notice More details found here https://docs.tapioca.xyz/tapioca/launch/option-airdrop
-contract AirdropBroker is Pausable, BoringOwnable, FullMath {
+contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
     bytes public tapOracleData;
     TapOFT public immutable tapOFT;
     AOTAP public immutable aoTAP;
@@ -167,7 +171,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(
             _aoTAPTokenID
         );
-        require(aoTapOption.expiry > block.timestamp, "adb: Option expired");
+        require(aoTapOption.expiry >= block.timestamp, "adb: Option expired");
 
         uint256 cachedEpoch = epoch;
 
@@ -242,7 +246,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(
             _aoTAPTokenID
         );
-        require(aoTapOption.expiry > block.timestamp, "adb: Option expired");
+        require(aoTapOption.expiry >= block.timestamp, "adb: Option expired");
 
         uint256 cachedEpoch = epoch;
 
@@ -376,7 +380,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
     /// @param _paymentTokens The payment tokens to collect
     function collectPaymentTokens(
         address[] calldata _paymentTokens
-    ) external onlyOwner {
+    ) external onlyOwner nonReentrant {
         require(
             paymentTokenBeneficiary != address(0),
             "adb: Payment token beneficiary not set"
@@ -385,8 +389,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
 
         unchecked {
             for (uint256 i = 0; i < len; ++i) {
-                ERC20 paymentToken = ERC20(_paymentTokens[i]);
-                paymentToken.transfer(
+                IERC20 paymentToken = IERC20(_paymentTokens[i]);
+                paymentToken.safeTransfer(
                     paymentTokenBeneficiary,
                     paymentToken.balanceOf(address(this))
                 );
@@ -518,11 +522,15 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
             _paymentToken.decimals()
         );
 
-        _paymentToken.transferFrom(
+        require(discountedPaymentAmount > 0, "adb: payment amount is 0");
+        // in case of fee-on-transfer tokens, received amount might be less than `discountedPaymentAmount`
+        IERC20(address(_paymentToken)).safeTransferFrom(
             msg.sender,
             address(this),
             discountedPaymentAmount
         );
+
+        require(tapAmount > 0, "adb: tapAmount is 0");
         tapOFT.transfer(msg.sender, tapAmount);
     }
 
@@ -538,6 +546,10 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath {
         uint256 _discount,
         uint256 _paymentTokenDecimals
     ) internal pure returns (uint256 paymentAmount) {
+        require(
+            _paymentTokenValuation > 0,
+            "adb: paymentTokenValuation not valid"
+        );
         // Calculate payment amount
         uint256 rawPaymentAmount = _otcAmountInUSD / _paymentTokenValuation;
         paymentAmount =

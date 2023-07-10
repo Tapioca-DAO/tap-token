@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "tapioca-periph/contracts/interfaces/IOracle.sol";
 import "./TapiocaOptionLiquidityProvision.sol";
@@ -58,7 +60,14 @@ struct PaymentTokenOracle {
     bytes oracleData;
 }
 
-contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
+contract TapiocaOptionBroker is
+    Pausable,
+    BoringOwnable,
+    TWAML,
+    ReentrancyGuard
+{
+    using SafeERC20 for IERC20;
+
     TapiocaOptionLiquidityProvision public immutable tOLP;
     bytes public tapOracleData;
     TapOFT public immutable tapOFT;
@@ -486,7 +495,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
     /// @param _paymentTokens The payment tokens to collect
     function collectPaymentTokens(
         address[] calldata _paymentTokens
-    ) external onlyOwner {
+    ) external onlyOwner nonReentrant {
         require(
             paymentTokenBeneficiary != address(0),
             "tOB: Payment token beneficiary not set"
@@ -495,8 +504,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
 
         unchecked {
             for (uint256 i = 0; i < len; ++i) {
-                ERC20 paymentToken = ERC20(_paymentTokens[i]);
-                paymentToken.transfer(
+                IERC20 paymentToken = IERC20(_paymentTokens[i]);
+                paymentToken.safeTransfer(
                     paymentTokenBeneficiary,
                     paymentToken.balanceOf(address(this))
                 );
@@ -535,7 +544,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
             _paymentToken.decimals()
         );
 
-        _paymentToken.transferFrom(
+        IERC20(address(_paymentToken)).safeTransferFrom(
             msg.sender,
             address(this),
             discountedPaymentAmount
@@ -555,6 +564,10 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML {
         uint256 _discount,
         uint256 _paymentTokenDecimals
     ) internal pure returns (uint256 paymentAmount) {
+        require(
+            _paymentTokenValuation > 0,
+            "tOB: paymentTokenValuation not valid"
+        );
         // Calculate payment amount
         uint256 rawPaymentAmount = _otcAmountInUSD / _paymentTokenValuation;
         paymentAmount =
