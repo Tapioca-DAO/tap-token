@@ -92,9 +92,9 @@ contract TapiocaOptionLiquidityProvision is
     event UpdateTotalSingularityPoolWeights(
         uint256 totalSingularityPoolWeights
     );
-    event SetSGLPoolWeight(address sgl, uint256 poolWeight);
-    event RegisterSingularity(address sgl, uint256 assetID);
-    event UnregisterSingularity(address sgl, uint256 assetID);
+    event SetSGLPoolWeight(address indexed sgl, uint256 poolWeight);
+    event RegisterSingularity(address indexed sgl, uint256 indexed assetID);
+    event UnregisterSingularity(address indexed sgl, uint256 indexed assetID);
 
     // ===============
     //    MODIFIERS

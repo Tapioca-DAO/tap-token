@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol";
 import {ONFT721} from "tapioca-sdk/src/contracts/token/onft/ONFT721.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
@@ -76,7 +77,7 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TwTAP is TWAML, ONFT721, ERC721Permit {
+contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     TapOFT public immutable tapOFT;
@@ -149,7 +150,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         uint256 averageMagnitude,
         uint256 totalParticipants
     );
-    event ExitPosition(uint256 tokenId, uint256 amount);
+    event ExitPosition(uint256 indexed tokenId, uint256 amount);
 
     // ==========
     //    READ
@@ -164,7 +165,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         uint _tokenId
     ) public view returns (Participation memory participant) {
         participant = participants[_tokenId];
-        if (participant.expiry < block.timestamp) {
+        if (participant.expiry <= block.timestamp) {
             participant.multiplier = 0;
         }
         return participant;
@@ -437,7 +438,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
     function distributeReward(
         uint256 _rewardTokenId,
         uint256 _amount
-    ) external {
+    ) external nonReentrant {
         require(
             lastProcessedWeek == currentWeek(),
             "twTAP: Advance week first"
@@ -453,6 +454,8 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit {
         totals.totalDistPerVote[_rewardTokenId] +=
             (_amount * DIST_PRECISION) /
             uint256(totals.netActiveVotes);
+
+        require(_amount > 0, "twTap: amount is 0");
         rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
     }
 

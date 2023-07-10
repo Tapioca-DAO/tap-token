@@ -50,6 +50,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     error NoTokens();
     error NotEnough();
     error BalanceTooLow();
+    error VestingDurationNotValid();
 
     // *************** //
     // *** EVENTS *** //
@@ -63,7 +64,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     /// @param _cliff cliff period
     /// @param _duration vesting period
     constructor(uint256 _cliff, uint256 _duration, address _owner) {
-        require(_duration > 0, "Vesting: no vesting");
+        if (_duration == 0) revert VestingDurationNotValid();
 
         cliff = _cliff;
         duration = _duration;
