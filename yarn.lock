@@ -5958,10 +5958,10 @@ solidity-comments-extractor@^0.0.7:
   resolved "https://registry.npmjs.org/solidity-comments-extractor/-/solidity-comments-extractor-0.0.7.tgz"
   integrity sha512-wciNMLg/Irp8OKGrh3S2tfvZiZ0NEyILfcRCXCD4mp7SgK/i9gzLfhY2hY7VMCQJ3kH9UB9BzNdibIVMchzyYw==
 
-solidity-coverage@^0.8.1:
-  version "0.8.2"
-  resolved "https://registry.npmjs.org/solidity-coverage/-/solidity-coverage-0.8.2.tgz"
-  integrity sha512-cv2bWb7lOXPE9/SSleDO6czkFiMHgP4NXPj+iW9W7iEKLBk7Cj0AGBiNmGX3V1totl9wjPrT0gHmABZKZt65rQ==
+solidity-coverage@^0.8.3:
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/solidity-coverage/-/solidity-coverage-0.8.3.tgz#72ce51e5ca9ea1182bbf6085eb1cf526f0603b52"
+  integrity sha512-hbcNgj5z8zzgTlnp4F0pXiqj1v5ua8P4DH5i9cWOBtFPfUuIohLoXu5WiAixexWmpKVjyxXqupnu/mPb4IGr7Q==
   dependencies:
     "@ethersproject/abi" "^5.0.9"
     "@solidity-parser/parser" "^0.14.1"
@@ -6269,10 +6269,10 @@ table@^6.0.9, table@^6.8.0, table@^6.8.1:
     string-width "^4.2.3"
     strip-ansi "^6.0.1"
 
-tapioca-sdk@^1.4.7:
-  version "1.4.7"
-  resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.4.7.tgz#1081b20d8c1a4b2f784f3b1765102b7a9bbf560b"
-  integrity sha512-EBQW8ze+eNPzLwE/5QK0W0XrtialgYyB7PM5a4s3UC8LDwZtWls0U089B1fDCTI7g2k1AsS2ehe51IZpcpF7Yw==
+tapioca-sdk@^1.4.9:
+  version "1.4.9"
+  resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.4.9.tgz#14979bb81279bbd8f9aa11aa6614ef740d47eedd"
+  integrity sha512-Y0DUwWl2Z5d4YEtURj6/yMfKy7LUl9sJV8FT6B2VuBkLbB7w/M9Eb+DNZit7s2UoCqrCC9ox/jf9b3X8PQm7OQ==
   dependencies:
     ethers "^5.4.7"
     fs-extra "^11.1.1"
