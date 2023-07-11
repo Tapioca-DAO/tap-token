@@ -66,11 +66,11 @@ abstract contract BaseTapOFT is OFTV2 {
         uint256 packetType = _payload.toUint256(0);
 
         if (packetType == PT_LOCK_TWTAP) {
-            _lockTwTapPosition(_srcChainId, _payload);
+            _lockTwTapPosition(_srcChainId, _srcAddress, _nonce, _payload);
         } else if (packetType == PT_UNLOCK_TWTAP) {
-            _unlockTwTapPosition(_srcChainId, _payload);
+            _unlockTwTapPosition(_srcChainId, _srcAddress, _nonce, _payload);
         } else if (packetType == PT_CLAIM_REWARDS) {
-            _claimRewards(_srcChainId, _payload);
+            _claimRewards(_srcChainId, _srcAddress, _nonce, _payload);
         } else {
             packetType = _payload.toUint8(0);
             if (packetType == PT_SEND) {
@@ -135,6 +135,8 @@ abstract contract BaseTapOFT is OFTV2 {
 
     function _lockTwTapPosition(
         uint16 _srcChainId,
+        bytes memory _srcAddress,
+        uint64 _nonce,
         bytes memory _payload
     ) internal virtual {
         (, , address to, uint64 amountSD, uint duration) = abi.decode(
@@ -157,6 +159,14 @@ abstract contract BaseTapOFT is OFTV2 {
         } catch (bytes memory _reason) {
             emit CallFailedBytes(_srcChainId, _payload, _reason);
             _transferFrom(address(this), to, amount);
+
+            _storeFailedMessage(
+                _srcChainId,
+                _srcAddress,
+                _nonce,
+                _payload,
+                _reason
+            );
         }
     }
 
@@ -214,6 +224,8 @@ abstract contract BaseTapOFT is OFTV2 {
 
     function _claimRewards(
         uint16 _srcChainId,
+        bytes memory _srcAddress,
+        uint64 _nonce,
         bytes memory _payload
     ) internal virtual {
         (
@@ -268,6 +280,14 @@ abstract contract BaseTapOFT is OFTV2 {
             emit CallFailedStr(_srcChainId, _payload, _reason);
         } catch (bytes memory _reason) {
             emit CallFailedBytes(_srcChainId, _payload, _reason);
+
+            _storeFailedMessage(
+                _srcChainId,
+                _srcAddress,
+                _nonce,
+                _payload,
+                _reason
+            );
         }
     }
 
@@ -317,6 +337,8 @@ abstract contract BaseTapOFT is OFTV2 {
 
     function _unlockTwTapPosition(
         uint16 _srcChainId,
+        bytes memory _srcAddress,
+        uint64 _nonce,
         bytes memory _payload
     ) internal virtual {
         (
@@ -355,6 +377,14 @@ abstract contract BaseTapOFT is OFTV2 {
             emit CallFailedStr(_srcChainId, _payload, _reason);
         } catch (bytes memory _reason) {
             emit CallFailedBytes(_srcChainId, _payload, _reason);
+
+            _storeFailedMessage(
+                _srcChainId,
+                _srcAddress,
+                _nonce,
+                _payload,
+                _reason
+            );
         }
     }
 
