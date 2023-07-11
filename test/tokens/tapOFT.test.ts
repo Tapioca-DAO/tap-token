@@ -7,7 +7,7 @@ import {
     loadFixture,
     takeSnapshot,
 } from '@nomicfoundation/hardhat-network-helpers';
-import { BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 import { TapOFT } from '../../typechain';
 import { LZEndpointMock } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
 import { setBalance } from '@nomicfoundation/hardhat-network-helpers';
@@ -787,10 +787,8 @@ describe('tapOFT', () => {
                     .distributeReward(0, rewardToClaim);
             }
 
-            expect((await twTAP.claimable(tokenID))[0]).to.be.approximately(
-                rewardToClaim,
-                1,
-            );
+            const claimable = (await twTAP.claimable(tokenID))[0];
+            expect(claimable).to.be.approximately(rewardToClaim, 1);
 
             await expect(
                 tapiocaOFT0.claimRewards(
@@ -820,10 +818,13 @@ describe('tapOFT', () => {
                 ),
             ).to.not.be.reverted;
 
+            const removeDust = (amount: BigNumber) => {
+                const dust = amount.mod(BN(10 ** (18 - 8)).toString());
+                return amount.sub(dust);
+            };
             // Check reward was transferred back
-            expect(await toft0.balanceOf(signer.address)).to.be.approximately(
-                rewardToClaim,
-                1,
+            expect(await toft0.balanceOf(signer.address)).to.be.eq(
+                removeDust(BN(claimable)),
             );
         });
     });
