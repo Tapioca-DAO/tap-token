@@ -1,7 +1,10 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
-import { TAPIOCA_PROJECTS_NAME } from '../../gitsub_tapioca-sdk/src/api/config';
-import { constants } from '../../scripts/deployment.utils';
+import {
+    EChainID,
+    TAPIOCA_PROJECTS_NAME,
+} from '../../gitsub_tapioca-sdk/src/api/config';
+import { TAP_DISTRIBUTION } from '../../gitsub_tapioca-sdk/src/api/constants';
 import { buildTapOFT } from '../deployBuilds/01-buildTapOFT';
 import { buildTOLP } from '../deployBuilds/02-buildTOLP';
 import { buildOTAP } from '../deployBuilds/03-buildOTAP';
@@ -45,24 +48,20 @@ export const deployStack__task = async (
 
         // Build contracts
         const chainId = await hre.getChainId();
-        const lzEndpoint = constants[chainId as '5'].address as string;
-        const contributorAddress = constants.teamAddress;
-        const earlySupportersAddress = constants.earlySupportersAddress;
-        const supportersAddress = constants.supportersAddress;
-        const lbpAddress = constants.daoAddress;
-        const airdropAddress = constants.seedAddress;
-        const daoAddress = constants.daoAddress;
-        const governanceChainId = constants.governanceChainId.toString();
+        const lzEndpoint = chainInfo?.address;
         VM.add(
             await buildTapOFT(hre, [
                 lzEndpoint,
-                contributorAddress,
-                earlySupportersAddress,
-                supportersAddress,
-                lbpAddress,
-                daoAddress,
-                airdropAddress,
-                governanceChainId,
+                TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]?.teamAddress, //contributor address
+                TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]
+                    ?.earlySupportersAddress,
+                TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]
+                    ?.supportersAddress,
+                TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]?.lbpAddress,
+                TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]?.daoAddress,
+                TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]
+                    ?.airdropAddress,
+                EChainID.ARBITRUM_GOERLI, //governance chain
                 signer.address,
             ]),
         )
