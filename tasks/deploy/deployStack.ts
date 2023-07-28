@@ -49,7 +49,7 @@ export const deployStack__task = async (
         const contributorAddress = constants.teamAddress;
         const earlySupportersAddress = constants.earlySupportersAddress;
         const supportersAddress = constants.supportersAddress;
-        const lbpAddress = constants.daoAddress;
+        const LTAPAddress = constants.daoAddress;
         const airdropAddress = constants.seedAddress;
         const daoAddress = constants.daoAddress;
         const governanceChainId = constants.governanceChainId.toString();
@@ -59,7 +59,7 @@ export const deployStack__task = async (
                 contributorAddress,
                 earlySupportersAddress,
                 supportersAddress,
-                lbpAddress,
+                LTAPAddress,
                 daoAddress,
                 airdropAddress,
                 governanceChainId,
