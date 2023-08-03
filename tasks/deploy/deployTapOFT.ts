@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { buildTapOFT } from '../deployBuilds/01-buildTapOFT';
 import { loadVM } from '../utils';
 import { TAP_DISTRIBUTION } from '../../gitsub_tapioca-sdk/src/api/constants';
-import { EChainID } from 'tapioca-sdk/dist/api/config';
+import { EChainID } from '../../gitsub_tapioca-sdk/src/api/config';
 
 // hh deployTapOFT -network goerli
 export const deployTapOFT__task = async (
