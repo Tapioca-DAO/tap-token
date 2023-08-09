@@ -97,7 +97,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     ///      Phase 3
     /// =====-------======
 
-    uint256 public constant PHASE_3_AMOUNT_PER_USER = 714;
+    uint256 public constant PHASE_3_AMOUNT_PER_USER = 714e18;
     uint256 public constant PHASE_3_DISCOUNT = 50 * 1e4;
 
     /// =====-------======
