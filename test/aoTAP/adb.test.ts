@@ -113,7 +113,7 @@ describe('AirdropBroker', () => {
         expect(await adb.PHASE_2_AMOUNT_PER_USER(3)).to.be.eq(BN(190));
 
         // Phase3
-        expect(await adb.PHASE_3_AMOUNT_PER_USER()).to.be.eq(BN(714).mul(1e18));
+        expect(await adb.PHASE_3_AMOUNT_PER_USER()).to.be.eq(BN(714));
         expect(await adb.PHASE_3_DISCOUNT()).to.be.eq(BN(50 * 1e4));
 
         // Phase4
@@ -481,7 +481,7 @@ describe('AirdropBroker', () => {
             const aoTAPTokenID = await aoTAP.mintedAOTAP();
             const aoTAPOption = await aoTAP.options(aoTAPTokenID);
 
-            expect(aoTAPOption.amount).to.be.eq(BN(714).mul(1e18)); // 200 per user for role 0
+            expect(aoTAPOption.amount).to.be.eq(BN(714).mul((1e18).toString())); // 200 per user for role 0
             expect(aoTAPOption.expiry).to.be.eq(
                 (await adb.lastEpochUpdate()).add(await adb.EPOCH_DURATION()),
             ); // 1 epoch after last epoch update
