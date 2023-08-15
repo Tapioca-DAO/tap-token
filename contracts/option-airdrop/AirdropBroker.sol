@@ -472,8 +472,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         userParticipation[tokenIDToAddress][3] = true;
 
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
-        uint256 eligibleAmount = PHASE_3_AMOUNT_PER_USER;
-        uint128 discount = uint128(PHASE_3_DISCOUNT);
+        uint256 eligibleAmount = PHASE_3_AMOUNT_PER_USER * 1e18;
+        uint128 discount = uint128(PHASE_3_DISCOUNT) * 1e4;
         oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
     }
 
