@@ -359,7 +359,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @notice claims all rewards distributed since token mint or last claim.
     /// @param _tokenId tokenId whose rewards to claim
     /// @param _to address to receive the rewards
-    function claimRewards(uint256 _tokenId, address _to) external {
+    function claimRewards(uint256 _tokenId, address _to) external nonReentrant {
         _requireClaimPermission(_to, _tokenId);
         _claimRewards(_tokenId, _to);
     }
@@ -370,7 +370,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     function claimAndSendRewards(
         uint256 _tokenId,
         IERC20[] memory _rewardTokens
-    ) external {
+    ) external nonReentrant {
         require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
         _claimRewardsOn(_tokenId, address(tapOFT), _rewardTokens);
     }
@@ -379,14 +379,14 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @notice and undoes the effect on the twAML calculations.
     /// @param _tokenId tokenId whose locked TAP to claim
     /// @param _to address to receive the TAP
-    function releaseTap(uint256 _tokenId, address _to) external {
+    function releaseTap(uint256 _tokenId, address _to) external nonReentrant {
         _requireClaimPermission(_to, _tokenId);
         _releaseTap(_tokenId, _to);
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
     /// @param _tokenId The tokenId of the twTAP position
-    function exitPosition(uint256 _tokenId) external {
+    function exitPosition(uint256 _tokenId) external nonReentrant {
         address to = ownerOf(_tokenId);
         _releaseTap(_tokenId, to);
     }
@@ -395,7 +395,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @param _tokenId The tokenId of the twTAP position
     function exitPositionAndSendTap(
         uint256 _tokenId
-    ) external returns (uint256) {
+    ) external nonReentrant returns (uint256) {
         require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
         return _releaseTap(_tokenId, address(tapOFT));
     }
@@ -403,7 +403,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @notice Indicate that (a) week(s) have passed and update running totals
     /// @notice Reverts if called in week 0. Let it.
     /// @param _limit Maximum number of weeks to process in one call
-    function advanceWeek(uint256 _limit) public {
+    function advanceWeek(uint256 _limit) public nonReentrant {
         // TODO: Make whole function unchecked
         uint256 cur = currentWeek();
         uint256 week = lastProcessedWeek;
