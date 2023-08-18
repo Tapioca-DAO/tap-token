@@ -97,7 +97,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     ///      Phase 3
     /// =====-------======
 
-    uint256 public constant PHASE_3_AMOUNT_PER_USER = 714e18;
+    uint256 public constant PHASE_3_AMOUNT_PER_USER = 714;
     uint256 public constant PHASE_3_DISCOUNT = 50 * 1e4;
 
     /// =====-------======
@@ -472,7 +472,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         userParticipation[tokenIDToAddress][3] = true;
 
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
-        uint256 eligibleAmount = PHASE_3_AMOUNT_PER_USER;
+        uint256 eligibleAmount = PHASE_3_AMOUNT_PER_USER * 1e18;
         uint128 discount = uint128(PHASE_3_DISCOUNT);
         oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
     }
