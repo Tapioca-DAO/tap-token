@@ -94,6 +94,10 @@ contract TapiocaOptionBroker is
     uint256 constant dMIN = 5 * 1e4;
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
 
+    /// @notice starts time for emissions
+    /// @dev initialized in the constructor with block.timestamp
+    uint256 public immutable emissionsStartTime;
+
     /// =====-------======
     constructor(
         address _tOLP,
@@ -109,6 +113,7 @@ contract TapiocaOptionBroker is
         oTAP = OTAP(_oTAP);
         EPOCH_DURATION = _epochDuration;
         owner = _owner;
+        emissionsStartTime = block.timestamp;
     }
 
     // ==========
@@ -150,6 +155,22 @@ contract TapiocaOptionBroker is
     // ==========
     //    READ
     // ==========
+    /// @notice Returns the current week given a timestamp
+    function timestampToWeek(
+        uint256 timestamp
+    ) external view returns (uint256) {
+        if (timestamp == 0) {
+            timestamp = block.timestamp;
+        }
+        if (timestamp < emissionsStartTime) return 0;
+
+        return _timestampToWeek(timestamp);
+    }
+
+    /// @notice Returns the current week
+    function getCurrentWeek() external view returns (uint256) {
+        return _timestampToWeek(block.timestamp);
+    }
 
     /// @notice Returns the details of an OTC deal for a given oTAP token ID and a payment token.
     ///         The oracle uses the last peeked value, and not the latest one, so the payment amount may be different.
@@ -429,14 +450,15 @@ contract TapiocaOptionBroker is
     ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
         require(
-            block.timestamp >= lastEpochUpdate + EPOCH_DURATION,
+            _timestampToWeek(block.timestamp) > lastEpochUpdate,
             "tOB: too soon"
         );
+
         uint256[] memory singularities = tOLP.getSingularities();
         require(singularities.length > 0, "tOB: No active singularities");
 
         // Update epoch info
-        lastEpochUpdate = block.timestamp;
+        lastEpochUpdate = _timestampToWeek(block.timestamp);
         epoch++;
 
         // Extract TAP
@@ -516,6 +538,12 @@ contract TapiocaOptionBroker is
     // ============
     //   INTERNAL
     // ============
+    /// @notice returns week for timestasmp
+    function _timestampToWeek(
+        uint256 timestamp
+    ) internal view returns (uint256) {
+        return ((timestamp - emissionsStartTime) / EPOCH_DURATION) + 1; // Starts at week 1
+    }
 
     /// @notice Process the OTC deal, transfer the payment token to the broker and the TAP amount to the user
     /// @param _paymentToken The payment token

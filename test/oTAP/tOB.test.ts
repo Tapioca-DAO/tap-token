@@ -601,9 +601,12 @@ describe('TapiocaOptionBroker', () => {
         // Check epoch update
         const txNewEpoch = await tOB.newEpoch();
         expect(await tOB.epoch()).to.be.equal(1);
+
+        const txNewEpochTimestamp = (
+            await hre.ethers.provider.getBlock(txNewEpoch.blockNumber!)
+        ).timestamp;
         expect(await tOB.lastEpochUpdate()).to.be.equal(
-            (await hre.ethers.provider.getBlock(txNewEpoch.blockNumber!))
-                .timestamp,
+            await tOB.timestampToWeek(txNewEpochTimestamp),
         );
         expect(await tOB.epochTAPValuation()).to.be.equal(tapPrice);
 
