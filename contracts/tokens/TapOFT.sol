@@ -194,6 +194,8 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     /// @notice Emit the TAP for the current week
     /// @return the emitted amount
     function emitForWeek() external notPaused returns (uint256) {
+        require(msg.sender == minter, "unauthorized");
+
         require(_getChainId() == governanceChainIdentifier, "chain not valid");
 
         uint256 week = _timestampToWeek(block.timestamp);
