@@ -223,7 +223,10 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
         require(_amount > 0, "amount not valid");
 
         uint256 week = _timestampToWeek(block.timestamp);
-        require(emissionForWeek[week] >= _amount, "exceeds allowable amount");
+        require(
+            emissionForWeek[week] >= mintedInWeek[week] + _amount,
+            "exceeds allowable amount"
+        );
         _mint(_to, _amount);
         mintedInWeek[week] += _amount;
         emit Minted(msg.sender, _to, _amount);

@@ -206,6 +206,7 @@ describe('tapOFT', () => {
         });
 
         it('should not mint when paused', async () => {
+            await tapiocaOFT0.setMinter(signer.address);
             await tapiocaOFT0.updatePause(true);
             await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.be
                 .reverted;
@@ -218,6 +219,7 @@ describe('tapOFT', () => {
         });
 
         it('should not allow emit from another chain', async () => {
+            await tapiocaOFT0.setMinter(signer.address);
             const chainBLzEndpoint = await deployLZEndpointMock(11);
             const chainBTap = await deployTapiocaOFT(
                 signer,
@@ -225,6 +227,7 @@ describe('tapOFT', () => {
                 signer.address,
                 10,
             );
+            await chainBTap.setMinter(signer.address);
             await time_travel(7 * 86400);
             await expect(
                 chainBTap.connect(signer).emitForWeek(),
@@ -250,22 +253,23 @@ describe('tapOFT', () => {
 
     describe('emissions', () => {
         it('should emit for each week', async () => {
+            await tapiocaOFT0.setMinter(signer.address);
             const initialDSOSupply = await tapiocaOFT0.dso_supply();
 
             const emissionForWeekBefore =
                 await tapiocaOFT0.getCurrentWeekEmission();
-            await tapiocaOFT0.connect(normalUser).emitForWeek();
+            await tapiocaOFT0.emitForWeek();
             const emissionForWeekAfter =
                 await tapiocaOFT0.getCurrentWeekEmission();
             expect(emissionForWeekAfter).to.be.gt(emissionForWeekBefore);
 
-            await tapiocaOFT0.connect(normalUser).emitForWeek();
+            await tapiocaOFT0.emitForWeek();
             expect(await tapiocaOFT0.getCurrentWeekEmission()).to.be.equal(
                 emissionForWeekAfter,
             ); // Can't mint 2 times a week
 
             await time_travel(7 * 86400);
-            await expect(tapiocaOFT0.connect(normalUser).emitForWeek()).to.emit(
+            await expect(tapiocaOFT0.emitForWeek()).to.emit(
                 tapiocaOFT0,
                 'Emitted',
             );
@@ -280,20 +284,18 @@ describe('tapOFT', () => {
         });
 
         it('should test weekly emissions', async () => {
+            await tapiocaOFT0.setMinter(signer.address);
             const noOfWeeks = 200;
             const supplyJsonContent: any = {};
             const emissionJsonContent: any = {};
             let sum: BigNumberish = 0;
-            await tapiocaOFT0.connect(signer).setMinter(minter.address);
             for (let i = 1; i <= noOfWeeks; i++) {
                 await time_travel(7 * 86400);
                 await tapiocaOFT0.emitForWeek();
                 const available =
                     await tapiocaOFT0.callStatic.getCurrentWeekEmission();
                 sum = available.add(sum);
-                await tapiocaOFT0
-                    .connect(minter)
-                    .extractTAP(signer.address, available);
+                await tapiocaOFT0.extractTAP(signer.address, available);
 
                 supplyJsonContent[i] = ethers.utils.formatEther(sum);
                 emissionJsonContent[i] = ethers.utils.formatEther(available);
@@ -511,12 +513,10 @@ describe('tapOFT', () => {
 
     describe('extract', () => {
         it('should transfer unused TAP for next week', async () => {
-            await tapiocaOFT0.connect(normalUser).emitForWeek();
+            await tapiocaOFT0.setMinter(signer.address);
+            await tapiocaOFT0.emitForWeek();
             const emissionWeek1 = await tapiocaOFT0.getCurrentWeekEmission();
-            await tapiocaOFT0.setMinter(minter.address);
-            await tapiocaOFT0
-                .connect(minter)
-                .extractTAP(minter.address, emissionWeek1.div(2));
+            await tapiocaOFT0.extractTAP(minter.address, emissionWeek1.div(2));
 
             const dso_supply = await tapiocaOFT0.dso_supply();
             const toBeEmitted = dso_supply
@@ -526,7 +526,7 @@ describe('tapOFT', () => {
 
             // Check emission update that accounts for unminted TAP
             await time_travel(7 * 86400);
-            await tapiocaOFT0.connect(normalUser).emitForWeek();
+            await tapiocaOFT0.emitForWeek();
             expect(await tapiocaOFT0.getCurrentWeekEmission()).to.be.equal(
                 toBeEmitted.add(emissionWeek1.div(2)),
             );
@@ -537,6 +537,7 @@ describe('tapOFT', () => {
             );
         });
         it('should extract minted from minter', async () => {
+            await tapiocaOFT0.setMinter(signer.address);
             const bigAmount = BN(33_500_000).mul((1e18).toString());
             // Check requirements
             await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.emit(
