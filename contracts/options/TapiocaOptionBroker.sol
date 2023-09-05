@@ -350,17 +350,20 @@ contract TapiocaOptionBroker is
             TWAMLPool memory pool = twAML[lock.sglAssetID];
 
             if (participation.divergenceForce) {
-                if (pool.cumulative > pool.averageMagnitude) {
-                    pool.cumulative -= pool.averageMagnitude;
+                if (pool.cumulative > participation.averageMagnitude) {
+                    pool.cumulative -= participation.averageMagnitude;
                 } else {
                     pool.cumulative = 0;
                 }
             } else {
-                pool.cumulative += pool.averageMagnitude;
+                pool.cumulative += participation.averageMagnitude;
             }
 
             pool.totalDeposited -= lock.amount;
-            pool.totalParticipants--;
+
+            unchecked {
+                --pool.totalParticipants;
+            }
 
             twAML[lock.sglAssetID] = pool; // Save twAML exit
             emit AMLDivergence(
