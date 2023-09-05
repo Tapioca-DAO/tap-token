@@ -123,6 +123,7 @@ export async function deployTapiocaOFT(
         await ethers.getContractFactory('TapOFT')
     ).deploy(lzEndpoint, to, to, to, to, to, to, chainId, signer.address);
     await oftContract.deployed();
+    await oftContract.setMinter(signer.address);
 
     return oftContract;
 }
