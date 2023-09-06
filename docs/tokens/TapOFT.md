@@ -6,14 +6,14 @@
 
 OFT compatible TAP token
 
-*Latest size: 17.663  KiBEmissions calculator: https://www.desmos.com/calculator/1fa0zen2ut*
+*Latest size: 17.663  KiBEmissions E(x)= E(x-1) - E(x-1) * D with E being total supply a x week, and D the initial decay rate*
 
 ## Methods
 
-### INCREASE_AMOUNT
+### DEFAULT_PAYLOAD_SIZE_LIMIT
 
 ```solidity
-function INCREASE_AMOUNT() external view returns (uint256)
+function DEFAULT_PAYLOAD_SIZE_LIMIT() external view returns (uint256)
 ```
 
 
@@ -26,6 +26,23 @@ function INCREASE_AMOUNT() external view returns (uint256)
 | Name | Type | Description |
 |---|---|---|
 | _0 | uint256 | undefined |
+
+### DOMAIN_SEPARATOR
+
+```solidity
+function DOMAIN_SEPARATOR() external view returns (bytes32)
+```
+
+
+
+*See {IERC20Permit-DOMAIN_SEPARATOR}.*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bytes32 | undefined |
 
 ### INITIAL_SUPPLY
 
@@ -44,10 +61,10 @@ function INITIAL_SUPPLY() external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
-### LOCK
+### NO_EXTRA_GAS
 
 ```solidity
-function LOCK() external view returns (uint256)
+function NO_EXTRA_GAS() external view returns (uint256)
 ```
 
 
@@ -60,6 +77,40 @@ function LOCK() external view returns (uint256)
 | Name | Type | Description |
 |---|---|---|
 | _0 | uint256 | undefined |
+
+### PT_SEND
+
+```solidity
+function PT_SEND() external view returns (uint8)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint8 | undefined |
+
+### PT_SEND_AND_CALL
+
+```solidity
+function PT_SEND_AND_CALL() external view returns (uint8)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint8 | undefined |
 
 ### WEEK
 
@@ -77,23 +128,6 @@ seconds in a week
 | Name | Type | Description |
 |---|---|---|
 | _0 | uint256 | undefined |
-
-### a_param
-
-```solidity
-function a_param() external view returns (int256)
-```
-
-the a parameter used in the emission function; can be changed by governance
-
-*formula: b(xe^(c-f(x))) where f(x)=x/a*
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | int256 | undefined |
 
 ### allowance
 
@@ -141,45 +175,6 @@ function approve(address spender, uint256 amount) external nonpayable returns (b
 |---|---|---|
 | _0 | bool | undefined |
 
-### availableForWeek
-
-```solidity
-function availableForWeek(uint256 timestamp) external view returns (uint256)
-```
-
-returns available emissions for a specific timestamp
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| timestamp | uint256 | the moment in time to emit for |
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | uint256 | undefined |
-
-### b_param
-
-```solidity
-function b_param() external view returns (int256)
-```
-
-the b parameter used in the emission function; can be changed by governance
-
-*formula: b(xe^(c-f(x))) where f(x)=x/a*
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | int256 | undefined |
-
 ### balanceOf
 
 ```solidity
@@ -202,22 +197,28 @@ function balanceOf(address account) external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
-### c_param
+### callOnOFTReceived
 
 ```solidity
-function c_param() external view returns (int256)
+function callOnOFTReceived(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes32 _from, address _to, uint256 _amount, bytes _payload, uint256 _gasForCall) external nonpayable
 ```
 
-the c parameter used in the emission function; can be changed by governance
-
-*formula: b(xe^(c-f(x))) where f(x)=x/a*
 
 
-#### Returns
+
+
+#### Parameters
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | int256 | undefined |
+| _srcChainId | uint16 | undefined |
+| _srcAddress | bytes | undefined |
+| _nonce | uint64 | undefined |
+| _from | bytes32 | undefined |
+| _to | address | undefined |
+| _amount | uint256 | undefined |
+| _payload | bytes | undefined |
+| _gasForCall | uint256 | undefined |
 
 ### circulatingSupply
 
@@ -235,6 +236,52 @@ function circulatingSupply() external view returns (uint256)
 | Name | Type | Description |
 |---|---|---|
 | _0 | uint256 | undefined |
+
+### claimRewards
+
+```solidity
+function claimRewards(address to, uint256 tokenID, address[] rewardTokens, uint16 lzDstChainId, address zroPaymentAddress, bytes adapterParams, IRewardClaimSendFromParams[] rewardClaimSendParams) external payable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| to | address | undefined |
+| tokenID | uint256 | undefined |
+| rewardTokens | address[] | undefined |
+| lzDstChainId | uint16 | undefined |
+| zroPaymentAddress | address | undefined |
+| adapterParams | bytes | undefined |
+| rewardClaimSendParams | IRewardClaimSendFromParams[] | undefined |
+
+### creditedPackets
+
+```solidity
+function creditedPackets(uint16, bytes, uint64) external view returns (bool)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint16 | undefined |
+| _1 | bytes | undefined |
+| _2 | uint64 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bool | undefined |
 
 ### decimals
 
@@ -276,6 +323,45 @@ function decreaseAllowance(address spender, uint256 subtractedValue) external no
 |---|---|---|
 | _0 | bool | undefined |
 
+### dso_supply
+
+```solidity
+function dso_supply() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### emissionForWeek
+
+```solidity
+function emissionForWeek(uint256) external view returns (uint256)
+```
+
+returns the amount of emitted TAP for a specific week
+
+*week is computed using (timestamp - emissionStartTime) / WEEK*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### emissionsStartTime
 
 ```solidity
@@ -296,29 +382,53 @@ starts time for emissions
 ### emitForWeek
 
 ```solidity
-function emitForWeek(uint256 timestamp) external nonpayable returns (uint256)
+function emitForWeek() external nonpayable returns (uint256)
 ```
 
--- Write methods --returns the available emissions for a specific week
+-- Write methods --Emit the TAP for the current week
 
-*formula: b(xe^(c-f(x))) where f(x)=x/a*
 
-#### Parameters
 
-| Name | Type | Description |
-|---|---|---|
-| timestamp | uint256 | the moment in time to emit for |
 
 #### Returns
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | uint256 | undefined |
+| _0 | uint256 | the emitted amount |
+
+### estimateSendAndCallFee
+
+```solidity
+function estimateSendAndCallFee(uint16 _dstChainId, bytes32 _toAddress, uint256 _amount, bytes _payload, uint64 _dstGasForCall, bool _useZro, bytes _adapterParams) external view returns (uint256 nativeFee, uint256 zroFee)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _dstChainId | uint16 | undefined |
+| _toAddress | bytes32 | undefined |
+| _amount | uint256 | undefined |
+| _payload | bytes | undefined |
+| _dstGasForCall | uint64 | undefined |
+| _useZro | bool | undefined |
+| _adapterParams | bytes | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| nativeFee | uint256 | undefined |
+| zroFee | uint256 | undefined |
 
 ### estimateSendFee
 
 ```solidity
-function estimateSendFee(uint16 _dstChainId, bytes _toAddress, uint256 _amount, bool _useZro, bytes _adapterParams) external view returns (uint256 nativeFee, uint256 zroFee)
+function estimateSendFee(uint16 _dstChainId, bytes32 _toAddress, uint256 _amount, bool _useZro, bytes _adapterParams) external view returns (uint256 nativeFee, uint256 zroFee)
 ```
 
 
@@ -330,7 +440,7 @@ function estimateSendFee(uint16 _dstChainId, bytes _toAddress, uint256 _amount, 
 | Name | Type | Description |
 |---|---|---|
 | _dstChainId | uint16 | undefined |
-| _toAddress | bytes | undefined |
+| _toAddress | bytes32 | undefined |
 | _amount | uint256 | undefined |
 | _useZro | bool | undefined |
 | _adapterParams | bytes | undefined |
@@ -356,7 +466,7 @@ extracts from the minted TAP
 
 | Name | Type | Description |
 |---|---|---|
-| _to | address | the receiver address |
+| _to | address | Address to send the minted TAP to |
 | _amount | uint256 | TAP amount |
 
 ### failedMessages
@@ -425,28 +535,66 @@ function getConfig(uint16 _version, uint16 _chainId, address, uint256 _configTyp
 |---|---|---|
 | _0 | bytes | undefined |
 
-### getVotingPower
+### getCurrentWeek
 
 ```solidity
-function getVotingPower(uint256 _amount, uint256 _time, uint256 _action) external payable
+function getCurrentWeek() external view returns (uint256)
 ```
 
-lock TapOFT and get veTap on Optimism
+Returns the current week
 
-*cannot be called on Optimism; use VeTap directly*
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### getCurrentWeekEmission
+
+```solidity
+function getCurrentWeekEmission() external view returns (uint256)
+```
+
+Returns the current week emission
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### getTrustedRemoteAddress
+
+```solidity
+function getTrustedRemoteAddress(uint16 _remoteChainId) external view returns (bytes)
+```
+
+
+
+
 
 #### Parameters
 
 | Name | Type | Description |
 |---|---|---|
-| _amount | uint256 | the amount of TAP to lock for voting power |
-| _time | uint256 | lock duration |
-| _action | uint256 | undefined |
+| _remoteChainId | uint16 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bytes | undefined |
 
 ### governanceChainIdentifier
 
 ```solidity
-function governanceChainIdentifier() external view returns (uint16)
+function governanceChainIdentifier() external view returns (uint256)
 ```
 
 LayerZero governance chain identifier
@@ -458,7 +606,7 @@ LayerZero governance chain identifier
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | uint16 | undefined |
+| _0 | uint256 | undefined |
 
 ### increaseAllowance
 
@@ -506,6 +654,27 @@ function isTrustedRemote(uint16 _srcChainId, bytes _srcAddress) external view re
 |---|---|---|
 | _0 | bool | undefined |
 
+### lockTwTapPosition
+
+```solidity
+function lockTwTapPosition(address to, uint256 amount, uint256 duration, uint16 lzDstChainId, address zroPaymentAddress, bytes adapterParams) external payable
+```
+
+Opens a twTAP by participating in twAML.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| to | address | The address to add the twTAP position to. |
+| amount | uint256 | The amount to add. |
+| duration | uint256 | undefined |
+| lzDstChainId | uint16 | The destination chain id. |
+| zroPaymentAddress | address | The address to send the ZRO payment to. |
+| adapterParams | bytes | The adapter params. |
+
 ### lzEndpoint
 
 ```solidity
@@ -542,10 +711,33 @@ function lzReceive(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes _
 | _nonce | uint64 | undefined |
 | _payload | bytes | undefined |
 
+### minDstGasLookup
+
+```solidity
+function minDstGasLookup(uint16, uint16) external view returns (uint256)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint16 | undefined |
+| _1 | uint16 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### mintedInWeek
 
 ```solidity
-function mintedInWeek(int256) external view returns (uint256)
+function mintedInWeek(uint256) external view returns (uint256)
 ```
 
 returns the amount minted for a specific week
@@ -556,7 +748,7 @@ returns the amount minted for a specific week
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | int256 | undefined |
+| _0 | uint256 | undefined |
 
 #### Returns
 
@@ -617,6 +809,28 @@ function nonblockingLzReceive(uint16 _srcChainId, bytes _srcAddress, uint64 _non
 | _nonce | uint64 | undefined |
 | _payload | bytes | undefined |
 
+### nonces
+
+```solidity
+function nonces(address owner) external view returns (uint256)
+```
+
+
+
+*See {IERC20Permit-nonces}.*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| owner | address | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### owner
 
 ```solidity
@@ -634,10 +848,27 @@ function owner() external view returns (address)
 |---|---|---|
 | _0 | address | undefined |
 
-### pauseSendTokens
+### paused
 
 ```solidity
-function pauseSendTokens(bool pause) external nonpayable
+function paused() external view returns (bool)
+```
+
+returns the pause state of the contract
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bool | undefined |
+
+### payloadSizeLimitLookup
+
+```solidity
+function payloadSizeLimitLookup(uint16) external view returns (uint256)
 ```
 
 
@@ -648,29 +879,57 @@ function pauseSendTokens(bool pause) external nonpayable
 
 | Name | Type | Description |
 |---|---|---|
-| pause | bool | undefined |
+| _0 | uint16 | undefined |
 
-### paused
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### permit
 
 ```solidity
-function paused() external view returns (bool)
+function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external nonpayable
 ```
 
 
 
-*Returns true if the contract is paused, and false otherwise.*
+*See {IERC20Permit-permit}.*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| owner | address | undefined |
+| spender | address | undefined |
+| value | uint256 | undefined |
+| deadline | uint256 | undefined |
+| v | uint8 | undefined |
+| r | bytes32 | undefined |
+| s | bytes32 | undefined |
+
+### precrime
+
+```solidity
+function precrime() external view returns (address)
+```
+
+
+
+
 
 
 #### Returns
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | bool | undefined |
+| _0 | address | undefined |
 
 ### removeTAP
 
 ```solidity
-function removeTAP(address _from, uint256 _amount) external nonpayable
+function removeTAP(uint256 _amount) external nonpayable
 ```
 
 burns TAP
@@ -681,7 +940,6 @@ burns TAP
 
 | Name | Type | Description |
 |---|---|---|
-| _from | address | the address to burn from |
 | _amount | uint256 | TAP amount |
 
 ### renounceOwnership
@@ -694,6 +952,23 @@ function renounceOwnership() external nonpayable
 
 *Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.*
 
+
+### rescueEth
+
+```solidity
+function rescueEth(uint256 amount, address to) external nonpayable
+```
+
+rescues unused ETH from the contract
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| amount | uint256 | the amount to rescue |
+| to | address | the recipient |
 
 ### retryMessage
 
@@ -714,15 +989,15 @@ function retryMessage(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, byte
 | _nonce | uint64 | undefined |
 | _payload | bytes | undefined |
 
-### sendFrom
+### sendAndCall
 
 ```solidity
-function sendFrom(address _from, uint16 _dstChainId, bytes _toAddress, uint256 _amount, address payable _refundAddress, address _zroPaymentAddress, bytes _adapterParams) external payable
+function sendAndCall(address _from, uint16 _dstChainId, bytes32 _toAddress, uint256 _amount, bytes _payload, uint64 _dstGasForCall, ICommonOFT.LzCallParams _callParams) external payable
 ```
 
 
 
-*send `_amount` amount of token to (`_dstChainId`, `_toAddress`) from `_from` `_from` the owner of token `_dstChainId` the destination chain identifier `_toAddress` can be any size depending on the `dstChainId`. `_amount` the quantity of tokens in wei `_refundAddress` the address LayerZero refunds if too much message fee is sent `_zroPaymentAddress` set to address(0x0) if not paying in ZRO (LayerZero Token) `_adapterParams` is a flexible bytes array to indicate messaging adapter services*
+
 
 #### Parameters
 
@@ -730,19 +1005,19 @@ function sendFrom(address _from, uint16 _dstChainId, bytes _toAddress, uint256 _
 |---|---|---|
 | _from | address | undefined |
 | _dstChainId | uint16 | undefined |
-| _toAddress | bytes | undefined |
+| _toAddress | bytes32 | undefined |
 | _amount | uint256 | undefined |
-| _refundAddress | address payable | undefined |
-| _zroPaymentAddress | address | undefined |
-| _adapterParams | bytes | undefined |
+| _payload | bytes | undefined |
+| _dstGasForCall | uint64 | undefined |
+| _callParams | ICommonOFT.LzCallParams | undefined |
 
-### setAParam
+### sendFrom
 
 ```solidity
-function setAParam(int256 val) external nonpayable
+function sendFrom(address _from, uint16 _dstChainId, bytes32 _toAddress, uint256 _amount, ICommonOFT.LzCallParams _callParams) external payable
 ```
 
-sets a new value for parameter
+
 
 
 
@@ -750,39 +1025,11 @@ sets a new value for parameter
 
 | Name | Type | Description |
 |---|---|---|
-| val | int256 | the new value |
-
-### setBParam
-
-```solidity
-function setBParam(int256 val) external nonpayable
-```
-
-sets a new value for parameter
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| val | int256 | the new value |
-
-### setCParam
-
-```solidity
-function setCParam(int256 val) external nonpayable
-```
-
-sets a new value for parameter
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| val | int256 | the new value |
+| _from | address | undefined |
+| _dstChainId | uint16 | undefined |
+| _toAddress | bytes32 | undefined |
+| _amount | uint256 | undefined |
+| _callParams | ICommonOFT.LzCallParams | undefined |
 
 ### setConfig
 
@@ -806,10 +1053,10 @@ function setConfig(uint16 _version, uint16 _chainId, uint256 _configType, bytes 
 ### setGovernanceChainIdentifier
 
 ```solidity
-function setGovernanceChainIdentifier(uint16 _identifier) external nonpayable
+function setGovernanceChainIdentifier(uint256 _identifier) external nonpayable
 ```
 
--- Onwer methods --sets the governance chain identifier
+-- Owner methods --sets the governance chain identifier
 
 
 
@@ -817,7 +1064,25 @@ function setGovernanceChainIdentifier(uint16 _identifier) external nonpayable
 
 | Name | Type | Description |
 |---|---|---|
-| _identifier | uint16 | LayerZero chain identifier |
+| _identifier | uint256 | LayerZero chain identifier |
+
+### setMinDstGas
+
+```solidity
+function setMinDstGas(uint16 _dstChainId, uint16 _packetType, uint256 _minGas) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _dstChainId | uint16 | undefined |
+| _packetType | uint16 | undefined |
+| _minGas | uint256 | undefined |
 
 ### setMinter
 
@@ -834,6 +1099,39 @@ sets a new minter address
 | Name | Type | Description |
 |---|---|---|
 | _minter | address | the new address |
+
+### setPayloadSizeLimit
+
+```solidity
+function setPayloadSizeLimit(uint16 _dstChainId, uint256 _size) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _dstChainId | uint16 | undefined |
+| _size | uint256 | undefined |
+
+### setPrecrime
+
+```solidity
+function setPrecrime(address _precrime) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _precrime | address | undefined |
 
 ### setReceiveVersion
 
@@ -870,7 +1168,7 @@ function setSendVersion(uint16 _version) external nonpayable
 ### setTrustedRemote
 
 ```solidity
-function setTrustedRemote(uint16 _srcChainId, bytes _srcAddress) external nonpayable
+function setTrustedRemote(uint16 _srcChainId, bytes _path) external nonpayable
 ```
 
 
@@ -882,15 +1180,15 @@ function setTrustedRemote(uint16 _srcChainId, bytes _srcAddress) external nonpay
 | Name | Type | Description |
 |---|---|---|
 | _srcChainId | uint16 | undefined |
-| _srcAddress | bytes | undefined |
+| _path | bytes | undefined |
 
-### setVeTap
+### setTrustedRemoteAddress
 
 ```solidity
-function setVeTap(address addr) external nonpayable
+function setTrustedRemoteAddress(uint16 _remoteChainId, bytes _remoteAddress) external nonpayable
 ```
 
-sets the VotingEscrow address
+
 
 
 
@@ -898,7 +1196,57 @@ sets the VotingEscrow address
 
 | Name | Type | Description |
 |---|---|---|
-| addr | address | the VotingEscrow address |
+| _remoteChainId | uint16 | undefined |
+| _remoteAddress | bytes | undefined |
+
+### setTwTap
+
+```solidity
+function setTwTap(address _twTap) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _twTap | address | undefined |
+
+### setUseCustomAdapterParams
+
+```solidity
+function setUseCustomAdapterParams(bool _useCustomAdapterParams) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _useCustomAdapterParams | bool | undefined |
+
+### sharedDecimals
+
+```solidity
+function sharedDecimals() external view returns (uint8)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint8 | undefined |
 
 ### supportsInterface
 
@@ -938,6 +1286,45 @@ function symbol() external view returns (string)
 | Name | Type | Description |
 |---|---|---|
 | _0 | string | undefined |
+
+### timestampToWeek
+
+```solidity
+function timestampToWeek(uint256 timestamp) external view returns (uint256)
+```
+
+Returns the current week given a timestamp
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| timestamp | uint256 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### token
+
+```solidity
+function token() external view returns (address)
+```
+
+
+
+*returns the address of the ERC20 token*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | address | undefined |
 
 ### totalSupply
 
@@ -1041,34 +1428,30 @@ function trustedRemoteLookup(uint16) external view returns (bytes)
 |---|---|---|
 | _0 | bytes | undefined |
 
-### veTap
+### twTap
 
 ```solidity
-function veTap() external view returns (address)
+function twTap() external view returns (contract TwTAP)
 ```
 
-returns the voting escrow address
 
-*veTap is deployed only on Optimism*
+
+
 
 
 #### Returns
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | address | undefined |
+| _0 | contract TwTAP | undefined |
 
-
-
-## Events
-
-### AParamUpdated
+### unlockTwTapPosition
 
 ```solidity
-event AParamUpdated(int256 _old, int256 _new)
+function unlockTwTapPosition(address to, uint256 tokenID, uint16 lzDstChainId, address zroPaymentAddress, bytes adapterParams, ICommonOFT.LzCallParams twTapSendBackAdapterParams) external payable
 ```
 
-event emitted when the A parameter of the emission formula is updated
+
 
 
 
@@ -1076,8 +1459,49 @@ event emitted when the A parameter of the emission formula is updated
 
 | Name | Type | Description |
 |---|---|---|
-| _old  | int256 | undefined |
-| _new  | int256 | undefined |
+| to | address | undefined |
+| tokenID | uint256 | undefined |
+| lzDstChainId | uint16 | undefined |
+| zroPaymentAddress | address | undefined |
+| adapterParams | bytes | undefined |
+| twTapSendBackAdapterParams | ICommonOFT.LzCallParams | undefined |
+
+### updatePause
+
+```solidity
+function updatePause(bool val) external nonpayable
+```
+
+updates the pause state of the contract
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| val | bool | the new value |
+
+### useCustomAdapterParams
+
+```solidity
+function useCustomAdapterParams() external view returns (bool)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bool | undefined |
+
+
+
+## Events
 
 ### Approval
 
@@ -1087,7 +1511,7 @@ event Approval(address indexed owner, address indexed spender, uint256 value)
 
 
 
-
+*Emitted when the allowance of a `spender` for an `owner` is set by a call to {approve}. `value` is the new allowance.*
 
 #### Parameters
 
@@ -1097,27 +1521,10 @@ event Approval(address indexed owner, address indexed spender, uint256 value)
 | spender `indexed` | address | undefined |
 | value  | uint256 | undefined |
 
-### BParamUpdated
-
-```solidity
-event BParamUpdated(int256 _old, int256 _new)
-```
-
-event emitted when the B parameter of the emission formula is updated
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _old  | int256 | undefined |
-| _new  | int256 | undefined |
-
 ### Burned
 
 ```solidity
-event Burned(address indexed _by, address indexed _from, uint256 _amount)
+event Burned(address indexed _from, uint256 _amount)
 ```
 
 event emitted when new TAP is burned
@@ -1128,17 +1535,16 @@ event emitted when new TAP is burned
 
 | Name | Type | Description |
 |---|---|---|
-| _by `indexed` | address | undefined |
 | _from `indexed` | address | undefined |
 | _amount  | uint256 | undefined |
 
-### CParamUpdated
+### CallFailedBytes
 
 ```solidity
-event CParamUpdated(int256 _old, int256 _new)
+event CallFailedBytes(uint16 indexed _srcChainId, bytes _payload, bytes _reason)
 ```
 
-event emitted when the C parameter of the emission formula is updated
+
 
 
 
@@ -1146,13 +1552,68 @@ event emitted when the C parameter of the emission formula is updated
 
 | Name | Type | Description |
 |---|---|---|
-| _old  | int256 | undefined |
-| _new  | int256 | undefined |
+| _srcChainId `indexed` | uint16 | undefined |
+| _payload  | bytes | undefined |
+| _reason  | bytes | undefined |
+
+### CallFailedStr
+
+```solidity
+event CallFailedStr(uint16 indexed _srcChainId, bytes _payload, string _reason)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _srcChainId `indexed` | uint16 | undefined |
+| _payload  | bytes | undefined |
+| _reason  | string | undefined |
+
+### CallOFTReceivedSuccess
+
+```solidity
+event CallOFTReceivedSuccess(uint16 indexed _srcChainId, bytes _srcAddress, uint64 _nonce, bytes32 _hash)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _srcChainId `indexed` | uint16 | undefined |
+| _srcAddress  | bytes | undefined |
+| _nonce  | uint64 | undefined |
+| _hash  | bytes32 | undefined |
+
+### Emitted
+
+```solidity
+event Emitted(uint256 week, uint256 amount)
+```
+
+event emitted when a new emission is called
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| week  | uint256 | undefined |
+| amount  | uint256 | undefined |
 
 ### GovernanceChainIdentifierUpdated
 
 ```solidity
-event GovernanceChainIdentifierUpdated(uint16 _old, uint16 _new)
+event GovernanceChainIdentifierUpdated(uint256 _old, uint256 _new)
 ```
 
 event emitted when the governance chain identifier is updated
@@ -1163,30 +1624,13 @@ event emitted when the governance chain identifier is updated
 
 | Name | Type | Description |
 |---|---|---|
-| _old  | uint16 | undefined |
-| _new  | uint16 | undefined |
-
-### IncreasedVeAmount
-
-```solidity
-event IncreasedVeAmount(address indexed forAddr, uint256 amount)
-```
-
-event emitted when TAP amount from veTap is increased
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| forAddr `indexed` | address | undefined |
-| amount  | uint256 | undefined |
+| _old  | uint256 | undefined |
+| _new  | uint256 | undefined |
 
 ### MessageFailed
 
 ```solidity
-event MessageFailed(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes _payload)
+event MessageFailed(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes _payload, bytes _reason)
 ```
 
 
@@ -1201,6 +1645,7 @@ event MessageFailed(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes 
 | _srcAddress  | bytes | undefined |
 | _nonce  | uint64 | undefined |
 | _payload  | bytes | undefined |
+| _reason  | bytes | undefined |
 
 ### Minted
 
@@ -1237,6 +1682,22 @@ event emitted when a new minter is set
 | _old `indexed` | address | undefined |
 | _new `indexed` | address | undefined |
 
+### NonContractAddress
+
+```solidity
+event NonContractAddress(address _address)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _address  | address | undefined |
+
 ### OwnershipTransferred
 
 ```solidity
@@ -1254,13 +1715,13 @@ event OwnershipTransferred(address indexed previousOwner, address indexed newOwn
 | previousOwner `indexed` | address | undefined |
 | newOwner `indexed` | address | undefined |
 
-### Paused
+### PausedUpdated
 
 ```solidity
-event Paused(address account)
+event PausedUpdated(bool oldState, bool newState)
 ```
 
-
+event emitted when pause state is changed
 
 
 
@@ -1268,52 +1729,31 @@ event Paused(address account)
 
 | Name | Type | Description |
 |---|---|---|
-| account  | address | undefined |
+| oldState  | bool | undefined |
+| newState  | bool | undefined |
 
 ### ReceiveFromChain
 
 ```solidity
-event ReceiveFromChain(uint16 indexed _srcChainId, bytes indexed _srcAddress, address indexed _toAddress, uint256 _amount, uint64 _nonce)
+event ReceiveFromChain(uint16 indexed _srcChainId, address indexed _to, uint256 _amount)
 ```
 
 
 
-
+*Emitted when `_amount` tokens are received from `_srcChainId` into the `_toAddress` on the local chain. `_nonce` is the inbound nonce.*
 
 #### Parameters
 
 | Name | Type | Description |
 |---|---|---|
 | _srcChainId `indexed` | uint16 | undefined |
-| _srcAddress `indexed` | bytes | undefined |
-| _toAddress `indexed` | address | undefined |
+| _to `indexed` | address | undefined |
 | _amount  | uint256 | undefined |
-| _nonce  | uint64 | undefined |
 
-### SendToChain
+### RetryMessageSuccess
 
 ```solidity
-event SendToChain(address indexed _sender, uint16 indexed _dstChainId, bytes indexed _toAddress, uint256 _amount, uint64 _nonce)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _sender `indexed` | address | undefined |
-| _dstChainId `indexed` | uint16 | undefined |
-| _toAddress `indexed` | bytes | undefined |
-| _amount  | uint256 | undefined |
-| _nonce  | uint64 | undefined |
-
-### SetTrustedRemote
-
-```solidity
-event SetTrustedRemote(uint16 _srcChainId, bytes _srcAddress)
+event RetryMessageSuccess(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes32 _payloadHash)
 ```
 
 
@@ -1326,6 +1766,111 @@ event SetTrustedRemote(uint16 _srcChainId, bytes _srcAddress)
 |---|---|---|
 | _srcChainId  | uint16 | undefined |
 | _srcAddress  | bytes | undefined |
+| _nonce  | uint64 | undefined |
+| _payloadHash  | bytes32 | undefined |
+
+### SendToChain
+
+```solidity
+event SendToChain(uint16 indexed _dstChainId, address indexed _from, bytes32 indexed _toAddress, uint256 _amount)
+```
+
+
+
+*Emitted when `_amount` tokens are moved from the `_sender` to (`_dstChainId`, `_toAddress`) `_nonce` is the outbound nonce*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _dstChainId `indexed` | uint16 | undefined |
+| _from `indexed` | address | undefined |
+| _toAddress `indexed` | bytes32 | undefined |
+| _amount  | uint256 | undefined |
+
+### SetMinDstGas
+
+```solidity
+event SetMinDstGas(uint16 _dstChainId, uint16 _type, uint256 _minDstGas)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _dstChainId  | uint16 | undefined |
+| _type  | uint16 | undefined |
+| _minDstGas  | uint256 | undefined |
+
+### SetPrecrime
+
+```solidity
+event SetPrecrime(address precrime)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| precrime  | address | undefined |
+
+### SetTrustedRemote
+
+```solidity
+event SetTrustedRemote(uint16 _remoteChainId, bytes _path)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _remoteChainId  | uint16 | undefined |
+| _path  | bytes | undefined |
+
+### SetTrustedRemoteAddress
+
+```solidity
+event SetTrustedRemoteAddress(uint16 _remoteChainId, bytes _remoteAddress)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _remoteChainId  | uint16 | undefined |
+| _remoteAddress  | bytes | undefined |
+
+### SetUseCustomAdapterParams
+
+```solidity
+event SetUseCustomAdapterParams(bool _useCustomAdapterParams)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _useCustomAdapterParams  | bool | undefined |
 
 ### Transfer
 
@@ -1335,7 +1880,7 @@ event Transfer(address indexed from, address indexed to, uint256 value)
 
 
 
-
+*Emitted when `value` tokens are moved from one account (`from`) to another (`to`). Note that `value` may be zero.*
 
 #### Parameters
 
@@ -1345,228 +1890,5 @@ event Transfer(address indexed from, address indexed to, uint256 value)
 | to `indexed` | address | undefined |
 | value  | uint256 | undefined |
 
-### Unpaused
-
-```solidity
-event Unpaused(address account)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| account  | address | undefined |
-
-### UpdateMiningParameters
-
-```solidity
-event UpdateMiningParameters(uint256 _blockTimestmap, uint256 _rate, uint256 _startEpochSupply)
-```
-
-event emitted when mining parameters are updated
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _blockTimestmap  | uint256 | undefined |
-| _rate  | uint256 | undefined |
-| _startEpochSupply  | uint256 | undefined |
-
-### VeLockedFor
-
-```solidity
-event VeLockedFor(address indexed forAddr, uint256 amount, uint256 time)
-```
-
-event emitted when TAP is locked for voting
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| forAddr `indexed` | address | undefined |
-| amount  | uint256 | undefined |
-| time  | uint256 | undefined |
-
-### VeTapUpdated
-
-```solidity
-event VeTapUpdated(address indexed _old, address indexed _new)
-```
-
-event emitted when veTap address is updated
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _old `indexed` | address | undefined |
-| _new `indexed` | address | undefined |
-
-
-
-## Errors
-
-### PRBMathSD59x18__DivInputTooSmall
-
-```solidity
-error PRBMathSD59x18__DivInputTooSmall()
-```
-
-Emitted when one of the inputs is MIN_SD59x18.
-
-
-
-
-### PRBMathSD59x18__DivOverflow
-
-```solidity
-error PRBMathSD59x18__DivOverflow(uint256 rAbs)
-```
-
-Emitted when one of the intermediary unsigned results overflows SD59x18.
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| rAbs | uint256 | undefined |
-
-### PRBMathSD59x18__Exp2InputTooBig
-
-```solidity
-error PRBMathSD59x18__Exp2InputTooBig(int256 x)
-```
-
-Emitted when the input is greater than 192.
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| x | int256 | undefined |
-
-### PRBMathSD59x18__FromIntOverflow
-
-```solidity
-error PRBMathSD59x18__FromIntOverflow(int256 x)
-```
-
-Emitted when converting a basic integer to the fixed-point format overflows SD59x18.
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| x | int256 | undefined |
-
-### PRBMathSD59x18__FromIntUnderflow
-
-```solidity
-error PRBMathSD59x18__FromIntUnderflow(int256 x)
-```
-
-Emitted when converting a basic integer to the fixed-point format underflows SD59x18.
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| x | int256 | undefined |
-
-### PRBMathSD59x18__LogInputTooSmall
-
-```solidity
-error PRBMathSD59x18__LogInputTooSmall(int256 x)
-```
-
-Emitted when the input is less than or equal to zero.
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| x | int256 | undefined |
-
-### PRBMathSD59x18__MulInputTooSmall
-
-```solidity
-error PRBMathSD59x18__MulInputTooSmall()
-```
-
-Emitted when one of the inputs is MIN_SD59x18.
-
-
-
-
-### PRBMathSD59x18__MulOverflow
-
-```solidity
-error PRBMathSD59x18__MulOverflow(uint256 rAbs)
-```
-
-Emitted when the intermediary absolute result overflows SD59x18.
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| rAbs | uint256 | undefined |
-
-### PRBMath__MulDivFixedPointOverflow
-
-```solidity
-error PRBMath__MulDivFixedPointOverflow(uint256 prod1)
-```
-
-Emitted when the result overflows uint256.
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| prod1 | uint256 | undefined |
-
-### PRBMath__MulDivOverflow
-
-```solidity
-error PRBMath__MulDivOverflow(uint256 prod1, uint256 denominator)
-```
-
-Emitted when the result overflows uint256.
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| prod1 | uint256 | undefined |
-| denominator | uint256 | undefined |
 
 

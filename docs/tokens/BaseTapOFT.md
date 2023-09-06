@@ -1,4 +1,4 @@
-# PausableOFT
+# BaseTapOFT
 
 
 
@@ -9,6 +9,74 @@
 
 
 ## Methods
+
+### DEFAULT_PAYLOAD_SIZE_LIMIT
+
+```solidity
+function DEFAULT_PAYLOAD_SIZE_LIMIT() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### NO_EXTRA_GAS
+
+```solidity
+function NO_EXTRA_GAS() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### PT_SEND
+
+```solidity
+function PT_SEND() external view returns (uint8)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint8 | undefined |
+
+### PT_SEND_AND_CALL
+
+```solidity
+function PT_SEND_AND_CALL() external view returns (uint8)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint8 | undefined |
 
 ### allowance
 
@@ -78,6 +146,29 @@ function balanceOf(address account) external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### callOnOFTReceived
+
+```solidity
+function callOnOFTReceived(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes32 _from, address _to, uint256 _amount, bytes _payload, uint256 _gasForCall) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _srcChainId | uint16 | undefined |
+| _srcAddress | bytes | undefined |
+| _nonce | uint64 | undefined |
+| _from | bytes32 | undefined |
+| _to | address | undefined |
+| _amount | uint256 | undefined |
+| _payload | bytes | undefined |
+| _gasForCall | uint256 | undefined |
+
 ### circulatingSupply
 
 ```solidity
@@ -94,6 +185,52 @@ function circulatingSupply() external view returns (uint256)
 | Name | Type | Description |
 |---|---|---|
 | _0 | uint256 | undefined |
+
+### claimRewards
+
+```solidity
+function claimRewards(address to, uint256 tokenID, address[] rewardTokens, uint16 lzDstChainId, address zroPaymentAddress, bytes adapterParams, IRewardClaimSendFromParams[] rewardClaimSendParams) external payable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| to | address | undefined |
+| tokenID | uint256 | undefined |
+| rewardTokens | address[] | undefined |
+| lzDstChainId | uint16 | undefined |
+| zroPaymentAddress | address | undefined |
+| adapterParams | bytes | undefined |
+| rewardClaimSendParams | IRewardClaimSendFromParams[] | undefined |
+
+### creditedPackets
+
+```solidity
+function creditedPackets(uint16, bytes, uint64) external view returns (bool)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint16 | undefined |
+| _1 | bytes | undefined |
+| _2 | uint64 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bool | undefined |
 
 ### decimals
 
@@ -135,10 +272,39 @@ function decreaseAllowance(address spender, uint256 subtractedValue) external no
 |---|---|---|
 | _0 | bool | undefined |
 
+### estimateSendAndCallFee
+
+```solidity
+function estimateSendAndCallFee(uint16 _dstChainId, bytes32 _toAddress, uint256 _amount, bytes _payload, uint64 _dstGasForCall, bool _useZro, bytes _adapterParams) external view returns (uint256 nativeFee, uint256 zroFee)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _dstChainId | uint16 | undefined |
+| _toAddress | bytes32 | undefined |
+| _amount | uint256 | undefined |
+| _payload | bytes | undefined |
+| _dstGasForCall | uint64 | undefined |
+| _useZro | bool | undefined |
+| _adapterParams | bytes | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| nativeFee | uint256 | undefined |
+| zroFee | uint256 | undefined |
+
 ### estimateSendFee
 
 ```solidity
-function estimateSendFee(uint16 _dstChainId, bytes _toAddress, uint256 _amount, bool _useZro, bytes _adapterParams) external view returns (uint256 nativeFee, uint256 zroFee)
+function estimateSendFee(uint16 _dstChainId, bytes32 _toAddress, uint256 _amount, bool _useZro, bytes _adapterParams) external view returns (uint256 nativeFee, uint256 zroFee)
 ```
 
 
@@ -150,7 +316,7 @@ function estimateSendFee(uint16 _dstChainId, bytes _toAddress, uint256 _amount, 
 | Name | Type | Description |
 |---|---|---|
 | _dstChainId | uint16 | undefined |
-| _toAddress | bytes | undefined |
+| _toAddress | bytes32 | undefined |
 | _amount | uint256 | undefined |
 | _useZro | bool | undefined |
 | _adapterParams | bytes | undefined |
@@ -228,6 +394,28 @@ function getConfig(uint16 _version, uint16 _chainId, address, uint256 _configTyp
 |---|---|---|
 | _0 | bytes | undefined |
 
+### getTrustedRemoteAddress
+
+```solidity
+function getTrustedRemoteAddress(uint16 _remoteChainId) external view returns (bytes)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _remoteChainId | uint16 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bytes | undefined |
+
 ### increaseAllowance
 
 ```solidity
@@ -274,6 +462,27 @@ function isTrustedRemote(uint16 _srcChainId, bytes _srcAddress) external view re
 |---|---|---|
 | _0 | bool | undefined |
 
+### lockTwTapPosition
+
+```solidity
+function lockTwTapPosition(address to, uint256 amount, uint256 duration, uint16 lzDstChainId, address zroPaymentAddress, bytes adapterParams) external payable
+```
+
+Opens a twTAP by participating in twAML.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| to | address | The address to add the twTAP position to. |
+| amount | uint256 | The amount to add. |
+| duration | uint256 | undefined |
+| lzDstChainId | uint16 | The destination chain id. |
+| zroPaymentAddress | address | The address to send the ZRO payment to. |
+| adapterParams | bytes | The adapter params. |
+
 ### lzEndpoint
 
 ```solidity
@@ -309,6 +518,29 @@ function lzReceive(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes _
 | _srcAddress | bytes | undefined |
 | _nonce | uint64 | undefined |
 | _payload | bytes | undefined |
+
+### minDstGasLookup
+
+```solidity
+function minDstGasLookup(uint16, uint16) external view returns (uint256)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint16 | undefined |
+| _1 | uint16 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
 
 ### name
 
@@ -363,10 +595,10 @@ function owner() external view returns (address)
 |---|---|---|
 | _0 | address | undefined |
 
-### pauseSendTokens
+### payloadSizeLimitLookup
 
 ```solidity
-function pauseSendTokens(bool pause) external nonpayable
+function payloadSizeLimitLookup(uint16) external view returns (uint256)
 ```
 
 
@@ -377,24 +609,30 @@ function pauseSendTokens(bool pause) external nonpayable
 
 | Name | Type | Description |
 |---|---|---|
-| pause | bool | undefined |
+| _0 | uint16 | undefined |
 
-### paused
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### precrime
 
 ```solidity
-function paused() external view returns (bool)
+function precrime() external view returns (address)
 ```
 
 
 
-*Returns true if the contract is paused, and false otherwise.*
+
 
 
 #### Returns
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | bool | undefined |
+| _0 | address | undefined |
 
 ### renounceOwnership
 
@@ -406,6 +644,23 @@ function renounceOwnership() external nonpayable
 
 *Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.*
 
+
+### rescueEth
+
+```solidity
+function rescueEth(uint256 amount, address to) external nonpayable
+```
+
+rescues unused ETH from the contract
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| amount | uint256 | the amount to rescue |
+| to | address | the recipient |
 
 ### retryMessage
 
@@ -426,15 +681,15 @@ function retryMessage(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, byte
 | _nonce | uint64 | undefined |
 | _payload | bytes | undefined |
 
-### sendFrom
+### sendAndCall
 
 ```solidity
-function sendFrom(address _from, uint16 _dstChainId, bytes _toAddress, uint256 _amount, address payable _refundAddress, address _zroPaymentAddress, bytes _adapterParams) external payable
+function sendAndCall(address _from, uint16 _dstChainId, bytes32 _toAddress, uint256 _amount, bytes _payload, uint64 _dstGasForCall, ICommonOFT.LzCallParams _callParams) external payable
 ```
 
 
 
-*send `_amount` amount of token to (`_dstChainId`, `_toAddress`) from `_from` `_from` the owner of token `_dstChainId` the destination chain identifier `_toAddress` can be any size depending on the `dstChainId`. `_amount` the quantity of tokens in wei `_refundAddress` the address LayerZero refunds if too much message fee is sent `_zroPaymentAddress` set to address(0x0) if not paying in ZRO (LayerZero Token) `_adapterParams` is a flexible bytes array to indicate messaging adapter services*
+
 
 #### Parameters
 
@@ -442,11 +697,31 @@ function sendFrom(address _from, uint16 _dstChainId, bytes _toAddress, uint256 _
 |---|---|---|
 | _from | address | undefined |
 | _dstChainId | uint16 | undefined |
-| _toAddress | bytes | undefined |
+| _toAddress | bytes32 | undefined |
 | _amount | uint256 | undefined |
-| _refundAddress | address payable | undefined |
-| _zroPaymentAddress | address | undefined |
-| _adapterParams | bytes | undefined |
+| _payload | bytes | undefined |
+| _dstGasForCall | uint64 | undefined |
+| _callParams | ICommonOFT.LzCallParams | undefined |
+
+### sendFrom
+
+```solidity
+function sendFrom(address _from, uint16 _dstChainId, bytes32 _toAddress, uint256 _amount, ICommonOFT.LzCallParams _callParams) external payable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _from | address | undefined |
+| _dstChainId | uint16 | undefined |
+| _toAddress | bytes32 | undefined |
+| _amount | uint256 | undefined |
+| _callParams | ICommonOFT.LzCallParams | undefined |
 
 ### setConfig
 
@@ -466,6 +741,57 @@ function setConfig(uint16 _version, uint16 _chainId, uint256 _configType, bytes 
 | _chainId | uint16 | undefined |
 | _configType | uint256 | undefined |
 | _config | bytes | undefined |
+
+### setMinDstGas
+
+```solidity
+function setMinDstGas(uint16 _dstChainId, uint16 _packetType, uint256 _minGas) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _dstChainId | uint16 | undefined |
+| _packetType | uint16 | undefined |
+| _minGas | uint256 | undefined |
+
+### setPayloadSizeLimit
+
+```solidity
+function setPayloadSizeLimit(uint16 _dstChainId, uint256 _size) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _dstChainId | uint16 | undefined |
+| _size | uint256 | undefined |
+
+### setPrecrime
+
+```solidity
+function setPrecrime(address _precrime) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _precrime | address | undefined |
 
 ### setReceiveVersion
 
@@ -502,7 +828,7 @@ function setSendVersion(uint16 _version) external nonpayable
 ### setTrustedRemote
 
 ```solidity
-function setTrustedRemote(uint16 _srcChainId, bytes _srcAddress) external nonpayable
+function setTrustedRemote(uint16 _srcChainId, bytes _path) external nonpayable
 ```
 
 
@@ -514,7 +840,73 @@ function setTrustedRemote(uint16 _srcChainId, bytes _srcAddress) external nonpay
 | Name | Type | Description |
 |---|---|---|
 | _srcChainId | uint16 | undefined |
-| _srcAddress | bytes | undefined |
+| _path | bytes | undefined |
+
+### setTrustedRemoteAddress
+
+```solidity
+function setTrustedRemoteAddress(uint16 _remoteChainId, bytes _remoteAddress) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _remoteChainId | uint16 | undefined |
+| _remoteAddress | bytes | undefined |
+
+### setTwTap
+
+```solidity
+function setTwTap(address _twTap) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _twTap | address | undefined |
+
+### setUseCustomAdapterParams
+
+```solidity
+function setUseCustomAdapterParams(bool _useCustomAdapterParams) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _useCustomAdapterParams | bool | undefined |
+
+### sharedDecimals
+
+```solidity
+function sharedDecimals() external view returns (uint8)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint8 | undefined |
 
 ### supportsInterface
 
@@ -554,6 +946,23 @@ function symbol() external view returns (string)
 | Name | Type | Description |
 |---|---|---|
 | _0 | string | undefined |
+
+### token
+
+```solidity
+function token() external view returns (address)
+```
+
+
+
+*returns the address of the ERC20 token*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | address | undefined |
 
 ### totalSupply
 
@@ -657,6 +1066,61 @@ function trustedRemoteLookup(uint16) external view returns (bytes)
 |---|---|---|
 | _0 | bytes | undefined |
 
+### twTap
+
+```solidity
+function twTap() external view returns (contract TwTAP)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | contract TwTAP | undefined |
+
+### unlockTwTapPosition
+
+```solidity
+function unlockTwTapPosition(address to, uint256 tokenID, uint16 lzDstChainId, address zroPaymentAddress, bytes adapterParams, ICommonOFT.LzCallParams twTapSendBackAdapterParams) external payable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| to | address | undefined |
+| tokenID | uint256 | undefined |
+| lzDstChainId | uint16 | undefined |
+| zroPaymentAddress | address | undefined |
+| adapterParams | bytes | undefined |
+| twTapSendBackAdapterParams | ICommonOFT.LzCallParams | undefined |
+
+### useCustomAdapterParams
+
+```solidity
+function useCustomAdapterParams() external view returns (bool)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bool | undefined |
+
 
 
 ## Events
@@ -669,7 +1133,7 @@ event Approval(address indexed owner, address indexed spender, uint256 value)
 
 
 
-
+*Emitted when the allowance of a `spender` for an `owner` is set by a call to {approve}. `value` is the new allowance.*
 
 #### Parameters
 
@@ -679,10 +1143,65 @@ event Approval(address indexed owner, address indexed spender, uint256 value)
 | spender `indexed` | address | undefined |
 | value  | uint256 | undefined |
 
+### CallFailedBytes
+
+```solidity
+event CallFailedBytes(uint16 indexed _srcChainId, bytes _payload, bytes _reason)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _srcChainId `indexed` | uint16 | undefined |
+| _payload  | bytes | undefined |
+| _reason  | bytes | undefined |
+
+### CallFailedStr
+
+```solidity
+event CallFailedStr(uint16 indexed _srcChainId, bytes _payload, string _reason)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _srcChainId `indexed` | uint16 | undefined |
+| _payload  | bytes | undefined |
+| _reason  | string | undefined |
+
+### CallOFTReceivedSuccess
+
+```solidity
+event CallOFTReceivedSuccess(uint16 indexed _srcChainId, bytes _srcAddress, uint64 _nonce, bytes32 _hash)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _srcChainId `indexed` | uint16 | undefined |
+| _srcAddress  | bytes | undefined |
+| _nonce  | uint64 | undefined |
+| _hash  | bytes32 | undefined |
+
 ### MessageFailed
 
 ```solidity
-event MessageFailed(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes _payload)
+event MessageFailed(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes _payload, bytes _reason)
 ```
 
 
@@ -697,6 +1216,23 @@ event MessageFailed(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes 
 | _srcAddress  | bytes | undefined |
 | _nonce  | uint64 | undefined |
 | _payload  | bytes | undefined |
+| _reason  | bytes | undefined |
+
+### NonContractAddress
+
+```solidity
+event NonContractAddress(address _address)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _address  | address | undefined |
 
 ### OwnershipTransferred
 
@@ -715,66 +1251,28 @@ event OwnershipTransferred(address indexed previousOwner, address indexed newOwn
 | previousOwner `indexed` | address | undefined |
 | newOwner `indexed` | address | undefined |
 
-### Paused
-
-```solidity
-event Paused(address account)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| account  | address | undefined |
-
 ### ReceiveFromChain
 
 ```solidity
-event ReceiveFromChain(uint16 indexed _srcChainId, bytes indexed _srcAddress, address indexed _toAddress, uint256 _amount, uint64 _nonce)
+event ReceiveFromChain(uint16 indexed _srcChainId, address indexed _to, uint256 _amount)
 ```
 
 
 
-
+*Emitted when `_amount` tokens are received from `_srcChainId` into the `_toAddress` on the local chain. `_nonce` is the inbound nonce.*
 
 #### Parameters
 
 | Name | Type | Description |
 |---|---|---|
 | _srcChainId `indexed` | uint16 | undefined |
-| _srcAddress `indexed` | bytes | undefined |
-| _toAddress `indexed` | address | undefined |
+| _to `indexed` | address | undefined |
 | _amount  | uint256 | undefined |
-| _nonce  | uint64 | undefined |
 
-### SendToChain
+### RetryMessageSuccess
 
 ```solidity
-event SendToChain(address indexed _sender, uint16 indexed _dstChainId, bytes indexed _toAddress, uint256 _amount, uint64 _nonce)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _sender `indexed` | address | undefined |
-| _dstChainId `indexed` | uint16 | undefined |
-| _toAddress `indexed` | bytes | undefined |
-| _amount  | uint256 | undefined |
-| _nonce  | uint64 | undefined |
-
-### SetTrustedRemote
-
-```solidity
-event SetTrustedRemote(uint16 _srcChainId, bytes _srcAddress)
+event RetryMessageSuccess(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes32 _payloadHash)
 ```
 
 
@@ -787,6 +1285,111 @@ event SetTrustedRemote(uint16 _srcChainId, bytes _srcAddress)
 |---|---|---|
 | _srcChainId  | uint16 | undefined |
 | _srcAddress  | bytes | undefined |
+| _nonce  | uint64 | undefined |
+| _payloadHash  | bytes32 | undefined |
+
+### SendToChain
+
+```solidity
+event SendToChain(uint16 indexed _dstChainId, address indexed _from, bytes32 indexed _toAddress, uint256 _amount)
+```
+
+
+
+*Emitted when `_amount` tokens are moved from the `_sender` to (`_dstChainId`, `_toAddress`) `_nonce` is the outbound nonce*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _dstChainId `indexed` | uint16 | undefined |
+| _from `indexed` | address | undefined |
+| _toAddress `indexed` | bytes32 | undefined |
+| _amount  | uint256 | undefined |
+
+### SetMinDstGas
+
+```solidity
+event SetMinDstGas(uint16 _dstChainId, uint16 _type, uint256 _minDstGas)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _dstChainId  | uint16 | undefined |
+| _type  | uint16 | undefined |
+| _minDstGas  | uint256 | undefined |
+
+### SetPrecrime
+
+```solidity
+event SetPrecrime(address precrime)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| precrime  | address | undefined |
+
+### SetTrustedRemote
+
+```solidity
+event SetTrustedRemote(uint16 _remoteChainId, bytes _path)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _remoteChainId  | uint16 | undefined |
+| _path  | bytes | undefined |
+
+### SetTrustedRemoteAddress
+
+```solidity
+event SetTrustedRemoteAddress(uint16 _remoteChainId, bytes _remoteAddress)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _remoteChainId  | uint16 | undefined |
+| _remoteAddress  | bytes | undefined |
+
+### SetUseCustomAdapterParams
+
+```solidity
+event SetUseCustomAdapterParams(bool _useCustomAdapterParams)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _useCustomAdapterParams  | bool | undefined |
 
 ### Transfer
 
@@ -796,7 +1399,7 @@ event Transfer(address indexed from, address indexed to, uint256 value)
 
 
 
-
+*Emitted when `value` tokens are moved from one account (`from`) to another (`to`). Note that `value` may be zero.*
 
 #### Parameters
 
@@ -805,22 +1408,6 @@ event Transfer(address indexed from, address indexed to, uint256 value)
 | from `indexed` | address | undefined |
 | to `indexed` | address | undefined |
 | value  | uint256 | undefined |
-
-### Unpaused
-
-```solidity
-event Unpaused(address account)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| account  | address | undefined |
 
 
 
