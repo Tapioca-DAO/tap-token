@@ -38,7 +38,7 @@ describe('tapOFT', () => {
 
     async function register() {
         signer = (await ethers.getSigners())[0];
-        minter = (await ethers.getSigners())[1];
+        minter = (await ethers.getSigners())[0];
         normalUser = (await ethers.getSigners())[2];
 
         const chainId = (await ethers.provider.getNetwork()).chainId;
@@ -477,9 +477,9 @@ describe('tapOFT', () => {
 
         it('should set minter', async () => {
             const currentMinter = await tapiocaOFT0.minter();
-            expect(currentMinter).to.eq(ethers.constants.AddressZero);
-            await expect(tapiocaOFT0.connect(minter).setMinter(minter.address))
-                .to.be.reverted;
+            await expect(
+                tapiocaOFT0.connect(normalUser).setMinter(minter.address),
+            ).to.be.reverted;
             await expect(
                 tapiocaOFT0
                     .connect(signer)
@@ -547,7 +547,7 @@ describe('tapOFT', () => {
 
             await expect(
                 tapiocaOFT0
-                    .connect(minter)
+                    .connect(normalUser)
                     .extractTAP(minter.address, bigAmount),
             ).to.be.revertedWith('unauthorized');
             await expect(

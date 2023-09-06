@@ -216,10 +216,13 @@ contract TapiocaOptionBroker is
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
             tOLPLockPosition.sglAssetID
         ];
+        (uint256 totalShares, ) = tOLP.getTotalPoolDeposited(
+            tOLPLockPosition.sglAssetID
+        );
         eligibleTapAmount = muldiv(
-            tOLPLockPosition.amount,
+            tOLPLockPosition.ybShares,
             gaugeTotalForEpoch,
-            tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID)
+            totalShares
         );
         eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "tOB: Too high");
@@ -275,7 +278,7 @@ contract TapiocaOptionBroker is
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Participate in twAMl voting
-        bool hasVotingPower = lock.amount >=
+        bool hasVotingPower = lock.ybShares >=
             computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
         if (hasVotingPower) {
             pool.totalParticipants++; // Save participation
@@ -296,7 +299,7 @@ contract TapiocaOptionBroker is
             }
 
             // Save new weight
-            pool.totalDeposited += lock.amount;
+            pool.totalDeposited += lock.ybShares;
 
             twAML[lock.sglAssetID] = pool; // Save twAML participation
             emit AMLDivergence(
@@ -350,17 +353,20 @@ contract TapiocaOptionBroker is
             TWAMLPool memory pool = twAML[lock.sglAssetID];
 
             if (participation.divergenceForce) {
-                if (pool.cumulative > pool.averageMagnitude) {
-                    pool.cumulative -= pool.averageMagnitude;
+                if (pool.cumulative > participation.averageMagnitude) {
+                    pool.cumulative -= participation.averageMagnitude;
                 } else {
                     pool.cumulative = 0;
                 }
             } else {
-                pool.cumulative += pool.averageMagnitude;
+                pool.cumulative += participation.averageMagnitude;
             }
 
-            pool.totalDeposited -= lock.amount;
-            pool.totalParticipants--;
+            pool.totalDeposited -= lock.ybShares;
+
+            unchecked {
+                --pool.totalParticipants;
+            }
 
             twAML[lock.sglAssetID] = pool; // Save twAML exit
             emit AMLDivergence(
@@ -379,7 +385,7 @@ contract TapiocaOptionBroker is
         // Transfer position back to oTAP owner
         tOLP.transferFrom(address(this), otapOwner, oTAPPosition.tOLP);
 
-        emit ExitPosition(epoch, oTAPPosition.tOLP, lock.amount);
+        emit ExitPosition(epoch, oTAPPosition.tOLP, lock.ybShares);
     }
 
     /// @notice Exercise an oTAP position
@@ -417,10 +423,13 @@ contract TapiocaOptionBroker is
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
             tOLPLockPosition.sglAssetID
         ];
+        (uint256 totalShares, ) = tOLP.getTotalPoolDeposited(
+            tOLPLockPosition.sglAssetID
+        );
         uint256 eligibleTapAmount = muldiv(
-            tOLPLockPosition.amount,
+            tOLPLockPosition.ybShares,
             gaugeTotalForEpoch,
-            tOLP.getTotalPoolDeposited(tOLPLockPosition.sglAssetID)
+            totalShares
         );
         eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "tOB: Too high");
