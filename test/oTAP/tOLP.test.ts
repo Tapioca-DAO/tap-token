@@ -208,25 +208,36 @@ describe('TapiocaOptionLiquidityProvision', () => {
         );
         await yieldBox.setApprovalForAll(tOLP.address, true);
 
+        const lockShares = await yieldBox.toShare(
+            sglTokenMockAsset,
+            lockAmount,
+            false,
+        );
+
         // Requirements
         await expect(
-            tOLP.lock(signer.address, sglTokenMock.address, 0, lockAmount),
+            tOLP.lock(signer.address, sglTokenMock.address, 0, lockShares),
         ).to.revertedWith('tOLP: lock duration must be > 0');
         await expect(
             tOLP.lock(signer.address, sglTokenMock.address, lockDuration, 0),
-        ).to.revertedWith('tOLP: amount must be > 0');
+        ).to.revertedWith('tOLP: shares must be > 0');
         await expect(
             tOLP.lock(
                 signer.address,
                 sglTokenMock2.address,
                 lockDuration,
-                lockAmount,
+                lockShares,
             ),
         ).to.revertedWith('tOLP: singularity not active');
 
         // Lock
         await expect(
-            tOLP.lock(signer.address, sglTokenMock.address, lockDuration, 1e8),
+            tOLP.lock(
+                signer.address,
+                sglTokenMock.address,
+                lockDuration,
+                lockShares,
+            ),
         )
             .to.emit(tOLP, 'Mint')
             .withArgs(signer.address, sglTokenMockAsset, []);
@@ -238,13 +249,11 @@ describe('TapiocaOptionLiquidityProvision', () => {
         // Validate YieldBox transfers
         expect(
             await yieldBox.balanceOf(tOLP.address, sglTokenMockAsset),
-        ).to.be.eq(
-            await yieldBox.toShare(sglTokenMockAsset, lockAmount, false),
-        );
+        ).to.be.eq(lockShares);
 
         // Validate position
         const lockPosition = await tOLP.lockPositions(tokenID);
-        expect(lockPosition.amount).to.be.eq(lockAmount);
+        expect(lockPosition.ybShares).to.be.eq(lockShares);
         expect(lockPosition.lockDuration).to.be.eq(lockDuration);
         expect(lockPosition.lockTime).to.be.eq(
             (await hre.ethers.provider.getBlock('latest')).timestamp,
@@ -252,7 +261,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
         expect(
             (await tOLP.activeSingularities(sglTokenMock.address))
                 .totalDeposited,
-        ).to.be.eq(lockAmount);
+        ).to.be.eq(lockShares);
     });
 
     it('Should unlock a lock', async () => {
@@ -283,12 +292,18 @@ describe('TapiocaOptionLiquidityProvision', () => {
             lockAmount,
             0,
         );
+        const lockShares = await yieldBox.toShare(
+            sglTokenMockAsset,
+            lockAmount,
+            false,
+        );
+
         await yieldBox.setApprovalForAll(tOLP.address, true);
         await tOLP.lock(
             signer.address,
             sglTokenMock.address,
             lockDuration,
-            1e8,
+            lockShares,
         );
         const tokenID = await tOLP.tokenCounter();
 
@@ -314,9 +329,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
         // Check balances
         expect(
             await yieldBox.balanceOf(signer.address, sglTokenMockAsset),
-        ).to.be.eq(
-            await yieldBox.toShare(sglTokenMockAsset, lockAmount, false),
-        );
+        ).to.be.eq(lockShares);
         expect(
             (await tOLP.activeSingularities(sglTokenMock.address))
                 .totalDeposited,
