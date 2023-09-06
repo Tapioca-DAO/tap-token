@@ -33,14 +33,14 @@ import "tapioca-sdk/dist/contracts/YieldBox/contracts/interfaces/IYieldBox.sol";
 
 struct LockPosition {
     uint128 sglAssetID; // Singularity market YieldBox asset ID
-    uint128 amount; // amount of tOLR tokens locked.
+    uint128 ybShares; // amount of YieldBox shares locked.
     uint128 lockTime; // time when the tokens were locked
     uint128 lockDuration; // duration of the lock
 }
 
 struct SingularityPool {
     uint256 sglAssetID; // Singularity market YieldBox asset ID
-    uint256 totalDeposited; // total amount of tOLR tokens deposited, used for pool share calculation
+    uint256 totalDeposited; // total amount of YieldBox shares deposited, used for pool share calculation
     uint256 poolWeight; // Pool weight to calculate emission
 }
 
@@ -141,13 +141,15 @@ contract TapiocaOptionLiquidityProvision is
         return pools;
     }
 
-    /// @notice Returns the total amount of locked tokens for a given singularity market
+    /// @notice Returns the total amount of locked YieldBox shares for a given singularity market
+    /// @return shares Amount of YieldBox shares locked
+    /// @return amount Amount of YieldBox shares locked converted in amount
     function getTotalPoolDeposited(
         uint256 _sglAssetId
-    ) external view returns (uint256) {
-        return
-            activeSingularities[sglAssetIDToAddress[_sglAssetId]]
-                .totalDeposited;
+    ) external view returns (uint256 shares, uint256 amount) {
+        shares = activeSingularities[sglAssetIDToAddress[_sglAssetId]]
+            .totalDeposited;
+        amount = yieldBox.toAmount(_sglAssetId, shares, false);
     }
 
     function isApprovedOrOwner(
@@ -161,29 +163,27 @@ contract TapiocaOptionLiquidityProvision is
     //    WRITE
     // ==========
 
-    /// @notice Locks tOLR tokens for a given duration
+    /// @notice Locks YieldBox shares for a given duration
     /// @param _to Address to mint the tOLP NFT to
     /// @param _singularity Singularity market address
     /// @param _lockDuration Duration of the lock
-    /// @param _amount Amount of tOLR tokens to lock
+    /// @param _ybShares Amount of YieldBox shares to lock
     /// @return tokenId The ID of the minted NFT
     function lock(
         address _to,
         IERC20 _singularity,
         uint128 _lockDuration,
-        uint128 _amount
+        uint128 _ybShares
     ) external returns (uint256 tokenId) {
         require(_lockDuration > 0, "tOLP: lock duration must be > 0");
-        require(_amount > 0, "tOLP: amount must be > 0");
+        require(_ybShares > 0, "tOLP: shares must be > 0");
 
         uint256 sglAssetID = activeSingularities[_singularity].sglAssetID;
         require(sglAssetID > 0, "tOLP: singularity not active");
 
         // Transfer the Singularity position to this contract
-        uint256 sharesIn = yieldBox.toShare(sglAssetID, _amount, false);
-
-        yieldBox.transfer(msg.sender, address(this), sglAssetID, sharesIn);
-        activeSingularities[_singularity].totalDeposited += _amount;
+        yieldBox.transfer(msg.sender, address(this), sglAssetID, _ybShares);
+        activeSingularities[_singularity].totalDeposited += _ybShares;
 
         // Mint the tOLP NFT position
         tokenId = ++tokenCounter;
@@ -194,7 +194,7 @@ contract TapiocaOptionLiquidityProvision is
         lockPosition.lockTime = uint128(block.timestamp);
         lockPosition.sglAssetID = uint128(sglAssetID);
         lockPosition.lockDuration = _lockDuration;
-        lockPosition.amount = _amount;
+        lockPosition.ybShares = _ybShares;
 
         emit Mint(_to, uint128(sglAssetID), lockPosition);
     }
@@ -207,7 +207,7 @@ contract TapiocaOptionLiquidityProvision is
         uint256 _tokenId,
         IERC20 _singularity,
         address _to
-    ) external returns (uint256 sharesOut) {
+    ) external {
         require(_exists(_tokenId), "tOLP: Expired position");
 
         LockPosition memory lockPosition = lockPositions[_tokenId];
@@ -230,20 +230,15 @@ contract TapiocaOptionLiquidityProvision is
         _burn(_tokenId);
         delete lockPositions[_tokenId];
 
-        // Transfer the tOLR tokens back to the owner
-        sharesOut = yieldBox.toShare(
-            lockPosition.sglAssetID,
-            lockPosition.amount,
-            false
-        );
-
+        // Transfer the YieldBox position back to the owner
         yieldBox.transfer(
             address(this),
             _to,
             lockPosition.sglAssetID,
-            sharesOut
+            lockPosition.ybShares
         );
-        activeSingularities[_singularity].totalDeposited -= lockPosition.amount;
+        activeSingularities[_singularity].totalDeposited -= lockPosition
+            .ybShares;
 
         emit Burn(_to, lockPosition.sglAssetID, lockPosition);
     }
