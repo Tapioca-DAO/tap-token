@@ -354,6 +354,32 @@ function nonces(address owner) external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### onERC1155BatchReceived
+
+```solidity
+function onERC1155BatchReceived(address _operator, address _from, uint256[] _ids, uint256[] _values, bytes _data) external pure returns (bytes4)
+```
+
+ERC1155 compliance
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _operator | address | undefined |
+| _from | address | undefined |
+| _ids | uint256[] | undefined |
+| _values | uint256[] | undefined |
+| _data | bytes | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bytes4 | undefined |
+
 ### onERC1155Received
 
 ```solidity
@@ -610,18 +636,18 @@ function singularities(uint256) external view returns (uint256)
 ### supportsInterface
 
 ```solidity
-function supportsInterface(bytes4 interfaceId) external view returns (bool)
+function supportsInterface(bytes4 interfaceID) external pure returns (bool)
 ```
 
+ERC165 compliance
 
 
-*See {IERC165-supportsInterface}.*
 
 #### Parameters
 
 | Name | Type | Description |
 |---|---|---|
-| interfaceId | bytes4 | undefined |
+| interfaceID | bytes4 | undefined |
 
 #### Returns
 
