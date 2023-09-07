@@ -12,10 +12,10 @@ export const setupTwTAPFixture = async () => {
     const one = BN(1e18);
     const hundredMil = one.mul(100_000_000);
     const tapOFT = await (
-        (await ethers.getContractFactoryFromArtifact(
-            ERC20MockArtifact,
-        )) as ERC20Mock__factory
-    ).deploy('TapOFT', 'TapOFT', hundredMil, 18, signer.address);
+        await ethers.getContractFactory('FakeTapOFT')
+    ).deploy();
+
+    await tapOFT.mint(signer.address, hundredMil);
 
     // Mock tokens
     const mock0 = await (

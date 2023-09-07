@@ -511,9 +511,19 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         IERC20[] memory _rewardTokens
     ) internal {
         uint256[] memory amounts = claimable(_tokenId);
+        address[] memory _reviewed = new address[](_rewardTokens.length);
+
         unchecked {
             uint256 len = _rewardTokens.length;
             for (uint256 i = 0; i < len; ) {
+                // Check for duplicates
+                require(
+                    !_existInArray(address(_rewardTokens[i]), _reviewed),
+                    "twTAP: duplicate reward token"
+                );
+                _reviewed[i] = address(_rewardTokens[i]);
+
+                // Get amount and reward token index
                 uint256 claimableIndex = rewardTokenIndex[_rewardTokens[i]];
                 uint256 amount = amounts[i];
 
@@ -575,6 +585,24 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         tapOFT.transfer(_to, releasedAmount);
 
         emit ExitPosition(_tokenId, releasedAmount);
+    }
+
+    /// @notice Checks if an element is in an array
+    /// @param _check The element to check
+    /// @param _array The array to check in
+    function _existInArray(
+        address _check,
+        address[] memory _array
+    ) internal pure returns (bool) {
+        uint256 len = _array.length;
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                if (_array[i] == _check) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /// @dev Returns the chain ID of the current network
