@@ -1506,4 +1506,170 @@ describe('TapiocaOptionBroker', () => {
             .to.emit(oTAP, 'Transfer')
             .withArgs(signer.address, normalUser.address, tokenID);
     });
+
+    it('Add and remove the correct amount of average magnitude to the cumulative', async () => {
+        const {
+            signer,
+            tOLP,
+            tOB,
+            tapOFT,
+            sglTokenMock,
+            sglTokenMockAsset,
+            yieldBox,
+            oTAP,
+        } = await loadFixture(setupFixture);
+
+        // Setup tOB
+        await tOB.oTAPBrokerClaim();
+        await tapOFT.setMinter(tOB.address);
+
+        // Setup - register a singularity, mint and deposit in YB, lock in tOLP
+        const amount = 3e10;
+        const lockDurationA = 10;
+        const lockDurationB = 100;
+        await tOLP.registerSingularity(
+            sglTokenMock.address,
+            sglTokenMockAsset,
+            0,
+        );
+
+        await sglTokenMock.freeMint(amount);
+        await sglTokenMock.approve(yieldBox.address, amount);
+        await yieldBox.depositAsset(
+            sglTokenMockAsset,
+            signer.address,
+            signer.address,
+            amount,
+            0,
+        );
+
+        const ybAmount = await yieldBox.toAmount(
+            sglTokenMockAsset,
+            await yieldBox.balanceOf(signer.address, sglTokenMockAsset),
+            false,
+        );
+        await yieldBox.setApprovalForAll(tOLP.address, true);
+        //A (short less impact)
+        // console.log(ybAmount);
+        await tOLP.lock(
+            signer.address,
+            sglTokenMock.address,
+            lockDurationA,
+            ybAmount.div(100),
+        );
+        //B (long, big impact)
+        await tOLP.lock(
+            signer.address,
+            sglTokenMock.address,
+            lockDurationB,
+            ybAmount.div(2),
+        );
+        const tokenID = await tOLP.tokenCounter();
+        const snapshot = await takeSnapshot();
+        // console.log(
+        //     'A Duration: ',
+        //     lockDurationA,
+        //     ' B Duration: ',
+        //     lockDurationB,
+        // );
+        // Just A Participate
+        // console.log('Just A participation');
+        await tOLP.approve(tOB.address, tokenID.sub(1));
+        await tOB.participate(tokenID.sub(1));
+        const participationA = await tOB.participants(tokenID.sub(1));
+        const oTAPTknID = await oTAP.mintedOTAP();
+        await time.increase(lockDurationA);
+        const prevPoolState = await tOB.twAML(sglTokenMockAsset);
+        // console.log('[B4] Just A Cumulative: ', await prevPoolState.cumulative);
+        // console.log('[B4] Just A Average: ', participationA.averageMagnitude);
+        await oTAP.approve(tOB.address, oTAPTknID);
+        await tOB.exitPosition(oTAPTknID);
+        // console.log('Exit A position');
+        const newPoolState = await tOB.twAML(sglTokenMockAsset);
+        // console.log('[A4] Just A Cumulative: ', await newPoolState.cumulative);
+        // console.log(
+        //     '[A4] Just A Average: ',
+        //     await participationA.averageMagnitude,
+        // );
+
+        //Both Participations
+        // console.log();
+        // console.log('Run both participation---');
+        const ctime1 = new Date();
+        // console.log('Time: ', ctime1);
+        //A and B Participate
+        await snapshot.restore();
+        //Before everything
+        const initPoolState = await tOB.twAML(sglTokenMockAsset);
+        // console.log(
+        //     '[IN] Initial Cumulative: ',
+        //     await initPoolState.cumulative,
+        // );
+        //First participate A
+        await tOLP.approve(tOB.address, tokenID.sub(1));
+        await tOB.participate(tokenID.sub(1));
+        const xparticipationA = await tOB.participants(tokenID.sub(1));
+        const ATknID = await oTAP.mintedOTAP();
+        // console.log('Participate A (smaller weight)');
+        // console.log('[ID] A Token ID: ', ATknID);
+        const xprevPoolState = await tOB.twAML(sglTokenMockAsset);
+        // console.log(
+        //     '[B4] Both A Cumulative: ',
+        //     await xprevPoolState.cumulative,
+        // );
+        // console.log(
+        //     '[B4] Both A Average: ',
+        //     await xparticipationA.averageMagnitude,
+        // );
+        // console.log();
+
+        //Time skip to half A's duration
+        await time.increase(5);
+        const ctime2 = new Date();
+        // console.log('Participate B (larger weight), Time(+5): ', ctime2);
+
+        //Participate B
+        await tOLP.approve(tOB.address, tokenID);
+        await tOB.participate(tokenID);
+        const xparticipationB = await tOB.participants(tokenID);
+        const BTknID = await oTAP.mintedOTAP();
+        // console.log('[ID] B Token ID: ', ATknID);
+        const xbothPoolState = await tOB.twAML(sglTokenMockAsset);
+        // console.log(
+        //     '[B4] Both AB Cumulative: ',
+        //     await xbothPoolState.cumulative,
+        // );
+        // console.log(
+        //     '[B4] Both B Average: ',
+        //     await xparticipationB.averageMagnitude,
+        // );
+
+        //Time skip end A
+        await time.increase(6);
+        await oTAP.approve(tOB.address, ATknID);
+        await tOB.exitPosition(ATknID);
+        const exitAPoolState = await tOB.twAML(sglTokenMockAsset);
+        const ctime3 = new Date();
+        // console.log();
+        // console.log(
+        //     'Exit A (Dispraportionate Weight, Time(+6 Expire A): ',
+        //     ctime3,
+        // );
+        // console.log(
+        //     '[!X!] Just B Cumulative: ',
+        //     await exitAPoolState.cumulative,
+        // );
+        // console.log('[A4] Just B Average: ', xparticipationB.averageMagnitude);
+        expect(exitAPoolState.cumulative).to.be.equal(50);
+
+        //TIme skip end B
+        await time.increase(lockDurationB);
+        await oTAP.approve(tOB.address, BTknID);
+        await tOB.exitPosition(BTknID);
+        const exitBPoolState = await tOB.twAML(sglTokenMockAsset);
+        const ctime4 = new Date();
+        // console.log('Exit B, Time(+100 Expire B): ', ctime4);
+        // console.log('[A4] END Cumulative: ', await exitBPoolState.cumulative);
+        expect(exitBPoolState.cumulative).to.be.equal(0);
+    });
 });

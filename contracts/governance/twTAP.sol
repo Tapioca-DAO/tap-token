@@ -542,7 +542,9 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         // Remove participation
         if (position.hasVotingPower) {
             TWAMLPool memory pool = twAML;
-            pool.totalParticipants--;
+            unchecked {
+                --pool.totalParticipants;
+            }
 
             // Inverse of the participation. The participation entry tracks
             // the average magnitude as it was at the time the participant
