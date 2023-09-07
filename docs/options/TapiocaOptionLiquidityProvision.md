@@ -200,10 +200,10 @@ Returns the active singularity pool data
 ### getTotalPoolDeposited
 
 ```solidity
-function getTotalPoolDeposited(uint256 _sglAssetId) external view returns (uint256)
+function getTotalPoolDeposited(uint256 _sglAssetId) external view returns (uint256 shares, uint256 amount)
 ```
 
-Returns the total amount of locked tokens for a given singularity market
+Returns the total amount of locked YieldBox shares for a given singularity market
 
 
 
@@ -217,7 +217,8 @@ Returns the total amount of locked tokens for a given singularity market
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | uint256 | undefined |
+| shares | uint256 | Amount of YieldBox shares locked |
+| amount | uint256 | Amount of YieldBox shares locked converted in amount |
 
 ### isApprovedForAll
 
@@ -268,10 +269,10 @@ function isApprovedOrOwner(address _spender, uint256 _tokenId) external view ret
 ### lock
 
 ```solidity
-function lock(address _to, contract IERC20 _singularity, uint128 _lockDuration, uint128 _amount) external nonpayable returns (uint256 tokenId)
+function lock(address _to, contract IERC20 _singularity, uint128 _lockDuration, uint128 _ybShares) external nonpayable returns (uint256 tokenId)
 ```
 
-Locks tOLR tokens for a given duration
+Locks YieldBox shares for a given duration
 
 
 
@@ -282,7 +283,7 @@ Locks tOLR tokens for a given duration
 | _to | address | Address to mint the tOLP NFT to |
 | _singularity | contract IERC20 | Singularity market address |
 | _lockDuration | uint128 | Duration of the lock |
-| _amount | uint128 | Amount of tOLR tokens to lock |
+| _ybShares | uint128 | Amount of YieldBox shares to lock |
 
 #### Returns
 
@@ -293,7 +294,7 @@ Locks tOLR tokens for a given duration
 ### lockPositions
 
 ```solidity
-function lockPositions(uint256) external view returns (uint128 sglAssetID, uint128 amount, uint128 lockTime, uint128 lockDuration)
+function lockPositions(uint256) external view returns (uint128 sglAssetID, uint128 ybShares, uint128 lockTime, uint128 lockDuration)
 ```
 
 
@@ -311,7 +312,7 @@ function lockPositions(uint256) external view returns (uint128 sglAssetID, uint1
 | Name | Type | Description |
 |---|---|---|
 | sglAssetID | uint128 | undefined |
-| amount | uint128 | undefined |
+| ybShares | uint128 | undefined |
 | lockTime | uint128 | undefined |
 | lockDuration | uint128 | undefined |
 
@@ -353,32 +354,6 @@ function nonces(address owner) external view returns (uint256)
 | Name | Type | Description |
 |---|---|---|
 | _0 | uint256 | undefined |
-
-### onERC1155Received
-
-```solidity
-function onERC1155Received(address, address, uint256, uint256, bytes) external pure returns (bytes4)
-```
-
-ERC1155 compliance
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | address | undefined |
-| _1 | address | undefined |
-| _2 | uint256 | undefined |
-| _3 | uint256 | undefined |
-| _4 | bytes | undefined |
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | bytes4 | undefined |
 
 ### owner
 
@@ -741,7 +716,7 @@ Transfers ownership to `newOwner`. Either directly or claimable by the new pendi
 ### unlock
 
 ```solidity
-function unlock(uint256 _tokenId, contract IERC20 _singularity, address _to) external nonpayable returns (uint256 sharesOut)
+function unlock(uint256 _tokenId, contract IERC20 _singularity, address _to) external nonpayable
 ```
 
 Unlocks tOLP tokens
@@ -755,12 +730,6 @@ Unlocks tOLP tokens
 | _tokenId | uint256 | ID of the position to unlock |
 | _singularity | contract IERC20 | Singularity market address |
 | _to | address | Address to send the tokens to |
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| sharesOut | uint256 | undefined |
 
 ### unregisterSingularity
 
