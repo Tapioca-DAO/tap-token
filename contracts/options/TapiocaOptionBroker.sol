@@ -613,6 +613,21 @@ contract TapiocaOptionBroker is
         paymentAmount = paymentAmount / (10 ** (18 - _paymentTokenDecimals));
     }
 
+    function getDiscountedPaymentAmount(
+        uint256 _otcAmountInUSD,
+        uint256 _paymentTokenValuation,
+        uint256 _discount,
+        uint256 _paymentTokenDecimals
+    ) external pure returns (uint256 paymentAmount) {
+        return
+            _getDiscountedPaymentAmount(
+                _otcAmountInUSD,
+                _paymentTokenValuation,
+                _discount,
+                _paymentTokenDecimals
+            );
+    }
+
     /// @notice Emit TAP to the gauges equitably
     function _emitToGauges(uint256 _epochTAP) internal {
         SingularityPool[] memory sglPools = tOLP.getSingularityPools();

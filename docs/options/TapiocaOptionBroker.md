@@ -156,6 +156,31 @@ Returns the current week
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### getDiscountedPaymentAmount
+
+```solidity
+function getDiscountedPaymentAmount(uint256 _otcAmountInUSD, uint256 _paymentTokenValuation, uint256 _discount, uint256 _paymentTokenDecimals) external pure returns (uint256 paymentAmount)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _otcAmountInUSD | uint256 | undefined |
+| _paymentTokenValuation | uint256 | undefined |
+| _discount | uint256 | undefined |
+| _paymentTokenDecimals | uint256 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| paymentAmount | uint256 | undefined |
+
 ### getOTCDealDetails
 
 ```solidity

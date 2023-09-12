@@ -4,7 +4,7 @@ import {
     time,
 } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-import hre from 'hardhat';
+import hre, { ethers } from 'hardhat';
 import {
     BN,
     aml_computeAverageMagnitude,
@@ -24,6 +24,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { ERC20Mock } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
 import { YieldBox } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
 import { setupFixture } from './fixtures';
+import { TapiocaOptionBrokerMock } from '../../typechain/contracts/options/mocks/TapiocaOptionBrokerMock';
 
 describe('TapiocaOptionBroker', () => {
     const setupEnv = async (
@@ -99,6 +100,20 @@ describe('TapiocaOptionBroker', () => {
             oTAPOption,
         };
     };
+
+    it('should test tOB discount', async () => {
+        const { tOB, oTAP, tapOFT, tOLP, signer } = await loadFixture(
+            setupFixture,
+        );
+
+        const discount = await tOB.getDiscountedPaymentAmount(
+            ethers.utils.parseEther('1'),
+            ethers.utils.parseEther('1'),
+            5e3,
+            18,
+        );
+        expect(discount.eq(1)).to.be.true;
+    });
 
     it('should claim oTAP and TAP', async () => {
         const { tOB, oTAP, tapOFT } = await loadFixture(setupFixture);
