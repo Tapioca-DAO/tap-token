@@ -355,58 +355,6 @@ function nonces(address owner) external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
-### onERC1155BatchReceived
-
-```solidity
-function onERC1155BatchReceived(address, address, uint256[], uint256[], bytes) external pure returns (bytes4)
-```
-
-ERC1155 compliance
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | address | undefined |
-| _1 | address | undefined |
-| _2 | uint256[] | undefined |
-| _3 | uint256[] | undefined |
-| _4 | bytes | undefined |
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | bytes4 | undefined |
-
-### onERC1155Received
-
-```solidity
-function onERC1155Received(address, address, uint256, uint256, bytes) external pure returns (bytes4)
-```
-
-ERC1155 compliance
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | address | undefined |
-| _1 | address | undefined |
-| _2 | uint256 | undefined |
-| _3 | uint256 | undefined |
-| _4 | bytes | undefined |
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | bytes4 | undefined |
-
 ### owner
 
 ```solidity
