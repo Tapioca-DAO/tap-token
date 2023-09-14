@@ -591,7 +591,7 @@ describe('tapOFT', () => {
 
     describe('twTAP cross-chain', () => {
         it('Should make a cross-chain twTAP participation', async () => {
-            const twTAPFactory = await ethers.getContractFactory('TwTAP');
+            const twTAPFactory = await ethers.getContractFactory('FakeTwTAP');
             const twTAP = await twTAPFactory.deploy(
                 tapiocaOFT1.address,
                 signer.address,
@@ -660,7 +660,7 @@ describe('tapOFT', () => {
         });
 
         it('Should make a cross-chain twTAP exit', async () => {
-            const twTAPFactory = await ethers.getContractFactory('TwTAP');
+            const twTAPFactory = await ethers.getContractFactory('FakeTwTAP');
             const twTAP = await twTAPFactory.deploy(
                 tapiocaOFT1.address,
                 signer.address,
@@ -747,7 +747,7 @@ describe('tapOFT', () => {
         });
 
         it('Should make a cross-chain twTAP reward claim', async () => {
-            const twTAPFactory = await ethers.getContractFactory('TwTAP');
+            const twTAPFactory = await ethers.getContractFactory('FakeTwTAP');
             const twTAP = await twTAPFactory.deploy(
                 tapiocaOFT1.address,
                 signer.address,

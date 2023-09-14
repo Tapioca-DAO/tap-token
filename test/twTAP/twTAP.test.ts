@@ -1054,4 +1054,19 @@ describe('twTAP', () => {
             ]),
         ).to.not.be.reverted;
     });
+
+    it('Should not allow participating other than host chain', async () => {
+        const { twtap, twtapOtherChain, users, tokens, tapOFT } =
+            await loadFixture(setupTwTAPFixture);
+        const [bob] = users;
+
+        await tapOFT.approve(twtap.address, oneEth);
+        await expect(twtap.participate(bob.address, oneEth, 4 * WEEK)).to.not.be
+            .reverted;
+
+        await tapOFT.approve(twtapOtherChain.address, oneEth);
+        await expect(
+            twtapOtherChain.participate(bob.address, oneEth, 4 * WEEK),
+        ).to.be.revertedWith('twTAP: only host chain');
+    });
 });
