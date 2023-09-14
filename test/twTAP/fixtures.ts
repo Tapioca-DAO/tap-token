@@ -12,10 +12,10 @@ export const setupTwTAPFixture = async () => {
     const one = BN(1e18);
     const hundredMil = one.mul(100_000_000);
     const tapOFT = await (
-        (await ethers.getContractFactoryFromArtifact(
-            ERC20MockArtifact,
-        )) as ERC20Mock__factory
-    ).deploy('TapOFT', 'TapOFT', hundredMil, 18, signer.address);
+        await ethers.getContractFactory('FakeTapOFT')
+    ).deploy();
+
+    await tapOFT.mint(signer.address, hundredMil);
 
     // Mock tokens
     const mock0 = await (
@@ -56,6 +56,8 @@ export const setupTwTAPFixture = async () => {
         Number(await hre.getChainId()),
     );
 
+    const LZEndpointMockOtherChain = await deployLZEndpointMock(Number(11));
+
     // twtap
     const twtap = await (
         await ethers.getContractFactory('TwTAP')
@@ -63,6 +65,15 @@ export const setupTwTAPFixture = async () => {
         tapOFT.address,
         signer.address,
         LZEndpointMockCurrentChain.address,
+        await hre.getChainId(),
+        200_000,
+    );
+    const twtapOtherChain = await (
+        await ethers.getContractFactory('FakeTwTAP')
+    ).deploy(
+        tapOFT.address,
+        signer.address,
+        LZEndpointMockOtherChain.address,
         await hre.getChainId(),
         200_000,
     );
@@ -82,6 +93,7 @@ export const setupTwTAPFixture = async () => {
         // vars
         tapOFT,
         twtap,
+        twtapOtherChain,
         tokens,
     };
 };

@@ -29,6 +29,12 @@ describe('twTAP', () => {
             setupTwTAPFixture,
         );
 
+        // Delete the balance
+        await tapOFT.transfer(
+            users[0].address,
+            await tapOFT.balanceOf(signer.address),
+        );
+
         // Setup - Get some Tap tokens
         const toMint = BN(2e18);
         const lockDuration = EIGHT_DAYS;
@@ -1011,5 +1017,56 @@ describe('twTAP', () => {
                 .connect(alice)
                 .participate(alice.address, oneEth.mul(100), tooMuch),
         ).to.be.revertedWith('twTAP: too long');
+    });
+
+    it('Should not allow claiming rewards for a duplicate reward token', async () => {
+        const { twtap, users, tokens, tapOFT } = await loadFixture(
+            setupTwTAPFixture,
+        );
+        const [bob] = users;
+        const [mock0] = tokens;
+
+        await twtap
+            .connect(bob)
+            .participate(bob.address, oneEth.mul(10), 4 * WEEK);
+        const bobId = await twtap.mintedTWTap();
+
+        // WEEK 2
+        await time.increase(2 * WEEK);
+        await twtap.advanceWeek(2);
+        expect(await twtap.currentWeek()).to.equal(2);
+        expect(await twtap.lastProcessedWeek()).to.equal(2);
+
+        const distAmount = oneEth.mul(3).div(8);
+        await mock0.connect(bob).approve(twtap.address, distAmount);
+        await twtap.connect(bob).distributeReward(0, distAmount);
+
+        await expect(
+            tapOFT.fakeClaimAndSendReward(twtap.address, bobId, [
+                mock0.address,
+                mock0.address,
+            ]),
+        ).to.be.revertedWith('twTAP: duplicate reward token');
+
+        await expect(
+            tapOFT.fakeClaimAndSendReward(twtap.address, bobId, [
+                mock0.address,
+            ]),
+        ).to.not.be.reverted;
+    });
+
+    it('Should not allow participating other than host chain', async () => {
+        const { twtap, twtapOtherChain, users, tokens, tapOFT } =
+            await loadFixture(setupTwTAPFixture);
+        const [bob] = users;
+
+        await tapOFT.approve(twtap.address, oneEth);
+        await expect(twtap.participate(bob.address, oneEth, 4 * WEEK)).to.not.be
+            .reverted;
+
+        await tapOFT.approve(twtapOtherChain.address, oneEth);
+        await expect(
+            twtapOtherChain.participate(bob.address, oneEth, 4 * WEEK),
+        ).to.be.revertedWith('twTAP: only host chain');
     });
 });
