@@ -5,7 +5,6 @@ import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/Borin
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 import "tapioca-sdk/dist/contracts/YieldBox/contracts/interfaces/IYieldBox.sol";
@@ -46,7 +45,6 @@ struct SingularityPool {
 }
 
 contract TapiocaOptionLiquidityProvision is
-    IERC1155Receiver,
     ERC721,
     ERC721Permit,
     BaseBoringBatchable,
@@ -347,48 +345,5 @@ contract TapiocaOptionLiquidityProvision is
         return
             (lockPosition.lockTime + lockPosition.lockDuration) >=
             block.timestamp;
-    }
-
-    /// @notice ERC165 compliance
-    function supportsInterface(
-        bytes4 interfaceID
-    ) public pure override(IERC165, ERC721) returns (bool) {
-        // https://eips.ethereum.org/EIPS/eip-1155 (ERC1155TokenReceiver ERC-165 rules)
-        return
-            interfaceID == 0x01ffc9a7 || // ERC-165 support (i.e. bytes4(keccak256('supportsInterface(bytes4)'))).
-            interfaceID == 0x4e2312e0 || // ERC-1155 ERC1155TokenReceiver support (i.e. bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)")) ^ bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))).
-            interfaceID == 0x80ac58cd; // ERC-721 support
-    }
-
-    /// @notice ERC1155 compliance
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata
-    ) external pure returns (bytes4) {
-        return
-            bytes4(
-                keccak256(
-                    "onERC1155Received(address,address,uint256,uint256,bytes)"
-                )
-            );
-    }
-
-    /// @notice ERC1155 compliance
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] calldata,
-        uint256[] calldata,
-        bytes calldata
-    ) external pure returns (bytes4) {
-        return
-            bytes4(
-                keccak256(
-                    "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"
-                )
-            );
     }
 }
