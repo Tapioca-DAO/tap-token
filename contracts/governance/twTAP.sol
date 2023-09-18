@@ -105,6 +105,8 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
 
     IERC20[] public rewardTokens;
     mapping(IERC20 => uint256) public rewardTokenIndex;
+    uint256 public maxRewardTokens;
+
     // tokenId -> rewardTokens index -> amount
     mapping(uint256 => mapping(uint256 => uint256)) public claimed;
 
@@ -119,6 +121,12 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
 
     uint256 public immutable HOST_CHAIN_ID;
     string private baseURI;
+
+    event LogMaxRewardsLength(
+        uint256 _oldLength,
+        uint256 _newLength,
+        uint256 _currentLength
+    );
 
     /// =====-------======
     constructor(
@@ -135,6 +143,8 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         transferOwnership(_owner);
         creation = block.timestamp;
         HOST_CHAIN_ID = _hostChainID;
+
+        maxRewardTokens = 1000;
     }
 
     // ==========
@@ -462,8 +472,23 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     // =========
     //   OWNER
     // =========
+    function setMaxRewardTokensLength(uint256 _length) external onlyOwner {
+        emit LogMaxRewardsLength(maxRewardTokens, _length, rewardTokens.length);
+        maxRewardTokens = _length;
+    }
 
     function addRewardToken(IERC20 token) external onlyOwner returns (uint256) {
+        if (rewardTokens.length > 0) {
+            require(
+                rewardTokenIndex[token] == 0 &&
+                    address(rewardTokens[0]) != address(token),
+                "twTap: token already registered"
+            );
+        }
+        require(
+            rewardTokens.length + 1 <= maxRewardTokens,
+            "twTap: tokens limit reached"
+        );
         uint256 i = rewardTokens.length;
         rewardTokens.push(token);
         rewardTokenIndex[token] = i;
