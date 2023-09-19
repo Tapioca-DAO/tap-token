@@ -21,7 +21,11 @@ import {
 } from '../../typechain';
 import { BigNumber } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ERC20Mock } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
+import {
+    ERC20Mock,
+    ERC20Mock__factory,
+    OracleMock__factory,
+} from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
 import { YieldBox } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
 import { setupFixture } from './fixtures';
 
@@ -1671,5 +1675,92 @@ describe('TapiocaOptionBroker', () => {
         // console.log('Exit B, Time(+100 Expire B): ', ctime4);
         // console.log('[A4] END Cumulative: ', await exitBPoolState.cumulative);
         expect(exitBPoolState.cumulative).to.be.equal(0);
+    });
+
+    it('Should support decimals >18', async () => {
+        const {
+            signer,
+            users,
+            yieldBox,
+            tOB,
+            tapOFT,
+            tOLP,
+            oTAP,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+        } = await loadFixture(setupFixture);
+
+        await setupEnv(
+            tOB,
+            tOLP,
+            tapOFT,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+        );
+        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await tOB.newEpoch();
+
+        const ERC20Mock = new ERC20Mock__factory(signer);
+        const paymentTokenMock = await ERC20Mock.deploy(
+            'paymentTokenMock',
+            'PTM',
+            0,
+            24,
+            signer.address,
+        );
+        await paymentTokenMock.updateMintLimit(hre.ethers.constants.MaxUint256);
+
+        const OracleMock = new OracleMock__factory(signer);
+        const paymentTokenOracleMock = await OracleMock.deploy(
+            'paymentTokenOracleMock',
+            'PTOM',
+            BN(10).pow(24).toString(),
+        );
+        await tOB.setPaymentToken(
+            paymentTokenMock.address,
+            paymentTokenOracleMock.address,
+            '0x00',
+        );
+
+        const userLock1 = await lockAndParticipate(
+            users[0],
+            3e8,
+            3600,
+            tOLP,
+            tOB,
+            oTAP,
+            yieldBox,
+            sglTokenMock,
+            sglTokenMockAsset,
+        );
+
+        const epoch = await tOB.epoch();
+
+        // Exercise for 10e18 TAP with 1e24 decimals stable, 50% discount
+        {
+            const eligibleTapAmount = BN(10e18);
+            const otcDealAmountInUSD = BN(33e17).mul(eligibleTapAmount);
+            const rawPayment = otcDealAmountInUSD.div(
+                (await paymentTokenOracleMock.get('0x00'))[1],
+            );
+            const discount = rawPayment.mul(50).div(100);
+            const paymentTokenToSend = rawPayment.sub(discount).mul(1e6); // 24 - 18
+
+            const otcDetails = await tOB
+                .connect(users[0])
+                .getOTCDealDetails(
+                    userLock1.oTAPTokenID,
+                    paymentTokenMock.address,
+                    eligibleTapAmount,
+                );
+
+            expect(otcDetails.paymentTokenAmount).to.be.equal(
+                paymentTokenToSend,
+            );
+        }
     });
 });

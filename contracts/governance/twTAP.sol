@@ -166,6 +166,11 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     //    READ
     // ==========
 
+    modifier onlyHostChain() {
+        require(_getChainId() == HOST_CHAIN_ID, "twTAP: only host chain");
+        _;
+    }
+
     function currentWeek() public view returns (uint256) {
         return (block.timestamp - creation) / EPOCH_DURATION;
     }
@@ -272,7 +277,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         address _participant,
         uint256 _amount,
         uint256 _duration
-    ) external nonReentrant returns (uint256 tokenId) {
+    ) external nonReentrant onlyHostChain returns (uint256 tokenId) {
         require(_duration >= EPOCH_DURATION, "twTAP: Lock not a week");
 
         // Transfer TAP to this contract
