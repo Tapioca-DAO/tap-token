@@ -56,6 +56,8 @@ export const setupTwTAPFixture = async () => {
         Number(await hre.getChainId()),
     );
 
+    const LZEndpointMockOtherChain = await deployLZEndpointMock(Number(11));
+
     // twtap
     const twtap = await (
         await ethers.getContractFactory('TwTAP')
@@ -63,6 +65,15 @@ export const setupTwTAPFixture = async () => {
         tapOFT.address,
         signer.address,
         LZEndpointMockCurrentChain.address,
+        await hre.getChainId(),
+        200_000,
+    );
+    const twtapOtherChain = await (
+        await ethers.getContractFactory('FakeTwTAP')
+    ).deploy(
+        tapOFT.address,
+        signer.address,
+        LZEndpointMockOtherChain.address,
         await hre.getChainId(),
         200_000,
     );
@@ -82,6 +93,7 @@ export const setupTwTAPFixture = async () => {
         // vars
         tapOFT,
         twtap,
+        twtapOtherChain,
         tokens,
     };
 };
