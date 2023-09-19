@@ -585,18 +585,18 @@ function singularities(uint256) external view returns (uint256)
 ### supportsInterface
 
 ```solidity
-function supportsInterface(bytes4 interfaceID) external pure returns (bool)
+function supportsInterface(bytes4 interfaceId) external view returns (bool)
 ```
 
-ERC165 compliance
 
 
+*See {IERC165-supportsInterface}.*
 
 #### Parameters
 
 | Name | Type | Description |
 |---|---|---|
-| interfaceID | bytes4 | undefined |
+| interfaceId | bytes4 | undefined |
 
 #### Returns
 
