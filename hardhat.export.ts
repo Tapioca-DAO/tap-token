@@ -67,7 +67,7 @@ const config: HardhatUserConfig & { dodoc: any } = {
                     viaIR: process.env.NODE_ENV == 'coverage' ? false : true,
                     optimizer: {
                         enabled: true,
-                        runs: 100,
+                        runs: 10,
                     },
                 },
             },
