@@ -116,6 +116,12 @@ abstract contract BaseTapOFT is OFTV2 {
 
         _debitFrom(msg.sender, lzEndpoint.getChainId(), senderBytes, amount);
 
+        _checkGasLimit(
+            lzDstChainId,
+            PT_LOCK_TWTAP,
+            adapterParams,
+            NO_EXTRA_GAS
+        );
         _lzSend(
             lzDstChainId,
             lzPayload,
@@ -205,6 +211,12 @@ abstract contract BaseTapOFT is OFTV2 {
             rewardClaimSendParams
         );
 
+        _checkGasLimit(
+            lzDstChainId,
+            PT_CLAIM_REWARDS,
+            adapterParams,
+            NO_EXTRA_GAS
+        );
         _lzSend(
             lzDstChainId,
             lzPayload,
@@ -318,6 +330,12 @@ abstract contract BaseTapOFT is OFTV2 {
             twTapSendBackAdapterParams
         );
 
+        _checkGasLimit(
+            lzDstChainId,
+            PT_UNLOCK_TWTAP,
+            adapterParams,
+            NO_EXTRA_GAS
+        );
         _lzSend(
             lzDstChainId,
             lzPayload,

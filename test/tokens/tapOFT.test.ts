@@ -75,12 +75,14 @@ describe('tapOFT', () => {
         // OFT Setup
         await tapiocaOFT0.setUseCustomAdapterParams(true);
         await tapiocaOFT0.setMinDstGas(11, 870, 550_00);
-        await tapiocaOFT0.setMinDstGas(11, 870, 550_00);
+        await tapiocaOFT0.setMinDstGas(11, 871, 550_00);
+        await tapiocaOFT0.setMinDstGas(11, 872, 550_00);
         await tapiocaOFT0.setMinDstGas(11, 0, 200_000);
 
         await tapiocaOFT1.setUseCustomAdapterParams(true);
         await tapiocaOFT1.setMinDstGas(chainId, 870, 550_00);
         await tapiocaOFT1.setMinDstGas(chainId, 871, 550_00);
+        await tapiocaOFT1.setMinDstGas(chainId, 872, 550_00);
         await tapiocaOFT1.setMinDstGas(chainId, 0, 200_000);
 
         await toft0.setUseCustomAdapterParams(true);
