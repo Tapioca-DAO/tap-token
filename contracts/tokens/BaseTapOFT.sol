@@ -230,7 +230,7 @@ abstract contract BaseTapOFT is OFTV2 {
     ) internal virtual {
         (
             ,
-            ,
+            address sender,
             address to,
             uint256 tokenID,
             IERC20[] memory rewardTokens,
@@ -248,7 +248,7 @@ abstract contract BaseTapOFT is OFTV2 {
             );
 
         // Only the owner can unlock
-        require(twTap.ownerOf(tokenID) == to, "TapOFT: Not owner");
+        require(twTap.ownerOf(tokenID) == sender, "TapOFT: Not owner");
 
         // Exit and receive tokens to this contract
         try twTap.claimAndSendRewards(tokenID, rewardTokens) {
