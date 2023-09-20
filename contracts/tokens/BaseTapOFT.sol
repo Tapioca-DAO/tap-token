@@ -322,18 +322,11 @@ abstract contract BaseTapOFT is OFTV2 {
         bytes calldata adapterParams,
         LzCallParams calldata twTapSendBackAdapterParams
     ) external payable {
-        if (to != msg.sender) {
-            require(
-                allowance(to, msg.sender) >= 1, //simulate ERC20 allowance
-                "TapOFT: sender not approved"
-            );
-            _spendAllowance(to, msg.sender, 1);
-        }
-
         bytes memory lzPayload = abi.encode(
             PT_UNLOCK_TWTAP, // packet type
             msg.sender,
             to,
+            msg.sender,
             tokenID,
             twTapSendBackAdapterParams
         );
@@ -371,15 +364,16 @@ abstract contract BaseTapOFT is OFTV2 {
             ,
             ,
             address to,
+            address sender,
             uint256 tokenID,
             LzCallParams memory twTapSendBackAdapterParams
         ) = abi.decode(
                 _payload,
-                (uint16, address, address, uint256, LzCallParams)
+                (uint16, address, address, address, uint256, LzCallParams)
             );
 
         // Only the owner can unlock
-        require(twTap.ownerOf(tokenID) == to, "TapOFT: Not owner");
+        require(twTap.ownerOf(tokenID) == sender, "TapOFT: Not owner");
 
         // Exit and receive tokens to this contract
         try twTap.exitPositionAndSendTap(tokenID) returns (uint256 _amount) {
