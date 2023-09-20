@@ -322,6 +322,14 @@ abstract contract BaseTapOFT is OFTV2 {
         bytes calldata adapterParams,
         LzCallParams calldata twTapSendBackAdapterParams
     ) external payable {
+        if (to != msg.sender) {
+            require(
+                allowance(to, msg.sender) >= 1, //simulate ERC20 allowance
+                "TapOFT: sender not approved"
+            );
+            _spendAllowance(to, msg.sender, 1);
+        }
+
         bytes memory lzPayload = abi.encode(
             PT_UNLOCK_TWTAP, // packet type
             msg.sender,
