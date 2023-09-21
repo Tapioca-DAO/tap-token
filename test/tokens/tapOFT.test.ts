@@ -22,7 +22,7 @@ import {
 } from '../test.utils';
 import { TapiocaOFT } from 'tapioca-sdk/dist/typechain/tapiocaz';
 
-describe.only('tapOFT', () => {
+describe('tapOFT', () => {
     let signer: SignerWithAddress;
     let minter: SignerWithAddress;
     let normalUser: SignerWithAddress;

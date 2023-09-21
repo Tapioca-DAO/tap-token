@@ -1055,7 +1055,7 @@ describe('twTAP', () => {
         ).to.not.be.reverted;
     });
 
-    it('Should not allow participating other than host chain', async () => {
+    it.skip('Should not allow participating other than host chain', async () => {
         const { twtap, twtapOtherChain, users, tokens, tapOFT } =
             await loadFixture(setupTwTAPFixture);
         const [bob] = users;

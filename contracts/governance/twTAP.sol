@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 import "../tokens/TapOFT.sol";
 import "../twAML.sol";
+
 // ********************************************************************************
 // *******************************,                 ,******************************
 // *************************                               ************************
@@ -120,7 +121,6 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     mapping(uint256 => WeekTotals) public weekTotals;
 
     uint256 public immutable HOST_CHAIN_ID;
-    string private baseURI;
 
     event LogMaxRewardsLength(
         uint256 _oldLength,
@@ -165,11 +165,6 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     // ==========
     //    READ
     // ==========
-
-    modifier onlyHostChain() {
-        require(_getChainId() == HOST_CHAIN_ID, "twTAP: only host chain");
-        _;
-    }
 
     function currentWeek() public view returns (uint256) {
         return (block.timestamp - creation) / EPOCH_DURATION;
@@ -471,7 +466,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
             (_amount * DIST_PRECISION) /
             uint256(totals.netActiveVotes);
 
-        require(_amount > 0, "twTap: amount is 0");
+        require(_amount > 0, "twTap: 0");
         rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
     }
 
@@ -484,18 +479,12 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     }
 
     function addRewardToken(IERC20 token) external onlyOwner returns (uint256) {
-        if (rewardTokens.length > 0) {
-            require(
-                rewardTokenIndex[token] == 0 &&
-                    address(rewardTokens[0]) != address(token),
-                "twTap: token already registered"
-            );
-        }
+        require(rewardTokenIndex[token] == 0, "twTap: registered");
         require(
             rewardTokens.length + 1 <= maxRewardTokens,
             "twTap: tokens limit reached"
         );
-        uint256 i = rewardTokens.length;
+        uint256 i = rewardTokens.length + 1;
         rewardTokens.push(token);
         rewardTokenIndex[token] = i;
         return i;
@@ -560,8 +549,8 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
 
                 if (amount > 0) {
                     // Math is safe: `amount` calculated safely in `claimable()`
-                    claimed[_tokenId][claimableIndex] += amount;
-                    rewardTokens[claimableIndex].safeTransfer(_to, amount);
+                    claimed[_tokenId][claimableIndex - 1] += amount;
+                    rewardTokens[claimableIndex - 1].safeTransfer(_to, amount);
                 }
                 ++i;
             }
