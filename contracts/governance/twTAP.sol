@@ -166,6 +166,11 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     //    READ
     // ==========
 
+    modifier onlyHostChain() {
+        require(_getChainId() == HOST_CHAIN_ID, "twTAP: only host chain");
+        _;
+    }
+
     function currentWeek() public view returns (uint256) {
         return (block.timestamp - creation) / EPOCH_DURATION;
     }

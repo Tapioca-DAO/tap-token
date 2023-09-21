@@ -610,7 +610,16 @@ contract TapiocaOptionBroker is
         paymentAmount =
             rawPaymentAmount -
             muldiv(rawPaymentAmount, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
-        paymentAmount = paymentAmount / (10 ** (18 - _paymentTokenDecimals));
+
+        if (_paymentTokenDecimals <= 18) {
+            paymentAmount =
+                paymentAmount /
+                (10 ** (18 - _paymentTokenDecimals));
+        } else {
+            paymentAmount =
+                paymentAmount *
+                (10 ** (_paymentTokenDecimals - 18));
+        }
     }
 
     /// @notice Emit TAP to the gauges equitably
