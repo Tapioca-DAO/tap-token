@@ -545,7 +545,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
 
                 // Get amount and reward token index
                 uint256 claimableIndex = rewardTokenIndex[_rewardTokens[i]];
-                uint256 amount = amounts[i];
+                uint256 amount = amounts[claimableIndex - 1];
 
                 if (amount > 0) {
                     // Math is safe: `amount` calculated safely in `claimable()`
