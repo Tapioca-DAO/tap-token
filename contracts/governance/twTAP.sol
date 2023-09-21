@@ -273,6 +273,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         uint256 _amount,
         uint256 _duration
     ) external nonReentrant returns (uint256 tokenId) {
+        require(block.chainid == HOST_CHAIN_ID, "twTAP: not host chain");
         require(_duration >= EPOCH_DURATION, "twTAP: Lock not a week");
 
         // Transfer TAP to this contract

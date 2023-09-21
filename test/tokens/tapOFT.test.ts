@@ -22,7 +22,7 @@ import {
 } from '../test.utils';
 import { TapiocaOFT } from 'tapioca-sdk/dist/typechain/tapiocaz';
 
-describe('tapOFT', () => {
+describe.only('tapOFT', () => {
     let signer: SignerWithAddress;
     let minter: SignerWithAddress;
     let normalUser: SignerWithAddress;
@@ -78,6 +78,10 @@ describe('tapOFT', () => {
         await tapiocaOFT0.setMinDstGas(11, 871, 550_00);
         await tapiocaOFT0.setMinDstGas(11, 872, 550_00);
         await tapiocaOFT0.setMinDstGas(11, 0, 200_000);
+        await tapiocaOFT0.setMinDstGas(31337, 870, 550_00);
+        await tapiocaOFT0.setMinDstGas(31337, 871, 550_00);
+        await tapiocaOFT0.setMinDstGas(31337, 872, 550_00);
+        await tapiocaOFT0.setMinDstGas(31337, 0, 200_000);
 
         await tapiocaOFT1.setUseCustomAdapterParams(true);
         await tapiocaOFT1.setMinDstGas(chainId, 870, 550_00);
@@ -125,9 +129,23 @@ describe('tapOFT', () => {
                 [tapiocaOFT0.address, tapiocaOFT1.address],
             ),
         );
+        await tapiocaOFT0.setTrustedRemote(
+            31337,
+            ethers.utils.solidityPack(
+                ['address', 'address'],
+                [tapiocaOFT1.address, tapiocaOFT0.address],
+            ),
+        );
 
         await toft0.setTrustedRemote(
             11,
+            ethers.utils.solidityPack(
+                ['address', 'address'],
+                [toft1.address, toft0.address],
+            ),
+        );
+        await toft0.setTrustedRemote(
+            31337,
             ethers.utils.solidityPack(
                 ['address', 'address'],
                 [toft1.address, toft0.address],
@@ -598,7 +616,7 @@ describe('tapOFT', () => {
                 tapiocaOFT1.address,
                 signer.address,
                 LZEndpointMockGovernance.address,
-                11,
+                31337,
                 200_000,
             );
             const amountToParticipate = (1e18).toString();
@@ -616,7 +634,7 @@ describe('tapOFT', () => {
                     signer.address,
                     amountToParticipate,
                     10,
-                    11,
+                    31337,
                     ethers.constants.AddressZero,
                     hre.ethers.utils.solidityPack(
                         ['uint16', 'uint256'],
@@ -630,12 +648,13 @@ describe('tapOFT', () => {
             ); // Expect to be credited
 
             // Real call
+            hre.tracer.enabled = true;
             await expect(
                 tapiocaOFT0.lockTwTapPosition(
                     signer.address,
                     amountToParticipate,
                     await twTAP.EPOCH_DURATION(),
-                    11,
+                    31337,
                     ethers.constants.AddressZero,
                     hre.ethers.utils.solidityPack(
                         ['uint16', 'uint256'],
@@ -644,6 +663,7 @@ describe('tapOFT', () => {
                     { value: (1e18).toString() },
                 ),
             ).to.emit(twTAP, 'Participate');
+            hre.tracer.enabled = false;
             const blockTimestamp = (await ethers.provider.getBlock('latest'))
                 .timestamp;
 
@@ -667,7 +687,7 @@ describe('tapOFT', () => {
                 tapiocaOFT1.address,
                 signer.address,
                 LZEndpointMockGovernance.address,
-                11,
+                31337,
                 200_000,
             );
             const tapBefore_chain_0 = await tapiocaOFT0.balanceOf(
@@ -680,7 +700,7 @@ describe('tapOFT', () => {
                 signer.address,
                 (1e18).toString(),
                 await twTAP.EPOCH_DURATION(),
-                11,
+                31337,
                 ethers.constants.AddressZero,
                 hre.ethers.utils.solidityPack(
                     ['uint16', 'uint256'],
@@ -695,7 +715,7 @@ describe('tapOFT', () => {
                 tapiocaOFT0.unlockTwTapPosition(
                     signer.address,
                     tokenID,
-                    11,
+                    31337,
                     ethers.constants.AddressZero,
                     hre.ethers.utils.solidityPack(
                         ['uint16', 'uint256'],
@@ -724,7 +744,7 @@ describe('tapOFT', () => {
                 tapiocaOFT0.unlockTwTapPosition(
                     signer.address,
                     tokenID,
-                    11,
+                    31337,
                     ethers.constants.AddressZero,
                     hre.ethers.utils.solidityPack(
                         ['uint16', 'uint', 'uint', 'address'],
