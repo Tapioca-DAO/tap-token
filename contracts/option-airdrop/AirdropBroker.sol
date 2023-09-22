@@ -304,7 +304,9 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         epoch++;
 
         // Get epoch TAP valuation
-        (bool success, uint256 _epochTAPValuation) = tapOracle.get(tapOracleData);
+        (bool success, uint256 _epochTAPValuation) = tapOracle.get(
+            tapOracleData
+        );
         require(success, "adb: oracle call failed");
         epochTAPValuation = uint128(_epochTAPValuation);
         emit NewEpoch(epoch, epochTAPValuation);
@@ -511,9 +513,9 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         uint256 otcAmountInUSD = tapAmount * epochTAPValuation;
 
         // Get payment token valuation
-        (bool success, uint256 paymentTokenValuation) = _paymentTokenOracle.oracle.get(
-            _paymentTokenOracle.oracleData
-        );
+        (bool success, uint256 paymentTokenValuation) = _paymentTokenOracle
+            .oracle
+            .get(_paymentTokenOracle.oracleData);
         require(success, "adb: oracle call failed");
 
         // Calculate payment amount and initiate the transfers

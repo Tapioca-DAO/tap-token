@@ -571,9 +571,9 @@ contract TapiocaOptionBroker is
         uint256 otcAmountInUSD = tapAmount * epochTAPValuation;
 
         // Get payment token valuation
-        (bool success, uint256 paymentTokenValuation) = _paymentTokenOracle.oracle.get(
-            _paymentTokenOracle.oracleData
-        );
+        (bool success, uint256 paymentTokenValuation) = _paymentTokenOracle
+            .oracle
+            .get(_paymentTokenOracle.oracleData);
         require(success, "tOB: oracle call failed");
 
         // Calculate payment amount and initiate the transfers
