@@ -475,7 +475,9 @@ contract TapiocaOptionBroker is
         _emitToGauges(epochTAP);
 
         // Get epoch TAP valuation
-        (, epochTAPValuation) = tapOracle.get(tapOracleData);
+        bool success;
+        (success, epochTAPValuation) = tapOracle.get(tapOracleData);
+        require(success, "tOB: oracle call failed");
         emit NewEpoch(epoch, epochTAP, epochTAPValuation);
     }
 
@@ -569,9 +571,10 @@ contract TapiocaOptionBroker is
         uint256 otcAmountInUSD = tapAmount * epochTAPValuation;
 
         // Get payment token valuation
-        (, uint256 paymentTokenValuation) = _paymentTokenOracle.oracle.get(
+        (bool success, uint256 paymentTokenValuation) = _paymentTokenOracle.oracle.get(
             _paymentTokenOracle.oracleData
         );
+        require(success, "tOB: oracle call failed");
 
         // Calculate payment amount and initiate the transfers
         uint256 discountedPaymentAmount = _getDiscountedPaymentAmount(

@@ -685,6 +685,23 @@ function lzReceive(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes _
 | _nonce | uint64 | undefined |
 | _payload | bytes | undefined |
 
+### maxRewardTokens
+
+```solidity
+function maxRewardTokens() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### minDstGasLookup
 
 ```solidity
@@ -1195,6 +1212,22 @@ function setDstChainIdToTransferGas(uint16 _dstChainId, uint256 _dstChainIdToTra
 | _dstChainId | uint16 | undefined |
 | _dstChainIdToTransferGas | uint256 | undefined |
 
+### setMaxRewardTokensLength
+
+```solidity
+function setMaxRewardTokensLength(uint256 _length) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _length | uint256 | undefined |
+
 ### setMinDstGas
 
 ```solidity
@@ -1636,6 +1669,24 @@ event ExitPosition(uint256 indexed tokenId, uint256 amount)
 |---|---|---|
 | tokenId `indexed` | uint256 | undefined |
 | amount  | uint256 | undefined |
+
+### LogMaxRewardsLength
+
+```solidity
+event LogMaxRewardsLength(uint256 _oldLength, uint256 _newLength, uint256 _currentLength)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _oldLength  | uint256 | undefined |
+| _newLength  | uint256 | undefined |
+| _currentLength  | uint256 | undefined |
 
 ### MessageFailed
 
