@@ -1763,4 +1763,156 @@ describe('TapiocaOptionBroker', () => {
             );
         }
     });
+
+    it.only('Should be able to exercise based on shares', async () => {
+        const {
+            signer,
+            users,
+            yieldBox,
+            tOB,
+            tapOFT,
+            tOLP,
+            oTAP,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+            stableMock,
+            stableMockOracle,
+        } = await loadFixture(setupFixture);
+
+        await setupEnv(
+            tOB,
+            tOLP,
+            tapOFT,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+        );
+        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+
+        await tOB.setPaymentToken(
+            stableMock.address,
+            stableMockOracle.address,
+            '0x00',
+        );
+
+        const userLock0 = await lockAndParticipate(
+            users[0],
+            3e8,
+            3600,
+            tOLP,
+            tOB,
+            oTAP,
+            yieldBox,
+            sglTokenMock,
+            sglTokenMockAsset,
+        );
+
+        const userLock1 = await lockAndParticipate(
+            users[1],
+            3e8,
+            3600,
+            tOLP,
+            tOB,
+            oTAP,
+            yieldBox,
+            sglTokenMock,
+            sglTokenMockAsset,
+        );
+
+        const userLock2 = await lockAndParticipate(
+            users[2],
+            3e8,
+            3600,
+            tOLP,
+            tOB,
+            oTAP,
+            yieldBox,
+            sglTokenMock,
+            sglTokenMockAsset,
+        );
+
+        tOB.newEpoch();
+
+        // User 0 OTC details
+        const otcDetail0 = await tOB.getOTCDealDetails(
+            userLock0.oTAPTokenID,
+            stableMock.address,
+            0,
+        );
+        await stableMock.mintTo(
+            users[0].address,
+            otcDetail0.paymentTokenAmount,
+        );
+        await stableMock
+            .connect(users[0])
+            .approve(tOB.address, otcDetail0.paymentTokenAmount);
+
+        // User 1 OTC details
+        const otcDetail1 = await tOB.getOTCDealDetails(
+            userLock1.oTAPTokenID,
+            stableMock.address,
+            0,
+        );
+        await stableMock.mintTo(
+            users[1].address,
+            otcDetail1.paymentTokenAmount,
+        );
+        await stableMock
+            .connect(users[1])
+            .approve(tOB.address, otcDetail1.paymentTokenAmount);
+        await tOB
+            .connect(users[1])
+            .exerciseOption(
+                userLock1.oTAPTokenID,
+                stableMock.address,
+                otcDetail1.eligibleTapAmount,
+            );
+
+        // User 2 OTC details
+        const otcDetail2 = await tOB.getOTCDealDetails(
+            userLock2.oTAPTokenID,
+            stableMock.address,
+            0,
+        );
+        await stableMock.mintTo(
+            users[2].address,
+            otcDetail2.paymentTokenAmount,
+        );
+        await stableMock
+            .connect(users[2])
+            .approve(tOB.address, otcDetail2.paymentTokenAmount);
+
+        await tOB
+            .connect(users[2])
+            .exerciseOption(
+                userLock2.oTAPTokenID,
+                stableMock.address,
+                otcDetail2.eligibleTapAmount,
+            );
+
+        // All amounts should be equal regardless of the order of exercise
+        expect(otcDetail0.eligibleTapAmount).not.to.be.equal(0);
+        expect(otcDetail0.eligibleTapAmount).to.be.equal(
+            otcDetail1.eligibleTapAmount,
+        );
+        expect(otcDetail1.eligibleTapAmount).to.be.equal(
+            otcDetail2.eligibleTapAmount,
+        );
+
+        expect(
+            await tOB.singularityGauges(await tOB.epoch(), sglTokenMockAsset),
+        ).to.be.closeTo(otcDetail0.tapAmount.mul(3), 1);
+
+        // Lock in with user 0 who should be able to lock
+        await tOB
+            .connect(users[0])
+            .exerciseOption(
+                userLock0.oTAPTokenID,
+                stableMock.address,
+                otcDetail0.eligibleTapAmount,
+            );
+    });
 });
