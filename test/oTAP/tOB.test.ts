@@ -307,7 +307,7 @@ describe('TapiocaOptionBroker', () => {
 
         // Setup - register a singularity, mint and deposit in YB, lock in tOLP
         const amount = 1e8;
-        const lockDuration = 10;
+        const lockDuration = 604800;
         await tOLP.registerSingularity(
             sglTokenMock.address,
             sglTokenMockAsset,
@@ -441,7 +441,7 @@ describe('TapiocaOptionBroker', () => {
 
         // Setup - register a singularity, mint and deposit in YB, lock in tOLP
         const amount = 3e8;
-        const lockDuration = 10;
+        const lockDuration = 604800;
         await tOLP.registerSingularity(
             sglTokenMock.address,
             sglTokenMockAsset,
@@ -681,7 +681,6 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2Asset,
         );
         await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
-        await tOB.newEpoch();
 
         await tOB.setPaymentToken(
             stableMock.address,
@@ -696,7 +695,7 @@ describe('TapiocaOptionBroker', () => {
         const userLock1 = await lockAndParticipate(
             users[0],
             3e8,
-            3600,
+            604800,
             tOLP,
             tOB,
             oTAP,
@@ -707,7 +706,7 @@ describe('TapiocaOptionBroker', () => {
         const userLock2 = await lockAndParticipate(
             users[1],
             1e8,
-            3600,
+            604800,
             tOLP,
             tOB,
             oTAP,
@@ -715,6 +714,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock,
             sglTokenMockAsset,
         );
+        await tOB.newEpoch();
 
         const epoch = await tOB.epoch();
 
@@ -948,7 +948,6 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2Asset,
         );
         await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
-        await tOB.newEpoch();
 
         await tOB.setPaymentToken(
             stableMock.address,
@@ -982,6 +981,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock,
             sglTokenMockAsset,
         );
+        await tOB.newEpoch();
 
         // Check requirements
         const _otcDetails = await tOB
@@ -1351,7 +1351,6 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2Asset,
         );
         await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
-        await tOB.newEpoch();
 
         await tOB.setPaymentToken(
             stableMock.address,
@@ -1361,7 +1360,7 @@ describe('TapiocaOptionBroker', () => {
         const userLock1 = await lockAndParticipate(
             users[0],
             3e8,
-            3600,
+            604800,
             tOLP,
             tOB,
             oTAP,
@@ -1369,6 +1368,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock,
             sglTokenMockAsset,
         );
+        await tOB.newEpoch();
         const otcDetails = await tOB.getOTCDealDetails(
             userLock1.oTAPTokenID,
             stableMock.address,
@@ -1431,7 +1431,7 @@ describe('TapiocaOptionBroker', () => {
         const userLock1 = await lockAndParticipate(
             signer,
             3e8,
-            3600,
+            604800,
             tOLP,
             tOB,
             oTAP,
@@ -1529,8 +1529,8 @@ describe('TapiocaOptionBroker', () => {
 
         // Setup - register a singularity, mint and deposit in YB, lock in tOLP
         const amount = 3e10;
-        const lockDurationA = 10;
-        const lockDurationB = 100;
+        const lockDurationA = 604800;
+        const lockDurationB = 704800;
         await tOLP.registerSingularity(
             sglTokenMock.address,
             sglTokenMockAsset,
@@ -1628,7 +1628,7 @@ describe('TapiocaOptionBroker', () => {
         // console.log();
 
         //Time skip to half A's duration
-        await time.increase(5);
+        await time.increase(lockDurationA / 2);
         const ctime2 = new Date();
         // console.log('Participate B (larger weight), Time(+5): ', ctime2);
 
@@ -1649,7 +1649,7 @@ describe('TapiocaOptionBroker', () => {
         // );
 
         //Time skip end A
-        await time.increase(6);
+        await time.increase(lockDurationA / 2 + 1);
         await oTAP.approve(tOB.address, ATknID);
         await tOB.exitPosition(ATknID);
         const exitAPoolState = await tOB.twAML(sglTokenMockAsset);
@@ -1664,7 +1664,7 @@ describe('TapiocaOptionBroker', () => {
         //     await exitAPoolState.cumulative,
         // );
         // console.log('[A4] Just B Average: ', xparticipationB.averageMagnitude);
-        expect(exitAPoolState.cumulative).to.be.equal(50);
+        expect(exitAPoolState.cumulative).to.be.equal(464361);
 
         //TIme skip end B
         await time.increase(lockDurationB);
@@ -1702,7 +1702,6 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2Asset,
         );
         await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
-        await tOB.newEpoch();
 
         const ERC20Mock = new ERC20Mock__factory(signer);
         const paymentTokenMock = await ERC20Mock.deploy(
@@ -1729,7 +1728,7 @@ describe('TapiocaOptionBroker', () => {
         const userLock1 = await lockAndParticipate(
             users[0],
             3e8,
-            3600,
+            604800,
             tOLP,
             tOB,
             oTAP,
@@ -1738,6 +1737,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMockAsset,
         );
 
+        await tOB.newEpoch();
         const epoch = await tOB.epoch();
 
         // Exercise for 10e18 TAP with 1e24 decimals stable, 50% discount
@@ -1764,7 +1764,7 @@ describe('TapiocaOptionBroker', () => {
         }
     });
 
-    it.only('Should be able to exercise based on shares', async () => {
+    it('Should be able to exercise based on shares', async () => {
         const {
             signer,
             users,
@@ -1801,7 +1801,7 @@ describe('TapiocaOptionBroker', () => {
         const userLock0 = await lockAndParticipate(
             users[0],
             3e8,
-            3600,
+            604800,
             tOLP,
             tOB,
             oTAP,
@@ -1813,7 +1813,7 @@ describe('TapiocaOptionBroker', () => {
         const userLock1 = await lockAndParticipate(
             users[1],
             3e8,
-            3600,
+            604800,
             tOLP,
             tOB,
             oTAP,
@@ -1825,7 +1825,7 @@ describe('TapiocaOptionBroker', () => {
         const userLock2 = await lockAndParticipate(
             users[2],
             3e8,
-            3600,
+            604800,
             tOLP,
             tOB,
             oTAP,
