@@ -277,8 +277,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         address _participant,
         uint256 _amount,
         uint256 _duration
-    ) external nonReentrant returns (uint256 tokenId) {
-        require(block.chainid == HOST_CHAIN_ID, "twTAP: not host chain");
+    ) external nonReentrant onlyHostChain returns (uint256 tokenId) {
         require(_duration >= EPOCH_DURATION, "twTAP: Lock not a week");
 
         // Transfer TAP to this contract
@@ -636,13 +635,10 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         return false;
     }
 
-    /// @dev Returns the chain ID of the current network
+    /// @notice Returns the chain ID of the current network.
+    /// @dev Used for dev purposes.
     function _getChainId() internal view virtual returns (uint256) {
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
-        return chainId;
+        return block.chainid;
     }
 
     /**
