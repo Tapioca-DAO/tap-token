@@ -630,6 +630,7 @@ describe('tapOFT', () => {
             ); // Expect to be credited
 
             // Real call
+            hre.tracer.enabled = true;
             await expect(
                 tapiocaOFT0.lockTwTapPosition(
                     signer.address,
@@ -644,6 +645,7 @@ describe('tapOFT', () => {
                     { value: (1e18).toString() },
                 ),
             ).to.emit(twTAP, 'Participate');
+            hre.tracer.enabled = false;
             const blockTimestamp = (await ethers.provider.getBlock('latest'))
                 .timestamp;
 

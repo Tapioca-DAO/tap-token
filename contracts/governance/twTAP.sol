@@ -635,13 +635,10 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         return false;
     }
 
-    /// @dev Returns the chain ID of the current network
+    /// @notice Returns the chain ID of the current network.
+    /// @dev Used for dev purposes.
     function _getChainId() internal view virtual returns (uint256) {
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
-        return chainId;
+        return block.chainid;
     }
 
     /**
