@@ -199,6 +199,29 @@ function lastEpochUpdate() external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### netDepositedForEpoch
+
+```solidity
+function netDepositedForEpoch(uint256 epoch, uint256 sglAssetID) external view returns (int256 netAmount)
+```
+
+Total amount of participation per epoch
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| epoch | uint256 | undefined |
+| sglAssetID | uint256 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| netAmount | int256 | undefined |
+
 ### newEpoch
 
 ```solidity
@@ -308,7 +331,7 @@ function participants(uint256) external view returns (bool hasVotingPower, bool 
 function participate(uint256 _tOLPTokenID) external nonpayable returns (uint256 oTAPTokenID)
 ```
 
-Participate in twAMl voting and mint an oTAP position
+Participate in twAMl voting and mint an oTAP position.         Exercising the option is not possible on participation week.
 
 
 
