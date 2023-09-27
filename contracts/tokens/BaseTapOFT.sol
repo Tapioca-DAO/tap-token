@@ -8,6 +8,7 @@ import {LzLib} from "tapioca-sdk/dist/contracts/libraries/LzLib.sol";
 import "tapioca-periph/contracts/interfaces/ITapiocaOFT.sol";
 import "tapioca-sdk/dist/contracts/token/oft/v2/OFTV2.sol";
 import {TwTAP} from "../governance/twTAP.sol";
+
 /*
 
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -261,6 +262,17 @@ abstract contract BaseTapOFT is OFTV2 {
 
         // Only the owner can unlock
         require(twTap.ownerOf(tokenID) == sender, "TapOFT: Not owner");
+
+        if (((gasleft() * 1) / 64) < 100_000) {
+            _storeFailedMessage(
+                _srcChainId,
+                _srcAddress,
+                _nonce,
+                _payload,
+                bytes("TapOft: gas not enough")
+            );
+            return;
+        }
 
         // Exit and receive tokens to this contract
         try twTap.claimAndSendRewards(tokenID, rewardTokens) {

@@ -802,7 +802,7 @@ describe('tapOFT', () => {
                     ethers.constants.AddressZero,
                     hre.ethers.utils.solidityPack(
                         ['uint16', 'uint', 'uint', 'address'],
-                        [2, 1_000_000, (1e18).toString(), tapiocaOFT1.address],
+                        [2, 10_000_000, (1e18).toString(), tapiocaOFT1.address],
                     ),
                     [
                         {
@@ -810,7 +810,7 @@ describe('tapOFT', () => {
                             callParams: {
                                 adapterParams: hre.ethers.utils.solidityPack(
                                     ['uint16', 'uint256'],
-                                    [1, 200_000],
+                                    [1, 400_000],
                                 ),
                                 refundAddress: signer.address,
                                 zroPaymentAddress: ethers.constants.AddressZero,
