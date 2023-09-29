@@ -18,5 +18,11 @@ contract FakeTapOFT is ERC20Mock {
         IERC20[] memory _rewardTokens
     ) public {
         twTap.claimAndSendRewards(_tokenId, _rewardTokens);
+        for (uint i = 0; i < _rewardTokens.length; i++) {
+            _rewardTokens[i].transfer(
+                msg.sender,
+                _rewardTokens[i].balanceOf(address(this))
+            );
+        }
     }
 }
