@@ -105,7 +105,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     uint256 constant DIST_PRECISION = 2 ** 128;
 
     IERC20[] public rewardTokens;
-    mapping(IERC20 => uint256) public rewardTokenIndex;
+    mapping(IERC20 => uint256) public rewardTokenIndex; // Index 0 is reserved with 0x0 address
     uint256 public maxRewardTokens;
 
     // tokenId -> rewardTokens index -> amount
@@ -144,6 +144,8 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         creation = block.timestamp;
         HOST_CHAIN_ID = _hostChainID;
 
+        rewardTokens.push(IERC20(address(0x0))); // 0 index is reserved
+
         maxRewardTokens = 1000;
     }
 
@@ -166,6 +168,11 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     //    READ
     // ==========
 
+    modifier onlyHostChain() {
+        require(_getChainId() == HOST_CHAIN_ID, "twTAP: only host chain");
+        _;
+    }
+
     function currentWeek() public view returns (uint256) {
         return (block.timestamp - creation) / EPOCH_DURATION;
     }
@@ -182,6 +189,8 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     }
 
     /// @notice Amount currently claimable for each reward token
+    /// @dev index 0 will ALWAYS return 0, as it's used by address(0x0)
+    /// @return claimable amounts mapped by reward token
     function claimable(
         uint256 _tokenId
     ) public view returns (uint256[] memory) {
@@ -272,8 +281,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         address _participant,
         uint256 _amount,
         uint256 _duration
-    ) external nonReentrant returns (uint256 tokenId) {
-        require(block.chainid == HOST_CHAIN_ID, "twTAP: not host chain");
+    ) external nonReentrant onlyHostChain returns (uint256 tokenId) {
         require(_duration >= EPOCH_DURATION, "twTAP: Lock not a week");
 
         // Transfer TAP to this contract
@@ -484,10 +492,12 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
             rewardTokens.length + 1 <= maxRewardTokens,
             "twTap: tokens limit reached"
         );
-        uint256 i = rewardTokens.length + 1;
         rewardTokens.push(token);
-        rewardTokenIndex[token] = i;
-        return i;
+
+        uint256 newTokenIndex = rewardTokens.length - 1;
+        rewardTokenIndex[token] = newTokenIndex;
+
+        return newTokenIndex;
     }
 
     // ============
@@ -545,12 +555,12 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
 
                 // Get amount and reward token index
                 uint256 claimableIndex = rewardTokenIndex[_rewardTokens[i]];
-                uint256 amount = amounts[i];
+                uint256 amount = amounts[claimableIndex];
 
                 if (amount > 0) {
                     // Math is safe: `amount` calculated safely in `claimable()`
-                    claimed[_tokenId][claimableIndex - 1] += amount;
-                    rewardTokens[claimableIndex - 1].safeTransfer(_to, amount);
+                    claimed[_tokenId][claimableIndex] += amount;
+                    rewardTokens[claimableIndex].safeTransfer(_to, amount);
                 }
                 ++i;
             }
@@ -627,11 +637,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
 
     /// @dev Returns the chain ID of the current network
     function _getChainId() internal view virtual returns (uint256) {
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
-        return chainId;
+        return block.chainid;
     }
 
     /**
