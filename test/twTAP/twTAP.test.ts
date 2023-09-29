@@ -1071,4 +1071,47 @@ describe('twTAP', () => {
             twtapOtherChain.participate(bob.address, oneEth, 4 * WEEK),
         ).to.be.revertedWith('twTAP: only host chain');
     });
+
+    it('Should not allow users to claim 2 times the same token', async () => {
+        const { twtap, users, tokens, tapOFT, signer } = await loadFixture(
+            setupTwTAPFixture,
+        );
+        const [bob] = users;
+        const [mock0, rndToken] = tokens;
+
+        await twtap
+            .connect(bob)
+            .participate(bob.address, oneEth.mul(10), 4 * WEEK);
+        const bobId = await twtap.mintedTWTap();
+
+        // WEEK 2
+        await time.increase(2 * WEEK);
+        await twtap.advanceWeek(2);
+
+        const distAmount = oneEth;
+        await mock0.approve(twtap.address, distAmount);
+        await twtap.distributeReward(1, distAmount);
+
+        // Call to address(0x0)
+        await expect(twtap.distributeReward(0, distAmount)).to.be.reverted;
+
+        // Transfer all tokens to have a clean state
+        await mock0
+            .connect(bob)
+            .transfer(signer.address, await mock0.balanceOf(bob.address));
+
+        // Claim the reward
+        await expect(
+            tapOFT
+                .connect(bob)
+                .fakeClaimAndSendReward(twtap.address, bobId, [
+                    mock0.address,
+                    rndToken.address,
+                ]),
+        ).to.not.be.reverted;
+
+        // Shouldn't receive the same token twice
+        const balAfter = await mock0.balanceOf(bob.address);
+        expect(balAfter).to.be.closeTo(distAmount, 1);
+    });
 });
