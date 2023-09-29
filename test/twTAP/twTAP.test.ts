@@ -252,7 +252,7 @@ describe('twTAP', () => {
         await twtap.advanceWeek(1);
 
         await expect(
-            twtap.distributeReward(0, oneEth.mul(2)),
+            twtap.distributeReward(1, oneEth.mul(2)),
         ).to.be.revertedWithPanic(PANIC_CODES.DIVISION_BY_ZERO);
     });
 
@@ -276,7 +276,7 @@ describe('twTAP', () => {
         expect(position.lastActive).to.equal(2);
 
         await expect(
-            twtap.connect(bob).distributeReward(0, oneEth.mul(2)),
+            twtap.connect(bob).distributeReward(1, oneEth.mul(2)),
         ).to.be.revertedWithPanic(PANIC_CODES.DIVISION_BY_ZERO);
     });
 
@@ -305,12 +305,12 @@ describe('twTAP', () => {
         // Reward tokens 0, 1 and 2 correspond to the mock tokens:
         const distAmount = oneEth.mul(2);
         await mock0.connect(carol).approve(twtap.address, distAmount);
-        await twtap.connect(carol).distributeReward(0, distAmount);
+        await twtap.connect(carol).distributeReward(1, distAmount);
 
         const claimableAlice = await twtap.claimable(aliceId);
         const claimableBob = await twtap.claimable(bobId);
 
-        const total = claimableAlice[0].add(claimableBob[0]);
+        const total = claimableAlice[1].add(claimableBob[1]);
         expect(total).to.be.lte(distAmount);
         expect(distAmount.sub(total)).to.be.lte(2);
 
@@ -344,7 +344,7 @@ describe('twTAP', () => {
         const distAmount = oneEth;
         await mock0.connect(bob).approve(twtap.address, distAmount);
         await expect(
-            twtap.connect(bob).distributeReward(0, distAmount),
+            twtap.connect(bob).distributeReward(1, distAmount),
         ).to.be.revertedWith('twTAP: Advance week first');
     });
 
@@ -480,13 +480,15 @@ describe('twTAP', () => {
         await expect(
             twtap.connect(alice).addRewardToken(mock.address),
         ).to.be.revertedWith('Ownable: caller is not the owner');
-        expect(await twtap.rewardTokens(tokens.length - 1)).to.equal(
+        expect(await twtap.rewardTokens(tokens.length)).to.equal(
             tokens[tokens.length - 1].address,
         );
         // TODO: Test that rewardTokens(tokens.length) is OOB?
 
         await twtap.addRewardToken(mock.address);
-        expect(await twtap.rewardTokens(tokens.length)).to.equal(mock.address);
+        expect(await twtap.rewardTokens(tokens.length + 1)).to.equal(
+            mock.address,
+        );
     });
 
     it('Should allow claiming rewards immediately', async () => {
@@ -535,12 +537,12 @@ describe('twTAP', () => {
 
         const distAmount0 = oneEth.mul(5);
         await mock0.connect(carol).approve(twtap.address, distAmount0);
-        await twtap.connect(carol).distributeReward(0, distAmount0.div(2));
-        await twtap.connect(carol).distributeReward(0, distAmount0.div(2));
+        await twtap.connect(carol).distributeReward(1, distAmount0.div(2));
+        await twtap.connect(carol).distributeReward(1, distAmount0.div(2));
 
         const distAmount1 = oneEth.mul(3);
         await mock1.connect(carol).approve(twtap.address, distAmount1);
-        await twtap.connect(carol).distributeReward(1, distAmount1);
+        await twtap.connect(carol).distributeReward(2, distAmount1);
 
         // Alice and Bob can both claim the reward immediately:
         await twtap.connect(alice).claimRewards(aliceId, alice.address);
@@ -583,10 +585,10 @@ describe('twTAP', () => {
         expect(d1.mul(1_000_000_000)).to.be.lte(lhs1);
 
         // Claimed amounts are stored in the contract:
-        expect(await twtap.claimed(aliceId, 0)).to.equal(aliceReward0);
-        expect(await twtap.claimed(aliceId, 1)).to.equal(aliceReward1);
-        expect(await twtap.claimed(bobId, 0)).to.equal(bobReward0);
-        expect(await twtap.claimed(bobId, 1)).to.equal(bobReward1);
+        expect(await twtap.claimed(aliceId, 1)).to.equal(aliceReward0);
+        expect(await twtap.claimed(aliceId, 2)).to.equal(aliceReward1);
+        expect(await twtap.claimed(bobId, 1)).to.equal(bobReward0);
+        expect(await twtap.claimed(bobId, 2)).to.equal(bobReward1);
     });
 
     it('Should allow claiming rewards after expiration', async () => {
@@ -622,11 +624,11 @@ describe('twTAP', () => {
 
         const distAmount0_w2 = oneEth.mul(5);
         await mock0.connect(carol).approve(twtap.address, distAmount0_w2);
-        await twtap.connect(carol).distributeReward(0, distAmount0_w2);
+        await twtap.connect(carol).distributeReward(1, distAmount0_w2);
 
         const distAmount1_w2 = oneEth.mul(3);
         await mock1.connect(carol).approve(twtap.address, distAmount1_w2);
-        await twtap.connect(carol).distributeReward(1, distAmount1_w2);
+        await twtap.connect(carol).distributeReward(2, distAmount1_w2);
 
         // WEEK 3. Only Alice is eligible for this reward:
         await time.increase(WEEK);
@@ -636,7 +638,7 @@ describe('twTAP', () => {
 
         const distAmount2_w3 = oneEth;
         await mock2.connect(carol).approve(twtap.address, distAmount2_w3);
-        await twtap.connect(carol).distributeReward(2, distAmount2_w3);
+        await twtap.connect(carol).distributeReward(3, distAmount2_w3);
 
         // WEEK 100. Alice and Bob claim only now:
         await time.increase(97 * WEEK);
@@ -686,7 +688,7 @@ describe('twTAP', () => {
 
         const distAmount = oneEth.mul(2);
         await mock0.connect(bob).approve(twtap.address, distAmount);
-        await twtap.connect(bob).distributeReward(0, distAmount);
+        await twtap.connect(bob).distributeReward(1, distAmount);
 
         // Alice claims this reward immediately:
         await twtap.connect(alice).claimRewards(aliceId, alice.address);
@@ -708,7 +710,7 @@ describe('twTAP', () => {
         // week 1 to week 4, and week 4 is not over yet:
         const distAmount2 = oneEth;
         await mock0.connect(bob).approve(twtap.address, distAmount2);
-        await twtap.connect(bob).distributeReward(0, distAmount2);
+        await twtap.connect(bob).distributeReward(1, distAmount2);
 
         await twtap.connect(alice).claimRewards(aliceId, alice.address);
         const aliceAfter = await mock0.balanceOf(alice.address);
@@ -730,7 +732,7 @@ describe('twTAP', () => {
         await time.increase(WEEK);
         await twtap.advanceWeek(1);
         await expect(
-            twtap.connect(bob).distributeReward(0, oneEth.mul(2)),
+            twtap.connect(bob).distributeReward(1, oneEth.mul(2)),
         ).to.be.revertedWithPanic(PANIC_CODES.DIVISION_BY_ZERO);
     });
 
@@ -753,7 +755,7 @@ describe('twTAP', () => {
 
         const distAmount = oneEth.div(3);
         await mock0.connect(bob).approve(twtap.address, distAmount);
-        await twtap.connect(bob).distributeReward(0, distAmount);
+        await twtap.connect(bob).distributeReward(1, distAmount);
 
         // Carol can claim the reward for Alice, but only to Alice's address:
         await expect(
@@ -793,7 +795,7 @@ describe('twTAP', () => {
 
         const distAmount = oneEth.mul(3).div(8);
         await mock0.connect(bob).approve(twtap.address, distAmount);
-        await twtap.connect(bob).distributeReward(0, distAmount);
+        await twtap.connect(bob).distributeReward(1, distAmount);
 
         // Carol can claim Alice's reward for herself if Alice approved Carol:
         await expect(
@@ -821,7 +823,7 @@ describe('twTAP', () => {
         const { twtap, tokens } = await loadFixture(setupTwTAPFixture);
         expect(await twtap.mintedTWTap()).to.equal(0);
         const claimable = await twtap.claimable(0);
-        expect(claimable.length).to.equal(tokens.length);
+        expect(claimable.length - 1).to.equal(tokens.length);
         expect(claimable.length).to.be.gt(0);
         for (const c of claimable) {
             expect(c).to.equal(0);
@@ -860,7 +862,7 @@ describe('twTAP', () => {
 
         // Nothing claimable yet:
         const claimable = await twtap.claimable(aliceId);
-        expect(claimable.length).to.equal(tokens.length);
+        expect(claimable.length).to.equal(tokens.length + 1);
         expect(claimable.length).to.be.gt(0);
         for (const c of claimable) {
             expect(c).to.equal(0);
@@ -1039,7 +1041,7 @@ describe('twTAP', () => {
 
         const distAmount = oneEth.mul(3).div(8);
         await mock0.connect(bob).approve(twtap.address, distAmount);
-        await twtap.connect(bob).distributeReward(0, distAmount);
+        await twtap.connect(bob).distributeReward(1, distAmount);
 
         await expect(
             tapOFT.fakeClaimAndSendReward(twtap.address, bobId, [
@@ -1068,5 +1070,48 @@ describe('twTAP', () => {
         await expect(
             twtapOtherChain.participate(bob.address, oneEth, 4 * WEEK),
         ).to.be.revertedWith('twTAP: only host chain');
+    });
+
+    it('Should not allow users to claim 2 times the same token', async () => {
+        const { twtap, users, tokens, tapOFT, signer } = await loadFixture(
+            setupTwTAPFixture,
+        );
+        const [bob] = users;
+        const [mock0, rndToken] = tokens;
+
+        await twtap
+            .connect(bob)
+            .participate(bob.address, oneEth.mul(10), 4 * WEEK);
+        const bobId = await twtap.mintedTWTap();
+
+        // WEEK 2
+        await time.increase(2 * WEEK);
+        await twtap.advanceWeek(2);
+
+        const distAmount = oneEth;
+        await mock0.approve(twtap.address, distAmount);
+        await twtap.distributeReward(1, distAmount);
+
+        // Call to address(0x0)
+        await expect(twtap.distributeReward(0, distAmount)).to.be.reverted;
+
+        // Transfer all tokens to have a clean state
+        await mock0
+            .connect(bob)
+            .transfer(signer.address, await mock0.balanceOf(bob.address));
+
+        // Claim the reward
+        await expect(
+            tapOFT
+                .connect(bob)
+                .fakeClaimAndSendReward(twtap.address, bobId, [
+                    mock0.address,
+                    rndToken.address,
+                ]),
+        ).to.not.be.reverted;
+
+        // Shouldn't receive the same token twice
+        const balAfter = await mock0.balanceOf(bob.address);
+        expect(balAfter).to.be.closeTo(distAmount, 1);
     });
 });

@@ -125,7 +125,21 @@ describe('tapOFT', () => {
                 [tapiocaOFT0.address, tapiocaOFT1.address],
             ),
         );
+        await tapiocaOFT0.setTrustedRemote(
+            11,
+            ethers.utils.solidityPack(
+                ['address', 'address'],
+                [tapiocaOFT1.address, tapiocaOFT0.address],
+            ),
+        );
 
+        await toft0.setTrustedRemote(
+            11,
+            ethers.utils.solidityPack(
+                ['address', 'address'],
+                [toft1.address, toft0.address],
+            ),
+        );
         await toft0.setTrustedRemote(
             11,
             ethers.utils.solidityPack(
@@ -789,10 +803,10 @@ describe('tapOFT', () => {
                     .approve(twTAP.address, rewardToClaim);
                 await twTAP
                     .connect(normalUser)
-                    .distributeReward(0, rewardToClaim);
+                    .distributeReward(1, rewardToClaim);
             }
 
-            const claimable = (await twTAP.claimable(tokenID))[0];
+            const claimable = (await twTAP.claimable(tokenID))[1];
             expect(claimable).to.be.approximately(rewardToClaim, 1);
 
             await expect(

@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 import "../tokens/TapOFT.sol";
 import "../twAML.sol";
+
 // ********************************************************************************
 // *******************************,                 ,******************************
 // *************************                               ************************
@@ -104,7 +105,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     uint256 constant DIST_PRECISION = 2 ** 128;
 
     IERC20[] public rewardTokens;
-    mapping(IERC20 => uint256) public rewardTokenIndex;
+    mapping(IERC20 => uint256) public rewardTokenIndex; // Index 0 is reserved with 0x0 address
     uint256 public maxRewardTokens;
 
     // tokenId -> rewardTokens index -> amount
@@ -120,7 +121,6 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     mapping(uint256 => WeekTotals) public weekTotals;
 
     uint256 public immutable HOST_CHAIN_ID;
-    string private baseURI;
 
     event LogMaxRewardsLength(
         uint256 _oldLength,
@@ -143,6 +143,8 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         transferOwnership(_owner);
         creation = block.timestamp;
         HOST_CHAIN_ID = _hostChainID;
+
+        rewardTokens.push(IERC20(address(0x0))); // 0 index is reserved
 
         maxRewardTokens = 1000;
     }
@@ -187,6 +189,8 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     }
 
     /// @notice Amount currently claimable for each reward token
+    /// @dev index 0 will ALWAYS return 0, as it's used by address(0x0)
+    /// @return claimable amounts mapped by reward token
     function claimable(
         uint256 _tokenId
     ) public view returns (uint256[] memory) {
@@ -470,7 +474,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
             (_amount * DIST_PRECISION) /
             uint256(totals.netActiveVotes);
 
-        require(_amount > 0, "twTap: amount is 0");
+        require(_amount > 0, "twTap: 0");
         rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
     }
 
@@ -483,21 +487,17 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     }
 
     function addRewardToken(IERC20 token) external onlyOwner returns (uint256) {
-        if (rewardTokens.length > 0) {
-            require(
-                rewardTokenIndex[token] == 0 &&
-                    address(rewardTokens[0]) != address(token),
-                "twTap: token already registered"
-            );
-        }
+        require(rewardTokenIndex[token] == 0, "twTap: registered");
         require(
             rewardTokens.length + 1 <= maxRewardTokens,
             "twTap: tokens limit reached"
         );
-        uint256 i = rewardTokens.length;
         rewardTokens.push(token);
-        rewardTokenIndex[token] = i;
-        return i;
+
+        uint256 newTokenIndex = rewardTokens.length - 1;
+        rewardTokenIndex[token] = newTokenIndex;
+
+        return newTokenIndex;
     }
 
     // ============
@@ -555,8 +555,10 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
 
                 // Get amount and reward token index
                 uint256 claimableIndex = rewardTokenIndex[_rewardTokens[i]];
-                uint256 amount = amounts[i];
+                uint256 amount = amounts[claimableIndex];
 
+                //if caller uses a token that is not in the list, it will be skipped
+                // Because index would target address(0x0)
                 if (amount > 0) {
                     // Math is safe: `amount` calculated safely in `claimable()`
                     claimed[_tokenId][claimableIndex] += amount;
