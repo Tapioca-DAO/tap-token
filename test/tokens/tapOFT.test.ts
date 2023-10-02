@@ -125,7 +125,21 @@ describe('tapOFT', () => {
                 [tapiocaOFT0.address, tapiocaOFT1.address],
             ),
         );
+        await tapiocaOFT0.setTrustedRemote(
+            11,
+            ethers.utils.solidityPack(
+                ['address', 'address'],
+                [tapiocaOFT1.address, tapiocaOFT0.address],
+            ),
+        );
 
+        await toft0.setTrustedRemote(
+            11,
+            ethers.utils.solidityPack(
+                ['address', 'address'],
+                [toft1.address, toft0.address],
+            ),
+        );
         await toft0.setTrustedRemote(
             11,
             ethers.utils.solidityPack(
@@ -630,6 +644,7 @@ describe('tapOFT', () => {
             ); // Expect to be credited
 
             // Real call
+            hre.tracer.enabled = true;
             await expect(
                 tapiocaOFT0.lockTwTapPosition(
                     signer.address,
@@ -644,6 +659,7 @@ describe('tapOFT', () => {
                     { value: (1e18).toString() },
                 ),
             ).to.emit(twTAP, 'Participate');
+            hre.tracer.enabled = false;
             const blockTimestamp = (await ethers.provider.getBlock('latest'))
                 .timestamp;
 
@@ -787,10 +803,10 @@ describe('tapOFT', () => {
                     .approve(twTAP.address, rewardToClaim);
                 await twTAP
                     .connect(normalUser)
-                    .distributeReward(0, rewardToClaim);
+                    .distributeReward(1, rewardToClaim);
             }
 
-            const claimable = (await twTAP.claimable(tokenID))[0];
+            const claimable = (await twTAP.claimable(tokenID))[1];
             expect(claimable).to.be.approximately(rewardToClaim, 1);
 
             await expect(

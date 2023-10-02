@@ -214,7 +214,7 @@ function claimable(uint256 _tokenId) external view returns (uint256[])
 
 Amount currently claimable for each reward token
 
-
+*index 0 will ALWAYS return 0, as it&#39;s used by address(0x0)*
 
 #### Parameters
 
@@ -226,7 +226,7 @@ Amount currently claimable for each reward token
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | uint256[] | undefined |
+| _0 | uint256[] | claimable amounts mapped by reward token |
 
 ### claimed
 
