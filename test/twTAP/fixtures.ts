@@ -37,7 +37,7 @@ export const setupTwTAPFixture = async () => {
     // Mock token distribution
     const tokens = [mock0, mock1, mock2];
     for (const tok of tokens) {
-        tok.freeMint(one.mul(10_000));
+        await tok.freeMint(one.mul(1000));
         for (const acc of users) {
             await tok.connect(acc).freeMint(one.mul(1000));
             await time.increase(86400);

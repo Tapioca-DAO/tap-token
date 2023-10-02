@@ -98,6 +98,10 @@ contract TapiocaOptionBroker is
     /// @dev initialized in the constructor with block.timestamp
     uint256 public immutable emissionsStartTime;
 
+    /// @notice Total amount of participation per epoch
+    mapping(uint256 epoch => mapping(uint256 sglAssetID => int256 netAmount))
+        public netDepositedForEpoch;
+
     /// =====-------======
     constructor(
         address _tOLP,
@@ -216,13 +220,15 @@ contract TapiocaOptionBroker is
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
             tOLPLockPosition.sglAssetID
         ];
-        (uint256 totalShares, ) = tOLP.getTotalPoolDeposited(
-            tOLPLockPosition.sglAssetID
+
+        uint256 netAmount = uint256(
+            netDepositedForEpoch[cachedEpoch][tOLPLockPosition.sglAssetID]
         );
+        require(netAmount > 0, "tOB: No liquidity");
         eligibleTapAmount = muldiv(
             tOLPLockPosition.ybShares,
             gaugeTotalForEpoch,
-            totalShares
+            netAmount
         );
         eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "tOB: Too high");
@@ -248,7 +254,8 @@ contract TapiocaOptionBroker is
     //    WRITE
     // ===========
 
-    /// @notice Participate in twAMl voting and mint an oTAP position
+    /// @notice Participate in twAMl voting and mint an oTAP position.
+    ///         Exercising the option is not possible on participation week.
     /// @param _tOLPTokenID The tokenId of the tOLP position
     function participate(
         uint256 _tOLPTokenID
@@ -314,6 +321,16 @@ contract TapiocaOptionBroker is
             hasVotingPower,
             divergenceForce,
             pool.averageMagnitude
+        );
+
+        // Record amount for next epoch exercise and remove it from last epoch
+        netDepositedForEpoch[epoch + 1][lock.sglAssetID] += int256(
+            uint256(lock.ybShares)
+        );
+        uint256 lastEpoch = _timestampToWeek(block.timestamp + EPOCH_DURATION);
+        // Math is safe, check `_emitToGauges()`
+        netDepositedForEpoch[lastEpoch + 1][lock.sglAssetID] -= int256(
+            uint256(lock.ybShares)
         );
 
         // Mint oTAP position
@@ -423,13 +440,14 @@ contract TapiocaOptionBroker is
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
             tOLPLockPosition.sglAssetID
         ];
-        (uint256 totalShares, ) = tOLP.getTotalPoolDeposited(
-            tOLPLockPosition.sglAssetID
+        uint256 netAmount = uint256(
+            netDepositedForEpoch[cachedEpoch][tOLPLockPosition.sglAssetID]
         );
+        require(netAmount > 0, "tOB: No liquidity");
         uint256 eligibleTapAmount = muldiv(
             tOLPLockPosition.ybShares,
             gaugeTotalForEpoch,
-            totalShares
+            netAmount
         );
         eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         require(eligibleTapAmount >= _tapAmount, "tOB: Too high");
@@ -470,7 +488,7 @@ contract TapiocaOptionBroker is
         lastEpochUpdate = _timestampToWeek(block.timestamp);
         epoch++;
 
-        // Extract TAP
+        // Extract TAP + Update net deposited amounts
         uint256 epochTAP = tapOFT.emitForWeek();
         _emitToGauges(epochTAP);
 
@@ -625,13 +643,15 @@ contract TapiocaOptionBroker is
         }
     }
 
-    /// @notice Emit TAP to the gauges equitably
+    /// @notice Emit TAP to the gauges equitably and update the net deposited amounts for each pool
+    /// @dev Assume the epoch has been updated
     function _emitToGauges(uint256 _epochTAP) internal {
         SingularityPool[] memory sglPools = tOLP.getSingularityPools();
         uint256 totalWeights = tOLP.totalSingularityPoolWeights();
 
         uint256 len = sglPools.length;
         unchecked {
+            // For each pool
             for (uint256 i = 0; i < len; ++i) {
                 uint256 currentPoolWeight = sglPools[i].poolWeight;
                 uint256 quotaPerSingularity = muldiv(
@@ -639,9 +659,19 @@ contract TapiocaOptionBroker is
                     _epochTAP,
                     totalWeights
                 );
-                singularityGauges[epoch][
-                    sglPools[i].sglAssetID
-                ] = quotaPerSingularity;
+                uint sglAssetID = sglPools[i].sglAssetID;
+                // Emit weekly TAP to the pool
+                singularityGauges[epoch][sglAssetID] = quotaPerSingularity;
+
+                // Update net deposited amounts
+                mapping(uint256 sglAssetID => int256 netAmount)
+                    storage prev = netDepositedForEpoch[epoch - 1];
+                mapping(uint256 sglAssetID => int256 netAmount)
+                    storage curr = netDepositedForEpoch[epoch];
+
+                // Pass previous epoch net amount to the next epoch
+                // Expired positions are offset, check `participate()`
+                curr[sglAssetID] += prev[sglAssetID];
             }
         }
     }
