@@ -603,7 +603,7 @@ event ApprovalForAll(address indexed owner, address indexed operator, bool appro
 ### Burn
 
 ```solidity
-event Burn(address indexed from, uint256 indexed tokenId, TapOption option)
+event Burn(address indexed from, uint256 indexed tokenId, TapOption indexed option)
 ```
 
 
@@ -616,12 +616,12 @@ event Burn(address indexed from, uint256 indexed tokenId, TapOption option)
 |---|---|---|
 | from `indexed` | address | undefined |
 | tokenId `indexed` | uint256 | undefined |
-| option  | TapOption | undefined |
+| option `indexed` | TapOption | undefined |
 
 ### Mint
 
 ```solidity
-event Mint(address indexed to, uint256 indexed tokenId, TapOption option)
+event Mint(address indexed to, uint256 indexed tokenId, TapOption indexed option)
 ```
 
 
@@ -634,7 +634,7 @@ event Mint(address indexed to, uint256 indexed tokenId, TapOption option)
 |---|---|---|
 | to `indexed` | address | undefined |
 | tokenId `indexed` | uint256 | undefined |
-| option  | TapOption | undefined |
+| option `indexed` | TapOption | undefined |
 
 ### Transfer
 

@@ -82,7 +82,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
 
     /// @notice user address => eligible TAP amount, 0 means no eligibility
     mapping(address => uint256) public phase1Users;
-    uint256 public constant PHASE_1_DISCOUNT = 50 * 1e4; // 50%
+    uint256 public constant PHASE_1_DISCOUNT = 500_000; //50 * 1e4; 50%
 
     /// =====-------======
     ///      Phase 2
@@ -98,7 +98,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// =====-------======
 
     uint256 public constant PHASE_3_AMOUNT_PER_USER = 714;
-    uint256 public constant PHASE_3_DISCOUNT = 50 * 1e4;
+    uint256 public constant PHASE_3_DISCOUNT = 500_000; //50 * 1e4; 50%
 
     /// =====-------======
     ///      Phase 4
@@ -106,7 +106,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
 
     /// @notice user address => eligible TAP amount, 0 means no eligibility
     mapping(address => uint256) public phase4Users;
-    uint256 public constant PHASE_4_DISCOUNT = 33 * 1e4;
+    uint256 public constant PHASE_4_DISCOUNT = 330_000; //33 * 1e4;
 
     uint256 public constant EPOCH_DURATION = 2 days;
 
@@ -216,7 +216,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         bytes calldata _data
     ) external returns (uint256 aoTAPTokenID) {
         uint256 cachedEpoch = epoch;
-        require(cachedEpoch > 0, "adb: Airdrop not started");
+        require(cachedEpoch != 0, "adb: Airdrop not started");
         require(cachedEpoch <= 4, "adb: Airdrop ended");
 
         // Phase 1
@@ -348,11 +348,11 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         require(_users.length == _amounts.length, "adb: invalid input");
 
         if (_phase == 1) {
-            for (uint256 i = 0; i < _users.length; i++) {
+            for (uint256 i; i < _users.length; i++) {
                 phase1Users[_users[i]] = _amounts[i];
             }
         } else if (_phase == 4) {
-            for (uint256 i = 0; i < _users.length; i++) {
+            for (uint256 i; i < _users.length; i++) {
                 phase4Users[_users[i]] = _amounts[i];
             }
         }
@@ -391,7 +391,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         uint256 len = _paymentTokens.length;
 
         unchecked {
-            for (uint256 i = 0; i < len; ++i) {
+            for (uint256 i; i < len; ++i) {
                 IERC20 paymentToken = IERC20(_paymentTokens[i]);
                 paymentToken.safeTransfer(
                     paymentTokenBeneficiary,
@@ -408,7 +408,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @notice Participate in phase 1 of the Airdrop. LBP users are given aoTAP pro-rata.
     function _participatePhase1() internal returns (uint256 oTAPTokenID) {
         uint256 _eligibleAmount = phase1Users[msg.sender];
-        require(_eligibleAmount > 0, "adb: Not eligible");
+        require(_eligibleAmount != 0, "adb: Not eligible");
 
         // Close eligibility
         phase1Users[msg.sender] = 0;

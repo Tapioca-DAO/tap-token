@@ -74,15 +74,22 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     /// @notice event emitted when a new minter is set
     event MinterUpdated(address indexed _old, address indexed _new);
     /// @notice event emitted when a new emission is called
-    event Emitted(uint256 week, uint256 amount);
+    event Emitted(uint256 indexed week, uint256 indexed amount);
     /// @notice event emitted when new TAP is minted
-    event Minted(address indexed _by, address indexed _to, uint256 _amount);
+    event Minted(
+        address indexed _by,
+        address indexed _to,
+        uint256 indexed _amount
+    );
     /// @notice event emitted when new TAP is burned
-    event Burned(address indexed _from, uint256 _amount);
+    event Burned(address indexed _from, uint256 indexed _amount);
     /// @notice event emitted when the governance chain identifier is updated
-    event GovernanceChainIdentifierUpdated(uint256 _old, uint256 _new);
+    event GovernanceChainIdentifierUpdated(
+        uint256 indexed _old,
+        uint256 indexed _new
+    );
     /// @notice event emitted when pause state is changed
-    event PausedUpdated(bool oldState, bool newState);
+    event PausedUpdated(bool indexed oldState, bool indexed newState);
 
     modifier notPaused() {
         require(!paused, "TAP: paused");

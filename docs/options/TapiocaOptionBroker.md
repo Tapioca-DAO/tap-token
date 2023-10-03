@@ -635,7 +635,7 @@ function twAML(uint256) external view returns (uint256 totalParticipants, uint25
 ### AMLDivergence
 
 ```solidity
-event AMLDivergence(uint256 indexed epoch, uint256 cumulative, uint256 averageMagnitude, uint256 totalParticipants)
+event AMLDivergence(uint256 indexed epoch, uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 totalParticipants)
 ```
 
 
@@ -647,8 +647,8 @@ event AMLDivergence(uint256 indexed epoch, uint256 cumulative, uint256 averageMa
 | Name | Type | Description |
 |---|---|---|
 | epoch `indexed` | uint256 | undefined |
-| cumulative  | uint256 | undefined |
-| averageMagnitude  | uint256 | undefined |
+| cumulative `indexed` | uint256 | undefined |
+| averageMagnitude `indexed` | uint256 | undefined |
 | totalParticipants  | uint256 | undefined |
 
 ### ExerciseOption
@@ -674,7 +674,7 @@ event ExerciseOption(uint256 indexed epoch, address indexed to, contract ERC20 i
 ### ExitPosition
 
 ```solidity
-event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 amount)
+event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 indexed amount)
 ```
 
 
@@ -687,12 +687,12 @@ event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 amoun
 |---|---|---|
 | epoch `indexed` | uint256 | undefined |
 | tokenId `indexed` | uint256 | undefined |
-| amount  | uint256 | undefined |
+| amount `indexed` | uint256 | undefined |
 
 ### NewEpoch
 
 ```solidity
-event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValuation)
+event NewEpoch(uint256 indexed epoch, uint256 indexed extractedTAP, uint256 indexed epochTAPValuation)
 ```
 
 
@@ -704,8 +704,8 @@ event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValu
 | Name | Type | Description |
 |---|---|---|
 | epoch `indexed` | uint256 | undefined |
-| extractedTAP  | uint256 | undefined |
-| epochTAPValuation  | uint256 | undefined |
+| extractedTAP `indexed` | uint256 | undefined |
+| epochTAPValuation `indexed` | uint256 | undefined |
 
 ### OwnershipTransferred
 
@@ -727,7 +727,7 @@ event OwnershipTransferred(address indexed previousOwner, address indexed newOwn
 ### Participate
 
 ```solidity
-event Participate(uint256 indexed epoch, uint256 indexed sglAssetID, uint256 totalDeposited, LockPosition lock, uint256 discount)
+event Participate(uint256 indexed epoch, uint256 indexed sglAssetID, uint256 indexed totalDeposited, LockPosition lock, uint256 discount)
 ```
 
 
@@ -740,7 +740,7 @@ event Participate(uint256 indexed epoch, uint256 indexed sglAssetID, uint256 tot
 |---|---|---|
 | epoch `indexed` | uint256 | undefined |
 | sglAssetID `indexed` | uint256 | undefined |
-| totalDeposited  | uint256 | undefined |
+| totalDeposited `indexed` | uint256 | undefined |
 | lock  | LockPosition | undefined |
 | discount  | uint256 | undefined |
 
@@ -763,7 +763,7 @@ event Paused(address account)
 ### SetPaymentToken
 
 ```solidity
-event SetPaymentToken(contract ERC20 paymentToken, contract IOracle oracle, bytes oracleData)
+event SetPaymentToken(contract ERC20 indexed paymentToken, contract IOracle indexed oracle, bytes indexed oracleData)
 ```
 
 
@@ -774,14 +774,14 @@ event SetPaymentToken(contract ERC20 paymentToken, contract IOracle oracle, byte
 
 | Name | Type | Description |
 |---|---|---|
-| paymentToken  | contract ERC20 | undefined |
-| oracle  | contract IOracle | undefined |
-| oracleData  | bytes | undefined |
+| paymentToken `indexed` | contract ERC20 | undefined |
+| oracle `indexed` | contract IOracle | undefined |
+| oracleData `indexed` | bytes | undefined |
 
 ### SetTapOracle
 
 ```solidity
-event SetTapOracle(contract IOracle oracle, bytes oracleData)
+event SetTapOracle(contract IOracle indexed oracle, bytes indexed oracleData)
 ```
 
 
@@ -792,8 +792,8 @@ event SetTapOracle(contract IOracle oracle, bytes oracleData)
 
 | Name | Type | Description |
 |---|---|---|
-| oracle  | contract IOracle | undefined |
-| oracleData  | bytes | undefined |
+| oracle `indexed` | contract IOracle | undefined |
+| oracleData `indexed` | bytes | undefined |
 
 ### Unpaused
 

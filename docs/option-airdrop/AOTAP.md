@@ -666,7 +666,7 @@ event ApprovalForAll(address indexed owner, address indexed operator, bool appro
 ### Burn
 
 ```solidity
-event Burn(address indexed from, uint256 indexed tokenId, AirdropTapOption option)
+event Burn(address indexed from, uint256 indexed tokenId, AirdropTapOption indexed option)
 ```
 
 
@@ -679,12 +679,12 @@ event Burn(address indexed from, uint256 indexed tokenId, AirdropTapOption optio
 |---|---|---|
 | from `indexed` | address | undefined |
 | tokenId `indexed` | uint256 | undefined |
-| option  | AirdropTapOption | undefined |
+| option `indexed` | AirdropTapOption | undefined |
 
 ### Mint
 
 ```solidity
-event Mint(address indexed to, uint256 indexed tokenId, AirdropTapOption option)
+event Mint(address indexed to, uint256 indexed tokenId, AirdropTapOption indexed option)
 ```
 
 
@@ -697,7 +697,7 @@ event Mint(address indexed to, uint256 indexed tokenId, AirdropTapOption option)
 |---|---|---|
 | to `indexed` | address | undefined |
 | tokenId `indexed` | uint256 | undefined |
-| option  | AirdropTapOption | undefined |
+| option `indexed` | AirdropTapOption | undefined |
 
 ### OwnershipTransferred
 

@@ -56,9 +56,9 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     // *** EVENTS *** //
     // ************** //
     /// @notice event emitted when a new user is registered
-    event UserRegistered(address indexed user, uint256 amount);
+    event UserRegistered(address indexed user, uint256 indexed amount);
     /// @notice event emitted when someone claims available tokens
-    event Claimed(address indexed user, uint256 amount);
+    event Claimed(address indexed user, uint256 indexed amount);
 
     /// @notice creates a new Vesting contract
     /// @param _cliff cliff period
