@@ -224,14 +224,25 @@ describe('tapOFT', () => {
         it('should not mint when paused', async () => {
             await tapiocaOFT0.setMinter(signer.address);
             await tapiocaOFT0.updatePause(true);
-            await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.be
+            await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.not.be
                 .reverted;
+            await expect(
+                tapiocaOFT0.extractTAP(
+                    signer.address,
+                    await tapiocaOFT0.getCurrentWeekEmission(),
+                ),
+            ).to.be.reverted;
+
             await tapiocaOFT0.updatePause(false);
-            await time_travel(86400);
+            await time_travel(604800);
             await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.emit(
                 tapiocaOFT0,
                 'Emitted',
             );
+            const emissions = await tapiocaOFT0.getCurrentWeekEmission();
+            await expect(tapiocaOFT0.extractTAP(signer.address, emissions))
+                .to.emit(tapiocaOFT0, 'Minted')
+                .withArgs(signer.address, signer.address, emissions);
         });
 
         it('should not allow emit from another chain', async () => {
