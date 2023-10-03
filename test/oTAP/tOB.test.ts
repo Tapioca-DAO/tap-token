@@ -29,6 +29,8 @@ import {
 import { YieldBox } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
 import { setupFixture } from './fixtures';
 
+const WEEK = 86400 * 7;
+
 describe('TapiocaOptionBroker', () => {
     const setupEnv = async (
         tOB: TapiocaOptionBroker,
@@ -175,6 +177,18 @@ describe('TapiocaOptionBroker', () => {
         ); // Too short lock duration
 
         await snapshot.restore();
+        await tOLP.lock(
+            signer.address,
+            sglTokenMock.address,
+            WEEK * 5,
+            ybAmount,
+        );
+        await tOLP.approve(tOB.address, tokenID);
+        await expect(tOB.participate(tokenID)).to.be.revertedWith(
+            'tOB: Too long',
+        ); // Too long lock duration
+
+        await snapshot.restore();
         lockDuration = await tOB.EPOCH_DURATION();
         await tOLP.lock(
             signer.address,
@@ -199,7 +213,10 @@ describe('TapiocaOptionBroker', () => {
             averageMagnitude: BN(0),
             discount: BN(0),
         };
-        computedAML.magnitude = aml_computeMagnitude(BN(lockDuration), BN(0));
+        computedAML.magnitude = aml_computeMagnitude(
+            BN(lockDuration),
+            BN(WEEK),
+        );
         computedAML.averageMagnitude = aml_computeAverageMagnitude(
             computedAML.magnitude,
             BN(0),
@@ -207,7 +224,7 @@ describe('TapiocaOptionBroker', () => {
         );
         computedAML.discount = aml_computeTarget(
             computedAML.magnitude,
-            BN(0),
+            BN(WEEK),
             BN(5e4),
             BN(50e4),
         );
@@ -226,7 +243,9 @@ describe('TapiocaOptionBroker', () => {
         expect(newPoolState.totalDeposited).to.be.equal(
             prevPoolState.totalDeposited.add(amount),
         );
-        expect(newPoolState.cumulative).to.be.equal(computedAML.magnitude);
+        expect(newPoolState.cumulative).to.be.equal(
+            computedAML.magnitude.add(WEEK),
+        );
         expect(newPoolState.averageMagnitude).to.be.equal(
             computedAML.averageMagnitude,
         );
@@ -420,7 +439,9 @@ describe('TapiocaOptionBroker', () => {
         expect(await tOB.twAML(sglTokenMockAsset)).to.be.deep.equal(
             newPoolState,
         ); // No change in AML state
-        expect((await tOB.twAML(sglTokenMockAsset)).cumulative).to.be.equal(0);
+        expect((await tOB.twAML(sglTokenMockAsset)).cumulative).to.be.equal(
+            WEEK,
+        );
     });
 
     it('should enter and exit multiple positions', async () => {
@@ -695,7 +716,7 @@ describe('TapiocaOptionBroker', () => {
         const userLock1 = await lockAndParticipate(
             users[0],
             3e8,
-            604800,
+            604800 * 4,
             tOLP,
             tOB,
             oTAP,
@@ -1664,7 +1685,7 @@ describe('TapiocaOptionBroker', () => {
         //     await exitAPoolState.cumulative,
         // );
         // console.log('[A4] Just B Average: ', xparticipationB.averageMagnitude);
-        expect(exitAPoolState.cumulative).to.be.equal(464361);
+        expect(exitAPoolState.cumulative).to.be.equal(353055);
 
         //TIme skip end B
         await time.increase(lockDurationB);
@@ -1674,7 +1695,7 @@ describe('TapiocaOptionBroker', () => {
         const ctime4 = new Date();
         // console.log('Exit B, Time(+100 Expire B): ', ctime4);
         // console.log('[A4] END Cumulative: ', await exitBPoolState.cumulative);
-        expect(exitBPoolState.cumulative).to.be.equal(0);
+        expect(exitBPoolState.cumulative).to.be.equal(WEEK);
     });
 
     it('Should support decimals >18', async () => {
@@ -1728,7 +1749,7 @@ describe('TapiocaOptionBroker', () => {
         const userLock1 = await lockAndParticipate(
             users[0],
             3e8,
-            604800,
+            WEEK * 4,
             tOLP,
             tOB,
             oTAP,

@@ -268,6 +268,9 @@ contract TapiocaOptionBroker is
         require(lock.lockDuration >= EPOCH_DURATION, "tOB: Duration too short");
 
         TWAMLPool memory pool = twAML[lock.sglAssetID];
+        if (pool.cumulative == 0) {
+            pool.cumulative = EPOCH_DURATION;
+        }
 
         require(
             tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID),
@@ -281,9 +284,12 @@ contract TapiocaOptionBroker is
             uint256(lock.lockDuration),
             pool.cumulative
         );
-        bool divergenceForce;
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
+        // Revert if the lock 4x the cumulative
+        require(magnitude < pool.cumulative * 4, "tOB: Too long");
+
+        bool divergenceForce;
         // Participate in twAMl voting
         bool hasVotingPower = lock.ybShares >=
             computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
@@ -294,7 +300,7 @@ contract TapiocaOptionBroker is
                 pool.totalParticipants; // compute new average magnitude
 
             // Compute and save new cumulative
-            divergenceForce = lock.lockDuration > pool.cumulative;
+            divergenceForce = lock.lockDuration >= pool.cumulative;
             if (divergenceForce) {
                 pool.cumulative += pool.averageMagnitude;
             } else {
