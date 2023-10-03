@@ -147,6 +147,9 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         rewardTokens.push(IERC20(address(0x0))); // 0 index is reserved
 
         maxRewardTokens = 1000;
+
+        // Seed the cumulative with 1 week of magnitude
+        twAML.cumulative = EPOCH_DURATION;
     }
 
     // ==========
@@ -291,7 +294,8 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         TWAMLPool memory pool = twAML;
 
         uint256 magnitude = computeMagnitude(_duration, pool.cumulative);
-        bool divergenceForce;
+        // Revert if the lock 4x the cumulative
+        require(magnitude < pool.cumulative * 4, "twTAP: Too long");
         uint256 multiplier = computeTarget(
             dMIN,
             dMAX,
@@ -300,6 +304,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         );
 
         // Calculate twAML voting weight
+        bool divergenceForce;
         bool hasVotingPower = _amount >=
             computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
         if (hasVotingPower) {
@@ -309,7 +314,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
                 pool.totalParticipants; // compute new average magnitude
 
             // Compute and save new cumulative
-            divergenceForce = _duration > pool.cumulative;
+            divergenceForce = _duration >= pool.cumulative;
 
             if (divergenceForce) {
                 pool.cumulative += pool.averageMagnitude;
@@ -338,7 +343,6 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         _safeMint(_participant, tokenId);
 
         uint256 expiry = block.timestamp + _duration;
-        require(expiry < type(uint56).max, "twTAP: too long");
         // Eligibility starts NEXT week, and lasts until the week that the lock
         // expires. This is guaranteed to be at least one week later by the
         // check on `_duration`.
