@@ -1569,7 +1569,7 @@ function weekTotals(uint256) external view returns (int256 netActiveVotes)
 ### AMLDivergence
 
 ```solidity
-event AMLDivergence(uint256 cumulative, uint256 averageMagnitude, uint256 totalParticipants)
+event AMLDivergence(uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 indexed totalParticipants)
 ```
 
 
@@ -1580,9 +1580,9 @@ event AMLDivergence(uint256 cumulative, uint256 averageMagnitude, uint256 totalP
 
 | Name | Type | Description |
 |---|---|---|
-| cumulative  | uint256 | undefined |
-| averageMagnitude  | uint256 | undefined |
-| totalParticipants  | uint256 | undefined |
+| cumulative `indexed` | uint256 | undefined |
+| averageMagnitude `indexed` | uint256 | undefined |
+| totalParticipants `indexed` | uint256 | undefined |
 
 ### Approval
 
@@ -1656,7 +1656,7 @@ event CreditStored(bytes32 _hashedPayload, bytes _payload)
 ### ExitPosition
 
 ```solidity
-event ExitPosition(uint256 indexed tokenId, uint256 amount)
+event ExitPosition(uint256 indexed tokenId, uint256 indexed amount)
 ```
 
 
@@ -1668,12 +1668,12 @@ event ExitPosition(uint256 indexed tokenId, uint256 amount)
 | Name | Type | Description |
 |---|---|---|
 | tokenId `indexed` | uint256 | undefined |
-| amount  | uint256 | undefined |
+| amount `indexed` | uint256 | undefined |
 
 ### LogMaxRewardsLength
 
 ```solidity
-event LogMaxRewardsLength(uint256 _oldLength, uint256 _newLength, uint256 _currentLength)
+event LogMaxRewardsLength(uint256 indexed _oldLength, uint256 indexed _newLength, uint256 indexed _currentLength)
 ```
 
 
@@ -1684,9 +1684,9 @@ event LogMaxRewardsLength(uint256 _oldLength, uint256 _newLength, uint256 _curre
 
 | Name | Type | Description |
 |---|---|---|
-| _oldLength  | uint256 | undefined |
-| _newLength  | uint256 | undefined |
-| _currentLength  | uint256 | undefined |
+| _oldLength `indexed` | uint256 | undefined |
+| _newLength `indexed` | uint256 | undefined |
+| _currentLength `indexed` | uint256 | undefined |
 
 ### MessageFailed
 
@@ -1728,7 +1728,7 @@ event OwnershipTransferred(address indexed previousOwner, address indexed newOwn
 ### Participate
 
 ```solidity
-event Participate(address indexed participant, uint256 tapAmount, uint256 multiplier)
+event Participate(address indexed participant, uint256 indexed tapAmount, uint256 indexed multiplier)
 ```
 
 
@@ -1740,8 +1740,8 @@ event Participate(address indexed participant, uint256 tapAmount, uint256 multip
 | Name | Type | Description |
 |---|---|---|
 | participant `indexed` | address | undefined |
-| tapAmount  | uint256 | undefined |
-| multiplier  | uint256 | undefined |
+| tapAmount `indexed` | uint256 | undefined |
+| multiplier `indexed` | uint256 | undefined |
 
 ### ReceiveFromChain
 

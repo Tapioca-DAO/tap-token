@@ -89,8 +89,8 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
     uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
-    uint256 constant dMAX = 100 * 1e4; // 10% - 100% voting power multiplier
-    uint256 constant dMIN = 10 * 1e4;
+    uint256 constant dMAX = 1_000_000; // 100 * 1e4; 10% - 100% voting power multiplier
+    uint256 constant dMIN = 100_000; // 10 * 1e4;
     uint256 public constant EPOCH_DURATION = 7 days;
 
     // If we assume 128 bit balances for the reward token -- which fit 1e40
@@ -102,7 +102,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     // the weight ranges from 10-100% where 1% = 1e4, so 1 million (20 bits).
     // the multiplier is at most 100% = 1M (20 bits), so votes is at most a
     // 107-bit number.
-    uint256 constant DIST_PRECISION = 2 ** 128;
+    uint256 constant DIST_PRECISION = 256; //2 ** 128;
 
     IERC20[] public rewardTokens;
     mapping(IERC20 => uint256) public rewardTokenIndex; // Index 0 is reserved with 0x0 address
@@ -123,9 +123,9 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     uint256 public immutable HOST_CHAIN_ID;
 
     event LogMaxRewardsLength(
-        uint256 _oldLength,
-        uint256 _newLength,
-        uint256 _currentLength
+        uint256 indexed _oldLength,
+        uint256 indexed _newLength,
+        uint256 indexed _currentLength
     );
 
     /// =====-------======
@@ -157,15 +157,15 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     // ==========
     event Participate(
         address indexed participant,
-        uint256 tapAmount,
-        uint256 multiplier
+        uint256 indexed tapAmount,
+        uint256 indexed multiplier
     );
     event AMLDivergence(
-        uint256 cumulative,
-        uint256 averageMagnitude,
-        uint256 totalParticipants
+        uint256 indexed cumulative,
+        uint256 indexed averageMagnitude,
+        uint256 indexed totalParticipants
     );
-    event ExitPosition(uint256 indexed tokenId, uint256 amount);
+    event ExitPosition(uint256 indexed tokenId, uint256 indexed amount);
 
     // ==========
     //    READ
@@ -183,7 +183,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @notice Return the participation of a token. Returns 0 votes for expired tokens.
     function getParticipation(
         uint _tokenId
-    ) public view returns (Participation memory participant) {
+    ) external view returns (Participation memory participant) {
         participant = participants[_tokenId];
         if (participant.expiry <= block.timestamp) {
             participant.multiplier = 0;
@@ -224,7 +224,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         WeekTotals storage cur = weekTotals[week];
         WeekTotals storage prev = weekTotals[position.lastInactive];
 
-        for (uint256 i = 0; i < len; ) {
+        for (uint256 i; i < len; ) {
             // Math is safe (but we do the checks anyway):
             //
             // -- The `totalDistPerVote[i]` values are increasing as a
@@ -392,7 +392,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @param _rewardTokens The address of the reward token
     function claimAndSendRewards(
         uint256 _tokenId,
-        IERC20[] memory _rewardTokens
+        IERC20[] calldata _rewardTokens
     ) external nonReentrant {
         require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
         _claimRewardsOn(_tokenId, address(tapOFT), _rewardTokens);
@@ -428,9 +428,8 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @param _limit Maximum number of weeks to process in one call
     function advanceWeek(uint256 _limit) public nonReentrant {
         // TODO: Make whole function unchecked
-        uint256 cur = currentWeek();
         uint256 week = lastProcessedWeek;
-        uint256 goal = cur;
+        uint256 goal = currentWeek();
         unchecked {
             if (goal - week > _limit) {
                 goal = week + _limit;
@@ -442,7 +441,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
             WeekTotals storage next = weekTotals[++week];
             // TODO: Prove that math is safe
             next.netActiveVotes += prev.netActiveVotes;
-            for (uint256 i = 0; i < len; ) {
+            for (uint256 i; i < len; ) {
                 next.totalDistPerVote[i] += prev.totalDistPerVote[i];
                 unchecked {
                     ++i;
@@ -528,7 +527,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         uint256[] memory amounts = claimable(_tokenId);
         uint256 len = amounts.length;
         unchecked {
-            for (uint256 i = 0; i < len; ++i) {
+            for (uint256 i; i < len; ++i) {
                 uint256 amount = amounts[i];
                 if (amount > 0) {
                     // Math is safe: `amount` calculated safely in `claimable()`
@@ -549,7 +548,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
 
         unchecked {
             uint256 len = _rewardTokens.length;
-            for (uint256 i = 0; i < len; ) {
+            for (uint256 i; i < len; ) {
                 // Check for duplicates
                 require(
                     !_existInArray(address(_rewardTokens[i]), _reviewed),
@@ -578,10 +577,10 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         address _to
     ) internal returns (uint256 releasedAmount) {
         Participation memory position = participants[_tokenId];
+        require(position.expiry <= block.timestamp, "twTAP: Lock not expired");
         if (position.tapReleased) {
             return 0;
         }
-        require(position.expiry <= block.timestamp, "twTAP: Lock not expired");
 
         releasedAmount = position.tapAmount;
 
@@ -632,7 +631,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     ) internal pure returns (bool) {
         uint256 len = _array.length;
         unchecked {
-            for (uint256 i = 0; i < len; ++i) {
+            for (uint256 i; i < len; ++i) {
                 if (_array[i] == _check) {
                     return true;
                 }
