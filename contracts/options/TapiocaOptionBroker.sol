@@ -89,7 +89,7 @@ contract TapiocaOptionBroker is
     /// ===== TWAML ======
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
 
-    uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
+    uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, 10%
     uint256 constant dMAX = 50 * 1e4; // 5% - 50% discount
     uint256 constant dMIN = 5 * 1e4;
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
@@ -513,6 +513,12 @@ contract TapiocaOptionBroker is
     // =========
     //   OWNER
     // =========
+
+    /// @notice Set the minimum weight factor
+    /// @param _minWeightFactor The new minimum weight factor
+    function setMinWeightFactor(uint256 _minWeightFactor) external onlyOwner {
+        MIN_WEIGHT_FACTOR = _minWeightFactor;
+    }
 
     /// @notice Set the TapOFT Oracle address and data
     /// @param _tapOracle The new TapOFT Oracle address
