@@ -29,7 +29,6 @@ struct IRewardClaimSendFromParams {
 }
 
 abstract contract BaseTapOFT is OFTV2 {
-    using ExcessivelySafeCall for address;
     using BytesLib for bytes;
     using SafeERC20 for IERC20;
 

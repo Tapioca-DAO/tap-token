@@ -24,9 +24,9 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 contract LTap is BoringOwnable, ERC20Permit {
     using SafeERC20 for IERC20;
 
-    IERC20 tapToken;
+    IERC20 immutable tapToken;
     uint256 public lockedUntil;
-    uint256 public maxLockedUntil;
+    uint256 public immutable maxLockedUntil;
 
     /// @notice Creates a new LTAP token
     /// @dev LTAP tokens are minted by depositing TAP
