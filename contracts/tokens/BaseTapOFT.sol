@@ -8,6 +8,7 @@ import {LzLib} from "tapioca-sdk/dist/contracts/libraries/LzLib.sol";
 import "tapioca-periph/contracts/interfaces/ITapiocaOFT.sol";
 import "tapioca-sdk/dist/contracts/token/oft/v2/OFTV2.sol";
 import {TwTAP} from "../governance/twTAP.sol";
+
 /*
 
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -154,9 +155,9 @@ abstract contract BaseTapOFT is OFTV2 {
         approve(address(twTap), amount);
 
         // We participate and mint with TapOFT as a receiver
-        try twTap.participate(to, amount, duration) {} catch Error(
-            string memory _reason
-        ) {
+        try
+            twTap.participate{gas: 310_000}(to, amount, duration) // Should consume 300_848 gas
+        {} catch Error(string memory _reason) {
             // If the process fails, we send back the funds to the user
             // We send back the funds to the user
             emit CallFailedStr(_srcChainId, _payload, _reason);
@@ -260,6 +261,17 @@ abstract contract BaseTapOFT is OFTV2 {
 
         // Only the owner can unlock
         require(twTap.ownerOf(tokenID) == sender, "TapOFT: Not owner");
+
+        if (((gasleft() * 1) / 64) < 100_000) {
+            _storeFailedMessage(
+                _srcChainId,
+                _srcAddress,
+                _nonce,
+                _payload,
+                bytes("TapOft: gas not enough")
+            );
+            return;
+        }
 
         // Exit and receive tokens to this contract
         try twTap.claimAndSendRewards(tokenID, rewardTokens) {

@@ -19,7 +19,7 @@ import { ERC20Mock__factory } from 'tapioca-sdk/dist/typechain/tapioca-mocks';
 const { formatUnits } = hre.ethers.utils;
 
 const WEEK = 86400 * 7;
-const EIGHT_DAYS = 86400 * 7;
+// const EIGHT_DAYS = 86400 * 8;
 
 const oneEth = BN(1e18);
 
@@ -37,21 +37,25 @@ describe('twTAP', () => {
 
         // Setup - Get some Tap tokens
         const toMint = BN(2e18);
-        const lockDuration = EIGHT_DAYS;
+        const lockDuration = WEEK;
         await tapOFT.freeMint(toMint);
+        await tapOFT.approve(twtap.address, toMint);
 
         // test tDP participation
         await expect(
             twtap.participate(signer.address, toMint, WEEK - 1),
         ).to.be.revertedWith('twTAP: Lock not a week');
         await expect(
+            twtap.participate(signer.address, toMint, WEEK * 5),
+        ).to.be.revertedWith('twTAP: Too long');
+
+        await tapOFT.approve(twtap.address, 0);
+        await expect(
             twtap.participate(signer.address, toMint, lockDuration),
         ).to.be.revertedWith('ERC20: insufficient allowance');
 
         const prevPoolState = await twtap.twAML();
-
         await tapOFT.approve(twtap.address, toMint);
-
         const lockTx = await twtap.participate(
             signer.address,
             toMint,
@@ -71,7 +75,10 @@ describe('twTAP', () => {
             averageMagnitude: BN(0),
             multiplier: BN(0),
         };
-        computedAML.magnitude = aml_computeMagnitude(BN(lockDuration), BN(0));
+        computedAML.magnitude = aml_computeMagnitude(
+            BN(lockDuration),
+            BN(WEEK),
+        );
         computedAML.averageMagnitude = aml_computeAverageMagnitude(
             computedAML.magnitude,
             BN(0),
@@ -79,7 +86,7 @@ describe('twTAP', () => {
         );
         computedAML.multiplier = aml_computeTarget(
             computedAML.magnitude,
-            BN(0),
+            BN(WEEK),
             BN(10e4),
             BN(100e4),
         );
@@ -98,7 +105,9 @@ describe('twTAP', () => {
         expect(newPoolState.totalDeposited).to.be.equal(
             prevPoolState.totalDeposited.add(toMint),
         );
-        expect(newPoolState.cumulative).to.be.equal(computedAML.magnitude);
+        expect(newPoolState.cumulative).to.be.equal(
+            prevPoolState.cumulative.add(computedAML.averageMagnitude),
+        );
         expect(newPoolState.averageMagnitude).to.be.equal(
             computedAML.averageMagnitude,
         );
@@ -138,7 +147,7 @@ describe('twTAP', () => {
 
         // Setup - Get some Tap tokens
         const toMint = BN(2e18);
-        const lockDuration = EIGHT_DAYS;
+        const lockDuration = WEEK;
         await tapOFT.freeMint(toMint);
 
         // Check exit before participation
@@ -199,7 +208,7 @@ describe('twTAP', () => {
         await twtap.exitPosition(_twTAPTokenID);
 
         expect(await twtap.twAML()).to.be.deep.equal(newPoolState); // No change in AML state
-        expect((await twtap.twAML()).cumulative).to.be.equal(0);
+        expect((await twtap.twAML()).cumulative).to.be.equal(WEEK);
     });
 
     it('should enter and exit multiple positions', async () => {
@@ -208,7 +217,7 @@ describe('twTAP', () => {
         // Setup - Get some Tap tokens
         const toMint = BN(3e18);
         const toParticipate = BN(1e18);
-        const lockDuration = EIGHT_DAYS;
+        const lockDuration = WEEK;
         await tapOFT.freeMint(toMint);
 
         // Check exit before participation
@@ -357,7 +366,7 @@ describe('twTAP', () => {
 
         await twtap
             .connect(alice)
-            .participate(alice.address, oneEth.mul(100), 5 * WEEK);
+            .participate(alice.address, oneEth.mul(100), 3 * WEEK);
         const aliceId = await twtap.mintedTWTap();
 
         await twtap
@@ -369,7 +378,7 @@ describe('twTAP', () => {
         const posBob = await twtap.getParticipation(bobId);
 
         expect(posAlice.lastInactive).to.equal(0);
-        expect(posAlice.lastActive).to.equal(5);
+        expect(posAlice.lastActive).to.equal(3);
         expect(posBob.lastInactive).to.equal(0);
         expect(posBob.lastActive).to.equal(2);
 
@@ -388,9 +397,9 @@ describe('twTAP', () => {
         expect(await twtap.weekTotals(1)).to.equal(votesAlice.add(votesBob));
         expect(await twtap.weekTotals(2)).to.equal(0);
         expect(await twtap.weekTotals(3)).to.equal(votesBob.mul(-1));
-        expect(await twtap.weekTotals(4)).to.equal(0);
+        expect(await twtap.weekTotals(4)).to.equal(votesAlice.mul(-1));
         expect(await twtap.weekTotals(5)).to.equal(0);
-        expect(await twtap.weekTotals(6)).to.equal(votesAlice.mul(-1));
+        expect(await twtap.weekTotals(6)).to.equal(0);
         expect(await twtap.weekTotals(7)).to.equal(0);
         expect(await twtap.weekTotals(8)).to.equal(0);
         expect(await twtap.weekTotals(9)).to.equal(0);
@@ -407,9 +416,9 @@ describe('twTAP', () => {
         expect(await twtap.weekTotals(1)).to.equal(votesAlice.add(votesBob));
         expect(await twtap.weekTotals(2)).to.equal(votesAlice.add(votesBob));
         expect(await twtap.weekTotals(3)).to.equal(votesBob.mul(-1));
-        expect(await twtap.weekTotals(4)).to.equal(0);
+        expect(await twtap.weekTotals(4)).to.equal(votesAlice.mul(-1));
         expect(await twtap.weekTotals(5)).to.equal(0);
-        expect(await twtap.weekTotals(6)).to.equal(votesAlice.mul(-1));
+        expect(await twtap.weekTotals(6)).to.equal(0);
         expect(await twtap.weekTotals(7)).to.equal(0);
         expect(await twtap.weekTotals(8)).to.equal(0);
         expect(await twtap.weekTotals(9)).to.equal(0);
@@ -425,9 +434,9 @@ describe('twTAP', () => {
         expect(await twtap.weekTotals(1)).to.equal(votesAlice.add(votesBob));
         expect(await twtap.weekTotals(2)).to.equal(votesAlice.add(votesBob));
         expect(await twtap.weekTotals(3)).to.equal(votesAlice);
-        expect(await twtap.weekTotals(4)).to.equal(0);
+        expect(await twtap.weekTotals(4)).to.equal(votesAlice.mul(-1));
         expect(await twtap.weekTotals(5)).to.equal(0);
-        expect(await twtap.weekTotals(6)).to.equal(votesAlice.mul(-1));
+        expect(await twtap.weekTotals(6)).to.equal(0);
         expect(await twtap.weekTotals(7)).to.equal(0);
         expect(await twtap.weekTotals(8)).to.equal(0);
         expect(await twtap.weekTotals(9)).to.equal(0);
@@ -440,9 +449,9 @@ describe('twTAP', () => {
         expect(await twtap.weekTotals(1)).to.equal(votesAlice.add(votesBob));
         expect(await twtap.weekTotals(2)).to.equal(votesAlice.add(votesBob));
         expect(await twtap.weekTotals(3)).to.equal(votesAlice);
-        expect(await twtap.weekTotals(4)).to.equal(votesAlice);
+        expect(await twtap.weekTotals(4)).to.equal(0);
         expect(await twtap.weekTotals(5)).to.equal(0);
-        expect(await twtap.weekTotals(6)).to.equal(votesAlice.mul(-1));
+        expect(await twtap.weekTotals(6)).to.equal(0);
         expect(await twtap.weekTotals(7)).to.equal(0);
         expect(await twtap.weekTotals(8)).to.equal(0);
         expect(await twtap.weekTotals(9)).to.equal(0);
@@ -457,8 +466,8 @@ describe('twTAP', () => {
         expect(await twtap.weekTotals(1)).to.equal(votesAlice.add(votesBob));
         expect(await twtap.weekTotals(2)).to.equal(votesAlice.add(votesBob));
         expect(await twtap.weekTotals(3)).to.equal(votesAlice);
-        expect(await twtap.weekTotals(4)).to.equal(votesAlice);
-        expect(await twtap.weekTotals(5)).to.equal(votesAlice);
+        expect(await twtap.weekTotals(4)).to.equal(0);
+        expect(await twtap.weekTotals(5)).to.equal(0);
         expect(await twtap.weekTotals(6)).to.equal(0);
         expect(await twtap.weekTotals(7)).to.equal(0);
         expect(await twtap.weekTotals(8)).to.equal(0);
@@ -1001,24 +1010,20 @@ describe('twTAP', () => {
     });
 
     it('Should not allow an expiry time that overflows', async () => {
-        const YEAR = 86400n * 365n;
-        const BILLION = 1_000_000_000n;
-        const ok = 2n * BILLION * YEAR;
-        const tooMuch = 3n * BILLION * YEAR;
-
         const { twtap, users, tokens } = await loadFixture(setupTwTAPFixture);
         const [alice, bob] = users;
 
+        const snapshot = await takeSnapshot();
         await twtap
             .connect(alice)
-            .participate(alice.address, oneEth.mul(100), ok);
-        const aliceId = await twtap.mintedTWTap();
+            .participate(alice.address, oneEth.mul(100), WEEK);
+        await snapshot.restore();
 
         await expect(
             twtap
                 .connect(alice)
-                .participate(alice.address, oneEth.mul(100), tooMuch),
-        ).to.be.revertedWith('twTAP: too long');
+                .participate(alice.address, oneEth.mul(100), WEEK * 5),
+        ).to.be.revertedWith('twTAP: Too long');
     });
 
     it('Should not allow claiming rewards for a duplicate reward token', async () => {

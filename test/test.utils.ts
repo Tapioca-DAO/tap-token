@@ -144,8 +144,8 @@ export function aml_computeTarget(
     if (cumulative.lte(0)) {
         return dmax;
     }
-    let target = magnitude.mul(dmax).div(cumulative);
-    target = target > dmax ? dmax : target < dmin ? dmin : target;
+    let target = BN(magnitude.mul(dmax)).div(cumulative);
+    target = target.gt(dmax) ? dmax : target.lt(dmin) ? dmin : target;
     return target;
 }
 

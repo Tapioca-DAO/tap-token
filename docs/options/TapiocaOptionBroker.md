@@ -27,6 +27,23 @@ function EPOCH_DURATION() external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### MIN_WEIGHT_FACTOR
+
+```solidity
+function MIN_WEIGHT_FACTOR() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### claimOwnership
 
 ```solidity
@@ -420,6 +437,22 @@ function pendingOwner() external view returns (address)
 | Name | Type | Description |
 |---|---|---|
 | _0 | address | undefined |
+
+### setMinWeightFactor
+
+```solidity
+function setMinWeightFactor(uint256 _minWeightFactor) external nonpayable
+```
+
+Set the minimum weight factor
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _minWeightFactor | uint256 | The new minimum weight factor |
 
 ### setPaymentToken
 

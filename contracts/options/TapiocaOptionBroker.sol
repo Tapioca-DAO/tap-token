@@ -89,7 +89,7 @@ contract TapiocaOptionBroker is
     /// ===== TWAML ======
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
 
-    uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
+    uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, 10%
     uint256 constant dMAX = 50 * 1e4; // 5% - 50% discount
     uint256 constant dMIN = 5 * 1e4;
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
@@ -268,6 +268,9 @@ contract TapiocaOptionBroker is
         require(lock.lockDuration >= EPOCH_DURATION, "tOB: Duration too short");
 
         TWAMLPool memory pool = twAML[lock.sglAssetID];
+        if (pool.cumulative == 0) {
+            pool.cumulative = EPOCH_DURATION;
+        }
 
         require(
             tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID),
@@ -281,9 +284,12 @@ contract TapiocaOptionBroker is
             uint256(lock.lockDuration),
             pool.cumulative
         );
-        bool divergenceForce;
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
+        // Revert if the lock 4x the cumulative
+        require(magnitude < pool.cumulative * 4, "tOB: Too long");
+
+        bool divergenceForce;
         // Participate in twAMl voting
         bool hasVotingPower = lock.ybShares >=
             computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
@@ -294,7 +300,7 @@ contract TapiocaOptionBroker is
                 pool.totalParticipants; // compute new average magnitude
 
             // Compute and save new cumulative
-            divergenceForce = lock.lockDuration > pool.cumulative;
+            divergenceForce = lock.lockDuration >= pool.cumulative;
             if (divergenceForce) {
                 pool.cumulative += pool.averageMagnitude;
             } else {
@@ -493,7 +499,9 @@ contract TapiocaOptionBroker is
         _emitToGauges(epochTAP);
 
         // Get epoch TAP valuation
-        (, epochTAPValuation) = tapOracle.get(tapOracleData);
+        bool success;
+        (success, epochTAPValuation) = tapOracle.get(tapOracleData);
+        require(success, "tOB: oracle call failed");
         emit NewEpoch(epoch, epochTAP, epochTAPValuation);
     }
 
@@ -505,6 +513,12 @@ contract TapiocaOptionBroker is
     // =========
     //   OWNER
     // =========
+
+    /// @notice Set the minimum weight factor
+    /// @param _minWeightFactor The new minimum weight factor
+    function setMinWeightFactor(uint256 _minWeightFactor) external onlyOwner {
+        MIN_WEIGHT_FACTOR = _minWeightFactor;
+    }
 
     /// @notice Set the TapOFT Oracle address and data
     /// @param _tapOracle The new TapOFT Oracle address
@@ -587,9 +601,10 @@ contract TapiocaOptionBroker is
         uint256 otcAmountInUSD = tapAmount * epochTAPValuation;
 
         // Get payment token valuation
-        (, uint256 paymentTokenValuation) = _paymentTokenOracle.oracle.get(
-            _paymentTokenOracle.oracleData
-        );
+        (bool success, uint256 paymentTokenValuation) = _paymentTokenOracle
+            .oracle
+            .get(_paymentTokenOracle.oracleData);
+        require(success, "tOB: oracle call failed");
 
         // Calculate payment amount and initiate the transfers
         uint256 discountedPaymentAmount = _getDiscountedPaymentAmount(

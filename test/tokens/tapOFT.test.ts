@@ -21,6 +21,7 @@ import {
     time_travel,
 } from '../test.utils';
 import { TapiocaOFT } from 'tapioca-sdk/dist/typechain/tapiocaz';
+import { token } from '../../typechain/@openzeppelin/contracts';
 
 describe('tapOFT', () => {
     let signer: SignerWithAddress;
@@ -224,14 +225,25 @@ describe('tapOFT', () => {
         it('should not mint when paused', async () => {
             await tapiocaOFT0.setMinter(signer.address);
             await tapiocaOFT0.updatePause(true);
-            await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.be
+            await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.not.be
                 .reverted;
+            await expect(
+                tapiocaOFT0.extractTAP(
+                    signer.address,
+                    await tapiocaOFT0.getCurrentWeekEmission(),
+                ),
+            ).to.be.reverted;
+
             await tapiocaOFT0.updatePause(false);
-            await time_travel(86400);
+            await time_travel(604800);
             await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.emit(
                 tapiocaOFT0,
                 'Emitted',
             );
+            const emissions = await tapiocaOFT0.getCurrentWeekEmission();
+            await expect(tapiocaOFT0.extractTAP(signer.address, emissions))
+                .to.emit(tapiocaOFT0, 'Minted')
+                .withArgs(signer.address, signer.address, emissions);
         });
 
         it('should not allow emit from another chain', async () => {
@@ -777,7 +789,7 @@ describe('tapOFT', () => {
 
             await tapiocaOFT1.setTwTap(twTAP.address);
 
-            tapiocaOFT0.lockTwTapPosition(
+            await tapiocaOFT0.lockTwTapPosition(
                 signer.address,
                 (1e18).toString(),
                 await twTAP.EPOCH_DURATION(),
@@ -790,6 +802,7 @@ describe('tapOFT', () => {
                 { value: (1e18).toString() },
             );
             const tokenID = await twTAP.mintedTWTap();
+            expect(tokenID).to.be.equal(1);
 
             await time_travel((await twTAP.EPOCH_DURATION()).toNumber());
 
@@ -818,7 +831,7 @@ describe('tapOFT', () => {
                     ethers.constants.AddressZero,
                     hre.ethers.utils.solidityPack(
                         ['uint16', 'uint', 'uint', 'address'],
-                        [2, 1_000_000, (1e18).toString(), tapiocaOFT1.address],
+                        [2, 10_000_000, (1e18).toString(), tapiocaOFT1.address],
                     ),
                     [
                         {
@@ -826,7 +839,7 @@ describe('tapOFT', () => {
                             callParams: {
                                 adapterParams: hre.ethers.utils.solidityPack(
                                     ['uint16', 'uint256'],
-                                    [1, 200_000],
+                                    [1, 400_000],
                                 ),
                                 refundAddress: signer.address,
                                 zroPaymentAddress: ethers.constants.AddressZero,
