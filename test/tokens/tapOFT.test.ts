@@ -21,6 +21,7 @@ import {
     time_travel,
 } from '../test.utils';
 import { TapiocaOFT } from 'tapioca-sdk/dist/typechain/tapiocaz';
+import { token } from '../../typechain/@openzeppelin/contracts';
 
 describe('tapOFT', () => {
     let signer: SignerWithAddress;
@@ -788,7 +789,7 @@ describe('tapOFT', () => {
 
             await tapiocaOFT1.setTwTap(twTAP.address);
 
-            tapiocaOFT0.lockTwTapPosition(
+            await tapiocaOFT0.lockTwTapPosition(
                 signer.address,
                 (1e18).toString(),
                 await twTAP.EPOCH_DURATION(),
@@ -801,6 +802,7 @@ describe('tapOFT', () => {
                 { value: (1e18).toString() },
             );
             const tokenID = await twTAP.mintedTWTap();
+            expect(tokenID).to.be.equal(1);
 
             await time_travel((await twTAP.EPOCH_DURATION()).toNumber());
 
