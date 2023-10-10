@@ -207,11 +207,15 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
         uint256 week = _timestampToWeek(block.timestamp);
         if (emissionForWeek[week] > 0) return 0;
 
-        // Update DSO supply from last minted emissions
-        dso_supply -= mintedInWeek[week - 1];
-
         // Compute unclaimed emission from last week and add it to the current week emission
-        uint256 unclaimed = emissionForWeek[week - 1] - mintedInWeek[week - 1];
+        uint256 unclaimed;
+        if (week > 0) {
+            // Update DSO supply from last minted emissions
+            dso_supply -= mintedInWeek[week - 1];
+
+            // Push unclaimed emission from last week to the current week
+            unclaimed = emissionForWeek[week - 1] - mintedInWeek[week - 1];
+        }
         uint256 emission = uint256(_computeEmission());
         emission += unclaimed;
         emissionForWeek[week] = emission;
@@ -251,7 +255,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     function _timestampToWeek(
         uint256 timestamp
     ) internal view returns (uint256) {
-        return ((timestamp - emissionsStartTime) / WEEK) + 1; // Starts at week 1
+        return ((timestamp - emissionsStartTime) / WEEK);
     }
 
     ///-- Private methods --
