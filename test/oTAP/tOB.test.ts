@@ -169,7 +169,7 @@ describe('TapiocaOptionBroker', () => {
 
         // test tOB participation
         await expect(tOB.participate(29)).to.be.revertedWith(
-            'tOB: Position is not active',
+            'tOB: Position does not exist',
         ); // invalid/inexistent tokenID
 
         await expect(tOB.participate(tokenID)).to.be.revertedWith(
@@ -607,6 +607,7 @@ describe('TapiocaOptionBroker', () => {
         // Setup tOB
         await tOB.oTAPBrokerClaim();
         await tapOFT.setMinter(tOB.address);
+        await time.increase(await tOB.EPOCH_DURATION());
 
         // No singularities
         await expect(tOB.newEpoch()).to.be.revertedWith(
@@ -624,15 +625,9 @@ describe('TapiocaOptionBroker', () => {
 
         const snapshot = await takeSnapshot();
         // Check epoch update
-        const txNewEpoch = await tOB.newEpoch();
+        await tOB.newEpoch();
         expect(await tOB.epoch()).to.be.equal(1);
 
-        const txNewEpochTimestamp = (
-            await hre.ethers.provider.getBlock(txNewEpoch.blockNumber!)
-        ).timestamp;
-        expect(await tOB.lastEpochUpdate()).to.be.equal(
-            await tOB.timestampToWeek(txNewEpochTimestamp),
-        );
         expect(await tOB.epochTAPValuation()).to.be.equal(tapPrice);
 
         const emittedTAP = await tapOFT.getCurrentWeekEmission();
@@ -672,6 +667,88 @@ describe('TapiocaOptionBroker', () => {
         expect(await tOB.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(
             emittedTAP.mul(2).div(3),
         );
+    });
+
+    it('Should wait 1 epoch before being able to exercise', async () => {
+        const {
+            users,
+            yieldBox,
+            tOB,
+            tapOFT,
+            tOLP,
+            oTAP,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+            stableMock,
+            stableMockOracle,
+        } = await loadFixture(setupFixture);
+
+        await setupEnv(
+            tOB,
+            tOLP,
+            tapOFT,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+        );
+        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+
+        await tOB.setPaymentToken(
+            stableMock.address,
+            stableMockOracle.address,
+            '0x00',
+        );
+
+        const userLock = await lockAndParticipate(
+            users[0],
+            3e8,
+            604800 * 4,
+            tOLP,
+            tOB,
+            oTAP,
+            yieldBox,
+            sglTokenMock,
+            sglTokenMockAsset,
+        );
+
+        // No exercise before 1 epoch
+        await expect(
+            tOB
+                .connect(users[0])
+                .getOTCDealDetails(userLock.oTAPTokenID, stableMock.address, 0),
+        ).to.be.revertedWith('tOB: 1 EPOCH cooldown');
+        await expect(
+            tOB
+                .connect(users[0])
+                .exerciseOption(userLock.oTAPTokenID, stableMock.address, 0),
+        ).to.be.revertedWith('tOB: 1 EPOCH cooldown');
+
+        // Exercise after 1 epoch
+        await time.increase(await tOB.EPOCH_DURATION());
+        await tOB.newEpoch();
+
+        await expect(
+            tOB
+                .connect(users[0])
+                .getOTCDealDetails(userLock.oTAPTokenID, stableMock.address, 0),
+        ).to.not.be.reverted;
+
+        await stableMock.mintTo(users[0].address, (1e18).toString());
+        await stableMock
+            .connect(users[0])
+            .approve(tOB.address, (1e18).toString());
+        await expect(
+            tOB
+                .connect(users[0])
+                .exerciseOption(
+                    userLock.oTAPTokenID,
+                    stableMock.address,
+                    (1e18).toString(),
+                ),
+        ).to.not.be.reverted;
     });
 
     it('should return correct OTC details', async () => {
@@ -735,6 +812,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock,
             sglTokenMockAsset,
         );
+        await time.increase(await tOB.EPOCH_DURATION());
         await tOB.newEpoch();
 
         const epoch = await tOB.epoch();
@@ -1002,6 +1080,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock,
             sglTokenMockAsset,
         );
+        await time.increase(await tOB.EPOCH_DURATION());
         await tOB.newEpoch();
 
         // Check requirements
@@ -1043,7 +1122,20 @@ describe('TapiocaOptionBroker', () => {
                 .exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0),
         ).to.be.rejectedWith('tOB: Payment token not supported');
         await snapshot.restore();
-        await time.increase(userLock1.lockDuration);
+
+        await stableMock
+            .connect(users[0])
+            .approve(tOB.address, _otcDetails.eligibleTapAmount);
+        await stableMock.mintTo(
+            users[0].address,
+            _otcDetails.eligibleTapAmount,
+        );
+
+        await time.increase(await tOB.EPOCH_DURATION()); // week 2
+        await tOB.newEpoch();
+        await time.increase(await tOB.EPOCH_DURATION()); // week 3
+        await tOB.newEpoch();
+
         await expect(
             tOB
                 .connect(users[0])
@@ -1389,6 +1481,8 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock,
             sglTokenMockAsset,
         );
+
+        await time.increase(await tOB.EPOCH_DURATION());
         await tOB.newEpoch();
         const otcDetails = await tOB.getOTCDealDetails(
             userLock1.oTAPTokenID,
@@ -1758,8 +1852,8 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMockAsset,
         );
 
+        await time.increase(await tOB.EPOCH_DURATION());
         await tOB.newEpoch();
-        const epoch = await tOB.epoch();
 
         // Exercise for 10e18 TAP with 1e24 decimals stable, 50% discount
         {
@@ -1854,8 +1948,8 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock,
             sglTokenMockAsset,
         );
-
-        tOB.newEpoch();
+        await time.increase(await tOB.EPOCH_DURATION());
+        await tOB.newEpoch();
 
         // User 0 OTC details
         const otcDetail0 = await tOB.getOTCDealDetails(
