@@ -251,7 +251,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     function _timestampToWeek(
         uint256 timestamp
     ) internal view returns (uint256) {
-        return ((timestamp - emissionsStartTime) / WEEK) + 1; // Starts at week 1
+        return ((timestamp - emissionsStartTime) / WEEK);
     }
 
     ///-- Private methods --

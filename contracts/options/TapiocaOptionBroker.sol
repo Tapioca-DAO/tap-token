@@ -499,6 +499,7 @@ contract TapiocaOptionBroker is
 
         // Extract TAP + Update net deposited amounts
         uint256 epochTAP = tapOFT.emitForWeek();
+        require(epochTAP > 0, "tOB: No TAP to emit");
         _emitToGauges(epochTAP);
 
         // Get epoch TAP valuation
@@ -586,7 +587,7 @@ contract TapiocaOptionBroker is
     function _timestampToWeek(
         uint256 timestamp
     ) internal view returns (uint256) {
-        return ((timestamp - emissionsStartTime) / EPOCH_DURATION) + 1; // Starts at week 1
+        return ((timestamp - emissionsStartTime) / EPOCH_DURATION);
     }
 
     /// @notice Check if a position is active
