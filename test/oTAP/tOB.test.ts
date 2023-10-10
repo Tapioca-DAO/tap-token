@@ -1136,6 +1136,7 @@ describe('TapiocaOptionBroker', () => {
         await time.increase(await tOB.EPOCH_DURATION()); // week 3
         await tOB.newEpoch();
 
+        expect(await tOB.epoch()).to.be.equal(3);
         await expect(
             tOB
                 .connect(users[0])

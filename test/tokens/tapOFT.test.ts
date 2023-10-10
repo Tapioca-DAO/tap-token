@@ -259,7 +259,7 @@ describe('tapOFT', () => {
             await time_travel(7 * 86400);
             await expect(
                 chainBTap.connect(signer).emitForWeek(),
-            ).to.be.revertedWith('chain not valid');
+            ).to.be.revertedWith('TAP: Chain not valid');
         });
         it('should not be able to deploy with an empty LayerZero endpoint', async () => {
             const factory = await ethers.getContractFactory('TapOFT');
@@ -527,14 +527,14 @@ describe('tapOFT', () => {
 
             expect(
                 await tapiocaOFT0.timestampToWeek(currentBlockTimestamp),
-            ).to.eq(1);
-            for (let i = 1; i < 100; i++) {
+            ).to.eq(0);
+            for (let i = 0; i < 42; i++) {
                 const week = await tapiocaOFT0.timestampToWeek(
                     (await tapiocaOFT0.WEEK())
                         .mul(i)
                         .add(currentBlockTimestamp),
                 );
-                expect(week).to.eq(i + 1);
+                expect(week).to.eq(i);
             }
         });
     });
@@ -577,19 +577,19 @@ describe('tapOFT', () => {
                 tapiocaOFT0
                     .connect(normalUser)
                     .extractTAP(minter.address, bigAmount),
-            ).to.be.revertedWith('unauthorized');
+            ).to.be.revertedWith('TAP: only minter');
             await expect(
                 tapiocaOFT0.connect(signer).setMinter(minter.address),
             ).to.emit(tapiocaOFT0, 'MinterUpdated');
 
             await expect(
                 tapiocaOFT0.connect(minter).extractTAP(minter.address, 0),
-            ).to.be.revertedWith('amount not valid');
+            ).to.be.revertedWith('TAP: Amount not valid');
             await expect(
                 tapiocaOFT0
                     .connect(minter)
                     .extractTAP(minter.address, bigAmount),
-            ).to.be.revertedWith('exceeds allowable amount');
+            ).to.be.revertedWith('TAP: Exceeds allowable amount');
 
             // Check balance
             const emissionForWeek = await tapiocaOFT0.getCurrentWeekEmission();
