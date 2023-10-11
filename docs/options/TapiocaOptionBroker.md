@@ -199,23 +199,6 @@ Returns the details of an OTC deal for a given oTAP token ID and a payment token
 | paymentTokenAmount | uint256 | The amount of payment tokens required for the deal |
 | tapAmount | uint256 | The amount of TAP to be exchanged |
 
-### lastEpochUpdate
-
-```solidity
-function lastEpochUpdate() external view returns (uint256)
-```
-
-
-
-
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | uint256 | undefined |
-
 ### netDepositedForEpoch
 
 ```solidity
