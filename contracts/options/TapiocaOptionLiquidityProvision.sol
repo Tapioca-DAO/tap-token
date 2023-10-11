@@ -110,10 +110,8 @@ contract TapiocaOptionLiquidityProvision is
     /// @param _tokenId tOLP NFT ID
     function getLock(
         uint256 _tokenId
-    ) external view returns (bool, LockPosition memory) {
-        LockPosition memory lockPosition = lockPositions[_tokenId];
-
-        return (_isPositionActive(_tokenId), lockPosition);
+    ) external view returns (LockPosition memory) {
+        return lockPositions[_tokenId];
     }
 
     /// @notice Returns the active singularity YieldBox ID markets
@@ -336,14 +334,5 @@ contract TapiocaOptionLiquidityProvision is
         }
 
         return total;
-    }
-
-    /// @notice Checks if the lock position is still active
-    function _isPositionActive(uint256 tokenId) internal view returns (bool) {
-        LockPosition memory lockPosition = lockPositions[tokenId];
-
-        return
-            (lockPosition.lockTime + lockPosition.lockDuration) >=
-            block.timestamp;
     }
 }

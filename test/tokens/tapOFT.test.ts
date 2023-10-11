@@ -21,6 +21,7 @@ import {
     time_travel,
 } from '../test.utils';
 import { TapiocaOFT } from 'tapioca-sdk/dist/typechain/tapiocaz';
+import { token } from '../../typechain/@openzeppelin/contracts';
 
 describe('tapOFT', () => {
     let signer: SignerWithAddress;
@@ -224,14 +225,25 @@ describe('tapOFT', () => {
         it('should not mint when paused', async () => {
             await tapiocaOFT0.setMinter(signer.address);
             await tapiocaOFT0.updatePause(true);
-            await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.be
+            await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.not.be
                 .reverted;
+            await expect(
+                tapiocaOFT0.extractTAP(
+                    signer.address,
+                    await tapiocaOFT0.getCurrentWeekEmission(),
+                ),
+            ).to.be.reverted;
+
             await tapiocaOFT0.updatePause(false);
-            await time_travel(86400);
+            await time_travel(604800);
             await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.emit(
                 tapiocaOFT0,
                 'Emitted',
             );
+            const emissions = await tapiocaOFT0.getCurrentWeekEmission();
+            await expect(tapiocaOFT0.extractTAP(signer.address, emissions))
+                .to.emit(tapiocaOFT0, 'Minted')
+                .withArgs(signer.address, signer.address, emissions);
         });
 
         it('should not allow emit from another chain', async () => {
@@ -247,7 +259,7 @@ describe('tapOFT', () => {
             await time_travel(7 * 86400);
             await expect(
                 chainBTap.connect(signer).emitForWeek(),
-            ).to.be.revertedWith('chain not valid');
+            ).to.be.revertedWith('TAP: Chain not valid');
         });
         it('should not be able to deploy with an empty LayerZero endpoint', async () => {
             const factory = await ethers.getContractFactory('TapOFT');
@@ -515,14 +527,14 @@ describe('tapOFT', () => {
 
             expect(
                 await tapiocaOFT0.timestampToWeek(currentBlockTimestamp),
-            ).to.eq(1);
-            for (let i = 1; i < 100; i++) {
+            ).to.eq(0);
+            for (let i = 0; i < 42; i++) {
                 const week = await tapiocaOFT0.timestampToWeek(
                     (await tapiocaOFT0.WEEK())
                         .mul(i)
                         .add(currentBlockTimestamp),
                 );
-                expect(week).to.eq(i + 1);
+                expect(week).to.eq(i);
             }
         });
     });
@@ -565,19 +577,19 @@ describe('tapOFT', () => {
                 tapiocaOFT0
                     .connect(normalUser)
                     .extractTAP(minter.address, bigAmount),
-            ).to.be.revertedWith('unauthorized');
+            ).to.be.revertedWith('TAP: only minter');
             await expect(
                 tapiocaOFT0.connect(signer).setMinter(minter.address),
             ).to.emit(tapiocaOFT0, 'MinterUpdated');
 
             await expect(
                 tapiocaOFT0.connect(minter).extractTAP(minter.address, 0),
-            ).to.be.revertedWith('amount not valid');
+            ).to.be.revertedWith('TAP: Amount not valid');
             await expect(
                 tapiocaOFT0
                     .connect(minter)
                     .extractTAP(minter.address, bigAmount),
-            ).to.be.revertedWith('exceeds allowable amount');
+            ).to.be.revertedWith('TAP: Exceeds allowable amount');
 
             // Check balance
             const emissionForWeek = await tapiocaOFT0.getCurrentWeekEmission();
@@ -777,7 +789,7 @@ describe('tapOFT', () => {
 
             await tapiocaOFT1.setTwTap(twTAP.address);
 
-            tapiocaOFT0.lockTwTapPosition(
+            await tapiocaOFT0.lockTwTapPosition(
                 signer.address,
                 (1e18).toString(),
                 await twTAP.EPOCH_DURATION(),
@@ -790,6 +802,7 @@ describe('tapOFT', () => {
                 { value: (1e18).toString() },
             );
             const tokenID = await twTAP.mintedTWTap();
+            expect(tokenID).to.be.equal(1);
 
             await time_travel((await twTAP.EPOCH_DURATION()).toNumber());
 

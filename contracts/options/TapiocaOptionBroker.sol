@@ -74,7 +74,6 @@ contract TapiocaOptionBroker is
     OTAP public immutable oTAP;
     IOracle public tapOracle;
 
-    uint256 public lastEpochUpdate; // timestamp of the last epoch update
     uint256 public epochTAPValuation; // TAP price for the current epoch
     uint256 public epoch; // Represents the number of weeks since the start of the contract
 
@@ -89,7 +88,7 @@ contract TapiocaOptionBroker is
     /// ===== TWAML ======
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
 
-    uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
+    uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, 10%
     uint256 constant dMAX = 500_000; // 50 * 1e4; 5% - 50% discount
     uint256 constant dMIN = 50_000; // 5 * 1e4;
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
@@ -203,8 +202,9 @@ contract TapiocaOptionBroker is
     {
         // Load data
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
-        (bool isPositionActive, LockPosition memory tOLPLockPosition) = tOLP
-            .getLock(oTAPPosition.tOLP);
+        LockPosition memory tOLPLockPosition = tOLP.getLock(oTAPPosition.tOLP);
+        bool isPositionActive = _isPositionActive(tOLPLockPosition);
+        require(isPositionActive, "tOB: Option expired");
 
         uint256 cachedEpoch = epoch;
 
@@ -217,8 +217,10 @@ contract TapiocaOptionBroker is
             paymentTokenOracle.oracle != IOracle(address(0)),
             "tOB: Payment token not supported"
         );
-
-        require(isPositionActive, "tOB: Option expired");
+        require(
+            block.timestamp >= tOLPLockPosition.lockTime + EPOCH_DURATION,
+            "tOB: 1 EPOCH cooldown"
+        ); // Can only exercise after 1 epoch duration
 
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
@@ -265,13 +267,16 @@ contract TapiocaOptionBroker is
         uint256 _tOLPTokenID
     ) external returns (uint256 oTAPTokenID) {
         // Compute option parameters
-        (bool isPositionActive, LockPosition memory lock) = tOLP.getLock(
-            _tOLPTokenID
-        );
-        require(isPositionActive, "tOB: Position is not active");
+        LockPosition memory lock = tOLP.getLock(_tOLPTokenID);
+        bool isPositionActive = _isPositionActive(lock);
+        require(isPositionActive, "tOB: Option expired");
+
         require(lock.lockDuration >= EPOCH_DURATION, "tOB: Duration too short");
 
         TWAMLPool memory pool = twAML[lock.sglAssetID];
+        if (pool.cumulative == 0) {
+            pool.cumulative = EPOCH_DURATION;
+        }
 
         require(
             tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID),
@@ -285,9 +290,12 @@ contract TapiocaOptionBroker is
             uint256(lock.lockDuration),
             pool.cumulative
         );
-        bool divergenceForce;
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
+        // Revert if the lock 4x the cumulative
+        require(magnitude < pool.cumulative * 4, "tOB: Too long");
+
+        bool divergenceForce;
         // Participate in twAMl voting
         bool hasVotingPower = lock.ybShares >=
             computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
@@ -298,7 +306,7 @@ contract TapiocaOptionBroker is
                 pool.totalParticipants; // compute new average magnitude
 
             // Compute and save new cumulative
-            divergenceForce = lock.lockDuration > pool.cumulative;
+            divergenceForce = lock.lockDuration >= pool.cumulative;
             if (divergenceForce) {
                 pool.cumulative += pool.averageMagnitude;
             } else {
@@ -327,11 +335,13 @@ contract TapiocaOptionBroker is
             pool.averageMagnitude
         );
 
-        // Record amount for next epoch exercise and remove it from last epoch
+        // Record amount for next epoch exercise
         netDepositedForEpoch[epoch + 1][lock.sglAssetID] += int256(
             uint256(lock.ybShares)
         );
-        uint256 lastEpoch = _timestampToWeek(block.timestamp + EPOCH_DURATION);
+
+        uint256 lastEpoch = _timestampToWeek(lock.lockTime + lock.lockDuration);
+        // And remove it from last epoch
         // Math is safe, check `_emitToGauges()`
         netDepositedForEpoch[lastEpoch + 1][lock.sglAssetID] -= int256(
             uint256(lock.ybShares)
@@ -360,7 +370,7 @@ contract TapiocaOptionBroker is
 
         // Load data
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
-        (, LockPosition memory lock) = tOLP.getLock(oTAPPosition.tOLP);
+        LockPosition memory lock = tOLP.getLock(oTAPPosition.tOLP);
 
         require(
             block.timestamp >= lock.lockTime + lock.lockDuration,
@@ -420,8 +430,9 @@ contract TapiocaOptionBroker is
     ) external {
         // Load data
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
-        (bool isPositionActive, LockPosition memory tOLPLockPosition) = tOLP
-            .getLock(oTAPPosition.tOLP);
+        LockPosition memory tOLPLockPosition = tOLP.getLock(oTAPPosition.tOLP);
+        bool isPositionActive = _isPositionActive(tOLPLockPosition);
+        require(isPositionActive, "tOB: Option expired");
 
         uint256 cachedEpoch = epoch;
 
@@ -438,7 +449,10 @@ contract TapiocaOptionBroker is
             oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID),
             "tOB: Not approved or owner"
         );
-        require(isPositionActive, "tOB: Option expired");
+        require(
+            block.timestamp >= tOLPLockPosition.lockTime + EPOCH_DURATION,
+            "tOB: 1 EPOCH cooldown"
+        ); // Can only exercise after 1 epoch duration
 
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
@@ -480,16 +494,11 @@ contract TapiocaOptionBroker is
     /// @notice Start a new epoch, extract TAP from the TapOFT contract,
     ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
-        require(
-            _timestampToWeek(block.timestamp) > lastEpochUpdate,
-            "tOB: too soon"
-        );
+        require(_timestampToWeek(block.timestamp) > epoch, "tOB: too soon");
 
         uint256[] memory singularities = tOLP.getSingularities();
         require(singularities.length != 0, "tOB: No active singularities");
 
-        // Update epoch info
-        lastEpochUpdate = _timestampToWeek(block.timestamp);
         epoch++;
 
         // Extract TAP + Update net deposited amounts
@@ -511,6 +520,12 @@ contract TapiocaOptionBroker is
     // =========
     //   OWNER
     // =========
+
+    /// @notice Set the minimum weight factor
+    /// @param _minWeightFactor The new minimum weight factor
+    function setMinWeightFactor(uint256 _minWeightFactor) external onlyOwner {
+        MIN_WEIGHT_FACTOR = _minWeightFactor;
+    }
 
     /// @notice Set the TapOFT Oracle address and data
     /// @param _tapOracle The new TapOFT Oracle address
@@ -576,7 +591,23 @@ contract TapiocaOptionBroker is
     function _timestampToWeek(
         uint256 timestamp
     ) internal view returns (uint256) {
-        return ((timestamp - emissionsStartTime) / EPOCH_DURATION) + 1; // Starts at week 1
+        return ((timestamp - emissionsStartTime) / EPOCH_DURATION);
+    }
+
+    /// @notice Check if a position is active
+    /// @dev Check if the current week is less than or equal the expiry week
+    /// @param _lock The lock position
+    /// @return isPositionActive True if the position is active
+    function _isPositionActive(
+        LockPosition memory _lock
+    ) internal view returns (bool isPositionActive) {
+        require(_lock.lockTime > 0, "tOB: Position does not exist");
+
+        uint256 expiryWeek = _timestampToWeek(
+            _lock.lockTime + _lock.lockDuration
+        );
+
+        isPositionActive = epoch <= expiryWeek;
     }
 
     /// @notice Process the OTC deal, transfer the payment token to the broker and the TAP amount to the user
@@ -631,11 +662,12 @@ contract TapiocaOptionBroker is
             _paymentTokenValuation > 0,
             "tOB: paymentTokenValuation not valid"
         );
+
+        uint256 discountedOTCAmountInUSD = _otcAmountInUSD -
+            muldiv(_otcAmountInUSD, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
+
         // Calculate payment amount
-        uint256 rawPaymentAmount = _otcAmountInUSD / _paymentTokenValuation;
-        paymentAmount =
-            rawPaymentAmount -
-            muldiv(rawPaymentAmount, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
+        paymentAmount = discountedOTCAmountInUSD / _paymentTokenValuation;
 
         if (_paymentTokenDecimals <= 18) {
             paymentAmount =

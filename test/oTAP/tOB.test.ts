@@ -29,6 +29,8 @@ import {
 import { YieldBox } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
 import { setupFixture } from './fixtures';
 
+const WEEK = 86400 * 7;
+
 describe('TapiocaOptionBroker', () => {
     const setupEnv = async (
         tOB: TapiocaOptionBroker,
@@ -167,12 +169,24 @@ describe('TapiocaOptionBroker', () => {
 
         // test tOB participation
         await expect(tOB.participate(29)).to.be.revertedWith(
-            'tOB: Position is not active',
+            'tOB: Position does not exist',
         ); // invalid/inexistent tokenID
 
         await expect(tOB.participate(tokenID)).to.be.revertedWith(
             'tOB: Duration too short',
         ); // Too short lock duration
+
+        await snapshot.restore();
+        await tOLP.lock(
+            signer.address,
+            sglTokenMock.address,
+            WEEK * 5,
+            ybAmount,
+        );
+        await tOLP.approve(tOB.address, tokenID);
+        await expect(tOB.participate(tokenID)).to.be.revertedWith(
+            'tOB: Too long',
+        ); // Too long lock duration
 
         await snapshot.restore();
         lockDuration = await tOB.EPOCH_DURATION();
@@ -199,7 +213,10 @@ describe('TapiocaOptionBroker', () => {
             averageMagnitude: BN(0),
             discount: BN(0),
         };
-        computedAML.magnitude = aml_computeMagnitude(BN(lockDuration), BN(0));
+        computedAML.magnitude = aml_computeMagnitude(
+            BN(lockDuration),
+            BN(WEEK),
+        );
         computedAML.averageMagnitude = aml_computeAverageMagnitude(
             computedAML.magnitude,
             BN(0),
@@ -207,7 +224,7 @@ describe('TapiocaOptionBroker', () => {
         );
         computedAML.discount = aml_computeTarget(
             computedAML.magnitude,
-            BN(0),
+            BN(WEEK),
             BN(5e4),
             BN(50e4),
         );
@@ -226,7 +243,9 @@ describe('TapiocaOptionBroker', () => {
         expect(newPoolState.totalDeposited).to.be.equal(
             prevPoolState.totalDeposited.add(amount),
         );
-        expect(newPoolState.cumulative).to.be.equal(computedAML.magnitude);
+        expect(newPoolState.cumulative).to.be.equal(
+            computedAML.magnitude.add(WEEK),
+        );
         expect(newPoolState.averageMagnitude).to.be.equal(
             computedAML.averageMagnitude,
         );
@@ -420,7 +439,9 @@ describe('TapiocaOptionBroker', () => {
         expect(await tOB.twAML(sglTokenMockAsset)).to.be.deep.equal(
             newPoolState,
         ); // No change in AML state
-        expect((await tOB.twAML(sglTokenMockAsset)).cumulative).to.be.equal(0);
+        expect((await tOB.twAML(sglTokenMockAsset)).cumulative).to.be.equal(
+            WEEK,
+        );
     });
 
     it('should enter and exit multiple positions', async () => {
@@ -586,6 +607,7 @@ describe('TapiocaOptionBroker', () => {
         // Setup tOB
         await tOB.oTAPBrokerClaim();
         await tapOFT.setMinter(tOB.address);
+        await time.increase(await tOB.EPOCH_DURATION());
 
         // No singularities
         await expect(tOB.newEpoch()).to.be.revertedWith(
@@ -603,15 +625,9 @@ describe('TapiocaOptionBroker', () => {
 
         const snapshot = await takeSnapshot();
         // Check epoch update
-        const txNewEpoch = await tOB.newEpoch();
+        await tOB.newEpoch();
         expect(await tOB.epoch()).to.be.equal(1);
 
-        const txNewEpochTimestamp = (
-            await hre.ethers.provider.getBlock(txNewEpoch.blockNumber!)
-        ).timestamp;
-        expect(await tOB.lastEpochUpdate()).to.be.equal(
-            await tOB.timestampToWeek(txNewEpochTimestamp),
-        );
         expect(await tOB.epochTAPValuation()).to.be.equal(tapPrice);
 
         const emittedTAP = await tapOFT.getCurrentWeekEmission();
@@ -651,6 +667,88 @@ describe('TapiocaOptionBroker', () => {
         expect(await tOB.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(
             emittedTAP.mul(2).div(3),
         );
+    });
+
+    it('Should wait 1 epoch before being able to exercise', async () => {
+        const {
+            users,
+            yieldBox,
+            tOB,
+            tapOFT,
+            tOLP,
+            oTAP,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+            stableMock,
+            stableMockOracle,
+        } = await loadFixture(setupFixture);
+
+        await setupEnv(
+            tOB,
+            tOLP,
+            tapOFT,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+        );
+        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+
+        await tOB.setPaymentToken(
+            stableMock.address,
+            stableMockOracle.address,
+            '0x00',
+        );
+
+        const userLock = await lockAndParticipate(
+            users[0],
+            3e8,
+            604800 * 4,
+            tOLP,
+            tOB,
+            oTAP,
+            yieldBox,
+            sglTokenMock,
+            sglTokenMockAsset,
+        );
+
+        // No exercise before 1 epoch
+        await expect(
+            tOB
+                .connect(users[0])
+                .getOTCDealDetails(userLock.oTAPTokenID, stableMock.address, 0),
+        ).to.be.revertedWith('tOB: 1 EPOCH cooldown');
+        await expect(
+            tOB
+                .connect(users[0])
+                .exerciseOption(userLock.oTAPTokenID, stableMock.address, 0),
+        ).to.be.revertedWith('tOB: 1 EPOCH cooldown');
+
+        // Exercise after 1 epoch
+        await time.increase(await tOB.EPOCH_DURATION());
+        await tOB.newEpoch();
+
+        await expect(
+            tOB
+                .connect(users[0])
+                .getOTCDealDetails(userLock.oTAPTokenID, stableMock.address, 0),
+        ).to.not.be.reverted;
+
+        await stableMock.mintTo(users[0].address, (1e18).toString());
+        await stableMock
+            .connect(users[0])
+            .approve(tOB.address, (1e18).toString());
+        await expect(
+            tOB
+                .connect(users[0])
+                .exerciseOption(
+                    userLock.oTAPTokenID,
+                    stableMock.address,
+                    (1e18).toString(),
+                ),
+        ).to.not.be.reverted;
     });
 
     it('should return correct OTC details', async () => {
@@ -695,7 +793,7 @@ describe('TapiocaOptionBroker', () => {
         const userLock1 = await lockAndParticipate(
             users[0],
             3e8,
-            604800,
+            604800 * 4,
             tOLP,
             tOB,
             oTAP,
@@ -714,6 +812,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock,
             sglTokenMockAsset,
         );
+        await time.increase(await tOB.EPOCH_DURATION());
         await tOB.newEpoch();
 
         const epoch = await tOB.epoch();
@@ -981,6 +1080,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock,
             sglTokenMockAsset,
         );
+        await time.increase(await tOB.EPOCH_DURATION());
         await tOB.newEpoch();
 
         // Check requirements
@@ -1022,7 +1122,21 @@ describe('TapiocaOptionBroker', () => {
                 .exerciseOption(userLock1.oTAPTokenID, stableMock.address, 0),
         ).to.be.rejectedWith('tOB: Payment token not supported');
         await snapshot.restore();
-        await time.increase(userLock1.lockDuration);
+
+        await stableMock
+            .connect(users[0])
+            .approve(tOB.address, _otcDetails.eligibleTapAmount);
+        await stableMock.mintTo(
+            users[0].address,
+            _otcDetails.eligibleTapAmount,
+        );
+
+        await time.increase(await tOB.EPOCH_DURATION()); // week 2
+        await tOB.newEpoch();
+        await time.increase(await tOB.EPOCH_DURATION()); // week 3
+        await tOB.newEpoch();
+
+        expect(await tOB.epoch()).to.be.equal(3);
         await expect(
             tOB
                 .connect(users[0])
@@ -1368,6 +1482,8 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock,
             sglTokenMockAsset,
         );
+
+        await time.increase(await tOB.EPOCH_DURATION());
         await tOB.newEpoch();
         const otcDetails = await tOB.getOTCDealDetails(
             userLock1.oTAPTokenID,
@@ -1664,7 +1780,7 @@ describe('TapiocaOptionBroker', () => {
         //     await exitAPoolState.cumulative,
         // );
         // console.log('[A4] Just B Average: ', xparticipationB.averageMagnitude);
-        expect(exitAPoolState.cumulative).to.be.equal(464361);
+        expect(exitAPoolState.cumulative).to.be.equal(353055);
 
         //TIme skip end B
         await time.increase(lockDurationB);
@@ -1674,7 +1790,7 @@ describe('TapiocaOptionBroker', () => {
         const ctime4 = new Date();
         // console.log('Exit B, Time(+100 Expire B): ', ctime4);
         // console.log('[A4] END Cumulative: ', await exitBPoolState.cumulative);
-        expect(exitBPoolState.cumulative).to.be.equal(0);
+        expect(exitBPoolState.cumulative).to.be.equal(WEEK);
     });
 
     it('Should support decimals >18', async () => {
@@ -1728,7 +1844,7 @@ describe('TapiocaOptionBroker', () => {
         const userLock1 = await lockAndParticipate(
             users[0],
             3e8,
-            604800,
+            WEEK * 4,
             tOLP,
             tOB,
             oTAP,
@@ -1737,8 +1853,8 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMockAsset,
         );
 
+        await time.increase(await tOB.EPOCH_DURATION());
         await tOB.newEpoch();
-        const epoch = await tOB.epoch();
 
         // Exercise for 10e18 TAP with 1e24 decimals stable, 50% discount
         {
@@ -1833,8 +1949,8 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock,
             sglTokenMockAsset,
         );
-
-        tOB.newEpoch();
+        await time.increase(await tOB.EPOCH_DURATION());
+        await tOB.newEpoch();
 
         // User 0 OTC details
         const otcDetail0 = await tOB.getOTCDealDetails(

@@ -143,7 +143,7 @@ function getApproved(uint256 tokenId) external view returns (address)
 ### getLock
 
 ```solidity
-function getLock(uint256 _tokenId) external view returns (bool, struct LockPosition)
+function getLock(uint256 _tokenId) external view returns (struct LockPosition)
 ```
 
 Returns the lock position of a given tOLP NFT and if it&#39;s active
@@ -160,8 +160,7 @@ Returns the lock position of a given tOLP NFT and if it&#39;s active
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | bool | undefined |
-| _1 | LockPosition | undefined |
+| _0 | LockPosition | undefined |
 
 ### getSingularities
 
