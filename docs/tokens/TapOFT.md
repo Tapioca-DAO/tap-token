@@ -1524,7 +1524,7 @@ event Approval(address indexed owner, address indexed spender, uint256 value)
 ### Burned
 
 ```solidity
-event Burned(address indexed _from, uint256 _amount)
+event Burned(address indexed _from, uint256 indexed _amount)
 ```
 
 event emitted when new TAP is burned
@@ -1536,12 +1536,12 @@ event emitted when new TAP is burned
 | Name | Type | Description |
 |---|---|---|
 | _from `indexed` | address | undefined |
-| _amount  | uint256 | undefined |
+| _amount `indexed` | uint256 | undefined |
 
 ### CallFailedBytes
 
 ```solidity
-event CallFailedBytes(uint16 indexed _srcChainId, bytes _payload, bytes _reason)
+event CallFailedBytes(uint16 indexed _srcChainId, bytes indexed _payload, bytes indexed _reason)
 ```
 
 
@@ -1553,13 +1553,13 @@ event CallFailedBytes(uint16 indexed _srcChainId, bytes _payload, bytes _reason)
 | Name | Type | Description |
 |---|---|---|
 | _srcChainId `indexed` | uint16 | undefined |
-| _payload  | bytes | undefined |
-| _reason  | bytes | undefined |
+| _payload `indexed` | bytes | undefined |
+| _reason `indexed` | bytes | undefined |
 
 ### CallFailedStr
 
 ```solidity
-event CallFailedStr(uint16 indexed _srcChainId, bytes _payload, string _reason)
+event CallFailedStr(uint16 indexed _srcChainId, bytes indexed _payload, string indexed _reason)
 ```
 
 
@@ -1571,8 +1571,8 @@ event CallFailedStr(uint16 indexed _srcChainId, bytes _payload, string _reason)
 | Name | Type | Description |
 |---|---|---|
 | _srcChainId `indexed` | uint16 | undefined |
-| _payload  | bytes | undefined |
-| _reason  | string | undefined |
+| _payload `indexed` | bytes | undefined |
+| _reason `indexed` | string | undefined |
 
 ### CallOFTReceivedSuccess
 
@@ -1596,7 +1596,7 @@ event CallOFTReceivedSuccess(uint16 indexed _srcChainId, bytes _srcAddress, uint
 ### Emitted
 
 ```solidity
-event Emitted(uint256 week, uint256 amount)
+event Emitted(uint256 indexed week, uint256 indexed amount)
 ```
 
 event emitted when a new emission is called
@@ -1607,13 +1607,13 @@ event emitted when a new emission is called
 
 | Name | Type | Description |
 |---|---|---|
-| week  | uint256 | undefined |
-| amount  | uint256 | undefined |
+| week `indexed` | uint256 | undefined |
+| amount `indexed` | uint256 | undefined |
 
 ### GovernanceChainIdentifierUpdated
 
 ```solidity
-event GovernanceChainIdentifierUpdated(uint256 _old, uint256 _new)
+event GovernanceChainIdentifierUpdated(uint256 indexed _old, uint256 indexed _new)
 ```
 
 event emitted when the governance chain identifier is updated
@@ -1624,8 +1624,8 @@ event emitted when the governance chain identifier is updated
 
 | Name | Type | Description |
 |---|---|---|
-| _old  | uint256 | undefined |
-| _new  | uint256 | undefined |
+| _old `indexed` | uint256 | undefined |
+| _new `indexed` | uint256 | undefined |
 
 ### MessageFailed
 
@@ -1650,7 +1650,7 @@ event MessageFailed(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes 
 ### Minted
 
 ```solidity
-event Minted(address indexed _by, address indexed _to, uint256 _amount)
+event Minted(address indexed _by, address indexed _to, uint256 indexed _amount)
 ```
 
 event emitted when new TAP is minted
@@ -1663,7 +1663,7 @@ event emitted when new TAP is minted
 |---|---|---|
 | _by `indexed` | address | undefined |
 | _to `indexed` | address | undefined |
-| _amount  | uint256 | undefined |
+| _amount `indexed` | uint256 | undefined |
 
 ### MinterUpdated
 
@@ -1718,7 +1718,7 @@ event OwnershipTransferred(address indexed previousOwner, address indexed newOwn
 ### PausedUpdated
 
 ```solidity
-event PausedUpdated(bool oldState, bool newState)
+event PausedUpdated(bool indexed oldState, bool indexed newState)
 ```
 
 event emitted when pause state is changed
@@ -1729,8 +1729,8 @@ event emitted when pause state is changed
 
 | Name | Type | Description |
 |---|---|---|
-| oldState  | bool | undefined |
-| newState  | bool | undefined |
+| oldState `indexed` | bool | undefined |
+| newState `indexed` | bool | undefined |
 
 ### ReceiveFromChain
 

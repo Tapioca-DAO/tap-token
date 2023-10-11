@@ -1146,7 +1146,7 @@ event Approval(address indexed owner, address indexed spender, uint256 value)
 ### CallFailedBytes
 
 ```solidity
-event CallFailedBytes(uint16 indexed _srcChainId, bytes _payload, bytes _reason)
+event CallFailedBytes(uint16 indexed _srcChainId, bytes indexed _payload, bytes indexed _reason)
 ```
 
 
@@ -1158,13 +1158,13 @@ event CallFailedBytes(uint16 indexed _srcChainId, bytes _payload, bytes _reason)
 | Name | Type | Description |
 |---|---|---|
 | _srcChainId `indexed` | uint16 | undefined |
-| _payload  | bytes | undefined |
-| _reason  | bytes | undefined |
+| _payload `indexed` | bytes | undefined |
+| _reason `indexed` | bytes | undefined |
 
 ### CallFailedStr
 
 ```solidity
-event CallFailedStr(uint16 indexed _srcChainId, bytes _payload, string _reason)
+event CallFailedStr(uint16 indexed _srcChainId, bytes indexed _payload, string indexed _reason)
 ```
 
 
@@ -1176,8 +1176,8 @@ event CallFailedStr(uint16 indexed _srcChainId, bytes _payload, string _reason)
 | Name | Type | Description |
 |---|---|---|
 | _srcChainId `indexed` | uint16 | undefined |
-| _payload  | bytes | undefined |
-| _reason  | string | undefined |
+| _payload `indexed` | bytes | undefined |
+| _reason `indexed` | string | undefined |
 
 ### CallOFTReceivedSuccess
 

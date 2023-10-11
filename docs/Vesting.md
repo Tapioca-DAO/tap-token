@@ -330,7 +330,7 @@ returns total vested amount
 ### Claimed
 
 ```solidity
-event Claimed(address indexed user, uint256 amount)
+event Claimed(address indexed user, uint256 indexed amount)
 ```
 
 event emitted when someone claims available tokens
@@ -342,7 +342,7 @@ event emitted when someone claims available tokens
 | Name | Type | Description |
 |---|---|---|
 | user `indexed` | address | undefined |
-| amount  | uint256 | undefined |
+| amount `indexed` | uint256 | undefined |
 
 ### OwnershipTransferred
 
@@ -364,7 +364,7 @@ event OwnershipTransferred(address indexed previousOwner, address indexed newOwn
 ### UserRegistered
 
 ```solidity
-event UserRegistered(address indexed user, uint256 amount)
+event UserRegistered(address indexed user, uint256 indexed amount)
 ```
 
 event emitted when a new user is registered
@@ -376,7 +376,7 @@ event emitted when a new user is registered
 | Name | Type | Description |
 |---|---|---|
 | user `indexed` | address | undefined |
-| amount  | uint256 | undefined |
+| amount `indexed` | uint256 | undefined |
 
 
 

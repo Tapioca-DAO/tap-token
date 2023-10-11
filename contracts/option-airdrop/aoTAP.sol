@@ -49,23 +49,18 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
         owner = _owner;
     }
 
-    modifier onlyBroker() {
-        require(msg.sender == broker, "AOTAP: only onlyBroker");
-        _;
-    }
-
     // ==========
     //   EVENTS
     // ==========
     event Mint(
         address indexed to,
         uint256 indexed tokenId,
-        AirdropTapOption option
+        AirdropTapOption indexed option
     );
     event Burn(
         address indexed from,
         uint256 indexed tokenId,
-        AirdropTapOption option
+        AirdropTapOption indexed option
     );
 
     // =========
@@ -118,7 +113,8 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
         uint128 _expiry,
         uint128 _discount,
         uint256 _amount
-    ) external onlyBroker returns (uint256 tokenId) {
+    ) external returns (uint256 tokenId) {
+        require(msg.sender == broker, "AOTAP: only onlyBroker");
         tokenId = ++mintedAOTAP;
         _safeMint(_to, tokenId);
 

@@ -89,8 +89,8 @@ contract TapiocaOptionBroker is
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
 
     uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, 10%
-    uint256 constant dMAX = 50 * 1e4; // 5% - 50% discount
-    uint256 constant dMIN = 5 * 1e4;
+    uint256 constant dMAX = 500_000; // 50 * 1e4; 5% - 50% discount
+    uint256 constant dMIN = 50_000; // 5 * 1e4;
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
 
     /// @notice starts time for emissions
@@ -125,14 +125,14 @@ contract TapiocaOptionBroker is
     event Participate(
         uint256 indexed epoch,
         uint256 indexed sglAssetID,
-        uint256 totalDeposited,
+        uint256 indexed totalDeposited,
         LockPosition lock,
         uint256 discount
     );
     event AMLDivergence(
         uint256 indexed epoch,
-        uint256 cumulative,
-        uint256 averageMagnitude,
+        uint256 indexed cumulative,
+        uint256 indexed averageMagnitude,
         uint256 totalParticipants
     );
     event ExerciseOption(
@@ -144,16 +144,20 @@ contract TapiocaOptionBroker is
     );
     event NewEpoch(
         uint256 indexed epoch,
-        uint256 extractedTAP,
-        uint256 epochTAPValuation
+        uint256 indexed extractedTAP,
+        uint256 indexed epochTAPValuation
     );
     event ExitPosition(
         uint256 indexed epoch,
         uint256 indexed tokenId,
-        uint256 amount
+        uint256 indexed amount
     );
-    event SetPaymentToken(ERC20 paymentToken, IOracle oracle, bytes oracleData);
-    event SetTapOracle(IOracle oracle, bytes oracleData);
+    event SetPaymentToken(
+        ERC20 indexed paymentToken,
+        IOracle indexed oracle,
+        bytes indexed oracleData
+    );
+    event SetTapOracle(IOracle indexed oracle, bytes indexed oracleData);
 
     // ==========
     //    READ
@@ -493,7 +497,7 @@ contract TapiocaOptionBroker is
         require(_timestampToWeek(block.timestamp) > epoch, "tOB: too soon");
 
         uint256[] memory singularities = tOLP.getSingularities();
-        require(singularities.length > 0, "tOB: No active singularities");
+        require(singularities.length != 0, "tOB: No active singularities");
 
         epoch++;
 
@@ -562,17 +566,18 @@ contract TapiocaOptionBroker is
     function collectPaymentTokens(
         address[] calldata _paymentTokens
     ) external onlyOwner nonReentrant {
+        address _paymentTokenBeneficiary = paymentTokenBeneficiary;
         require(
-            paymentTokenBeneficiary != address(0),
+            _paymentTokenBeneficiary != address(0),
             "tOB: Payment token beneficiary not set"
         );
         uint256 len = _paymentTokens.length;
 
         unchecked {
-            for (uint256 i = 0; i < len; ++i) {
+            for (uint256 i; i < len; ++i) {
                 IERC20 paymentToken = IERC20(_paymentTokens[i]);
                 paymentToken.safeTransfer(
-                    paymentTokenBeneficiary,
+                    _paymentTokenBeneficiary,
                     paymentToken.balanceOf(address(this))
                 );
             }
@@ -684,7 +689,7 @@ contract TapiocaOptionBroker is
         uint256 len = sglPools.length;
         unchecked {
             // For each pool
-            for (uint256 i = 0; i < len; ++i) {
+            for (uint256 i; i < len; ++i) {
                 uint256 currentPoolWeight = sglPools[i].poolWeight;
                 uint256 quotaPerSingularity = muldiv(
                     currentPoolWeight,

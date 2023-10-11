@@ -40,13 +40,13 @@ abstract contract BaseTapOFT is OFTV2 {
 
     event CallFailedStr(
         uint16 indexed _srcChainId,
-        bytes _payload,
-        string _reason
+        bytes indexed _payload,
+        string indexed _reason
     );
     event CallFailedBytes(
         uint16 indexed _srcChainId,
-        bytes _payload,
-        bytes _reason
+        bytes indexed _payload,
+        bytes indexed _reason
     );
 
     constructor(
@@ -101,6 +101,7 @@ abstract contract BaseTapOFT is OFTV2 {
         address zroPaymentAddress,
         bytes calldata adapterParams
     ) external payable {
+        require(duration > 0, "TapOFT: Small duration");
         (amount, ) = _removeDust(amount);
 
         bytes memory lzPayload = abi.encode(
@@ -111,7 +112,6 @@ abstract contract BaseTapOFT is OFTV2 {
             duration
         );
 
-        require(duration > 0, "TapOFT: Small duration");
         bytes32 senderBytes = LzLib.addressToBytes32(msg.sender);
 
         _debitFrom(msg.sender, lzEndpoint.getChainId(), senderBytes, amount);
@@ -191,7 +191,7 @@ abstract contract BaseTapOFT is OFTV2 {
     function claimRewards(
         address to,
         uint256 tokenID,
-        address[] memory rewardTokens,
+        address[] calldata rewardTokens,
         uint16 lzDstChainId,
         address zroPaymentAddress,
         bytes calldata adapterParams,
@@ -434,7 +434,7 @@ abstract contract BaseTapOFT is OFTV2 {
     receive() external payable virtual {}
 
     function _callApproval(ICommonData.IApproval[] memory approvals) private {
-        for (uint256 i = 0; i < approvals.length; ) {
+        for (uint256 i; i < approvals.length; ) {
             try
                 IERC20Permit(approvals[i].target).permit(
                     approvals[i].owner,

@@ -806,7 +806,7 @@ event ApprovalForAll(address indexed owner, address indexed operator, bool appro
 ### Burn
 
 ```solidity
-event Burn(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition)
+event Burn(address indexed to, uint128 indexed sglAssetID, LockPosition indexed lockPosition)
 ```
 
 
@@ -819,12 +819,12 @@ event Burn(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosi
 |---|---|---|
 | to `indexed` | address | undefined |
 | sglAssetID `indexed` | uint128 | undefined |
-| lockPosition  | LockPosition | undefined |
+| lockPosition `indexed` | LockPosition | undefined |
 
 ### Mint
 
 ```solidity
-event Mint(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition)
+event Mint(address indexed to, uint128 indexed sglAssetID, LockPosition indexed lockPosition)
 ```
 
 
@@ -837,7 +837,7 @@ event Mint(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosi
 |---|---|---|
 | to `indexed` | address | undefined |
 | sglAssetID `indexed` | uint128 | undefined |
-| lockPosition  | LockPosition | undefined |
+| lockPosition `indexed` | LockPosition | undefined |
 
 ### OwnershipTransferred
 
@@ -892,7 +892,7 @@ event RegisterSingularity(address indexed sgl, uint256 indexed assetID)
 ### SetSGLPoolWeight
 
 ```solidity
-event SetSGLPoolWeight(address indexed sgl, uint256 poolWeight)
+event SetSGLPoolWeight(address indexed sgl, uint256 indexed poolWeight)
 ```
 
 
@@ -904,7 +904,7 @@ event SetSGLPoolWeight(address indexed sgl, uint256 poolWeight)
 | Name | Type | Description |
 |---|---|---|
 | sgl `indexed` | address | undefined |
-| poolWeight  | uint256 | undefined |
+| poolWeight `indexed` | uint256 | undefined |
 
 ### Transfer
 
@@ -960,7 +960,7 @@ event UnregisterSingularity(address indexed sgl, uint256 indexed assetID)
 ### UpdateTotalSingularityPoolWeights
 
 ```solidity
-event UpdateTotalSingularityPoolWeights(uint256 totalSingularityPoolWeights)
+event UpdateTotalSingularityPoolWeights(uint256 indexed totalSingularityPoolWeights)
 ```
 
 
@@ -971,7 +971,7 @@ event UpdateTotalSingularityPoolWeights(uint256 totalSingularityPoolWeights)
 
 | Name | Type | Description |
 |---|---|---|
-| totalSingularityPoolWeights  | uint256 | undefined |
+| totalSingularityPoolWeights `indexed` | uint256 | undefined |
 
 
 
