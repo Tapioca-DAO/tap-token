@@ -657,11 +657,12 @@ contract TapiocaOptionBroker is
             _paymentTokenValuation > 0,
             "tOB: paymentTokenValuation not valid"
         );
+
+        uint256 discountedOTCAmountInUSD = _otcAmountInUSD -
+            muldiv(_otcAmountInUSD, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
+
         // Calculate payment amount
-        uint256 rawPaymentAmount = _otcAmountInUSD / _paymentTokenValuation;
-        paymentAmount =
-            rawPaymentAmount -
-            muldiv(rawPaymentAmount, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
+        paymentAmount = discountedOTCAmountInUSD / _paymentTokenValuation;
 
         if (_paymentTokenDecimals <= 18) {
             paymentAmount =
