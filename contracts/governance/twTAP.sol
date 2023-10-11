@@ -102,7 +102,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     // the weight ranges from 10-100% where 1% = 1e4, so 1 million (20 bits).
     // the multiplier is at most 100% = 1M (20 bits), so votes is at most a
     // 107-bit number.
-    uint256 constant DIST_PRECISION = 256; //2 ** 128;
+    uint256 constant DIST_PRECISION = 2 ** 128; //2 ** 128;
 
     IERC20[] public rewardTokens;
     mapping(IERC20 => uint256) public rewardTokenIndex; // Index 0 is reserved with 0x0 address
