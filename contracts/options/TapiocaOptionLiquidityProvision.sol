@@ -303,9 +303,7 @@ contract TapiocaOptionLiquidityProvision is
                     delete activeSingularities[singularity];
                     delete sglAssetIDToAddress[sglAssetID];
                     singularities.pop();
-                } else if (
-                    _singularities[i] == sglAssetID && i < sglLastIndex
-                ) {
+                } else if (_singularities[i] == sglAssetID) {
                     // If in the middle, copy last element on deleted element, then pop
                     delete activeSingularities[singularity];
                     delete sglAssetIDToAddress[sglAssetID];
