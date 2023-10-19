@@ -1044,6 +1044,77 @@ describe('AirdropBroker', () => {
             ).to.be.rejectedWith('adb: Too high');
         }
     });
+    it.only('should throw an error if OTC payment is not fully accounted for', async () => {
+        const {
+            adb,
+            tapOFT,
+            aoTAP,
+            generatePhase1_4Signers,
+            stableMock,
+            stableMockOracle,
+            ethMock,
+            ethMockOracle,
+        } = await loadFixture(setupFixture);
+        setupEnv(adb, tapOFT);
+
+        // Gen users and register them
+        const users = await generatePhase1_4Signers({
+            initialAmount: 1_500_000,
+        });
+        const registrations = await adbRegisterAndParticipatePhase1(
+            users.map((e) => e.wallet),
+            users.map((e) => e.amount),
+            adb,
+            aoTAP,
+        );
+
+        await adb.setPaymentToken(
+            stableMock.address,
+            stableMockOracle.address,
+            '0x00',
+        );
+
+        const otcDetails = await adb
+            .connect(users[0].wallet)
+            .getOTCDealDetails(
+                registrations[0].aoTAPTokenID,
+                stableMock.address,
+                0,
+            );
+        await stableMock.mintTo(
+            users[0].wallet.address,
+            otcDetails.paymentTokenAmount,
+        );
+        await stableMock
+            .connect(users[0].wallet)
+            .approve(adb.address, otcDetails.paymentTokenAmount);
+
+        const snapshot = await takeSnapshot();
+
+        await expect(
+            adb
+                .connect(users[0].wallet)
+                .exerciseOption(
+                    registrations[0].aoTAPTokenID,
+                    stableMock.address,
+                    0,
+                ),
+        ).to.not.be.reverted;
+
+        await snapshot.restore();
+
+        await stableMock.setTransferFee(50); // 0.5% fee
+        await stableMock.setFeeRecipient(users[1].wallet.address);
+        await expect(
+            adb
+                .connect(users[0].wallet)
+                .exerciseOption(
+                    registrations[0].aoTAPTokenID,
+                    stableMock.address,
+                    0,
+                ),
+        ).to.be.revertedWith('adb: payment token transfer failed');
+    });
 
     it('should set a payment token', async () => {
         const { adb, users, stableMock, stableMockOracle } = await loadFixture(
