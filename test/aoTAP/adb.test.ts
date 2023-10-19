@@ -1044,7 +1044,7 @@ describe('AirdropBroker', () => {
             ).to.be.rejectedWith('adb: Too high');
         }
     });
-    it.only('should throw an error if OTC payment is not fully accounted for', async () => {
+    it('should throw an error if OTC payment is not fully accounted for', async () => {
         const {
             adb,
             tapOFT,
