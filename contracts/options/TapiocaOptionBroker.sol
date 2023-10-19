@@ -638,11 +638,18 @@ contract TapiocaOptionBroker is
             _paymentToken.decimals()
         );
 
+        uint256 balBefore = _paymentToken.balanceOf(address(this));
         IERC20(address(_paymentToken)).safeTransferFrom(
             msg.sender,
             address(this),
             discountedPaymentAmount
         );
+        uint256 balAfter = _paymentToken.balanceOf(address(this));
+        require(
+            balAfter - balBefore == discountedPaymentAmount,
+            "tOB: Payment token transfer failed"
+        );
+
         tapOFT.extractTAP(msg.sender, tapAmount);
     }
 

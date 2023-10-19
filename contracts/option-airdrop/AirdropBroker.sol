@@ -525,13 +525,18 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
             discount,
             _paymentToken.decimals()
         );
-
         require(discountedPaymentAmount > 0, "adb: payment amount is 0");
-        // in case of fee-on-transfer tokens, received amount might be less than `discountedPaymentAmount`
+
+        uint256 balBefore = _paymentToken.balanceOf(address(this));
         IERC20(address(_paymentToken)).safeTransferFrom(
             msg.sender,
             address(this),
             discountedPaymentAmount
+        );
+        uint256 balAfter = _paymentToken.balanceOf(address(this));
+        require(
+            balAfter - balBefore == discountedPaymentAmount,
+            "adb: payment token transfer failed"
         );
 
         require(tapAmount > 0, "adb: tapAmount is 0");

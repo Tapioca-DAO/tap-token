@@ -2031,4 +2031,93 @@ describe('TapiocaOptionBroker', () => {
                 otcDetail0.eligibleTapAmount,
             );
     });
+    it('should throw an error if OTC payment is not fully accounted for', async () => {
+        const {
+            signer,
+            users,
+            yieldBox,
+            tOB,
+            tapOFT,
+            tOLP,
+            oTAP,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+            stableMock,
+            stableMockOracle,
+        } = await loadFixture(setupFixture);
+
+        await setupEnv(
+            tOB,
+            tOLP,
+            tapOFT,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+        );
+        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+
+        await tOB.setPaymentToken(
+            stableMock.address,
+            stableMockOracle.address,
+            '0x00',
+        );
+
+        const userLock0 = await lockAndParticipate(
+            users[0],
+            3e8,
+            604800,
+            tOLP,
+            tOB,
+            oTAP,
+            yieldBox,
+            sglTokenMock,
+            sglTokenMockAsset,
+        );
+
+        await time.increase(await tOB.EPOCH_DURATION());
+        await tOB.newEpoch();
+
+        // User 0 OTC details
+        const otcDetail0 = await tOB.getOTCDealDetails(
+            userLock0.oTAPTokenID,
+            stableMock.address,
+            0,
+        );
+        await stableMock.mintTo(
+            users[0].address,
+            otcDetail0.paymentTokenAmount,
+        );
+        await stableMock
+            .connect(users[0])
+            .approve(tOB.address, otcDetail0.paymentTokenAmount);
+
+        const snapshot = await takeSnapshot();
+
+        await expect(
+            tOB
+                .connect(users[0])
+                .exerciseOption(
+                    userLock0.oTAPTokenID,
+                    stableMock.address,
+                    otcDetail0.eligibleTapAmount,
+                ),
+        ).to.not.be.reverted;
+
+        await snapshot.restore();
+
+        await stableMock.setTransferFee(50); // 0.5% fee
+        await stableMock.setFeeRecipient(users[1].address);
+        await expect(
+            tOB
+                .connect(users[0])
+                .exerciseOption(
+                    userLock0.oTAPTokenID,
+                    stableMock.address,
+                    otcDetail0.eligibleTapAmount,
+                ),
+        ).to.be.revertedWith('tOB: Payment token transfer failed');
+    });
 });
