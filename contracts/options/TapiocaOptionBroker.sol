@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "tapioca-periph/contracts/interfaces/IOracle.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "./TapiocaOptionLiquidityProvision.sol";
 import "../tokens/TapOFT.sol";
 import "../twAML.sol";
@@ -265,7 +265,7 @@ contract TapiocaOptionBroker is
     /// @param _tOLPTokenID The tokenId of the tOLP position
     function participate(
         uint256 _tOLPTokenID
-    ) external returns (uint256 oTAPTokenID) {
+    ) external whenNotPaused returns (uint256 oTAPTokenID) {
         // Compute option parameters
         LockPosition memory lock = tOLP.getLock(_tOLPTokenID);
         bool isPositionActive = _isPositionActive(lock);
@@ -365,7 +365,7 @@ contract TapiocaOptionBroker is
 
     /// @notice Exit a twAML participation and delete the voting power if existing
     /// @param _oTAPTokenID The tokenId of the oTAP position
-    function exitPosition(uint256 _oTAPTokenID) external {
+    function exitPosition(uint256 _oTAPTokenID) external whenNotPaused {
         require(oTAP.exists(_oTAPTokenID), "tOB: oTAP position does not exist");
 
         // Load data
@@ -427,7 +427,7 @@ contract TapiocaOptionBroker is
         uint256 _oTAPTokenID,
         ERC20 _paymentToken,
         uint256 _tapAmount
-    ) external {
+    ) external whenNotPaused {
         // Load data
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
         LockPosition memory tOLPLockPosition = tOLP.getLock(oTAPPosition.tOLP);
