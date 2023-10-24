@@ -910,6 +910,23 @@ Participate in twAMl voting and mint an oTAP position
 |---|---|---|
 | tokenId | uint256 | undefined |
 
+### paused
+
+```solidity
+function paused() external view returns (bool)
+```
+
+
+
+*Returns true if the contract is paused, and false otherwise.*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bool | undefined |
+
 ### payloadSizeLimitLookup
 
 ```solidity
@@ -1743,6 +1760,22 @@ event Participate(address indexed participant, uint256 indexed tapAmount, uint25
 | tapAmount `indexed` | uint256 | undefined |
 | multiplier `indexed` | uint256 | undefined |
 
+### Paused
+
+```solidity
+event Paused(address account)
+```
+
+
+
+*Emitted when the pause is triggered by `account`.*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| account  | address | undefined |
+
 ### ReceiveFromChain
 
 ```solidity
@@ -1885,6 +1918,22 @@ event Transfer(address indexed from, address indexed to, uint256 indexed tokenId
 | from `indexed` | address | undefined |
 | to `indexed` | address | undefined |
 | tokenId `indexed` | uint256 | undefined |
+
+### Unpaused
+
+```solidity
+event Unpaused(address account)
+```
+
+
+
+*Emitted when the pause is lifted by `account`.*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| account  | address | undefined |
 
 
 

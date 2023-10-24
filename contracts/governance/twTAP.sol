@@ -5,6 +5,7 @@ import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol
 import {ONFT721} from "tapioca-sdk/src/contracts/token/onft/ONFT721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 import "../tokens/TapOFT.sol";
@@ -78,7 +79,7 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
+contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
     TapOFT public immutable tapOFT;
@@ -284,7 +285,13 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         address _participant,
         uint256 _amount,
         uint256 _duration
-    ) external nonReentrant onlyHostChain returns (uint256 tokenId) {
+    )
+        external
+        whenNotPaused
+        nonReentrant
+        onlyHostChain
+        returns (uint256 tokenId)
+    {
         require(_duration >= EPOCH_DURATION, "twTAP: Lock not a week");
 
         // Transfer TAP to this contract
@@ -382,7 +389,10 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @notice claims all rewards distributed since token mint or last claim.
     /// @param _tokenId tokenId whose rewards to claim
     /// @param _to address to receive the rewards
-    function claimRewards(uint256 _tokenId, address _to) external nonReentrant {
+    function claimRewards(
+        uint256 _tokenId,
+        address _to
+    ) external nonReentrant whenNotPaused {
         _requireClaimPermission(_to, _tokenId);
         _claimRewards(_tokenId, _to);
     }
@@ -393,7 +403,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     function claimAndSendRewards(
         uint256 _tokenId,
         IERC20[] calldata _rewardTokens
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
         _claimRewardsOn(_tokenId, address(tapOFT), _rewardTokens);
     }
@@ -402,14 +412,19 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @notice and undoes the effect on the twAML calculations.
     /// @param _tokenId tokenId whose locked TAP to claim
     /// @param _to address to receive the TAP
-    function releaseTap(uint256 _tokenId, address _to) external nonReentrant {
+    function releaseTap(
+        uint256 _tokenId,
+        address _to
+    ) external nonReentrant whenNotPaused {
         _requireClaimPermission(_to, _tokenId);
         _releaseTap(_tokenId, _to);
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
     /// @param _tokenId The tokenId of the twTAP position
-    function exitPosition(uint256 _tokenId) external nonReentrant {
+    function exitPosition(
+        uint256 _tokenId
+    ) external nonReentrant whenNotPaused {
         address to = ownerOf(_tokenId);
         _releaseTap(_tokenId, to);
     }
@@ -418,7 +433,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @param _tokenId The tokenId of the twTAP position
     function exitPositionAndSendTap(
         uint256 _tokenId
-    ) external nonReentrant returns (uint256) {
+    ) external nonReentrant whenNotPaused returns (uint256) {
         require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
         return _releaseTap(_tokenId, address(tapOFT));
     }

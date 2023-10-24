@@ -214,7 +214,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @param _data The data to be used for the participation, varies by phases
     function participate(
         bytes calldata _data
-    ) external returns (uint256 aoTAPTokenID) {
+    ) external whenNotPaused returns (uint256 aoTAPTokenID) {
         uint256 cachedEpoch = epoch;
         require(cachedEpoch != 0, "adb: Airdrop not started");
         require(cachedEpoch <= 4, "adb: Airdrop ended");
@@ -241,7 +241,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         uint256 _aoTAPTokenID,
         ERC20 _paymentToken,
         uint256 _tapAmount
-    ) external {
+    ) external whenNotPaused {
         // Load data
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(
             _aoTAPTokenID
