@@ -2,9 +2,10 @@
 pragma solidity 0.8.18;
 
 import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol";
-import {ONFT721} from "tapioca-sdk/src/contracts/token/onft/ONFT721.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
@@ -79,7 +80,14 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard, Pausable {
+contract TwTAP is
+    TWAML,
+    ERC721,
+    ERC721Permit,
+    BoringOwnable,
+    ReentrancyGuard,
+    Pausable
+{
     using SafeERC20 for IERC20;
 
     TapOFT public immutable tapOFT;
@@ -121,8 +129,6 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard, Pausable {
     uint256 public lastProcessedWeek;
     mapping(uint256 => WeekTotals) public weekTotals;
 
-    uint256 public immutable HOST_CHAIN_ID;
-
     event LogMaxRewardsLength(
         uint256 indexed _oldLength,
         uint256 indexed _newLength,
@@ -132,18 +138,11 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard, Pausable {
     /// =====-------======
     constructor(
         address payable _tapOFT,
-        address _owner,
-        address _layerZeroEndpoint,
-        uint256 _hostChainID,
-        uint256 _minGas
-    )
-        ONFT721("Time Weighted TAP", "twTAP", _minGas, _layerZeroEndpoint)
-        ERC721Permit("Time Weighted TAP")
-    {
+        address _owner
+    ) ERC721("Time Weighted TAP", "twTAP") ERC721Permit("Time Weighted TAP") {
         tapOFT = TapOFT(_tapOFT);
-        transferOwnership(_owner);
+        owner = _owner;
         creation = block.timestamp;
-        HOST_CHAIN_ID = _hostChainID;
 
         rewardTokens.push(IERC20(address(0x0))); // 0 index is reserved
 
@@ -171,11 +170,6 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard, Pausable {
     // ==========
     //    READ
     // ==========
-
-    modifier onlyHostChain() {
-        require(_getChainId() == HOST_CHAIN_ID, "twTAP: only host chain");
-        _;
-    }
 
     function currentWeek() public view returns (uint256) {
         return (block.timestamp - creation) / EPOCH_DURATION;
@@ -285,13 +279,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard, Pausable {
         address _participant,
         uint256 _amount,
         uint256 _duration
-    )
-        external
-        whenNotPaused
-        nonReentrant
-        onlyHostChain
-        returns (uint256 tokenId)
-    {
+    ) external whenNotPaused nonReentrant returns (uint256 tokenId) {
         require(_duration >= EPOCH_DURATION, "twTAP: Lock not a week");
 
         // Transfer TAP to this contract
@@ -666,7 +654,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard, Pausable {
      */
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(ONFT721, ERC721) returns (bool) {
+    ) public view virtual override(ERC721) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }
