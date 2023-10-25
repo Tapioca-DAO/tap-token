@@ -52,31 +52,13 @@ export const setupTwTAPFixture = async () => {
         await time.increase(86400);
     }
 
-    const LZEndpointMockCurrentChain = await deployLZEndpointMock(
-        Number(await hre.getChainId()),
-    );
-
-    const LZEndpointMockOtherChain = await deployLZEndpointMock(Number(11));
-
     // twtap
     const twtap = await (
         await ethers.getContractFactory('TwTAP')
-    ).deploy(
-        tapOFT.address,
-        signer.address,
-        LZEndpointMockCurrentChain.address,
-        await hre.getChainId(),
-        200_000,
-    );
+    ).deploy(tapOFT.address, signer.address);
     const twtapOtherChain = await (
         await ethers.getContractFactory('FakeTwTAP')
-    ).deploy(
-        tapOFT.address,
-        signer.address,
-        LZEndpointMockOtherChain.address,
-        await hre.getChainId(),
-        200_000,
-    );
+    ).deploy(tapOFT.address, signer.address);
 
     // Approvals and reward token setup
     for (const tok of tokens) {

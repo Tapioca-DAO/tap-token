@@ -623,9 +623,6 @@ describe('tapOFT', () => {
             const twTAP = await twTAPFactory.deploy(
                 tapiocaOFT1.address,
                 signer.address,
-                LZEndpointMockGovernance.address,
-                11,
-                200_000,
             );
             const amountToParticipate = (1e18).toString();
 
@@ -694,9 +691,6 @@ describe('tapOFT', () => {
             const twTAP = await twTAPFactory.deploy(
                 tapiocaOFT1.address,
                 signer.address,
-                LZEndpointMockGovernance.address,
-                11,
-                200_000,
             );
             const tapBefore_chain_0 = await tapiocaOFT0.balanceOf(
                 signer.address,
@@ -781,9 +775,6 @@ describe('tapOFT', () => {
             const twTAP = await twTAPFactory.deploy(
                 tapiocaOFT1.address,
                 signer.address,
-                LZEndpointMockGovernance.address,
-                11,
-                200_000,
             );
             const rewardToClaim = (1e18).toString();
 
