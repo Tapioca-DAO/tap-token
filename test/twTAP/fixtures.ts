@@ -56,9 +56,6 @@ export const setupTwTAPFixture = async () => {
     const twtap = await (
         await ethers.getContractFactory('TwTAP')
     ).deploy(tapOFT.address, signer.address);
-    const twtapOtherChain = await (
-        await ethers.getContractFactory('FakeTwTAP')
-    ).deploy(tapOFT.address, signer.address);
 
     // Approvals and reward token setup
     for (const tok of tokens) {
@@ -75,7 +72,6 @@ export const setupTwTAPFixture = async () => {
         // vars
         tapOFT,
         twtap,
-        twtapOtherChain,
         tokens,
     };
 };
