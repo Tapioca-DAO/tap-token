@@ -372,15 +372,21 @@ contract TapiocaOptionBroker is
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
         LockPosition memory lock = tOLP.getLock(oTAPPosition.tOLP);
 
-        require(
-            block.timestamp >= lock.lockTime + lock.lockDuration,
-            "tOB: Lock not expired"
-        );
+        bool isSGLInRescueMode = _isSGLInRescueMode(lock);
+
+        // If SGL is in rescue, bypass the lock expiration
+        if (!isSGLInRescueMode) {
+            require(
+                block.timestamp >= lock.lockTime + lock.lockDuration,
+                "tOB: Lock not expired"
+            );
+        }
 
         Participation memory participation = participants[oTAPPosition.tOLP];
 
         // Remove participation
-        if (participation.hasVotingPower) {
+        // If the SGL is in rescue mode, bypass the voting power removal
+        if (!isSGLInRescueMode && participation.hasVotingPower) {
             TWAMLPool memory pool = twAML[lock.sglAssetID];
 
             if (participation.divergenceForce) {
@@ -594,7 +600,18 @@ contract TapiocaOptionBroker is
         return ((timestamp - emissionsStartTime) / EPOCH_DURATION);
     }
 
-    /// @notice Check if a position is active
+    /// @notice Check if a singularity is in rescue mode
+    /// @param _lock The lock position
+    function _isSGLInRescueMode(
+        LockPosition memory _lock
+    ) internal view returns (bool) {
+        (, , , bool rescue) = tOLP.activeSingularities(
+            tOLP.sglAssetIDToAddress(_lock.sglAssetID)
+        );
+        return rescue;
+    }
+
+    /// @notice Check if a position is active, whether it is expired or SGL is in rescue mode
     /// @dev Check if the current week is less than or equal the expiry week
     /// @param _lock The lock position
     /// @return isPositionActive True if the position is active
@@ -602,6 +619,7 @@ contract TapiocaOptionBroker is
         LockPosition memory _lock
     ) internal view returns (bool isPositionActive) {
         require(_lock.lockTime > 0, "tOB: Position does not exist");
+        require(!_isSGLInRescueMode(_lock), "tOB: Singularity in rescue mode");
 
         uint256 expiryWeek = _timestampToWeek(
             _lock.lockTime + _lock.lockDuration
