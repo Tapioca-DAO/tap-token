@@ -483,4 +483,117 @@ describe('TapiocaOptionLiquidityProvision', () => {
             .to.emit(tOLP, 'Transfer')
             .withArgs(signer.address, normalUser.address, tokenID);
     });
+
+    it('Should handle market rescue correctly', async () => {
+        const {
+            signer,
+            users,
+            tOLP,
+            yieldBox,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+        } = await loadFixture(setupFixture);
+
+        // Setup
+        await tOLP.registerSingularity(
+            sglTokenMock.address,
+            sglTokenMockAsset,
+            0,
+        );
+        await tOLP.registerSingularity(
+            sglTokenMock2.address,
+            sglTokenMock2Asset,
+            0,
+        );
+        expect(await tOLP.totalSingularityPoolWeights()).to.be.eq(2);
+
+        await expect(
+            tOLP.connect(users[0]).activateSGLPoolRescue(sglTokenMock.address),
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+
+        await expect(tOLP.activateSGLPoolRescue(sglTokenMock.address))
+            .to.emit(tOLP, 'ActivateSGLPoolRescue')
+            .withArgs(sglTokenMock.address);
+        expect((await tOLP.activeSingularities(sglTokenMock.address)).rescue).to
+            .be.true;
+
+        await expect(
+            tOLP.activateSGLPoolRescue(sglTokenMock.address),
+        ).to.be.revertedWith('tOLP: already active');
+
+        expect(await tOLP.totalSingularityPoolWeights()).to.be.eq(1);
+
+        // Setup sglTokenMock deposit
+        {
+            const lockDuration = 10;
+            const lockAmount = 1e8;
+
+            await sglTokenMock.freeMint(lockAmount);
+            await sglTokenMock.approve(yieldBox.address, lockAmount);
+            await yieldBox.depositAsset(
+                sglTokenMockAsset,
+                signer.address,
+                signer.address,
+                lockAmount,
+                0,
+            );
+            const lockShares = await yieldBox.toShare(
+                sglTokenMockAsset,
+                lockAmount,
+                false,
+            );
+
+            await yieldBox.setApprovalForAll(tOLP.address, true);
+            await expect(
+                tOLP.lock(
+                    signer.address,
+                    sglTokenMock.address,
+                    lockDuration,
+                    lockShares,
+                ),
+            ).to.be.revertedWith('tOLP: singularity in rescue');
+        }
+
+        // Setup sglTokenMock2 deposit + rescue withdrawal
+        {
+            const lockDuration = 10;
+            const lockAmount = 1e8;
+
+            await sglTokenMock2.freeMint(lockAmount);
+            await sglTokenMock2.approve(yieldBox.address, lockAmount);
+            await yieldBox.depositAsset(
+                sglTokenMock2Asset,
+                signer.address,
+                signer.address,
+                lockAmount,
+                0,
+            );
+            const lockShares = await yieldBox.toShare(
+                sglTokenMock2Asset,
+                lockAmount,
+                false,
+            );
+
+            await yieldBox.setApprovalForAll(tOLP.address, true);
+            await tOLP.lock(
+                signer.address,
+                sglTokenMock2.address,
+                lockDuration,
+                lockShares,
+            );
+            const tokenID = await tOLP.tokenCounter();
+
+            await tOLP.activateSGLPoolRescue(sglTokenMock2.address);
+
+            await expect(
+                tOLP.unlock(tokenID, sglTokenMock2.address, signer.address),
+            ).to.emit(tOLP, 'Burn');
+
+            expect(
+                await yieldBox.balanceOf(signer.address, sglTokenMock2Asset),
+            ).to.be.equal(lockShares);
+        }
+    });
 });

@@ -2031,6 +2031,7 @@ describe('TapiocaOptionBroker', () => {
                 otcDetail0.eligibleTapAmount,
             );
     });
+
     it('should throw an error if OTC payment is not fully accounted for', async () => {
         const {
             signer,
@@ -2119,5 +2120,121 @@ describe('TapiocaOptionBroker', () => {
                     otcDetail0.eligibleTapAmount,
                 ),
         ).to.be.revertedWith('tOB: Payment token transfer failed');
+    });
+
+    it('should handle market rescue correctly', async () => {
+        const {
+            signer,
+            users,
+            yieldBox,
+            tOB,
+            tapOFT,
+            tOLP,
+            oTAP,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+            stableMock,
+            stableMockOracle,
+        } = await loadFixture(setupFixture);
+
+        await setupEnv(
+            tOB,
+            tOLP,
+            tapOFT,
+            sglTokenMock,
+            sglTokenMockAsset,
+            sglTokenMock2,
+            sglTokenMock2Asset,
+        );
+        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+
+        await tOB.setPaymentToken(
+            stableMock.address,
+            stableMockOracle.address,
+            '0x00',
+        );
+
+        const userLock0 = await lockAndParticipate(
+            users[0],
+            3e8,
+            604800,
+            tOLP,
+            tOB,
+            oTAP,
+            yieldBox,
+            sglTokenMock,
+            sglTokenMockAsset,
+        );
+
+        await time.increase(await tOB.EPOCH_DURATION());
+        await tOB.newEpoch();
+        // User 0 OTC details
+        const otcDetail0 = await tOB.getOTCDealDetails(
+            userLock0.oTAPTokenID,
+            stableMock.address,
+            0,
+        );
+
+        let snapshot = await takeSnapshot();
+        await tOLP.activateSGLPoolRescue(sglTokenMock.address);
+
+        await stableMock.mintTo(
+            users[0].address,
+            otcDetail0.paymentTokenAmount,
+        );
+
+        await stableMock
+            .connect(users[1])
+            .approve(tOB.address, otcDetail0.paymentTokenAmount);
+
+        await expect(
+            tOB
+                .connect(users[1])
+                .exerciseOption(
+                    userLock0.oTAPTokenID,
+                    stableMock.address,
+                    otcDetail0.eligibleTapAmount,
+                ),
+        ).to.be.revertedWith('tOB: Singularity in rescue mode');
+        snapshot.restore();
+
+        // User 2 lock
+        await sglTokenMock.connect(users[1]).freeMint(3e8);
+        await sglTokenMock.connect(users[1]).approve(yieldBox.address, 3e8);
+        await yieldBox
+            .connect(users[1])
+            .depositAsset(
+                sglTokenMockAsset,
+                users[1].address,
+                users[1].address,
+                3e8,
+                0,
+            );
+
+        const ybAmount = await yieldBox.toAmount(
+            sglTokenMockAsset,
+            await yieldBox.balanceOf(users[1].address, sglTokenMockAsset),
+            false,
+        );
+        await yieldBox.connect(users[1]).setApprovalForAll(tOLP.address, true);
+        await tOLP
+            .connect(users[1])
+            .lock(users[1].address, sglTokenMock.address, 604800, ybAmount);
+        const tOLPTokenID = await tOLP.tokenCounter();
+
+        await tOLP.connect(users[1]).approve(tOB.address, tOLPTokenID);
+
+        // Can't lock in a rescue
+        snapshot = await takeSnapshot();
+        await tOLP.activateSGLPoolRescue(sglTokenMock.address);
+        await expect(
+            tOB.connect(users[1]).participate(tOLPTokenID),
+        ).to.be.rejectedWith('tOB: Singularity in rescue mode');
+        snapshot.restore();
+
+        // Can unlock after a rescue
+        tOB.connect(users[1]).participate(tOLPTokenID);
     });
 });
