@@ -27,10 +27,26 @@ function DOMAIN_SEPARATOR() external view returns (bytes32)
 |---|---|---|
 | _0 | bytes32 | undefined |
 
+### activateSGLPoolRescue
+
+```solidity
+function activateSGLPoolRescue(contract IERC20 singularity) external nonpayable
+```
+
+Sets the rescue status of a given singularity market
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| singularity | contract IERC20 | Singularity market address |
+
 ### activeSingularities
 
 ```solidity
-function activeSingularities(contract IERC20) external view returns (uint256 sglAssetID, uint256 totalDeposited, uint256 poolWeight)
+function activeSingularities(contract IERC20) external view returns (uint256 sglAssetID, uint256 totalDeposited, uint256 poolWeight, bool rescue)
 ```
 
 
@@ -50,6 +66,7 @@ function activeSingularities(contract IERC20) external view returns (uint256 sgl
 | sglAssetID | uint256 | undefined |
 | totalDeposited | uint256 | undefined |
 | poolWeight | uint256 | undefined |
+| rescue | bool | undefined |
 
 ### approve
 
@@ -177,7 +194,7 @@ Returns the active singularity YieldBox ID markets
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | uint256[] | undefined |
+| _0 | uint256[] | singularities Array of YieldBox asset IDs |
 
 ### getSingularityPools
 
@@ -185,7 +202,7 @@ Returns the active singularity YieldBox ID markets
 function getSingularityPools() external view returns (struct SingularityPool[])
 ```
 
-Returns the active singularity pool data
+Returns the active singularity pool data, excluding the ones in rescue
 
 
 
@@ -194,7 +211,7 @@ Returns the active singularity pool data
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | SingularityPool[] | undefined |
+| _0 | SingularityPool[] | pools Array of SingularityPool |
 
 ### getTotalPoolDeposited
 
@@ -248,7 +265,7 @@ function isApprovedForAll(address owner, address operator) external view returns
 function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool)
 ```
 
-
+Return an approval or ownership status of a given address for a given tOLP NFT
 
 
 
@@ -256,8 +273,8 @@ function isApprovedOrOwner(address _spender, uint256 _tokenId) external view ret
 
 | Name | Type | Description |
 |---|---|---|
-| _spender | address | undefined |
-| _tokenId | uint256 | undefined |
+| _spender | address | Address to check |
+| _tokenId | uint256 | tOLP NFT ID |
 
 #### Returns
 
@@ -767,6 +784,22 @@ function yieldBox() external view returns (contract IYieldBox)
 
 ## Events
 
+### ActivateSGLPoolRescue
+
+```solidity
+event ActivateSGLPoolRescue(address sgl)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| sgl  | address | undefined |
+
 ### Approval
 
 ```solidity
@@ -806,7 +839,7 @@ event ApprovalForAll(address indexed owner, address indexed operator, bool appro
 ### Burn
 
 ```solidity
-event Burn(address indexed to, uint128 indexed sglAssetID, LockPosition indexed lockPosition)
+event Burn(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition)
 ```
 
 
@@ -819,12 +852,12 @@ event Burn(address indexed to, uint128 indexed sglAssetID, LockPosition indexed 
 |---|---|---|
 | to `indexed` | address | undefined |
 | sglAssetID `indexed` | uint128 | undefined |
-| lockPosition `indexed` | LockPosition | undefined |
+| lockPosition  | LockPosition | undefined |
 
 ### Mint
 
 ```solidity
-event Mint(address indexed to, uint128 indexed sglAssetID, LockPosition indexed lockPosition)
+event Mint(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition)
 ```
 
 
@@ -837,7 +870,7 @@ event Mint(address indexed to, uint128 indexed sglAssetID, LockPosition indexed 
 |---|---|---|
 | to `indexed` | address | undefined |
 | sglAssetID `indexed` | uint128 | undefined |
-| lockPosition `indexed` | LockPosition | undefined |
+| lockPosition  | LockPosition | undefined |
 
 ### OwnershipTransferred
 
@@ -875,7 +908,7 @@ event Paused(address account)
 ### RegisterSingularity
 
 ```solidity
-event RegisterSingularity(address indexed sgl, uint256 indexed assetID)
+event RegisterSingularity(address sgl, uint256 assetID)
 ```
 
 
@@ -886,13 +919,13 @@ event RegisterSingularity(address indexed sgl, uint256 indexed assetID)
 
 | Name | Type | Description |
 |---|---|---|
-| sgl `indexed` | address | undefined |
-| assetID `indexed` | uint256 | undefined |
+| sgl  | address | undefined |
+| assetID  | uint256 | undefined |
 
 ### SetSGLPoolWeight
 
 ```solidity
-event SetSGLPoolWeight(address indexed sgl, uint256 indexed poolWeight)
+event SetSGLPoolWeight(address indexed sgl, uint256 poolWeight)
 ```
 
 
@@ -904,7 +937,7 @@ event SetSGLPoolWeight(address indexed sgl, uint256 indexed poolWeight)
 | Name | Type | Description |
 |---|---|---|
 | sgl `indexed` | address | undefined |
-| poolWeight `indexed` | uint256 | undefined |
+| poolWeight  | uint256 | undefined |
 
 ### Transfer
 
@@ -943,7 +976,7 @@ event Unpaused(address account)
 ### UnregisterSingularity
 
 ```solidity
-event UnregisterSingularity(address indexed sgl, uint256 indexed assetID)
+event UnregisterSingularity(address sgl, uint256 assetID)
 ```
 
 
@@ -954,13 +987,13 @@ event UnregisterSingularity(address indexed sgl, uint256 indexed assetID)
 
 | Name | Type | Description |
 |---|---|---|
-| sgl `indexed` | address | undefined |
-| assetID `indexed` | uint256 | undefined |
+| sgl  | address | undefined |
+| assetID  | uint256 | undefined |
 
 ### UpdateTotalSingularityPoolWeights
 
 ```solidity
-event UpdateTotalSingularityPoolWeights(uint256 indexed totalSingularityPoolWeights)
+event UpdateTotalSingularityPoolWeights(uint256 totalSingularityPoolWeights)
 ```
 
 
@@ -971,7 +1004,7 @@ event UpdateTotalSingularityPoolWeights(uint256 indexed totalSingularityPoolWeig
 
 | Name | Type | Description |
 |---|---|---|
-| totalSingularityPoolWeights `indexed` | uint256 | undefined |
+| totalSingularityPoolWeights  | uint256 | undefined |
 
 
 
