@@ -92,11 +92,25 @@ describe('TapiocaOptionLiquidityProvision', () => {
                 sglTokenMockAsset,
                 0,
             ),
+        ).to.revertedWith('tOLP: duplicate asset ID');
+        await expect(
+            tOLP.registerSingularity(
+                sglTokenMock.address,
+                32323, // random asset ID
+                0,
+            ),
         ).to.revertedWith('tOLP: already registered');
         await expect(
             tOLP.registerSingularity(
                 sglTokenMock2.address,
                 sglTokenMock2Asset,
+                0,
+            ),
+        ).to.revertedWith('tOLP: duplicate asset ID');
+        await expect(
+            tOLP.registerSingularity(
+                sglTokenMock2.address,
+                213123, // random asset ID
                 0,
             ),
         ).to.revertedWith('tOLP: already registered');
