@@ -10,22 +10,6 @@
 
 ## Methods
 
-### addFlashloanFee
-
-```solidity
-function addFlashloanFee(uint256 _fee) external nonpayable
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _fee | uint256 | undefined |
-
 ### allowance
 
 ```solidity
@@ -185,23 +169,6 @@ function name() external view returns (string)
 |---|---|---|
 | _0 | string | undefined |
 
-### paused
-
-```solidity
-function paused() external view returns (bool)
-```
-
-
-
-
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | bool | undefined |
-
 ### removeAsset
 
 ```solidity
@@ -267,22 +234,6 @@ function sendForLeverage(uint256 amount, address leverageFor, IUSDOBase.ILeverag
 | lzData | IUSDOBase.ILeverageLZData | undefined |
 | swapData | IUSDOBase.ILeverageSwapData | undefined |
 | externalData | IUSDOBase.ILeverageExternalContractsData | undefined |
-
-### setFlashloanHelper
-
-```solidity
-function setFlashloanHelper(address _helper) external nonpayable
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _helper | address | undefined |
 
 ### symbol
 

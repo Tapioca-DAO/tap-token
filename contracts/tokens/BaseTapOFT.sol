@@ -301,6 +301,14 @@ abstract contract BaseTapOFT is OFTV2 {
             }
         } catch Error(string memory _reason) {
             emit CallFailedStr(_srcChainId, _payload, _reason);
+
+            _storeFailedMessage(
+                _srcChainId,
+                _srcAddress,
+                _nonce,
+                _payload,
+                bytes(_reason)
+            );
         } catch (bytes memory _reason) {
             emit CallFailedBytes(_srcChainId, _payload, _reason);
 
@@ -406,6 +414,14 @@ abstract contract BaseTapOFT is OFTV2 {
             );
         } catch Error(string memory _reason) {
             emit CallFailedStr(_srcChainId, _payload, _reason);
+
+            _storeFailedMessage(
+                _srcChainId,
+                _srcAddress,
+                _nonce,
+                _payload,
+                bytes(_reason)
+            );
         } catch (bytes memory _reason) {
             emit CallFailedBytes(_srcChainId, _payload, _reason);
 
