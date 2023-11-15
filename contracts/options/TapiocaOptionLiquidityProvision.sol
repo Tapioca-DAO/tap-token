@@ -306,6 +306,10 @@ contract TapiocaOptionLiquidityProvision is
     ) external onlyOwner updateTotalSGLPoolWeights {
         require(assetID != 0, "tOLP: invalid asset ID");
         require(
+            sglAssetIDToAddress[assetID] == IERC20(address(0)),
+            "tOLP: duplicate asset ID"
+        );
+        require(
             activeSingularities[singularity].sglAssetID == 0,
             "tOLP: already registered"
         );
