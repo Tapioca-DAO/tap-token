@@ -27,6 +27,23 @@ function EPOCH_DURATION() external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### MIN_WEIGHT_FACTOR
+
+```solidity
+function MIN_WEIGHT_FACTOR() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### claimOwnership
 
 ```solidity
@@ -181,23 +198,6 @@ Returns the details of an OTC deal for a given oTAP token ID and a payment token
 | eligibleTapAmount | uint256 | The amount of TAP eligible for the deal |
 | paymentTokenAmount | uint256 | The amount of payment tokens required for the deal |
 | tapAmount | uint256 | The amount of TAP to be exchanged |
-
-### lastEpochUpdate
-
-```solidity
-function lastEpochUpdate() external view returns (uint256)
-```
-
-
-
-
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | uint256 | undefined |
 
 ### netDepositedForEpoch
 
@@ -420,6 +420,22 @@ function pendingOwner() external view returns (address)
 | Name | Type | Description |
 |---|---|---|
 | _0 | address | undefined |
+
+### setMinWeightFactor
+
+```solidity
+function setMinWeightFactor(uint256 _minWeightFactor) external nonpayable
+```
+
+Set the minimum weight factor
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _minWeightFactor | uint256 | The new minimum weight factor |
 
 ### setPaymentToken
 

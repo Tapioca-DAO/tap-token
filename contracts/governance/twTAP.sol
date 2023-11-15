@@ -2,9 +2,11 @@
 pragma solidity 0.8.18;
 
 import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol";
-import {ONFT721} from "tapioca-sdk/src/contracts/token/onft/ONFT721.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 import "../tokens/TapOFT.sol";
@@ -78,7 +80,14 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
+contract TwTAP is
+    TWAML,
+    ERC721,
+    ERC721Permit,
+    BoringOwnable,
+    ReentrancyGuard,
+    Pausable
+{
     using SafeERC20 for IERC20;
 
     TapOFT public immutable tapOFT;
@@ -102,7 +111,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     // the weight ranges from 10-100% where 1% = 1e4, so 1 million (20 bits).
     // the multiplier is at most 100% = 1M (20 bits), so votes is at most a
     // 107-bit number.
-    uint256 constant DIST_PRECISION = 256; //2 ** 128;
+    uint256 constant DIST_PRECISION = 2 ** 128; //2 ** 128;
 
     IERC20[] public rewardTokens;
     mapping(IERC20 => uint256) public rewardTokenIndex; // Index 0 is reserved with 0x0 address
@@ -120,8 +129,6 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     uint256 public lastProcessedWeek;
     mapping(uint256 => WeekTotals) public weekTotals;
 
-    uint256 public immutable HOST_CHAIN_ID;
-
     event LogMaxRewardsLength(
         uint256 indexed _oldLength,
         uint256 indexed _newLength,
@@ -131,18 +138,11 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// =====-------======
     constructor(
         address payable _tapOFT,
-        address _owner,
-        address _layerZeroEndpoint,
-        uint256 _hostChainID,
-        uint256 _minGas
-    )
-        ONFT721("Time Weighted TAP", "twTAP", _minGas, _layerZeroEndpoint)
-        ERC721Permit("Time Weighted TAP")
-    {
+        address _owner
+    ) ERC721("Time Weighted TAP", "twTAP") ERC721Permit("Time Weighted TAP") {
         tapOFT = TapOFT(_tapOFT);
-        transferOwnership(_owner);
+        owner = _owner;
         creation = block.timestamp;
-        HOST_CHAIN_ID = _hostChainID;
 
         rewardTokens.push(IERC20(address(0x0))); // 0 index is reserved
 
@@ -170,11 +170,6 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     // ==========
     //    READ
     // ==========
-
-    modifier onlyHostChain() {
-        require(_getChainId() == HOST_CHAIN_ID, "twTAP: only host chain");
-        _;
-    }
 
     function currentWeek() public view returns (uint256) {
         return (block.timestamp - creation) / EPOCH_DURATION;
@@ -284,7 +279,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
         address _participant,
         uint256 _amount,
         uint256 _duration
-    ) external nonReentrant onlyHostChain returns (uint256 tokenId) {
+    ) external whenNotPaused nonReentrant returns (uint256 tokenId) {
         require(_duration >= EPOCH_DURATION, "twTAP: Lock not a week");
 
         // Transfer TAP to this contract
@@ -382,7 +377,10 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @notice claims all rewards distributed since token mint or last claim.
     /// @param _tokenId tokenId whose rewards to claim
     /// @param _to address to receive the rewards
-    function claimRewards(uint256 _tokenId, address _to) external nonReentrant {
+    function claimRewards(
+        uint256 _tokenId,
+        address _to
+    ) external nonReentrant whenNotPaused {
         _requireClaimPermission(_to, _tokenId);
         _claimRewards(_tokenId, _to);
     }
@@ -393,7 +391,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     function claimAndSendRewards(
         uint256 _tokenId,
         IERC20[] calldata _rewardTokens
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
         _claimRewardsOn(_tokenId, address(tapOFT), _rewardTokens);
     }
@@ -402,14 +400,19 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @notice and undoes the effect on the twAML calculations.
     /// @param _tokenId tokenId whose locked TAP to claim
     /// @param _to address to receive the TAP
-    function releaseTap(uint256 _tokenId, address _to) external nonReentrant {
+    function releaseTap(
+        uint256 _tokenId,
+        address _to
+    ) external nonReentrant whenNotPaused {
         _requireClaimPermission(_to, _tokenId);
         _releaseTap(_tokenId, _to);
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
     /// @param _tokenId The tokenId of the twTAP position
-    function exitPosition(uint256 _tokenId) external nonReentrant {
+    function exitPosition(
+        uint256 _tokenId
+    ) external nonReentrant whenNotPaused {
         address to = ownerOf(_tokenId);
         _releaseTap(_tokenId, to);
     }
@@ -418,7 +421,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
     /// @param _tokenId The tokenId of the twTAP position
     function exitPositionAndSendTap(
         uint256 _tokenId
-    ) external nonReentrant returns (uint256) {
+    ) external nonReentrant whenNotPaused returns (uint256) {
         require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
         return _releaseTap(_tokenId, address(tapOFT));
     }
@@ -651,7 +654,7 @@ contract TwTAP is TWAML, ONFT721, ERC721Permit, ReentrancyGuard {
      */
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(ONFT721, ERC721) returns (bool) {
+    ) public view virtual override(ERC721) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

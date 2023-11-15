@@ -96,6 +96,11 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
         _;
     }
 
+    modifier onlyMinter() {
+        require(msg.sender == minter, "TAP: only minter");
+        _;
+    }
+
     // ==========
     // * METHODS *
     // ==========
@@ -164,7 +169,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     /// @notice sets a new minter address
     /// @param _minter the new address
     function setMinter(address _minter) external onlyOwner {
-        require(_minter != address(0), "address not valid");
+        require(_minter != address(0), "TAP: Address not valid");
         emit MinterUpdated(minter, _minter);
         minter = _minter;
     }
@@ -200,19 +205,24 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     ///-- Write methods --
     /// @notice Emit the TAP for the current week
     /// @return the emitted amount
-    function emitForWeek() external returns (uint256) {
-        require(msg.sender == minter, "unauthorized");
-
-        require(_getChainId() == governanceChainIdentifier, "chain not valid");
+    function emitForWeek() external onlyMinter returns (uint256) {
+        require(
+            _getChainId() == governanceChainIdentifier,
+            "TAP: Chain not valid"
+        );
 
         uint256 week = _timestampToWeek(block.timestamp);
         if (emissionForWeek[week] > 0) return 0;
 
-        // Update DSO supply from last minted emissions
-        dso_supply -= mintedInWeek[week - 1];
-
         // Compute unclaimed emission from last week and add it to the current week emission
-        uint256 unclaimed = emissionForWeek[week - 1] - mintedInWeek[week - 1];
+        uint256 unclaimed;
+        if (week > 0) {
+            // Update DSO supply from last minted emissions
+            dso_supply -= mintedInWeek[week - 1];
+
+            // Push unclaimed emission from last week to the current week
+            unclaimed = emissionForWeek[week - 1] - mintedInWeek[week - 1];
+        }
         uint256 emission = uint256(_computeEmission());
         emission += unclaimed;
         emissionForWeek[week] = emission;
@@ -225,14 +235,16 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     /// @notice extracts from the minted TAP
     /// @param _to Address to send the minted TAP to
     /// @param _amount TAP amount
-    function extractTAP(address _to, uint256 _amount) external notPaused {
-        require(msg.sender == minter, "unauthorized");
-        require(_amount > 0, "amount not valid");
+    function extractTAP(
+        address _to,
+        uint256 _amount
+    ) external onlyMinter notPaused {
+        require(_amount > 0, "TAP: Amount not valid");
 
         uint256 week = _timestampToWeek(block.timestamp);
         require(
             emissionForWeek[week] >= mintedInWeek[week] + _amount,
-            "exceeds allowable amount"
+            "TAP: Exceeds allowable amount"
         );
         _mint(_to, _amount);
         mintedInWeek[week] += _amount;
@@ -250,7 +262,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     function _timestampToWeek(
         uint256 timestamp
     ) internal view returns (uint256) {
-        return ((timestamp - emissionsStartTime) / WEEK) + 1; // Starts at week 1
+        return ((timestamp - emissionsStartTime) / WEEK);
     }
 
     ///-- Private methods --
