@@ -2237,4 +2237,12 @@ describe('TapiocaOptionBroker', () => {
         // Can unlock after a rescue
         tOB.connect(users[1]).participate(tOLPTokenID);
     });
+
+    it.skip('Simulates 10 stagnant participations', async () => {
+        const testScenario = await (
+            await hre.ethers.getContractFactory('Simulations')
+        ).deploy();
+
+        await testScenario.test(); // hardhat console log
+    });
 });
