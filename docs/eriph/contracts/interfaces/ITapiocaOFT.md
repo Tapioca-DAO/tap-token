@@ -116,28 +116,6 @@ function hostChainID() external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
-### initMultiSell
-
-```solidity
-function initMultiSell(address from, uint256 share, IUSDOBase.ILeverageSwapData swapData, IUSDOBase.ILeverageLZData lzData, IUSDOBase.ILeverageExternalContractsData externalData, bytes airdropAdapterParams, ICommonData.IApproval[] approvals) external payable
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| from | address | undefined |
-| share | uint256 | undefined |
-| swapData | IUSDOBase.ILeverageSwapData | undefined |
-| lzData | IUSDOBase.ILeverageLZData | undefined |
-| externalData | IUSDOBase.ILeverageExternalContractsData | undefined |
-| airdropAdapterParams | bytes | undefined |
-| approvals | ICommonData.IApproval[] | undefined |
-
 ### isHostChain
 
 ```solidity
@@ -198,7 +176,7 @@ function lzEndpoint() external view returns (address)
 ### removeCollateral
 
 ```solidity
-function removeCollateral(address from, address to, uint16 lzDstChainId, address zroPaymentAddress, ICommonData.IWithdrawParams withdrawParams, ITapiocaOFT.IRemoveParams removeParams, ICommonData.IApproval[] approvals, bytes adapterParams) external payable
+function removeCollateral(address from, address to, uint16 lzDstChainId, address zroPaymentAddress, ICommonData.IWithdrawParams withdrawParams, ITapiocaOFT.IRemoveParams removeParams, ICommonData.IApproval[] approvals, ICommonData.IApproval[] revokes, bytes adapterParams) external payable
 ```
 
 
@@ -216,12 +194,13 @@ function removeCollateral(address from, address to, uint16 lzDstChainId, address
 | withdrawParams | ICommonData.IWithdrawParams | undefined |
 | removeParams | ITapiocaOFT.IRemoveParams | undefined |
 | approvals | ICommonData.IApproval[] | undefined |
+| revokes | ICommonData.IApproval[] | undefined |
 | adapterParams | bytes | undefined |
 
 ### retrieveFromStrategy
 
 ```solidity
-function retrieveFromStrategy(address _from, uint256 amount, uint256 share, uint256 assetId, uint16 lzDstChainId, address zroPaymentAddress, bytes airdropAdapterParam) external payable
+function retrieveFromStrategy(address _from, uint256 amount, uint256 assetId, uint16 lzDstChainId, address zroPaymentAddress, bytes airdropAdapterParam) external payable
 ```
 
 
@@ -234,7 +213,6 @@ function retrieveFromStrategy(address _from, uint256 amount, uint256 share, uint
 |---|---|---|
 | _from | address | undefined |
 | amount | uint256 | undefined |
-| share | uint256 | undefined |
 | assetId | uint256 | undefined |
 | lzDstChainId | uint16 | undefined |
 | zroPaymentAddress | address | undefined |
@@ -263,7 +241,7 @@ function sendForLeverage(uint256 amount, address leverageFor, IUSDOBase.ILeverag
 ### sendFrom
 
 ```solidity
-function sendFrom(address _from, uint16 _dstChainId, bytes32 _toAddress, uint256 _amount, ISendFrom.LzCallParams _callParams) external payable
+function sendFrom(address from, uint16 dstChainId, bytes32 toAddress, uint256 amount, ICommonOFT.LzCallParams callParams) external payable
 ```
 
 
@@ -274,16 +252,16 @@ function sendFrom(address _from, uint16 _dstChainId, bytes32 _toAddress, uint256
 
 | Name | Type | Description |
 |---|---|---|
-| _from | address | undefined |
-| _dstChainId | uint16 | undefined |
-| _toAddress | bytes32 | undefined |
-| _amount | uint256 | undefined |
-| _callParams | ISendFrom.LzCallParams | undefined |
+| from | address | undefined |
+| dstChainId | uint16 | undefined |
+| toAddress | bytes32 | undefined |
+| amount | uint256 | undefined |
+| callParams | ICommonOFT.LzCallParams | undefined |
 
 ### sendToStrategy
 
 ```solidity
-function sendToStrategy(address _from, address _to, uint256 amount, uint256 share, uint256 assetId, uint16 lzDstChainId, ICommonData.ISendOptions options) external payable
+function sendToStrategy(address _from, address _to, uint256 amount, uint256 assetId, uint16 lzDstChainId, ICommonData.ISendOptions options) external payable
 ```
 
 
@@ -297,7 +275,6 @@ function sendToStrategy(address _from, address _to, uint256 amount, uint256 shar
 | _from | address | undefined |
 | _to | address | undefined |
 | amount | uint256 | undefined |
-| share | uint256 | undefined |
 | assetId | uint256 | undefined |
 | lzDstChainId | uint16 | undefined |
 | options | ICommonData.ISendOptions | undefined |
@@ -305,7 +282,7 @@ function sendToStrategy(address _from, address _to, uint256 amount, uint256 shar
 ### sendToYBAndBorrow
 
 ```solidity
-function sendToYBAndBorrow(address _from, address _to, uint16 lzDstChainId, bytes airdropAdapterParams, ITapiocaOFT.IBorrowParams borrowParams, ICommonData.IWithdrawParams withdrawParams, ICommonData.ISendOptions options, ICommonData.IApproval[] approvals) external payable
+function sendToYBAndBorrow(address _from, address _to, uint16 lzDstChainId, bytes airdropAdapterParams, ITapiocaOFT.IBorrowParams borrowParams, ICommonData.IWithdrawParams withdrawParams, ICommonData.ISendOptions options, ICommonData.IApproval[] approvals, ICommonData.IApproval[] revokes) external payable
 ```
 
 
@@ -324,6 +301,7 @@ function sendToYBAndBorrow(address _from, address _to, uint16 lzDstChainId, byte
 | withdrawParams | ICommonData.IWithdrawParams | undefined |
 | options | ICommonData.ISendOptions | undefined |
 | approvals | ICommonData.IApproval[] | undefined |
+| revokes | ICommonData.IApproval[] | undefined |
 
 ### totalFees
 
@@ -341,6 +319,67 @@ function totalFees() external view returns (uint256)
 | Name | Type | Description |
 |---|---|---|
 | _0 | uint256 | undefined |
+
+### triggerApproveOrRevoke
+
+```solidity
+function triggerApproveOrRevoke(uint16 lzDstChainId, ICommonOFT.LzCallParams lzCallParams, ICommonData.IApproval[] approvals) external payable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| lzDstChainId | uint16 | undefined |
+| lzCallParams | ICommonOFT.LzCallParams | undefined |
+| approvals | ICommonData.IApproval[] | undefined |
+
+### triggerSendFrom
+
+```solidity
+function triggerSendFrom(address from, uint16 dstChainId, bytes32 toAddress, uint256 amount, ICommonOFT.LzCallParams callParams) external payable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| from | address | undefined |
+| dstChainId | uint16 | undefined |
+| toAddress | bytes32 | undefined |
+| amount | uint256 | undefined |
+| callParams | ICommonOFT.LzCallParams | undefined |
+
+### triggerSendFromWithParams
+
+```solidity
+function triggerSendFromWithParams(address from, uint16 lzDstChainId, bytes32 to, uint256 amount, ICommonOFT.LzCallParams callParams, bool unwrap, ICommonData.IApproval[] approvals, ICommonData.IApproval[] revokes) external payable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| from | address | undefined |
+| lzDstChainId | uint16 | undefined |
+| to | bytes32 | undefined |
+| amount | uint256 | undefined |
+| callParams | ICommonOFT.LzCallParams | undefined |
+| unwrap | bool | undefined |
+| approvals | ICommonData.IApproval[] | undefined |
+| revokes | ICommonData.IApproval[] | undefined |
 
 ### unwrap
 

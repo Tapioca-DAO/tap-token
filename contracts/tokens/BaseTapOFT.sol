@@ -25,7 +25,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 struct IRewardClaimSendFromParams {
     uint256 ethValue;
-    ITapiocaOFT.LzCallParams callParams;
+    ICommonOFT.LzCallParams callParams;
 }
 
 abstract contract BaseTapOFT is OFTV2 {
