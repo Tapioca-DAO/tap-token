@@ -24,7 +24,7 @@ export const deployStack__task = async (
     const chainInfo = hre.SDK.utils.getChainBy(
         'chainId',
         await hre.getChainId(),
-    );
+    )!;
     const VM = await loadVM(hre, tag);
 
     if (taskArgs.load) {
@@ -47,36 +47,60 @@ export const deployStack__task = async (
         }
 
         // Build contracts
-        const chainId = await hre.getChainId();
-        const lzEndpoint = chainInfo?.address;
+        const lzEndpoint = chainInfo.address;
+        const chainInfoAddresses =
+            TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]!;
         VM.add(
-            await buildTapOFT(hre, [
+            await buildTapOFT(hre, 'TapOFT', [
                 lzEndpoint,
-                TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]?.teamAddress, //contributor address
-                TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]
-                    ?.earlySupportersAddress,
-                TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]
-                    ?.supportersAddress,
-                TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]?.lbpAddress,
-                TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]?.daoAddress,
-                TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]
-                    ?.airdropAddress,
+                chainInfoAddresses.teamAddress, //contributor address
+                chainInfoAddresses.earlySupportersAddress,
+                chainInfoAddresses.supportersAddress,
+                chainInfoAddresses.lbpAddress,
+                chainInfoAddresses.daoAddress,
+                chainInfoAddresses.airdropAddress,
                 EChainID.ARBITRUM_GOERLI, //governance chain
                 signer.address,
             ]),
         )
-            .add(await buildTOLP(hre, signer.address, yieldBox?.address))
-            .add(await buildOTAP(hre))
-            .add(await buildTOB(hre, signer.address, signer.address))
             .add(
-                await buildTwTap(hre, [
-                    // To be replaced by VM
-                    hre.ethers.constants.AddressZero,
+                await buildTOLP(hre, 'TapiocaOptionLiquidityProvision', [
                     signer.address,
-                    lzEndpoint,
-                    await hre.getChainId(),
-                    200_000,
+                    yieldBox?.address,
                 ]),
+            )
+            .add(await buildOTAP(hre, 'OTAP'))
+            .add(
+                await buildTOB(
+                    hre,
+                    'TapiocaOptionBroker',
+                    [
+                        hre.ethers.constants.AddressZero, // tOLP
+                        hre.ethers.constants.AddressZero, // oTAP
+                        hre.ethers.constants.AddressZero, // TapOFT
+                        signer.address,
+                        604800, // 7 days
+                        signer.address,
+                    ],
+                    [
+                        {
+                            argPosition: 0,
+                            deploymentName: 'TapiocaOptionLiquidityProvision',
+                        },
+                        { argPosition: 1, deploymentName: 'OTAP' },
+                        { argPosition: 2, deploymentName: 'TapOFT' },
+                    ],
+                ),
+            )
+            .add(
+                await buildTwTap(
+                    hre,
+                    [
+                        hre.ethers.constants.AddressZero, // TapOFT
+                        signer.address,
+                    ],
+                    [{ argPosition: 0, deploymentName: 'TapOFT' }],
+                ),
             );
 
         // Add and execute
