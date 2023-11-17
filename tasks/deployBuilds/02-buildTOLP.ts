@@ -4,12 +4,12 @@ import { TapiocaOptionLiquidityProvision__factory } from '../../typechain';
 
 export const buildTOLP = async (
     hre: HardhatRuntimeEnvironment,
-    signerAddr: string,
-    yieldBoxAddr: string,
+    deploymentName: string,
+    args: Parameters<TapiocaOptionLiquidityProvision__factory['deploy']>,
 ): Promise<IDeployerVMAdd<TapiocaOptionLiquidityProvision__factory>> => ({
     contract: await hre.ethers.getContractFactory(
         'TapiocaOptionLiquidityProvision',
     ),
-    deploymentName: 'TapiocaOptionLiquidityProvision',
-    args: [yieldBoxAddr, signerAddr],
+    deploymentName,
+    args,
 });
