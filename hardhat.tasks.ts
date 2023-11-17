@@ -24,6 +24,7 @@ import { setTwTapRewardToken__task } from './tasks/exec/setTwTapRewardToken';
 import { testClaimRewards__task } from './tasks/exec/tests/test-claimRewards';
 import { setDistributeTwTapRewards__task } from './tasks/exec/setDistributeTwTapRewards';
 import { setAdvanceWeek__task } from './tasks/exec/setAdvanceWeek';
+import { deployMockADB__task } from './tasks/deployMock/deployMockADB';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -148,3 +149,4 @@ task(
     'Test a cross-chain reward claim in twTAP',
     testClaimRewards__task,
 );
+task('deployMockADB', 'Deploy a mock ADB environment', deployMockADB__task);
