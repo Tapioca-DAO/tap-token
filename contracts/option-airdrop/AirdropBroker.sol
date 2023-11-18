@@ -108,7 +108,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     mapping(address => uint256) public phase4Users;
     uint256 public constant PHASE_4_DISCOUNT = 330_000; //33 * 1e4;
 
-    uint256 public EPOCH_DURATION = 2 days;
+    uint256 public EPOCH_DURATION = 2 days; // Becomes 7 days at the start of the phase 4
 
     /// =====-------======
     constructor(
@@ -303,6 +303,11 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         lastEpochUpdate = uint64(block.timestamp);
         epoch++;
 
+        // At epoch 4, change the epoch duration to 7 days
+        if (epoch == 4) {
+            EPOCH_DURATION = 7 days;
+        }
+
         // Get epoch TAP valuation
         (bool success, uint256 _epochTAPValuation) = tapOracle.get(
             tapOracleData
@@ -399,11 +404,6 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
                 );
             }
         }
-    }
-
-    /// @notice Update the epoch duration
-    function setEpochDuration(uint256 _epochLength) external onlyOwner {
-        EPOCH_DURATION = _epochLength;
     }
 
     // ============

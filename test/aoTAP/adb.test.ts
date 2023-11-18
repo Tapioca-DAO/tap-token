@@ -490,6 +490,22 @@ describe('AirdropBroker', () => {
     });
 
     describe('Phase 4', () => {
+        it('Should check if the epoch duration changed on epoch 4', async () => {
+            const { adb, tapOFT } = await loadFixture(setupFixture);
+            setupEnv(adb, tapOFT);
+
+            //---- test adb participation
+            expect(await adb.EPOCH_DURATION()).to.be.eq(172800); // 2 days
+            await newEpoch(adb);
+            expect(await adb.EPOCH_DURATION()).to.be.eq(172800); // 2 days
+            await newEpoch(adb);
+            expect(await adb.EPOCH_DURATION()).to.be.eq(172800); // 2 days
+            await newEpoch(adb);
+            expect(await adb.EPOCH_DURATION()).to.be.eq(172800); // 2 days
+            await newEpoch(adb);
+            expect(await adb.epoch()).to.be.eq(BN(4));
+            expect(await adb.EPOCH_DURATION()).to.be.eq(604800); // 7 days
+        });
         it('Should participate', async () => {
             const {
                 signer,
