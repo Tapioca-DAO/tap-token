@@ -537,6 +537,22 @@ function registerUserForPhase(uint256 _phase, address[] _users, uint256[] _amoun
 | _users | address[] | undefined |
 | _amounts | uint256[] | undefined |
 
+### setEpochDuration
+
+```solidity
+function setEpochDuration(uint256 _epochLength) external nonpayable
+```
+
+Update the epoch duration
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _epochLength | uint256 | undefined |
+
 ### setPaymentToken
 
 ```solidity
