@@ -490,6 +490,68 @@ describe('AirdropBroker', () => {
     });
 
     describe('Phase 4', () => {
+        it('Should check if the epoch duration changed on epoch 4', async () => {
+            const { adb, tapOFT } = await loadFixture(setupFixture);
+            setupEnv(adb, tapOFT);
+
+            //---- test adb participation
+            expect(await adb.EPOCH_DURATION()).to.be.eq(172800); // 2 days
+            await newEpoch(adb);
+            expect(await adb.EPOCH_DURATION()).to.be.eq(172800); // 2 days
+            await newEpoch(adb);
+            expect(await adb.EPOCH_DURATION()).to.be.eq(172800); // 2 days
+            await newEpoch(adb);
+            expect(await adb.EPOCH_DURATION()).to.be.eq(172800); // 2 days
+            await newEpoch(adb);
+            expect(await adb.epoch()).to.be.eq(BN(4));
+            expect(await adb.EPOCH_DURATION()).to.be.eq(604800); // 7 days
+        });
+
+        it('Should send token to owner after 8 epochs', async () => {
+            const { adb, tapOFT, users, signer } = await loadFixture(
+                setupFixture,
+            );
+            setupEnv(adb, tapOFT);
+
+            //---- test adb participation
+            expect(await adb.EPOCH_DURATION()).to.be.eq(172800); // 2 days
+            await newEpoch(adb);
+            expect(await adb.EPOCH_DURATION()).to.be.eq(172800); // 2 days
+            await newEpoch(adb);
+            expect(await adb.EPOCH_DURATION()).to.be.eq(172800); // 2 days
+            await newEpoch(adb);
+            expect(await adb.EPOCH_DURATION()).to.be.eq(172800); // 2 days
+            await newEpoch(adb);
+            expect(await adb.epoch()).to.be.eq(BN(4));
+            expect(await adb.EPOCH_DURATION()).to.be.eq(604800); // 7 days
+
+            await newEpoch(adb);
+            await newEpoch(adb);
+            await newEpoch(adb);
+            await newEpoch(adb);
+            expect(await adb.epoch()).to.be.eq(BN(8));
+            await expect(adb.daoRecoverTAP()).to.be.revertedWith(
+                'adb: too soon',
+            );
+            await newEpoch(adb);
+            expect(await adb.epoch()).to.be.eq(BN(9));
+
+            await expect(
+                adb.connect(users[0]).daoRecoverTAP(),
+            ).to.be.revertedWith('Ownable: caller is not the owner');
+
+            await tapOFT.transfer(
+                users[0].address,
+                await tapOFT.balanceOf(signer.address),
+            ); // "Burn" all currently held tokens
+
+            await adb.daoRecoverTAP();
+            expect(await tapOFT.balanceOf(adb.address)).to.be.eq(0);
+            expect(await tapOFT.balanceOf(adb.owner())).to.be.eq(
+                BN((1e18).toString()).mul(2_500_000),
+            );
+        });
+
         it('Should participate', async () => {
             const {
                 signer,
