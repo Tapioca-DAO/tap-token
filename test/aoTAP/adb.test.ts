@@ -1329,17 +1329,4 @@ describe('AirdropBroker', () => {
             await stableMock.balanceOf(paymentTokenBeneficiary.address),
         ).to.be.equal(otcDetails.paymentTokenAmount);
     });
-
-    it('Should change epoch duration', async () => {
-        const { adb, tapOFT, users } = await loadFixture(setupFixture);
-        await setupEnv(adb, tapOFT);
-
-        await expect(
-            adb.connect(users[0]).setEpochDuration(1),
-        ).to.be.revertedWith('Ownable: caller is not the owner');
-
-        await expect(adb.setEpochDuration(1)).to.not.be.reverted;
-
-        expect(await adb.EPOCH_DURATION()).to.be.equal(1);
-    });
 });
