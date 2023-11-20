@@ -90,6 +90,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     );
     /// @notice event emitted when pause state is changed
     event PausedUpdated(bool indexed oldState, bool indexed newState);
+    event BoostedTAP(uint256 indexed _amount);
 
     modifier notPaused() {
         if (paused) revert Paused();
@@ -209,7 +210,9 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     }
 
     ///-- Write methods --
-    /// @notice Emit the TAP for the current week
+    /// @notice Emit the TAP for the current week. Follow the emission function.
+    /// If there are unclaimed emissions from the previous week, they are added to the current week.
+    /// If there are some TAP in the contract, use it as boosted TAP.
     /// @return the emitted amount
     function emitForWeek() external onlyMinter returns (uint256) {
         if (_getChainId() != governanceChainIdentifier) revert NotValid();
@@ -228,8 +231,16 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
         }
         uint256 emission = uint256(_computeEmission());
         emission += unclaimed;
-        emissionForWeek[week] = emission;
 
+        // Boosted TAP is burned and added to the emission to be minted on demand later on in `extractTAP()`
+        uint256 boostedTAP = balanceOf(address(this));
+        if (boostedTAP > 0) {
+            _burn(address(this), boostedTAP);
+            emission += boostedTAP; // Add TAP in the contract as boosted TAP
+            emit BoostedTAP(boostedTAP);
+        }
+
+        emissionForWeek[week] = emission;
         emit Emitted(week, emission);
 
         return emission;

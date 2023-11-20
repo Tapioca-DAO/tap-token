@@ -511,7 +511,7 @@ contract TapiocaOptionBroker is
 
         epoch++;
 
-        // Extract TAP + Update net deposited amounts
+        // Extract TAP + emit to gauges
         uint256 epochTAP = tapOFT.emitForWeek();
         _emitToGauges(epochTAP);
 

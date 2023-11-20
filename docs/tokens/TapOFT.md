@@ -385,7 +385,7 @@ starts time for emissions
 function emitForWeek() external nonpayable returns (uint256)
 ```
 
--- Write methods --Emit the TAP for the current week
+-- Write methods --Emit the TAP for the current week. Follow the emission function. If there are unclaimed emissions from the previous week, they are added to the current week. If there are some TAP in the contract, use it as boosted TAP.
 
 
 
@@ -1520,6 +1520,22 @@ event Approval(address indexed owner, address indexed spender, uint256 value)
 | owner `indexed` | address | undefined |
 | spender `indexed` | address | undefined |
 | value  | uint256 | undefined |
+
+### BoostedTAP
+
+```solidity
+event BoostedTAP(uint256 indexed _amount)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _amount `indexed` | uint256 | undefined |
 
 ### Burned
 
