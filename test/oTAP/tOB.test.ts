@@ -624,49 +624,65 @@ describe('TapiocaOptionBroker', () => {
         );
 
         const snapshot = await takeSnapshot();
+        let tapEmissionWithoutBoost = BN(0);
         // Check epoch update
-        await tOB.newEpoch();
-        expect(await tOB.epoch()).to.be.equal(1);
+        {
+            await tOB.newEpoch();
+            expect(await tOB.epoch()).to.be.equal(1);
 
-        expect(await tOB.epochTAPValuation()).to.be.equal(tapPrice);
+            expect(await tOB.epochTAPValuation()).to.be.equal(tapPrice);
 
-        const emittedTAP = await tapOFT.getCurrentWeekEmission();
+            const emittedTAP = await tapOFT.getCurrentWeekEmission();
+            tapEmissionWithoutBoost = emittedTAP;
 
-        // Check TAP minting for 1 SGL asset
-        expect(emittedTAP.gt(0)).to.be.true;
-        expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(
-            emittedTAP,
-        );
+            // Check TAP minting for 1 SGL asset
+            expect(emittedTAP.gt(0)).to.be.true;
+            expect(
+                await tOB.singularityGauges(1, sglTokenMockAsset),
+            ).to.be.equal(emittedTAP);
 
-        // Check TAP minting for 2 SGL assets with equal weights
-        await snapshot.restore();
-        await tOLP.registerSingularity(
-            sglTokenMock2.address,
-            sglTokenMock2Asset,
-            0,
-        );
-        await tOB.newEpoch();
-        expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(
-            emittedTAP.div(2),
-        );
-        expect(await tOB.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(
-            emittedTAP.div(2),
-        );
+            // Check TAP minting for 2 SGL assets with equal weights
+            await snapshot.restore();
+            await tOLP.registerSingularity(
+                sglTokenMock2.address,
+                sglTokenMock2Asset,
+                0,
+            );
+            await tOB.newEpoch();
+            expect(
+                await tOB.singularityGauges(1, sglTokenMockAsset),
+            ).to.be.equal(emittedTAP.div(2));
+            expect(
+                await tOB.singularityGauges(1, sglTokenMock2Asset),
+            ).to.be.equal(emittedTAP.div(2));
 
-        // Check TAP minting for 2 SGL assets with different weights
-        await snapshot.restore();
-        await tOLP.registerSingularity(
-            sglTokenMock2.address,
-            sglTokenMock2Asset,
-            2,
-        );
-        await tOB.newEpoch();
-        expect(await tOB.singularityGauges(1, sglTokenMockAsset)).to.be.equal(
-            emittedTAP.div(3),
-        );
-        expect(await tOB.singularityGauges(1, sglTokenMock2Asset)).to.be.equal(
-            emittedTAP.mul(2).div(3),
-        );
+            // Check TAP minting for 2 SGL assets with different weights
+            await snapshot.restore();
+            await tOLP.registerSingularity(
+                sglTokenMock2.address,
+                sglTokenMock2Asset,
+                2,
+            );
+            await tOB.newEpoch();
+            expect(
+                await tOB.singularityGauges(1, sglTokenMockAsset),
+            ).to.be.equal(emittedTAP.div(3));
+            expect(
+                await tOB.singularityGauges(1, sglTokenMock2Asset),
+            ).to.be.equal(emittedTAP.mul(2).div(3));
+        }
+
+        // Check emissions with boosted TAP
+        {
+            await snapshot.restore();
+            const boostedTAP = BN(1e18).mul(3);
+            await tapOFT.transfer(tapOFT.address, boostedTAP);
+            await tOB.newEpoch();
+            const emittedTAP = await tapOFT.getCurrentWeekEmission();
+            expect(emittedTAP).to.be.equal(
+                tapEmissionWithoutBoost.add(boostedTAP),
+            );
+        }
     });
 
     it('Should wait 1 epoch before being able to exercise', async () => {
