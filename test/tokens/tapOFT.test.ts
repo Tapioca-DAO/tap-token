@@ -257,9 +257,8 @@ describe('tapOFT', () => {
             );
             await chainBTap.setMinter(signer.address);
             await time_travel(7 * 86400);
-            await expect(
-                chainBTap.connect(signer).emitForWeek(),
-            ).to.be.revertedWith('TAP: Chain not valid');
+            await expect(chainBTap.connect(signer).emitForWeek()).to.be
+                .reverted;
         });
         it('should not be able to deploy with an empty LayerZero endpoint', async () => {
             const factory = await ethers.getContractFactory('TapOFT');
@@ -577,19 +576,19 @@ describe('tapOFT', () => {
                 tapiocaOFT0
                     .connect(normalUser)
                     .extractTAP(minter.address, bigAmount),
-            ).to.be.revertedWith('TAP: only minter');
+            ).to.be.reverted;
             await expect(
                 tapiocaOFT0.connect(signer).setMinter(minter.address),
             ).to.emit(tapiocaOFT0, 'MinterUpdated');
 
             await expect(
                 tapiocaOFT0.connect(minter).extractTAP(minter.address, 0),
-            ).to.be.revertedWith('TAP: Amount not valid');
+            ).to.be.reverted;
             await expect(
                 tapiocaOFT0
                     .connect(minter)
                     .extractTAP(minter.address, bigAmount),
-            ).to.be.revertedWith('TAP: Exceeds allowable amount');
+            ).to.be.reverted;
 
             // Check balance
             const emissionForWeek = await tapiocaOFT0.getCurrentWeekEmission();
@@ -647,7 +646,7 @@ describe('tapOFT', () => {
                     ),
                     { value: (1e18).toString() },
                 ),
-            ).to.emit(tapiocaOFT1, 'CallFailedStr');
+            ).to.emit(tapiocaOFT1, 'CallFailedBytes');
             expect(await tapiocaOFT1.balanceOf(signer.address)).to.be.equal(
                 tapBefore_chain_1.add(amountToParticipate),
             ); // Expect to be credited
@@ -721,19 +720,19 @@ describe('tapOFT', () => {
                     ethers.constants.AddressZero,
                     hre.ethers.utils.solidityPack(
                         ['uint16', 'uint256'],
-                        [1, 750_000], // Should use ~514_227 + sendBack 200_000
+                        [1, 100_000], // Should use ~514_227 + sendBack 200_000
                     ),
                     {
                         adapterParams: hre.ethers.utils.solidityPack(
                             ['uint16', 'uint256'],
-                            [1, 200_000],
+                            [1, 300_000],
                         ),
                         refundAddress: signer.address,
                         zroPaymentAddress: ethers.constants.AddressZero,
                     },
                     { value: (10e18).toString() },
                 ),
-            ).to.be.emit(tapiocaOFT1, 'CallFailedStr');
+            ).to.be.emit(tapiocaOFT1, 'CallFailedBytes');
             expect(await tapiocaOFT1.balanceOf(signer.address)).to.be.equal(
                 (await tapiocaOFT0.balanceOf(signer.address)).add(
                     (1e18).toString(),

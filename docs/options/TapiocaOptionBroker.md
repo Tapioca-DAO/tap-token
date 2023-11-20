@@ -829,3 +829,193 @@ event Unpaused(address account)
 
 
 
+## Errors
+
+### DurationTooShort
+
+```solidity
+error DurationTooShort()
+```
+
+
+
+
+
+
+### Failed
+
+```solidity
+error Failed()
+```
+
+
+
+
+
+
+### LockNotExpired
+
+```solidity
+error LockNotExpired()
+```
+
+
+
+
+
+
+### NoActiveSingularities
+
+```solidity
+error NoActiveSingularities()
+```
+
+
+
+
+
+
+### NoLiquidity
+
+```solidity
+error NoLiquidity()
+```
+
+
+
+
+
+
+### NotAuthorized
+
+```solidity
+error NotAuthorized()
+```
+
+=====-------======
+
+
+
+
+### OneEpochCooldown
+
+```solidity
+error OneEpochCooldown()
+```
+
+
+
+
+
+
+### OptionExpired
+
+```solidity
+error OptionExpired()
+```
+
+
+
+
+
+
+### PaymentTokenNotSupported
+
+```solidity
+error PaymentTokenNotSupported()
+```
+
+
+
+
+
+
+### PaymentTokenValuationNotValid
+
+```solidity
+error PaymentTokenValuationNotValid()
+```
+
+
+
+
+
+
+### PositionNotValid
+
+```solidity
+error PositionNotValid()
+```
+
+
+
+
+
+
+### SingularityInRescueMode
+
+```solidity
+error SingularityInRescueMode()
+```
+
+
+
+
+
+
+### TooHigh
+
+```solidity
+error TooHigh()
+```
+
+
+
+
+
+
+### TooLong
+
+```solidity
+error TooLong()
+```
+
+
+
+
+
+
+### TooLow
+
+```solidity
+error TooLow()
+```
+
+
+
+
+
+
+### TooSoon
+
+```solidity
+error TooSoon()
+```
+
+
+
+
+
+
+### TransferFailed
+
+```solidity
+error TransferFailed()
+```
+
+
+
+
+
+
+

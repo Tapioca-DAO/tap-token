@@ -65,6 +65,10 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
         TapOption indexed option
     );
 
+    error NotAuthorized();
+    error OnlyBroker();
+    error OnlyOnce();
+
     // =========
     //    READ
     // =========
@@ -132,10 +136,7 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     /// @notice burns an OTAP
     /// @param _tokenId tokenId to burn
     function burn(uint256 _tokenId) external {
-        require(
-            _isApprovedOrOwner(msg.sender, _tokenId),
-            "OTAP: only approved or owner"
-        );
+        if (!_isApprovedOrOwner(msg.sender, _tokenId)) revert NotAuthorized();
         _burn(_tokenId);
 
         emit Burn(msg.sender, _tokenId, options[_tokenId]);
@@ -143,7 +144,7 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
 
     /// @notice tOB claim
     function brokerClaim() external {
-        require(broker == address(0), "OTAP: only once");
+        if (broker != address(0)) revert OnlyOnce();
         broker = msg.sender;
     }
 }

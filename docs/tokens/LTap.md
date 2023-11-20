@@ -499,3 +499,28 @@ event Transfer(address indexed from, address indexed to, uint256 value)
 
 
 
+## Errors
+
+### StillLocked
+
+```solidity
+error StillLocked()
+```
+
+
+
+
+
+
+### TooLate
+
+```solidity
+error TooLate()
+```
+
+
+
+
+
+
+

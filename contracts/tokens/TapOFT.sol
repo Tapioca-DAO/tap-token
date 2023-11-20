@@ -92,14 +92,23 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     event PausedUpdated(bool indexed oldState, bool indexed newState);
 
     modifier notPaused() {
-        require(!paused, "TAP: paused");
+        if (paused) revert Paused();
         _;
     }
 
     modifier onlyMinter() {
-        require(msg.sender == minter, "TAP: only minter");
+        if (msg.sender != minter) revert OnlyMinter();
         _;
     }
+
+    // ==========
+    // *ERRORS*
+    // ==========
+    error NotValid();
+    error SupplyNotValid();
+    error AllowanceNotValid();
+    error Paused();
+    error OnlyMinter();
 
     // ==========
     // * METHODS *
@@ -126,7 +135,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
         uint256 _governanceChainId,
         address _conservator
     ) BaseTapOFT("TapOFT", "TAP", 8, _lzEndpoint) ERC20Permit("TapOFT") {
-        require(_lzEndpoint != address(0), "LZ endpoint not valid");
+        if (_lzEndpoint == address(0)) revert NotValid();
         governanceChainIdentifier = _governanceChainId;
         if (_getChainId() == governanceChainIdentifier) {
             _mint(_contributors, 1e18 * 15_000_000);
@@ -135,10 +144,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
             _mint(_lbp, 1e18 * 5_000_000);
             _mint(_dao, 1e18 * 8_000_000);
             _mint(_airdrop, 1e18 * 2_500_000);
-            require(
-                totalSupply() == INITIAL_SUPPLY,
-                "initial supply not valid"
-            );
+            if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
         }
         emissionsStartTime = block.timestamp;
 
@@ -161,7 +167,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     /// @notice updates the pause state of the contract
     /// @param val the new value
     function updatePause(bool val) external onlyOwner {
-        require(val != paused, "TAP: same state");
+        if (val == paused) revert NotValid();
         emit PausedUpdated(paused, val);
         paused = val;
     }
@@ -169,7 +175,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     /// @notice sets a new minter address
     /// @param _minter the new address
     function setMinter(address _minter) external onlyOwner {
-        require(_minter != address(0), "TAP: Address not valid");
+        if (_minter == address(0)) revert NotValid();
         emit MinterUpdated(minter, _minter);
         minter = _minter;
     }
@@ -206,10 +212,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     /// @notice Emit the TAP for the current week
     /// @return the emitted amount
     function emitForWeek() external onlyMinter returns (uint256) {
-        require(
-            _getChainId() == governanceChainIdentifier,
-            "TAP: Chain not valid"
-        );
+        if (_getChainId() != governanceChainIdentifier) revert NotValid();
 
         uint256 week = _timestampToWeek(block.timestamp);
         if (emissionForWeek[week] > 0) return 0;
@@ -239,13 +242,11 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
         address _to,
         uint256 _amount
     ) external onlyMinter notPaused {
-        require(_amount > 0, "TAP: Amount not valid");
+        if (_amount == 0) revert NotValid();
 
         uint256 week = _timestampToWeek(block.timestamp);
-        require(
-            emissionForWeek[week] >= mintedInWeek[week] + _amount,
-            "TAP: Exceeds allowable amount"
-        );
+        if (emissionForWeek[week] < mintedInWeek[week] + _amount)
+            revert AllowanceNotValid();
         _mint(_to, _amount);
         mintedInWeek[week] += _amount;
         emit Minted(msg.sender, _to, _amount);
