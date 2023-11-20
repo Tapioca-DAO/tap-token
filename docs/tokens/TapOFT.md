@@ -1908,3 +1908,105 @@ event Transfer(address indexed from, address indexed to, uint256 value)
 
 
 
+## Errors
+
+### AllowanceNotValid
+
+```solidity
+error AllowanceNotValid()
+```
+
+
+
+
+
+
+### Failed
+
+```solidity
+error Failed()
+```
+
+
+
+
+
+
+### LengthMismatch
+
+```solidity
+error LengthMismatch()
+```
+
+
+
+
+
+
+### NotAuthorized
+
+```solidity
+error NotAuthorized()
+```
+
+
+
+
+
+
+### NotValid
+
+```solidity
+error NotValid()
+```
+
+
+
+
+
+
+### OnlyMinter
+
+```solidity
+error OnlyMinter()
+```
+
+
+
+
+
+
+### Paused
+
+```solidity
+error Paused()
+```
+
+
+
+
+
+
+### SupplyNotValid
+
+```solidity
+error SupplyNotValid()
+```
+
+
+
+
+
+
+### TooSmall
+
+```solidity
+error TooSmall()
+```
+
+
+
+
+
+
+

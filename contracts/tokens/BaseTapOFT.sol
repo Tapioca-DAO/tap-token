@@ -49,6 +49,11 @@ abstract contract BaseTapOFT is OFTV2 {
         bytes indexed _reason
     );
 
+    error TooSmall();
+    error LengthMismatch();
+    error Failed();
+    error NotAuthorized();
+
     constructor(
         string memory _name,
         string memory _symbol,
@@ -101,7 +106,7 @@ abstract contract BaseTapOFT is OFTV2 {
         address zroPaymentAddress,
         bytes calldata adapterParams
     ) external payable {
-        require(duration > 0, "TapOFT: Small duration");
+        if (duration == 0) revert TooSmall();
         (amount, ) = _removeDust(amount);
 
         bytes memory lzPayload = abi.encode(
@@ -197,10 +202,8 @@ abstract contract BaseTapOFT is OFTV2 {
         bytes calldata adapterParams,
         IRewardClaimSendFromParams[] calldata rewardClaimSendParams
     ) external payable {
-        require(
-            rewardTokens.length == rewardClaimSendParams.length,
-            "TapOFT: length mismatch"
-        );
+        if (rewardTokens.length != rewardClaimSendParams.length)
+            revert LengthMismatch();
 
         bytes memory lzPayload = abi.encode(
             PT_CLAIM_REWARDS, // packet type
@@ -260,7 +263,7 @@ abstract contract BaseTapOFT is OFTV2 {
             );
 
         // Only the owner can unlock
-        require(twTap.ownerOf(tokenID) == sender, "TapOFT: Not owner");
+        if (twTap.ownerOf(tokenID) != sender) revert NotAuthorized();
 
         if (((gasleft() * 1) / 64) < 100_000) {
             _storeFailedMessage(
@@ -392,7 +395,7 @@ abstract contract BaseTapOFT is OFTV2 {
             );
 
         // Only the owner can unlock
-        require(twTap.ownerOf(tokenID) == sender, "TapOFT: Not owner");
+        if (twTap.ownerOf(tokenID) != sender) revert NotAuthorized();
 
         // Exit and receive tokens to this contract
         try twTap.exitPositionAndSendTap(tokenID) returns (uint256 _amount) {
@@ -440,7 +443,7 @@ abstract contract BaseTapOFT is OFTV2 {
     /// @param to the recipient
     function rescueEth(uint256 amount, address to) external onlyOwner {
         (bool success, ) = to.call{value: amount}("");
-        require(success, "TapOFT: failed to rescue");
+        if (!success) revert Failed();
     }
 
     function setTwTap(address _twTap) external onlyOwner {

@@ -6,12 +6,12 @@ import {TWAML} from "./twAML.sol";
 
 contract Simulations is TWAML {
     // tOB simulations
-    function test() public {
+    function test() public pure {
         uint256 cumulative;
         uint256 averageMagnitude;
         for (uint256 p; p < 10; p++) {
             uint256 magnitude = computeMagnitude(10, cumulative);
-            uint256 discount = computeTarget(5, 50, magnitude, cumulative);
+            // uint256 discount = computeTarget(5, 50, magnitude, cumulative);
 
             averageMagnitude = computeAM(averageMagnitude, magnitude, p + 1);
             cumulative = computeCumulative(10, cumulative, magnitude);

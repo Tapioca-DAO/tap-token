@@ -736,3 +736,39 @@ event Transfer(address indexed from, address indexed to, uint256 indexed tokenId
 
 
 
+## Errors
+
+### NotAuthorized
+
+```solidity
+error NotAuthorized()
+```
+
+
+
+
+
+
+### OnlyBroker
+
+```solidity
+error OnlyBroker()
+```
+
+
+
+
+
+
+### OnlyOnce
+
+```solidity
+error OnlyOnce()
+```
+
+
+
+
+
+
+

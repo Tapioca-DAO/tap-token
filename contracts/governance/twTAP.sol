@@ -135,6 +135,16 @@ contract TwTAP is
         uint256 indexed _currentLength
     );
 
+    error NotAuthorized();
+    error AdvanceWeekFirst();
+    error NotValid();
+    error Registered();
+    error TokenLimitReached();
+    error CannotCalim();
+    error Duplicate();
+    error LockNotExpired();
+    error LockNotAWeek();
+
     /// =====-------======
     constructor(
         address payable _tapOFT,
@@ -280,7 +290,7 @@ contract TwTAP is
         uint256 _amount,
         uint256 _duration
     ) external whenNotPaused nonReentrant returns (uint256 tokenId) {
-        require(_duration >= EPOCH_DURATION, "twTAP: Lock not a week");
+        if (_duration < EPOCH_DURATION) revert LockNotAWeek();
 
         // Transfer TAP to this contract
         tapOFT.transferFrom(msg.sender, address(this), _amount);
@@ -290,7 +300,7 @@ contract TwTAP is
 
         uint256 magnitude = computeMagnitude(_duration, pool.cumulative);
         // Revert if the lock 4x the cumulative
-        require(magnitude < pool.cumulative * 4, "twTAP: Too long");
+        if (magnitude >= pool.cumulative * 4) revert NotValid();
         uint256 multiplier = computeTarget(
             dMIN,
             dMAX,
@@ -392,7 +402,7 @@ contract TwTAP is
         uint256 _tokenId,
         IERC20[] calldata _rewardTokens
     ) external nonReentrant whenNotPaused {
-        require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
+        if (msg.sender != address(tapOFT)) revert NotAuthorized();
         _claimRewardsOn(_tokenId, address(tapOFT), _rewardTokens);
     }
 
@@ -422,7 +432,7 @@ contract TwTAP is
     function exitPositionAndSendTap(
         uint256 _tokenId
     ) external nonReentrant whenNotPaused returns (uint256) {
-        require(msg.sender == address(tapOFT), "twTAP: only tapOFT");
+        if (msg.sender != address(tapOFT)) revert NotAuthorized();
         return _releaseTap(_tokenId, address(tapOFT));
     }
 
@@ -464,10 +474,7 @@ contract TwTAP is
         uint256 _rewardTokenId,
         uint256 _amount
     ) external nonReentrant {
-        require(
-            lastProcessedWeek == currentWeek(),
-            "twTAP: Advance week first"
-        );
+        if (lastProcessedWeek != currentWeek()) revert AdvanceWeekFirst();
         WeekTotals storage totals = weekTotals[lastProcessedWeek];
         IERC20 rewardToken = rewardTokens[_rewardTokenId];
         // If this is a DBZ then there are no positions to give the reward to.
@@ -480,7 +487,7 @@ contract TwTAP is
             (_amount * DIST_PRECISION) /
             uint256(totals.netActiveVotes);
 
-        require(_amount > 0, "twTap: 0");
+        if (_amount == 0) revert NotValid();
         rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
     }
 
@@ -493,11 +500,9 @@ contract TwTAP is
     }
 
     function addRewardToken(IERC20 token) external onlyOwner returns (uint256) {
-        require(rewardTokenIndex[token] == 0, "twTap: registered");
-        require(
-            rewardTokens.length + 1 <= maxRewardTokens,
-            "twTap: tokens limit reached"
-        );
+        if (rewardTokenIndex[token] != 0) revert Registered();
+        if (rewardTokens.length + 1 > maxRewardTokens)
+            revert TokenLimitReached();
         rewardTokens.push(token);
 
         uint256 newTokenIndex = rewardTokens.length - 1;
@@ -517,13 +522,12 @@ contract TwTAP is
         uint256 _tokenId
     ) internal view {
         address tokenOwner = ownerOf(_tokenId);
-        require(
-            msg.sender == tokenOwner ||
-                _to == tokenOwner ||
-                isApprovedForAll(tokenOwner, msg.sender) ||
-                getApproved(_tokenId) == msg.sender,
-            "twTAP: cannot claim"
-        );
+        if (
+            msg.sender != tokenOwner &&
+            _to != tokenOwner &&
+            !isApprovedForAll(tokenOwner, msg.sender) &&
+            getApproved(_tokenId) != msg.sender
+        ) revert CannotCalim();
     }
 
     function _claimRewards(uint256 _tokenId, address _to) internal {
@@ -553,10 +557,8 @@ contract TwTAP is
             uint256 len = _rewardTokens.length;
             for (uint256 i; i < len; ) {
                 // Check for duplicates
-                require(
-                    !_existInArray(address(_rewardTokens[i]), _reviewed),
-                    "twTAP: duplicate reward token"
-                );
+                if (_existInArray(address(_rewardTokens[i]), _reviewed))
+                    revert Duplicate();
                 _reviewed[i] = address(_rewardTokens[i]);
 
                 // Get amount and reward token index
@@ -580,7 +582,7 @@ contract TwTAP is
         address _to
     ) internal returns (uint256 releasedAmount) {
         Participation memory position = participants[_tokenId];
-        require(position.expiry <= block.timestamp, "twTAP: Lock not expired");
+        if (position.expiry > block.timestamp) revert LockNotExpired();
         if (position.tapReleased) {
             return 0;
         }

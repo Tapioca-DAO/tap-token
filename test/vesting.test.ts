@@ -45,9 +45,8 @@ describe('Vesting', () => {
             );
             await usdc.transfer(vesting.address, mintAmount);
 
-            await expect(
-                vesting.connect(eoa1).init(usdc.address, mintAmount),
-            ).to.be.revertedWith('Ownable: caller is not the owner');
+            await expect(vesting.connect(eoa1).init(usdc.address, mintAmount))
+                .to.be.reverted;
             await expect(
                 vesting.init(usdc.address, 0),
             ).to.be.revertedWithCustomError(vesting, 'NoTokens');

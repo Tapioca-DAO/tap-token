@@ -1072,3 +1072,105 @@ event Unpaused(address account)
 
 
 
+## Errors
+
+### AdvanceWeekFirst
+
+```solidity
+error AdvanceWeekFirst()
+```
+
+
+
+
+
+
+### CannotCalim
+
+```solidity
+error CannotCalim()
+```
+
+
+
+
+
+
+### Duplicate
+
+```solidity
+error Duplicate()
+```
+
+
+
+
+
+
+### LockNotAWeek
+
+```solidity
+error LockNotAWeek()
+```
+
+
+
+
+
+
+### LockNotExpired
+
+```solidity
+error LockNotExpired()
+```
+
+
+
+
+
+
+### NotAuthorized
+
+```solidity
+error NotAuthorized()
+```
+
+
+
+
+
+
+### NotValid
+
+```solidity
+error NotValid()
+```
+
+
+
+
+
+
+### Registered
+
+```solidity
+error Registered()
+```
+
+
+
+
+
+
+### TokenLimitReached
+
+```solidity
+error TokenLimitReached()
+```
+
+
+
+
+
+
+

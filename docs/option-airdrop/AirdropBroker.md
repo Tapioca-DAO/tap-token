@@ -851,3 +851,182 @@ event Unpaused(address account)
 
 
 
+## Errors
+
+### AlreadyParticipated
+
+```solidity
+error AlreadyParticipated()
+```
+
+
+
+
+
+
+### Ended
+
+```solidity
+error Ended()
+```
+
+
+
+
+
+
+### Failed
+
+```solidity
+error Failed()
+```
+
+
+
+
+
+
+### NotAuthorized
+
+```solidity
+error NotAuthorized()
+```
+
+
+
+
+
+
+### NotEligible
+
+```solidity
+error NotEligible()
+```
+
+
+
+
+
+
+### NotStarted
+
+```solidity
+error NotStarted()
+```
+
+
+
+
+
+
+### NotValid
+
+```solidity
+error NotValid()
+```
+
+
+
+
+
+
+### OptionExpired
+
+```solidity
+error OptionExpired()
+```
+
+
+
+
+
+
+### PaymentAmountNotValid
+
+```solidity
+error PaymentAmountNotValid()
+```
+
+
+
+
+
+
+### PaymentTokenNotValid
+
+```solidity
+error PaymentTokenNotValid()
+```
+
+=====-------======
+
+
+
+
+### PaymentTokenValuationNotValid
+
+```solidity
+error PaymentTokenValuationNotValid()
+```
+
+
+
+
+
+
+### TapAmountNotValid
+
+```solidity
+error TapAmountNotValid()
+```
+
+
+
+
+
+
+### TokenBeneficiaryNotSet
+
+```solidity
+error TokenBeneficiaryNotSet()
+```
+
+
+
+
+
+
+### TooHigh
+
+```solidity
+error TooHigh()
+```
+
+
+
+
+
+
+### TooLow
+
+```solidity
+error TooLow()
+```
+
+
+
+
+
+
+### TooSoon
+
+```solidity
+error TooSoon()
+```
+
+
+
+
+
+
+

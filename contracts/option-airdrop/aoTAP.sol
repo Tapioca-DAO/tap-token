@@ -63,6 +63,10 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
         AirdropTapOption indexed option
     );
 
+    error NotAuthorized();
+    error OnlyBroker();
+    error OnlyOnce();
+
     // =========
     //    READ
     // =========
@@ -97,10 +101,7 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
     // ==========
 
     function setTokenURI(uint256 _tokenId, string calldata _tokenURI) external {
-        require(
-            _isApprovedOrOwner(msg.sender, _tokenId),
-            "AOTAP: only approved or owner"
-        );
+        if (!_isApprovedOrOwner(msg.sender, _tokenId)) revert NotAuthorized();
         tokenURIs[_tokenId] = _tokenURI;
     }
 
@@ -114,7 +115,7 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
         uint128 _discount,
         uint256 _amount
     ) external returns (uint256 tokenId) {
-        require(msg.sender == broker, "AOTAP: only onlyBroker");
+        if (msg.sender != broker) revert OnlyBroker();
         tokenId = ++mintedAOTAP;
         _safeMint(_to, tokenId);
 
@@ -129,10 +130,7 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
     /// @notice burns an AOTAP
     /// @param _tokenId tokenId to burn
     function burn(uint256 _tokenId) external {
-        require(
-            _isApprovedOrOwner(msg.sender, _tokenId),
-            "AOTAP: only approved or owner"
-        );
+        if (!_isApprovedOrOwner(msg.sender, _tokenId)) revert NotAuthorized();
         _burn(_tokenId);
 
         emit Burn(msg.sender, _tokenId, options[_tokenId]);
@@ -140,7 +138,7 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
 
     /// @notice ADB claim
     function brokerClaim() external {
-        require(broker == address(0), "AOTAP: only once");
+        if (broker != address(0)) revert OnlyOnce();
         broker = msg.sender;
     }
 }

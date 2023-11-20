@@ -100,8 +100,26 @@ contract TapiocaOptionBroker is
     /// @notice Total amount of participation per epoch
     mapping(uint256 epoch => mapping(uint256 sglAssetID => int256 netAmount))
         public netDepositedForEpoch;
-
     /// =====-------======
+
+    error NotAuthorized();
+    error NoActiveSingularities();
+    error NoLiquidity();
+    error OptionExpired();
+    error PaymentTokenNotSupported();
+    error OneEpochCooldown();
+    error TooHigh();
+    error TooLong();
+    error TooLow();
+    error DurationTooShort();
+    error PositionNotValid();
+    error LockNotExpired();
+    error TooSoon();
+    error Failed();
+    error TransferFailed();
+    error SingularityInRescueMode();
+    error PaymentTokenValuationNotValid();
+
     constructor(
         address _tOLP,
         address _oTAP,
@@ -204,7 +222,7 @@ contract TapiocaOptionBroker is
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
         LockPosition memory tOLPLockPosition = tOLP.getLock(oTAPPosition.tOLP);
         bool isPositionActive = _isPositionActive(tOLPLockPosition);
-        require(isPositionActive, "tOB: Option expired");
+        if (!isPositionActive) revert OptionExpired();
 
         uint256 cachedEpoch = epoch;
 
@@ -213,14 +231,10 @@ contract TapiocaOptionBroker is
         ];
 
         // Check requirements
-        require(
-            paymentTokenOracle.oracle != IOracle(address(0)),
-            "tOB: Payment token not supported"
-        );
-        require(
-            block.timestamp >= tOLPLockPosition.lockTime + EPOCH_DURATION,
-            "tOB: 1 EPOCH cooldown"
-        ); // Can only exercise after 1 epoch duration
+        if (paymentTokenOracle.oracle == IOracle(address(0)))
+            revert PaymentTokenNotSupported();
+        if (block.timestamp < tOLPLockPosition.lockTime + EPOCH_DURATION)
+            revert OneEpochCooldown(); // Can only exercise after 1 epoch duration
 
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
@@ -230,17 +244,17 @@ contract TapiocaOptionBroker is
         uint256 netAmount = uint256(
             netDepositedForEpoch[cachedEpoch][tOLPLockPosition.sglAssetID]
         );
-        require(netAmount > 0, "tOB: No liquidity");
+        if (netAmount == 0) revert NoLiquidity();
         eligibleTapAmount = muldiv(
             tOLPLockPosition.ybShares,
             gaugeTotalForEpoch,
             netAmount
         );
         eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
-        require(eligibleTapAmount >= _tapAmount, "tOB: Too high");
+        if (eligibleTapAmount < _tapAmount) revert TooHigh();
 
         tapAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
-        require(tapAmount >= 1e18, "tOB: Too low");
+        if (tapAmount < 1e18) revert TooLow();
         // Get TAP valuation
         uint256 otcAmountInUSD = tapAmount * epochTAPValuation; // Divided by TAP decimals
         // Get payment token valuation
@@ -269,19 +283,17 @@ contract TapiocaOptionBroker is
         // Compute option parameters
         LockPosition memory lock = tOLP.getLock(_tOLPTokenID);
         bool isPositionActive = _isPositionActive(lock);
-        require(isPositionActive, "tOB: Option expired");
+        if (!isPositionActive) revert OptionExpired();
 
-        require(lock.lockDuration >= EPOCH_DURATION, "tOB: Duration too short");
+        if (lock.lockDuration < EPOCH_DURATION) revert DurationTooShort();
 
         TWAMLPool memory pool = twAML[lock.sglAssetID];
         if (pool.cumulative == 0) {
             pool.cumulative = EPOCH_DURATION;
         }
 
-        require(
-            tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID),
-            "tOB: Not approved or owner"
-        );
+        if (!tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID))
+            revert NotAuthorized();
 
         // Transfer tOLP position to this contract
         tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
@@ -293,7 +305,7 @@ contract TapiocaOptionBroker is
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Revert if the lock 4x the cumulative
-        require(magnitude < pool.cumulative * 4, "tOB: Too long");
+        if (magnitude >= pool.cumulative * 4) revert TooLong();
 
         bool divergenceForce;
         // Participate in twAMl voting
@@ -366,7 +378,7 @@ contract TapiocaOptionBroker is
     /// @notice Exit a twAML participation and delete the voting power if existing
     /// @param _oTAPTokenID The tokenId of the oTAP position
     function exitPosition(uint256 _oTAPTokenID) external whenNotPaused {
-        require(oTAP.exists(_oTAPTokenID), "tOB: oTAP position does not exist");
+        if (!oTAP.exists(_oTAPTokenID)) revert PositionNotValid();
 
         // Load data
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
@@ -376,10 +388,8 @@ contract TapiocaOptionBroker is
 
         // If SGL is in rescue, bypass the lock expiration
         if (!isSGLInRescueMode) {
-            require(
-                block.timestamp >= lock.lockTime + lock.lockDuration,
-                "tOB: Lock not expired"
-            );
+            if (block.timestamp < lock.lockTime + lock.lockDuration)
+                revert LockNotExpired();
         }
 
         Participation memory participation = participants[oTAPPosition.tOLP];
@@ -438,7 +448,7 @@ contract TapiocaOptionBroker is
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
         LockPosition memory tOLPLockPosition = tOLP.getLock(oTAPPosition.tOLP);
         bool isPositionActive = _isPositionActive(tOLPLockPosition);
-        require(isPositionActive, "tOB: Option expired");
+        if (!isPositionActive) revert OptionExpired();
 
         uint256 cachedEpoch = epoch;
 
@@ -447,18 +457,12 @@ contract TapiocaOptionBroker is
         ];
 
         // Check requirements
-        require(
-            paymentTokenOracle.oracle != IOracle(address(0)),
-            "tOB: Payment token not supported"
-        );
-        require(
-            oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID),
-            "tOB: Not approved or owner"
-        );
-        require(
-            block.timestamp >= tOLPLockPosition.lockTime + EPOCH_DURATION,
-            "tOB: 1 EPOCH cooldown"
-        ); // Can only exercise after 1 epoch duration
+        if (paymentTokenOracle.oracle == IOracle(address(0)))
+            revert PaymentTokenNotSupported();
+        if (!oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID))
+            revert NotAuthorized();
+        if (block.timestamp < tOLPLockPosition.lockTime + EPOCH_DURATION)
+            revert OneEpochCooldown(); // Can only exercise after 1 epoch duration
 
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][
@@ -467,17 +471,17 @@ contract TapiocaOptionBroker is
         uint256 netAmount = uint256(
             netDepositedForEpoch[cachedEpoch][tOLPLockPosition.sglAssetID]
         );
-        require(netAmount > 0, "tOB: No liquidity");
+        if (netAmount <= 0) revert NoLiquidity();
         uint256 eligibleTapAmount = muldiv(
             tOLPLockPosition.ybShares,
             gaugeTotalForEpoch,
             netAmount
         );
         eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
-        require(eligibleTapAmount >= _tapAmount, "tOB: Too high");
+        if (eligibleTapAmount < _tapAmount) revert TooHigh();
 
         uint256 chosenAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
-        require(chosenAmount >= 1e18, "tOB: Too low");
+        if (chosenAmount < 1e18) revert TooLow();
         oTAPCalls[_oTAPTokenID][cachedEpoch] += chosenAmount; // Adds up exercised amount to current epoch
 
         // Finalize the deal
@@ -500,10 +504,10 @@ contract TapiocaOptionBroker is
     /// @notice Start a new epoch, extract TAP from the TapOFT contract,
     ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
-        require(_timestampToWeek(block.timestamp) > epoch, "tOB: too soon");
+        if (_timestampToWeek(block.timestamp) <= epoch) revert TooSoon();
 
         uint256[] memory singularities = tOLP.getSingularities();
-        require(singularities.length != 0, "tOB: No active singularities");
+        if (singularities.length == 0) revert NoActiveSingularities();
 
         epoch++;
 
@@ -514,7 +518,7 @@ contract TapiocaOptionBroker is
         // Get epoch TAP valuation
         bool success;
         (success, epochTAPValuation) = tapOracle.get(tapOracleData);
-        require(success, "tOB: oracle call failed");
+        if (!success) revert Failed();
         emit NewEpoch(epoch, epochTAP, epochTAPValuation);
     }
 
@@ -573,10 +577,8 @@ contract TapiocaOptionBroker is
         address[] calldata _paymentTokens
     ) external onlyOwner nonReentrant {
         address _paymentTokenBeneficiary = paymentTokenBeneficiary;
-        require(
-            _paymentTokenBeneficiary != address(0),
-            "tOB: Payment token beneficiary not set"
-        );
+        if (_paymentTokenBeneficiary == address(0))
+            revert PaymentTokenNotSupported();
         uint256 len = _paymentTokens.length;
 
         unchecked {
@@ -618,8 +620,8 @@ contract TapiocaOptionBroker is
     function _isPositionActive(
         LockPosition memory _lock
     ) internal view returns (bool isPositionActive) {
-        require(_lock.lockTime > 0, "tOB: Position does not exist");
-        require(!_isSGLInRescueMode(_lock), "tOB: Singularity in rescue mode");
+        if (_lock.lockTime <= 0) revert PositionNotValid();
+        if (_isSGLInRescueMode(_lock)) revert SingularityInRescueMode();
 
         uint256 expiryWeek = _timestampToWeek(
             _lock.lockTime + _lock.lockDuration
@@ -646,7 +648,7 @@ contract TapiocaOptionBroker is
         (bool success, uint256 paymentTokenValuation) = _paymentTokenOracle
             .oracle
             .get(_paymentTokenOracle.oracleData);
-        require(success, "tOB: oracle call failed");
+        if (!success) revert Failed();
 
         // Calculate payment amount and initiate the transfers
         uint256 discountedPaymentAmount = _getDiscountedPaymentAmount(
@@ -663,10 +665,8 @@ contract TapiocaOptionBroker is
             discountedPaymentAmount
         );
         uint256 balAfter = _paymentToken.balanceOf(address(this));
-        require(
-            balAfter - balBefore == discountedPaymentAmount,
-            "tOB: Payment token transfer failed"
-        );
+        if (balAfter - balBefore != discountedPaymentAmount)
+            revert TransferFailed();
 
         tapOFT.extractTAP(msg.sender, tapAmount);
     }
@@ -683,10 +683,7 @@ contract TapiocaOptionBroker is
         uint256 _discount,
         uint256 _paymentTokenDecimals
     ) internal pure returns (uint256 paymentAmount) {
-        require(
-            _paymentTokenValuation > 0,
-            "tOB: paymentTokenValuation not valid"
-        );
+        if (_paymentTokenValuation <= 0) revert PaymentTokenValuationNotValid();
 
         uint256 discountedOTCAmountInUSD = _otcAmountInUSD -
             muldiv(_otcAmountInUSD, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage

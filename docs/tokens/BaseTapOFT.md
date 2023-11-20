@@ -1411,3 +1411,50 @@ event Transfer(address indexed from, address indexed to, uint256 value)
 
 
 
+## Errors
+
+### Failed
+
+```solidity
+error Failed()
+```
+
+
+
+
+
+
+### LengthMismatch
+
+```solidity
+error LengthMismatch()
+```
+
+
+
+
+
+
+### NotAuthorized
+
+```solidity
+error NotAuthorized()
+```
+
+
+
+
+
+
+### TooSmall
+
+```solidity
+error TooSmall()
+```
+
+
+
+
+
+
+

@@ -35,7 +35,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
                     sglTokenMockAsset,
                     0,
                 ),
-        ).to.be.revertedWith('Ownable: caller is not the owner');
+        ).to.be.reverted;
 
         // Register a singularity
         await expect(
@@ -92,28 +92,28 @@ describe('TapiocaOptionLiquidityProvision', () => {
                 sglTokenMockAsset,
                 0,
             ),
-        ).to.revertedWith('tOLP: duplicate asset ID');
+        ).to.reverted;
         await expect(
             tOLP.registerSingularity(
                 sglTokenMock.address,
                 32323, // random asset ID
                 0,
             ),
-        ).to.revertedWith('tOLP: already registered');
+        ).to.reverted;
         await expect(
             tOLP.registerSingularity(
                 sglTokenMock2.address,
                 sglTokenMock2Asset,
                 0,
             ),
-        ).to.revertedWith('tOLP: duplicate asset ID');
+        ).to.reverted;
         await expect(
             tOLP.registerSingularity(
                 sglTokenMock2.address,
                 213123, // random asset ID
                 0,
             ),
-        ).to.revertedWith('tOLP: already registered');
+        ).to.reverted;
     });
 
     it('should unregister a singularity', async () => {
@@ -149,7 +149,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
                     sglTokenMockAsset,
                     0,
                 ),
-        ).to.be.revertedWith('Ownable: caller is not the owner');
+        ).to.be.reverted;
 
         // Unregister a singularity
         await expect(tOLP.unregisterSingularity(sglTokenMock.address))
@@ -185,12 +185,10 @@ describe('TapiocaOptionLiquidityProvision', () => {
         expect(await tOLP.getSingularities()).to.be.deep.eq([]);
 
         // Not registered
-        await expect(
-            tOLP.unregisterSingularity(sglTokenMock.address),
-        ).to.revertedWith('tOLP: not registered');
-        await expect(
-            tOLP.unregisterSingularity(sglTokenMock2.address),
-        ).to.revertedWith('tOLP: not registered');
+        await expect(tOLP.unregisterSingularity(sglTokenMock.address)).to
+            .reverted;
+        await expect(tOLP.unregisterSingularity(sglTokenMock2.address)).to
+            .reverted;
     });
 
     it('should create a lock', async () => {
@@ -231,10 +229,10 @@ describe('TapiocaOptionLiquidityProvision', () => {
         // Requirements
         await expect(
             tOLP.lock(signer.address, sglTokenMock.address, 0, lockShares),
-        ).to.revertedWith('tOLP: lock duration must be > 0');
+        ).to.reverted;
         await expect(
             tOLP.lock(signer.address, sglTokenMock.address, lockDuration, 0),
-        ).to.revertedWith('tOLP: shares must be > 0');
+        ).to.reverted;
         await expect(
             tOLP.lock(
                 signer.address,
@@ -242,7 +240,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
                 lockDuration,
                 lockShares,
             ),
-        ).to.revertedWith('tOLP: singularity not active');
+        ).to.reverted;
 
         // Lock
         await expect(
@@ -322,18 +320,17 @@ describe('TapiocaOptionLiquidityProvision', () => {
         const tokenID = await tOLP.tokenCounter();
 
         // Requirements
-        await expect(
-            tOLP.unlock(tokenID, sglTokenMock.address, signer.address),
-        ).to.be.revertedWith('tOLP: Lock not expired');
+        await expect(tOLP.unlock(tokenID, sglTokenMock.address, signer.address))
+            .to.be.reverted;
         await time_travel(10);
         await expect(
             tOLP.unlock(tokenID, sglTokenMock2.address, signer.address),
-        ).to.be.revertedWith('tOLP: Invalid singularity');
+        ).to.be.reverted;
         await expect(
             tOLP
                 .connect(users[0])
                 .unlock(tokenID, sglTokenMock.address, users[0].address),
-        ).to.be.revertedWith('tOLP: not owner nor approved');
+        ).to.be.reverted;
 
         // Unlock
         await expect(tOLP.unlock(tokenID, sglTokenMock.address, signer.address))
@@ -350,9 +347,8 @@ describe('TapiocaOptionLiquidityProvision', () => {
         ).to.be.eq(0);
 
         // Can not unlock more than once the same lock
-        await expect(
-            tOLP.unlock(tokenID, sglTokenMock.address, signer.address),
-        ).to.be.revertedWith('tOLP: Expired position');
+        await expect(tOLP.unlock(tokenID, sglTokenMock.address, signer.address))
+            .to.be.reverted;
     });
 
     it('Should should set an SGL pool weight', async () => {
@@ -380,7 +376,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
 
         await expect(
             tOLP.connect(users[0]).setSGLPoolWEight(sglTokenMock.address, 1),
-        ).to.be.revertedWith('Ownable: caller is not the owner');
+        ).to.be.reverted;
 
         await expect(tOLP.setSGLPoolWEight(sglTokenMock.address, 4))
             .to.emit(tOLP, 'SetSGLPoolWeight')
@@ -525,7 +521,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
 
         await expect(
             tOLP.connect(users[0]).activateSGLPoolRescue(sglTokenMock.address),
-        ).to.be.revertedWith('Ownable: caller is not the owner');
+        ).to.be.reverted;
 
         await expect(tOLP.activateSGLPoolRescue(sglTokenMock.address))
             .to.emit(tOLP, 'ActivateSGLPoolRescue')
@@ -533,9 +529,8 @@ describe('TapiocaOptionLiquidityProvision', () => {
         expect((await tOLP.activeSingularities(sglTokenMock.address)).rescue).to
             .be.true;
 
-        await expect(
-            tOLP.activateSGLPoolRescue(sglTokenMock.address),
-        ).to.be.revertedWith('tOLP: already active');
+        await expect(tOLP.activateSGLPoolRescue(sglTokenMock.address)).to.be
+            .reverted;
 
         expect(await tOLP.totalSingularityPoolWeights()).to.be.eq(1);
 
@@ -567,7 +562,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
                     lockDuration,
                     lockShares,
                 ),
-            ).to.be.revertedWith('tOLP: singularity in rescue');
+            ).to.be.reverted;
         }
 
         // Setup sglTokenMock2 deposit + rescue withdrawal

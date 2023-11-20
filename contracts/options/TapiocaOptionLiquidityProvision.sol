@@ -64,6 +64,20 @@ contract TapiocaOptionLiquidityProvision is
 
     uint256 public totalSingularityPoolWeights; // Total weight of all active singularity pools
 
+    error NotRegistered();
+    error InvalidSingularity();
+    error LockDurationNotValid();
+    error SharesNotValid();
+    error SingularityInRescueMode();
+    error SingularityNotActive();
+    error PositionExpired();
+    error LockNotExpired();
+    error AlreadyActive();
+    error AssetIdNotValid();
+    error DuplicateAssetId();
+    error AlreadyRegistered();
+    error NotAuthorized();
+
     constructor(
         address _yieldBox,
         address _owner
@@ -185,14 +199,14 @@ contract TapiocaOptionLiquidityProvision is
         uint128 _lockDuration,
         uint128 _ybShares
     ) external returns (uint256 tokenId) {
-        require(_lockDuration != 0, "tOLP: lock duration must be > 0");
-        require(_ybShares != 0, "tOLP: shares must be > 0");
+        if (_lockDuration == 0) revert LockDurationNotValid();
+        if (_ybShares == 0) revert SharesNotValid();
 
         SingularityPool memory sgl = activeSingularities[_singularity];
-        require(!sgl.rescue, "tOLP: singularity in rescue");
+        if (sgl.rescue) revert SingularityInRescueMode();
 
         uint256 sglAssetID = sgl.sglAssetID;
-        require(sglAssetID != 0, "tOLP: singularity not active");
+        if (sglAssetID == 0) revert SingularityNotActive();
 
         // Transfer the Singularity position to this contract
         yieldBox.transfer(msg.sender, address(this), sglAssetID, _ybShares);
@@ -221,7 +235,7 @@ contract TapiocaOptionLiquidityProvision is
         IERC20 _singularity,
         address _to
     ) external {
-        require(_exists(_tokenId), "tOLP: Expired position");
+        if (!_exists(_tokenId)) revert PositionExpired();
 
         LockPosition memory lockPosition = lockPositions[_tokenId];
         SingularityPool memory sgl = activeSingularities[_singularity];
@@ -229,21 +243,15 @@ contract TapiocaOptionLiquidityProvision is
         // If the singularity is in rescue, the lock can be unlocked at any time
         if (!sgl.rescue) {
             // If not, the lock must be expired
-            require(
-                block.timestamp >=
-                    lockPosition.lockTime + lockPosition.lockDuration,
-                "tOLP: Lock not expired"
-            );
+            if (
+                block.timestamp <
+                lockPosition.lockTime + lockPosition.lockDuration
+            ) revert LockNotExpired();
         }
-        require(
-            sgl.sglAssetID == lockPosition.sglAssetID,
-            "tOLP: Invalid singularity"
-        );
+        if (sgl.sglAssetID != lockPosition.sglAssetID)
+            revert InvalidSingularity();
 
-        require(
-            _isApprovedOrOwner(msg.sender, _tokenId),
-            "tOLP: not owner nor approved"
-        );
+        if (!_isApprovedOrOwner(msg.sender, _tokenId)) revert NotAuthorized();
 
         _burn(_tokenId);
         delete lockPositions[_tokenId];
@@ -272,10 +280,8 @@ contract TapiocaOptionLiquidityProvision is
         IERC20 singularity,
         uint256 weight
     ) external onlyOwner updateTotalSGLPoolWeights {
-        require(
-            activeSingularities[singularity].sglAssetID > 0,
-            "tOLP: not registered"
-        );
+        if (activeSingularities[singularity].sglAssetID == 0)
+            revert NotRegistered();
         activeSingularities[singularity].poolWeight = weight;
 
         emit SetSGLPoolWeight(address(singularity), weight);
@@ -287,8 +293,8 @@ contract TapiocaOptionLiquidityProvision is
         IERC20 singularity
     ) external onlyOwner updateTotalSGLPoolWeights {
         SingularityPool memory sgl = activeSingularities[singularity];
-        require(sgl.sglAssetID > 0, "tOLP: not registered");
-        require(!sgl.rescue, "tOLP: already active");
+        if (sgl.sglAssetID == 0) revert NotRegistered();
+        if (sgl.rescue) revert AlreadyActive();
 
         activeSingularities[singularity].rescue = true;
 
@@ -304,15 +310,11 @@ contract TapiocaOptionLiquidityProvision is
         uint256 assetID,
         uint256 weight
     ) external onlyOwner updateTotalSGLPoolWeights {
-        require(assetID != 0, "tOLP: invalid asset ID");
-        require(
-            sglAssetIDToAddress[assetID] == IERC20(address(0)),
-            "tOLP: duplicate asset ID"
-        );
-        require(
-            activeSingularities[singularity].sglAssetID == 0,
-            "tOLP: already registered"
-        );
+        if (assetID == 0) revert AssetIdNotValid();
+        if (sglAssetIDToAddress[assetID] != IERC20(address(0)))
+            revert DuplicateAssetId();
+        if (activeSingularities[singularity].sglAssetID != 0)
+            revert AlreadyRegistered();
 
         activeSingularities[singularity].sglAssetID = assetID;
         activeSingularities[singularity].poolWeight = weight > 0 ? weight : 1;
@@ -328,7 +330,7 @@ contract TapiocaOptionLiquidityProvision is
         IERC20 singularity
     ) external onlyOwner updateTotalSGLPoolWeights {
         uint256 sglAssetID = activeSingularities[singularity].sglAssetID;
-        require(sglAssetID != 0, "tOLP: not registered");
+        if (sglAssetID == 0) revert NotRegistered();
 
         unchecked {
             uint256[] memory _singularities = singularities;

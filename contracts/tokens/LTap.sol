@@ -28,6 +28,9 @@ contract LTap is BoringOwnable, ERC20Permit {
     uint256 public lockedUntil;
     uint256 public immutable maxLockedUntil;
 
+    error StillLocked();
+    error TooLate();
+
     /// @notice Creates a new LTAP token
     /// @dev LTAP tokens are minted by depositing TAP
     /// @param _tapToken Address of the TAP token
@@ -47,14 +50,14 @@ contract LTap is BoringOwnable, ERC20Permit {
     }
 
     function redeem() external {
-        require(block.timestamp > lockedUntil, "Still locked");
+        if (block.timestamp <= lockedUntil) revert StillLocked();
         uint256 amount = balanceOf(msg.sender);
         _burn(msg.sender, amount);
         tapToken.safeTransfer(msg.sender, amount);
     }
 
     function setLockedUntil(uint256 _lockedUntil) external onlyOwner {
-        require(_lockedUntil <= maxLockedUntil, "Too late");
+        if (_lockedUntil > maxLockedUntil) revert TooLate();
         lockedUntil = _lockedUntil;
     }
 }

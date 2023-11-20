@@ -1008,3 +1008,149 @@ event UpdateTotalSingularityPoolWeights(uint256 totalSingularityPoolWeights)
 
 
 
+## Errors
+
+### AlreadyActive
+
+```solidity
+error AlreadyActive()
+```
+
+
+
+
+
+
+### AlreadyRegistered
+
+```solidity
+error AlreadyRegistered()
+```
+
+
+
+
+
+
+### AssetIdNotValid
+
+```solidity
+error AssetIdNotValid()
+```
+
+
+
+
+
+
+### DuplicateAssetId
+
+```solidity
+error DuplicateAssetId()
+```
+
+
+
+
+
+
+### InvalidSingularity
+
+```solidity
+error InvalidSingularity()
+```
+
+
+
+
+
+
+### LockDurationNotValid
+
+```solidity
+error LockDurationNotValid()
+```
+
+
+
+
+
+
+### LockNotExpired
+
+```solidity
+error LockNotExpired()
+```
+
+
+
+
+
+
+### NotAuthorized
+
+```solidity
+error NotAuthorized()
+```
+
+
+
+
+
+
+### NotRegistered
+
+```solidity
+error NotRegistered()
+```
+
+
+
+
+
+
+### PositionExpired
+
+```solidity
+error PositionExpired()
+```
+
+
+
+
+
+
+### SharesNotValid
+
+```solidity
+error SharesNotValid()
+```
+
+
+
+
+
+
+### SingularityInRescueMode
+
+```solidity
+error SingularityInRescueMode()
+```
+
+
+
+
+
+
+### SingularityNotActive
+
+```solidity
+error SingularityNotActive()
+```
+
+
+
+
+
+
+

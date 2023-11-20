@@ -111,6 +111,24 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     uint256 public EPOCH_DURATION = 2 days; // Becomes 7 days at the start of the phase 4
 
     /// =====-------======
+
+    error PaymentTokenNotValid();
+    error OptionExpired();
+    error TooHigh();
+    error TooLow();
+    error NotStarted();
+    error Ended();
+    error NotAuthorized();
+    error TooSoon();
+    error Failed();
+    error NotValid();
+    error TokenBeneficiaryNotSet();
+    error NotEligible();
+    error AlreadyParticipated();
+    error PaymentAmountNotValid();
+    error TapAmountNotValid();
+    error PaymentTokenValuationNotValid();
+
     constructor(
         address _aoTAP,
         address payable _tapOFT,
@@ -171,7 +189,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(
             _aoTAPTokenID
         );
-        require(aoTapOption.expiry >= block.timestamp, "adb: Option expired");
+        if (aoTapOption.expiry < block.timestamp) revert OptionExpired();
 
         uint256 cachedEpoch = epoch;
 
@@ -180,17 +198,15 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         ];
 
         // Check requirements
-        require(
-            paymentTokenOracle.oracle != IOracle(address(0)),
-            "adb: Payment token not supported"
-        );
+        if (paymentTokenOracle.oracle == IOracle(address(0)))
+            revert PaymentTokenNotValid();
 
         eligibleTapAmount = aoTapOption.amount;
         eligibleTapAmount -= aoTAPCalls[_aoTAPTokenID][cachedEpoch]; // Subtract already exercised amount
-        require(eligibleTapAmount >= _tapAmount, "adb: Too high");
+        if (eligibleTapAmount < _tapAmount) revert TooHigh();
 
         tapAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
-        require(tapAmount >= 1e18, "adb: Too low");
+        if (tapAmount < 1e18) revert TooLow();
         // Get TAP valuation
         uint256 otcAmountInUSD = tapAmount * epochTAPValuation; // Divided by TAP decimals
         // Get payment token valuation
@@ -216,8 +232,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         bytes calldata _data
     ) external whenNotPaused returns (uint256 aoTAPTokenID) {
         uint256 cachedEpoch = epoch;
-        require(cachedEpoch != 0, "adb: Airdrop not started");
-        require(cachedEpoch <= 4, "adb: Airdrop ended");
+        if (cachedEpoch == 0) revert NotStarted();
+        if (cachedEpoch > 4) revert Ended();
 
         // Phase 1
         if (cachedEpoch == 1) {
@@ -246,7 +262,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(
             _aoTAPTokenID
         );
-        require(aoTapOption.expiry >= block.timestamp, "adb: Option expired");
+        if (aoTapOption.expiry < block.timestamp) revert OptionExpired();
 
         uint256 cachedEpoch = epoch;
 
@@ -255,23 +271,19 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         ];
 
         // Check requirements
-        require(
-            paymentTokenOracle.oracle != IOracle(address(0)),
-            "adb: Payment token not supported"
-        );
-        require(
-            aoTAP.isApprovedOrOwner(msg.sender, _aoTAPTokenID),
-            "adb: Not approved or owner"
-        );
+        if (paymentTokenOracle.oracle == IOracle(address(0)))
+            revert PaymentTokenNotValid();
+        if (!aoTAP.isApprovedOrOwner(msg.sender, _aoTAPTokenID))
+            revert NotAuthorized();
 
         // Get eligible OTC amount
 
         uint256 eligibleTapAmount = aoTapOption.amount;
         eligibleTapAmount -= aoTAPCalls[_aoTAPTokenID][cachedEpoch]; // Subtract already exercised amount
-        require(eligibleTapAmount >= _tapAmount, "adb: Too high");
+        if (eligibleTapAmount < _tapAmount) revert TooHigh();
 
         uint256 chosenAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
-        require(chosenAmount >= 1e18, "adb: Too low");
+        if (chosenAmount < 1e18) revert TooLow();
         aoTAPCalls[_aoTAPTokenID][cachedEpoch] += chosenAmount; // Adds up exercised amount to current epoch
 
         // Finalize the deal
@@ -294,10 +306,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @notice Start a new epoch, extract TAP from the TapOFT contract,
     ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
-        require(
-            block.timestamp >= lastEpochUpdate + EPOCH_DURATION,
-            "adb: too soon"
-        );
+        if (block.timestamp < lastEpochUpdate + EPOCH_DURATION)
+            revert TooSoon();
 
         // Update epoch info
         lastEpochUpdate = uint64(block.timestamp);
@@ -312,7 +322,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         (bool success, uint256 _epochTAPValuation) = tapOracle.get(
             tapOracleData
         );
-        require(success, "adb: oracle call failed");
+        if (!success) revert Failed();
         epochTAPValuation = uint128(_epochTAPValuation);
         emit NewEpoch(epoch, epochTAPValuation);
     }
@@ -350,7 +360,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         address[] calldata _users,
         uint256[] calldata _amounts
     ) external onlyOwner {
-        require(_users.length == _amounts.length, "adb: invalid input");
+        if (_users.length != _amounts.length) revert NotValid();
 
         if (_phase == 1) {
             for (uint256 i; i < _users.length; i++) {
@@ -389,10 +399,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     function collectPaymentTokens(
         address[] calldata _paymentTokens
     ) external onlyOwner nonReentrant {
-        require(
-            paymentTokenBeneficiary != address(0),
-            "adb: Payment token beneficiary not set"
-        );
+        if (paymentTokenBeneficiary == address(0))
+            revert TokenBeneficiaryNotSet();
         uint256 len = _paymentTokens.length;
 
         unchecked {
@@ -420,7 +428,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @notice Participate in phase 1 of the Airdrop. LBP users are given aoTAP pro-rata.
     function _participatePhase1() internal returns (uint256 oTAPTokenID) {
         uint256 _eligibleAmount = phase1Users[msg.sender];
-        require(_eligibleAmount != 0, "adb: Not eligible");
+        if (_eligibleAmount == 0) revert NotEligible();
 
         // Close eligibility
         phase1Users[msg.sender] = 0;
@@ -447,16 +455,12 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         );
 
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
-        require(
-            MerkleProof.verify(_merkleProof, phase2MerkleRoots[_role], leaf),
-            "adb: Not eligible"
-        );
+        if (!MerkleProof.verify(_merkleProof, phase2MerkleRoots[_role], leaf))
+            revert NotEligible();
 
         uint256 subPhase = 20 + _role;
-        require(
-            userParticipation[msg.sender][subPhase] == false,
-            "adb: Already participated"
-        );
+        if (userParticipation[msg.sender][subPhase])
+            revert AlreadyParticipated();
         // Close eligibility
         userParticipation[msg.sender][subPhase] = true;
 
@@ -475,12 +479,10 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     ) internal returns (uint256 oTAPTokenID) {
         uint256 _tokenID = abi.decode(_data, (uint256));
 
-        require(PCNFT.ownerOf(_tokenID) == msg.sender, "adb: Not eligible");
+        if (PCNFT.ownerOf(_tokenID) != msg.sender) revert NotEligible();
         address tokenIDToAddress = address(uint160(_tokenID));
-        require(
-            userParticipation[tokenIDToAddress][3] == false,
-            "adb: Already participated"
-        );
+        if (userParticipation[tokenIDToAddress][3])
+            revert AlreadyParticipated();
         // Close eligibility
         // To avoid a potential attack vector, we cast token ID to an address instead of using _to,
         // no conflict possible, tokenID goes from 0 ... 714.
@@ -495,7 +497,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @notice Participate in phase 4 of the Airdrop. twTAP and Cassava guild's role are given TAP pro-rata.
     function _participatePhase4() internal returns (uint256 oTAPTokenID) {
         uint256 _eligibleAmount = phase4Users[msg.sender];
-        require(_eligibleAmount > 0, "adb: Not eligible");
+        if (_eligibleAmount <= 0) revert NotEligible();
 
         // Close eligibility
         phase4Users[msg.sender] = 0;
@@ -528,7 +530,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         (bool success, uint256 paymentTokenValuation) = _paymentTokenOracle
             .oracle
             .get(_paymentTokenOracle.oracleData);
-        require(success, "adb: oracle call failed");
+        if (!success) revert Failed();
 
         // Calculate payment amount and initiate the transfers
         uint256 discountedPaymentAmount = _getDiscountedPaymentAmount(
@@ -537,7 +539,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
             discount,
             _paymentToken.decimals()
         );
-        require(discountedPaymentAmount > 0, "adb: payment amount is 0");
+        if (discountedPaymentAmount == 0) revert PaymentAmountNotValid();
 
         uint256 balBefore = _paymentToken.balanceOf(address(this));
         IERC20(address(_paymentToken)).safeTransferFrom(
@@ -546,12 +548,9 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
             discountedPaymentAmount
         );
         uint256 balAfter = _paymentToken.balanceOf(address(this));
-        require(
-            balAfter - balBefore == discountedPaymentAmount,
-            "adb: payment token transfer failed"
-        );
+        if (balAfter - balBefore != discountedPaymentAmount) revert Failed();
 
-        require(tapAmount > 0, "adb: tapAmount is 0");
+        if (tapAmount == 0) revert TapAmountNotValid();
         tapOFT.transfer(msg.sender, tapAmount);
     }
 
@@ -567,10 +566,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         uint256 _discount,
         uint256 _paymentTokenDecimals
     ) internal pure returns (uint256 paymentAmount) {
-        require(
-            _paymentTokenValuation > 0,
-            "adb: paymentTokenValuation not valid"
-        );
+        if (_paymentTokenValuation == 0) revert PaymentTokenValuationNotValid();
         // Calculate payment amount
         uint256 rawPaymentAmount = _otcAmountInUSD / _paymentTokenValuation;
         paymentAmount =

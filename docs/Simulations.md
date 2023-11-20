@@ -61,7 +61,7 @@ function computeCumulative(uint256 weight, uint256 cumulative, uint256 am) exter
 ### test
 
 ```solidity
-function test() external nonpayable
+function test() external pure
 ```
 
 

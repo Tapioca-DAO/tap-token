@@ -3,7 +3,7 @@
         "4002": [
             {
                 "name": "TapOFT",
-                "address": "0xD55af3ea41Cfb74eAAc23eB37D14c9B4DA8555BD",
+                "address": "0x00b5A33ddcfD177E10D778233e011fE6D0947173",
                 "meta": {
                     "args": [
                         "0x7dcAD72640F835B0FA36EFD3D6d3ec902C7E5acf",
@@ -16,13 +16,13 @@
                         "421613",
                         "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
                     ],
-                    "salt": "0xdce184e81888dd9488ff72f563b1a3873439b286bc84c758a5ea78d1e45ffed6",
+                    "salt": "0xcf48df21051ea776503a57f479f705f41d15f4250550d3c26cbb2182420c25f0",
                     "create2": true
                 }
             },
             {
                 "name": "TapiocaDeployer",
-                "address": "0xDD8eB183813e66E4A0EB9C865e83bE56FF41978d",
+                "address": "0x1AbD43eb0B45c5448c44863a508dcE6196A795B2",
                 "meta": {}
             }
         ],
@@ -142,7 +142,7 @@
             },
             {
                 "name": "TapOFT",
-                "address": "0x97f3E88DA4d26a67cb8415690E07d082652d3841",
+                "address": "0xf35877aeFa96E590a570100841eE5D0EF0eB49fF",
                 "meta": {
                     "args": [
                         "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
@@ -155,13 +155,13 @@
                         "421613",
                         "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
                     ],
-                    "salt": "0x7429ac6c71d20e4e6c363714146ce197bbaf033862c13cf1bd2a2086f7bddd79",
+                    "salt": "0xc6baa4b4ac2e4a3a6ed66d75598f691274c036fbd86ef736bf6e74883d4361f2",
                     "create2": true
                 }
             },
             {
                 "name": "TapiocaDeployer",
-                "address": "0x239B5C5Eb407789a2C27fBecAB63b6d799180C95",
+                "address": "0x3C6d5f6A63422a0376359369d505B3dE7B2E3E73",
                 "meta": {}
             }
         ]
