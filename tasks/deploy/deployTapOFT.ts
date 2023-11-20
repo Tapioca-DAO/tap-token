@@ -18,17 +18,19 @@ export const deployTapOFT__task = async (
     const chainInfo = hre.SDK.utils.getChainBy(
         'chainId',
         await hre.getChainId(),
-    );
+    )!;
 
-    const tapOft = await buildTapOFT(hre, [
-        chainInfo?.address,
-        TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]?.teamAddress, //contributor address
-        TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]
-            ?.earlySupportersAddress,
-        TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]?.supportersAddress,
-        TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]?.lbpAddress,
-        TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]?.daoAddress,
-        TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]?.airdropAddress,
+    const lzEndpoint = chainInfo.address;
+    const chainInfoAddresses =
+        TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]!;
+    const tapOft = await buildTapOFT(hre, 'TapOFT', [
+        lzEndpoint,
+        chainInfoAddresses.teamAddress, //contributor address
+        chainInfoAddresses.earlySupportersAddress,
+        chainInfoAddresses.supportersAddress,
+        chainInfoAddresses.lbpAddress,
+        chainInfoAddresses.daoAddress,
+        chainInfoAddresses.airdropAddress,
         EChainID.ARBITRUM_GOERLI, //governance chain
         signer.address,
     ]);

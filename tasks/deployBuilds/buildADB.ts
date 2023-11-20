@@ -1,18 +1,18 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
-import { TwTAP__factory } from '../../typechain';
 import { IDependentOn } from '../../gitsub_tapioca-sdk/src/ethers/hardhat/DeployerVM';
+import { AirdropBroker__factory } from '../../typechain';
 
-export const buildTwTap = async (
+export const buildADB = async (
     hre: HardhatRuntimeEnvironment,
-    args: Parameters<TwTAP__factory['deploy']>,
+    deploymentName: string,
+    args: Parameters<AirdropBroker__factory['deploy']>,
     dependsOn: IDependentOn[],
-): Promise<IDeployerVMAdd<TwTAP__factory>> => {
-    const deploymentName = 'TwTAP';
+): Promise<IDeployerVMAdd<AirdropBroker__factory>> => {
     return {
         contract: (await hre.ethers.getContractFactory(
             deploymentName,
-        )) as TwTAP__factory,
+        )) as AirdropBroker__factory,
         deploymentName,
         args,
         dependsOn,

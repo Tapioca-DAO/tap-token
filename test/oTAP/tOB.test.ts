@@ -2213,9 +2213,8 @@ describe('TapiocaOptionBroker', () => {
         // Can't lock in a rescue
         snapshot = await takeSnapshot();
         await tOLP.activateSGLPoolRescue(sglTokenMock.address);
-        await expect(
-            tOB.connect(users[1]).participate(tOLPTokenID),
-        ).to.be.rejected;
+        await expect(tOB.connect(users[1]).participate(tOLPTokenID)).to.be
+            .rejected;
         snapshot.restore();
 
         // Can unlock after a rescue

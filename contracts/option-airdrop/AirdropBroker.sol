@@ -88,7 +88,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     ///      Phase 2
     /// =====-------======
 
-    // [OG Pearls, Sushi Frens, Tapiocans, Oysters, Cassava]
+    // [OG Pearls, Tapiocans, Oysters, Cassava]
     bytes32[4] public phase2MerkleRoots; // merkle root of phase 2 airdrop
     uint8[4] public PHASE_2_AMOUNT_PER_USER = [200, 190, 200, 190];
     uint8[4] public PHASE_2_DISCOUNT_PER_USER = [50, 40, 40, 33];
@@ -108,7 +108,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     mapping(address => uint256) public phase4Users;
     uint256 public constant PHASE_4_DISCOUNT = 330_000; //33 * 1e4;
 
-    uint256 public constant EPOCH_DURATION = 2 days;
+    uint256 public EPOCH_DURATION = 2 days; // Becomes 7 days at the start of the phase 4
 
     /// =====-------======
 
@@ -313,6 +313,11 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         lastEpochUpdate = uint64(block.timestamp);
         epoch++;
 
+        // At epoch 4, change the epoch duration to 7 days
+        if (epoch == 4) {
+            EPOCH_DURATION = 7 days;
+        }
+
         // Get epoch TAP valuation
         (bool success, uint256 _epochTAPValuation) = tapOracle.get(
             tapOracleData
@@ -407,6 +412,13 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
                 );
             }
         }
+    }
+
+    /// @notice Recover the unclaimed TAP from the contract.
+    /// Should occur after the end of the airdrop, which is 8 epochs, or 41 days long.
+    function daoRecoverTAP() external onlyOwner {
+        require(epoch == 9, "adb: too soon");
+        tapOFT.transfer(msg.sender, tapOFT.balanceOf(address(this)));
     }
 
     // ============

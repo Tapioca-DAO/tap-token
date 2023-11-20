@@ -234,6 +234,17 @@ Collect the payment tokens from the OTC deals
 |---|---|---|
 | _paymentTokens | address[] | The payment tokens to collect |
 
+### daoRecoverTAP
+
+```solidity
+function daoRecoverTAP() external nonpayable
+```
+
+Recover the unclaimed TAP from the contract. Should occur after the end of the airdrop, which is 8 epochs, or 41 days long.
+
+
+
+
 ### epoch
 
 ```solidity
