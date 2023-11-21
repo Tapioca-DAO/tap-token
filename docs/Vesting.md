@@ -173,6 +173,23 @@ adds a new user
 | _user | address | the user address |
 | _amount | uint256 | user weight |
 
+### registerUsers
+
+```solidity
+function registerUsers(address[] _users, uint256[] _amounts) external nonpayable
+```
+
+adds multiple users
+
+*should be called before init*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _users | address[] | the user addresses |
+| _amounts | uint256[] | user weights |
+
 ### seeded
 
 ```solidity
@@ -474,6 +491,17 @@ error NotStarted()
 
 ```solidity
 error NothingToClaim()
+```
+
+
+
+
+
+
+### Overflow
+
+```solidity
+error Overflow()
 ```
 
 
