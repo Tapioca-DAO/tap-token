@@ -130,6 +130,58 @@ describe('Vesting', () => {
         });
     });
 
+    describe('registerUsers', () => {
+        it('should bulk register users', async () => {
+            const mintAmount = ethers.BigNumber.from((1e18).toString()).mul(
+                1000,
+            );
+            await usdc.freeMint(mintAmount);
+
+            const cliff = 86400 * 10;
+            const duration = 86400 * 100;
+            const { vesting } = await registerVesting(
+                usdc.address,
+                cliff,
+                duration,
+                deployer.address,
+            );
+            await usdc.transfer(vesting.address, mintAmount);
+
+            await vesting.registerUsers(
+                [eoa1.address, deployer.address],
+                [mintAmount.div(10), mintAmount.div(5)],
+            );
+
+            await expect(
+                vesting.registerUsers(
+                    [eoa1.address, deployer.address],
+                    [mintAmount.div(10), mintAmount.div(5)],
+                ),
+            ).to.be.revertedWithCustomError(vesting, 'AlreadyRegistered');
+
+            await expect(
+                vesting.init(usdc.address, mintAmount.div(100)),
+            ).to.be.revertedWithCustomError(vesting, 'NotEnough');
+            await vesting.init(usdc.address, mintAmount);
+
+            await expect(
+                vesting.registerUsers(
+                    [eoa1.address, deployer.address],
+                    [mintAmount.div(10), mintAmount.div(5)],
+                ),
+            ).to.be.revertedWithCustomError(vesting, 'Initialized');
+
+            let userInfo = await vesting.users(deployer.address);
+            expect(userInfo.amount).to.be.eq(mintAmount.div(5));
+            userInfo = await vesting.users(eoa1.address);
+            expect(userInfo.amount).to.be.eq(mintAmount.div(10));
+
+            const newSigners = await randomSigners(1);
+            userInfo = await vesting.users(newSigners[0].address);
+            expect(userInfo.amount).to.be.eq(0);
+        });
+    });
+
     describe('claim', () => {
         it('should test claim', async () => {
             const mintAmount = ethers.BigNumber.from((1e18).toString()).mul(

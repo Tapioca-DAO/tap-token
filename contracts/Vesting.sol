@@ -35,8 +35,8 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     }
     mapping(address => UserData) public users;
 
-    uint256 private _totalAmount;
-    uint256 private _totalClaimed;
+    uint256 private __totalAmount;
+    uint256 private __totalClaimed;
 
     // ************** //
     // *** ERRORS *** //
@@ -51,6 +51,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     error NotEnough();
     error BalanceTooLow();
     error VestingDurationNotValid();
+    error Overflow();
 
     // *************** //
     // *** EVENTS *** //
@@ -76,7 +77,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     // ********************** //
     /// @notice returns total claimable
     function claimable() external view returns (uint256) {
-        return _vested(seeded) - _totalClaimed;
+        return _vested(seeded) - __totalClaimed;
     }
 
     /// @notice returns total claimable for user
@@ -98,7 +99,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
 
     /// @notice returns total claimed
     function totalClaimed() external view returns (uint256) {
-        return _totalClaimed;
+        return __totalClaimed;
     }
 
     // ************************ //
@@ -111,7 +112,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
         uint256 _claimable = claimable(msg.sender);
         if (_claimable == 0) revert NothingToClaim();
 
-        _totalClaimed += _claimable;
+        __totalClaimed += _claimable;
         users[msg.sender].claimed += _claimable;
         users[msg.sender].latestClaimTimestamp = block.timestamp;
 
@@ -134,14 +135,50 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
 
         UserData memory data;
         data.amount = _amount;
-        data.claimed = 0;
-        data.revoked = false;
-        data.latestClaimTimestamp = 0;
         users[_user] = data;
 
-        _totalAmount += _amount;
+        __totalAmount += _amount;
 
         emit UserRegistered(_user, _amount);
+    }
+
+    /// @notice adds multiple users
+    /// @dev should be called before init
+    /// @param _users the user addresses
+    /// @param _amounts user weights
+    function registerUsers(
+        address[] calldata _users,
+        uint256[] calldata _amounts
+    ) external onlyOwner {
+        if (start > 0) revert Initialized();
+        if (_users.length != _amounts.length) revert("Lengths not equal");
+
+        // Gas ops
+        uint256 totalAmount = __totalAmount;
+        uint256 cachedTotalAmount = totalAmount;
+
+        UserData memory data;
+        unchecked {
+            uint256 len = _users.length;
+            for (uint256 i; i < len; ) {
+                // Checks
+                if (_users[i] == address(0)) revert AddressNotValid();
+                if (_amounts[i] == 0) revert AmountNotValid();
+                if (users[_users[i]].amount > 0) revert AlreadyRegistered();
+
+                // Effects
+                data.amount = _amounts[i];
+                users[_users[i]] = data;
+
+                totalAmount += _amounts[i];
+
+                ++i;
+            }
+
+            // Record new totals
+            if (cachedTotalAmount > totalAmount) revert Overflow();
+            __totalAmount = totalAmount;
+        }
     }
 
     /// @notice inits the contract with total amount
@@ -150,7 +187,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     function init(IERC20 _token, uint256 _seededAmount) external onlyOwner {
         if (start > 0) revert Initialized();
         if (_seededAmount == 0) revert NoTokens();
-        if (_totalAmount > _seededAmount) revert NotEnough();
+        if (__totalAmount > _seededAmount) revert NotEnough();
 
         token = _token;
         uint256 availableToken = _token.balanceOf(address(this));
