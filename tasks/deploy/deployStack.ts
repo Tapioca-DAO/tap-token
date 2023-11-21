@@ -12,6 +12,7 @@ import { buildTOB } from '../deployBuilds/04-buildTOB';
 import { buildTwTap } from '../deployBuilds/04-deployTwTap';
 import { buildAfterDepSetup } from '../deployBuilds/05-buildAfterDepSetup';
 import { loadVM } from '../utils';
+import { buildVesting } from '../deployBuilds/buildVesting';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
@@ -51,18 +52,57 @@ export const deployStack__task = async (
         const chainInfoAddresses =
             TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]!;
         VM.add(
-            await buildTapOFT(hre, 'TapOFT', [
-                lzEndpoint,
-                chainInfoAddresses.teamAddress, //contributor address
-                chainInfoAddresses.earlySupportersAddress,
-                chainInfoAddresses.supportersAddress,
-                chainInfoAddresses.lbpAddress,
-                chainInfoAddresses.daoAddress,
-                chainInfoAddresses.airdropAddress,
-                EChainID.ARBITRUM_GOERLI, //governance chain
+            await buildVesting(hre, 'VestingContributors', [
+                31104000, // 12 months cliff
+                93312000, // 36 months vesting
                 signer.address,
             ]),
         )
+            .add(
+                await buildVesting(hre, 'VestingEarlySupporters', [
+                    0, // 0 months cliff
+                    62208000, // 24 months vesting
+                    signer.address,
+                ]),
+            )
+            .add(
+                await buildVesting(hre, 'VestingSupporters', [
+                    0, // 0 months cliff
+                    46656000, // 18 months vesting
+                    signer.address,
+                ]),
+            )
+            .add(
+                await buildTapOFT(
+                    hre,
+                    'TapOFT',
+                    [
+                        lzEndpoint,
+                        hre.ethers.constants.AddressZero, //contributors address
+                        hre.ethers.constants.AddressZero, // early supporters address
+                        hre.ethers.constants.AddressZero, // supporters address
+                        chainInfoAddresses.lbpAddress,
+                        chainInfoAddresses.daoAddress,
+                        chainInfoAddresses.airdropAddress,
+                        EChainID.ARBITRUM_GOERLI, //governance chain
+                        signer.address,
+                    ],
+                    [
+                        {
+                            argPosition: 1,
+                            deploymentName: 'VestingContributors',
+                        },
+                        {
+                            argPosition: 2,
+                            deploymentName: 'VestingEarlySupporters',
+                        },
+                        {
+                            argPosition: 3,
+                            deploymentName: 'VestingSupporters',
+                        },
+                    ],
+                ),
+            )
             .add(
                 await buildTOLP(hre, 'TapiocaOptionLiquidityProvision', [
                     signer.address,
