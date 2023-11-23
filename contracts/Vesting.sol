@@ -258,13 +258,13 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
         uint256 _duration = duration;
 
         if (_start == 0) return 0; // Not started
-        if (block.timestamp >= _start + _duration) return _totalAmount; // Fully vested
 
         if (_cliff > 0) {
             _start = _start + _cliff; // Apply cliff offset
             if (block.timestamp < _start) return 0; // Cliff not reached
-            _duration = _duration;
         }
+
+        if (block.timestamp >= _start + _duration) return _totalAmount; // Fully vested
 
         _start = _start - __initialUnlockTimeOffset; // Offset initial unlock so it's claimable immediately
         return (_totalAmount * (block.timestamp - _start)) / _duration; // Partially vested
