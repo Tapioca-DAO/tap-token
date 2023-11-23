@@ -88,6 +88,31 @@ returns the cliff period
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### computeTimeFromAmount
+
+```solidity
+function computeTimeFromAmount(uint256 _start, uint256 _totalAmount, uint256 _amount, uint256 _duration) external pure returns (uint256)
+```
+
+Compute the time needed to unlock an amount of tokens, given a total amount.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _start | uint256 | The start time |
+| _totalAmount | uint256 | The total amount to be vested |
+| _amount | uint256 | The amount to be unlocked |
+| _duration | uint256 | The vesting duration |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### duration
 
 ```solidity
@@ -108,19 +133,20 @@ returns total vesting duration
 ### init
 
 ```solidity
-function init(contract IERC20 _token, uint256 _seededAmount) external nonpayable
+function init(contract IERC20 _token, uint256 _seededAmount, uint256 _initialUnlock) external nonpayable
 ```
 
-inits the contract with total amount
+init the contract with total amount.
 
-*sets the start time to block.timestamp*
+*If initial unlock is used, it&#39;ll compute the time needed to unlock it and subtract it from the start time, so the user can claim it immediately.*
 
 #### Parameters
 
 | Name | Type | Description |
 |---|---|---|
 | _token | contract IERC20 | undefined |
-| _seededAmount | uint256 | total vested amount |
+| _seededAmount | uint256 | total vested amount, cannot be 0. |
+| _initialUnlock | uint256 | initial unlock percentage, in BPS. |
 
 ### owner
 
