@@ -5,6 +5,7 @@ import {
     time_travel,
     randomSigners,
     deployUSDC,
+    BN,
 } from './test.utils';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -29,7 +30,7 @@ describe('Vesting', () => {
     });
 
     describe('init', () => {
-        it('should test init', async () => {
+        it('should test init without initial unlock', async () => {
             const mintAmount = ethers.BigNumber.from((1e18).toString()).mul(
                 1000,
             );
@@ -43,47 +44,91 @@ describe('Vesting', () => {
                 duration,
                 deployer.address,
             );
+
             await usdc.transfer(vesting.address, mintAmount);
 
-            await expect(vesting.connect(eoa1).init(usdc.address, mintAmount))
-                .to.be.reverted;
             await expect(
-                vesting.init(usdc.address, 0),
+                vesting.connect(eoa1).init(usdc.address, mintAmount, 0),
+            ).to.be.reverted;
+            await expect(
+                vesting.init(usdc.address, 0, 0),
             ).to.be.revertedWithCustomError(vesting, 'NoTokens');
 
-            await vesting.init(usdc.address, mintAmount);
+            await vesting.init(usdc.address, mintAmount, 0);
+            const start = (await ethers.provider.getBlock('latest')).timestamp;
+
             await expect(
-                vesting.init(usdc.address, mintAmount),
+                vesting.init(usdc.address, mintAmount, 0),
             ).to.be.revertedWithCustomError(vesting, 'Initialized');
 
-            const savedCliff = await vesting.cliff();
-            expect(savedCliff.eq(cliff)).to.be.true;
-
-            const savedDuration = await vesting.duration();
-            expect(savedDuration.eq(duration)).to.be.true;
-
-            let vested = await vesting['vested()']();
-            expect(vested.eq(0)).to.be.true;
-
-            const claimable = await vesting['claimable()']();
-            expect(claimable.eq(0)).to.be.true;
+            expect((await vesting.start()).gt(0)).to.be.true;
+            expect(await vesting.cliff()).to.be.eq(cliff);
+            expect(await vesting.duration()).to.be.eq(duration);
+            expect(await vesting['vested()']()).to.be.eq(0);
+            expect(await vesting['claimable()']()).to.be.eq(0);
 
             await time_travel(cliff / 2);
+            expect(await vesting['vested()']()).to.be.eq(0);
 
-            vested = await vesting['vested()']();
-            expect(vested.eq(0)).to.be.true;
-
-            await time_travel(cliff);
-
+            await time_travel(cliff / 2);
             let vestedAfterCliff = await vesting['vested()']();
-            expect(vestedAfterCliff.gt(0)).to.be.true;
-            const prevAmount = vestedAfterCliff;
+            expect(vestedAfterCliff).to.be.gt(BN(0));
 
-            await time_travel(cliff);
+            const timeForAmount = await vesting
+                .computeTimeFromAmount(
+                    start,
+                    mintAmount,
+                    mintAmount.mul(10).div(100),
+                    duration,
+                )
+                .then((res) => res.toNumber());
+
+            await time_travel(duration - cliff - timeForAmount); // ~80% (100% duration - 10% cliff - 10% timeForAmount )
             vestedAfterCliff = await vesting['vested()']();
-            expect(vestedAfterCliff.gt(prevAmount)).to.be.true;
+            expect(vestedAfterCliff).to.be.approximately(
+                mintAmount.mul(80).div(100),
+                mintAmount.mul(80).div(100).mul(999).div(1000), // 0.1% error
+            );
+        });
+
+        it('should test init with initial unlock', async () => {
+            const mintAmount = ethers.BigNumber.from((1e18).toString()).mul(
+                1000,
+            );
+            const initialUnlock = mintAmount.mul(8).div(100); // 8%
+            await usdc.freeMint(mintAmount);
+
+            const cliff = 86400 * 10;
+            const duration = 86400 * 100;
+            const { vesting } = await registerVesting(
+                usdc.address,
+                cliff,
+                duration,
+                deployer.address,
+            );
+            await usdc.transfer(vesting.address, mintAmount);
+
+            await vesting.init(usdc.address, mintAmount, 800); // 8% unlocked
 
             expect((await vesting.start()).gt(0)).to.be.true;
+            expect(await vesting.cliff()).to.be.eq(cliff);
+            expect(await vesting.duration()).to.be.eq(duration);
+            expect(await vesting['vested()']()).to.be.eq(0);
+            expect(await vesting['claimable()']()).to.be.eq(0);
+
+            await time_travel(cliff / 2);
+            expect(await vesting['vested()']()).to.be.eq(0);
+
+            await time_travel(cliff / 2);
+            let vestedAfterCliff = await vesting['vested()']();
+            expect(vestedAfterCliff).to.be.gte(initialUnlock);
+
+            await time_travel(duration - cliff - cliff / 2); // ~85% (100% duration - 10% cliff - 5% half cliff )
+            vestedAfterCliff = await vesting['vested()']();
+            expect(vestedAfterCliff).to.be.approximately(
+                mintAmount.mul(85).div(100),
+                mintAmount.mul(85).div(100).mul(999).div(1000), // 0.1% error
+            );
         });
     });
 
@@ -111,9 +156,9 @@ describe('Vesting', () => {
             ).to.be.revertedWithCustomError(vesting, 'AlreadyRegistered');
 
             await expect(
-                vesting.init(usdc.address, mintAmount.div(100)),
+                vesting.init(usdc.address, mintAmount.div(100), 0),
             ).to.be.revertedWithCustomError(vesting, 'NotEnough');
-            await vesting.init(usdc.address, mintAmount);
+            await vesting.init(usdc.address, mintAmount, 0);
 
             await expect(
                 vesting.registerUser(eoa1.address, mintAmount.div(5)),
@@ -160,9 +205,9 @@ describe('Vesting', () => {
             ).to.be.revertedWithCustomError(vesting, 'AlreadyRegistered');
 
             await expect(
-                vesting.init(usdc.address, mintAmount.div(100)),
+                vesting.init(usdc.address, mintAmount.div(100), 0),
             ).to.be.revertedWithCustomError(vesting, 'NotEnough');
-            await vesting.init(usdc.address, mintAmount);
+            await vesting.init(usdc.address, mintAmount, 0);
 
             await expect(
                 vesting.registerUsers(
@@ -210,7 +255,7 @@ describe('Vesting', () => {
                 );
             }
 
-            await vesting.init(usdc.address, mintAmount);
+            await vesting.init(usdc.address, mintAmount, 0);
             const totalAmount = await vesting.seeded();
             expect(totalAmount.eq(mintAmount)).to.be.true;
 
@@ -314,7 +359,7 @@ describe('Vesting', () => {
                 );
             }
 
-            await vesting.init(usdc.address, mintAmount);
+            await vesting.init(usdc.address, mintAmount, 0);
 
             const totalAmount = await vesting.seeded();
             expect(totalAmount.eq(mintAmount)).to.be.true;
