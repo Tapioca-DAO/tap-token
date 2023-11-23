@@ -24,7 +24,10 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     uint256 public duration;
 
     /// @notice returns total available tokens
-    uint256 public seeded = 0;
+    uint256 public seeded;
+
+    /// @notice Used for initial unlock
+    uint256 private __initialUnlockTimeOffset;
 
     /// @notice user vesting data
     struct UserData {
@@ -35,8 +38,8 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     }
     mapping(address => UserData) public users;
 
-    uint256 private _totalAmount;
-    uint256 private _totalClaimed;
+    uint256 private __totalAmount;
+    uint256 private __totalClaimed;
 
     // ************** //
     // *** ERRORS *** //
@@ -51,6 +54,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     error NotEnough();
     error BalanceTooLow();
     error VestingDurationNotValid();
+    error Overflow();
 
     // *************** //
     // *** EVENTS *** //
@@ -76,7 +80,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     // ********************** //
     /// @notice returns total claimable
     function claimable() external view returns (uint256) {
-        return _vested(seeded) - _totalClaimed;
+        return _vested(seeded) - __totalClaimed;
     }
 
     /// @notice returns total claimable for user
@@ -98,7 +102,21 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
 
     /// @notice returns total claimed
     function totalClaimed() external view returns (uint256) {
-        return _totalClaimed;
+        return __totalClaimed;
+    }
+
+    /// @notice Compute the time needed to unlock an amount of tokens, given a total amount.
+    /// @param _start The start time
+    /// @param _totalAmount The total amount to be vested
+    /// @param _amount The amount to be unlocked
+    /// @param _duration The vesting duration
+    function computeTimeFromAmount(
+        uint256 _start,
+        uint256 _totalAmount,
+        uint256 _amount,
+        uint256 _duration
+    ) external pure returns (uint256) {
+        return _computeTimeFromAmount(_start, _totalAmount, _amount, _duration);
     }
 
     // ************************ //
@@ -111,7 +129,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
         uint256 _claimable = claimable(msg.sender);
         if (_claimable == 0) revert NothingToClaim();
 
-        _totalClaimed += _claimable;
+        __totalClaimed += _claimable;
         users[msg.sender].claimed += _claimable;
         users[msg.sender].latestClaimTimestamp = block.timestamp;
 
@@ -134,23 +152,65 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
 
         UserData memory data;
         data.amount = _amount;
-        data.claimed = 0;
-        data.revoked = false;
-        data.latestClaimTimestamp = 0;
         users[_user] = data;
 
-        _totalAmount += _amount;
+        __totalAmount += _amount;
 
         emit UserRegistered(_user, _amount);
     }
 
-    /// @notice inits the contract with total amount
-    /// @dev sets the start time to block.timestamp
-    /// @param _seededAmount total vested amount
-    function init(IERC20 _token, uint256 _seededAmount) external onlyOwner {
+    /// @notice adds multiple users
+    /// @dev should be called before init
+    /// @param _users the user addresses
+    /// @param _amounts user weights
+    function registerUsers(
+        address[] calldata _users,
+        uint256[] calldata _amounts
+    ) external onlyOwner {
+        if (start > 0) revert Initialized();
+        if (_users.length != _amounts.length) revert("Lengths not equal");
+
+        // Gas ops
+        uint256 totalAmount = __totalAmount;
+        uint256 cachedTotalAmount = totalAmount;
+
+        UserData memory data;
+        unchecked {
+            uint256 len = _users.length;
+            for (uint256 i; i < len; ) {
+                // Checks
+                if (_users[i] == address(0)) revert AddressNotValid();
+                if (_amounts[i] == 0) revert AmountNotValid();
+                if (users[_users[i]].amount > 0) revert AlreadyRegistered();
+
+                // Effects
+                data.amount = _amounts[i];
+                users[_users[i]] = data;
+
+                totalAmount += _amounts[i];
+
+                ++i;
+            }
+
+            // Record new totals
+            if (cachedTotalAmount > totalAmount) revert Overflow();
+            __totalAmount = totalAmount;
+        }
+    }
+
+    /// @notice init the contract with total amount.
+    /// @dev If initial unlock is used, it'll compute the time needed to unlock it
+    /// and subtract it from the start time, so the user can claim it immediately.
+    /// @param _seededAmount total vested amount, cannot be 0.
+    /// @param _initialUnlock initial unlock percentage, in BPS.
+    function init(
+        IERC20 _token,
+        uint256 _seededAmount,
+        uint256 _initialUnlock
+    ) external onlyOwner {
         if (start > 0) revert Initialized();
         if (_seededAmount == 0) revert NoTokens();
-        if (_totalAmount > _seededAmount) revert NotEnough();
+        if (__totalAmount > _seededAmount) revert NotEnough();
 
         token = _token;
         uint256 availableToken = _token.balanceOf(address(this));
@@ -158,16 +218,55 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
 
         seeded = _seededAmount;
         start = block.timestamp;
+
+        if (_initialUnlock > 0) {
+            uint256 initialUnlockAmount = (_seededAmount * _initialUnlock) /
+                10_000;
+
+            __initialUnlockTimeOffset = _computeTimeFromAmount(
+                block.timestamp,
+                _seededAmount,
+                initialUnlockAmount,
+                duration
+            );
+        }
+    }
+
+    /// @notice Compute the time needed to unlock an amount of tokens, given a total amount.
+    /// @param _start The start time
+    /// @param _totalAmount The total amount to be vested
+    /// @param _amount The amount to be unlocked
+    /// @param _duration The vesting duration
+    function _computeTimeFromAmount(
+        uint256 _start,
+        uint256 _totalAmount,
+        uint256 _amount,
+        uint256 _duration
+    ) internal pure returns (uint256) {
+        return _start - (_start - ((_amount * _duration) / _totalAmount));
     }
 
     // ************************* //
     // *** PRIVATE FUNCTIONS *** //
     // ************************* //
-    function _vested(uint256 _total) private view returns (uint256) {
-        if (start == 0) return 0;
-        uint256 total = _total;
-        if (block.timestamp < start + cliff) return 0;
-        if (block.timestamp >= start + duration) return total;
-        return (total * (block.timestamp - start)) / duration;
+
+    /// @notice Returns amount of vested tokens up to the current time
+    /// @param _totalAmount The total amount to be vested
+    function _vested(uint256 _totalAmount) internal view returns (uint256) {
+        uint256 _cliff = cliff;
+        uint256 _start = start;
+        uint256 _duration = duration;
+
+        if (_start == 0) return 0; // Not started
+
+        if (_cliff > 0) {
+            _start = _start + _cliff; // Apply cliff offset
+            if (block.timestamp < _start) return 0; // Cliff not reached
+        }
+
+        if (block.timestamp >= _start + _duration) return _totalAmount; // Fully vested
+
+        _start = _start - __initialUnlockTimeOffset; // Offset initial unlock so it's claimable immediately
+        return (_totalAmount * (block.timestamp - _start)) / _duration; // Partially vested
     }
 }
