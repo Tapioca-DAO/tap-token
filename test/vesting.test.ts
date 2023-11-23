@@ -259,10 +259,10 @@ describe('Vesting', () => {
             const totalAmount = await vesting.seeded();
             expect(totalAmount.eq(mintAmount)).to.be.true;
 
-            await time_travel(duration / 2);
+            await time_travel(duration / 2 + cliff); // half the time after cliff, 50% vesting
 
             const vested = await vesting['vested()']();
-            expect(vested.eq(mintAmount.div(2))).to.be.true;
+            expect(vested).to.be.eq(mintAmount.div(2));
 
             const randomSignerPossibleAmount = mintAmount.div(20);
             const randomSignerClaimable = await vesting['claimable(address)'](
