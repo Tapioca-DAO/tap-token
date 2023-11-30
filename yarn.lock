@@ -5574,7 +5574,7 @@ table@^6.0.9, table@^6.8.0, table@^6.8.1:
     string-width "^4.2.3"
     strip-ansi "^6.0.1"
 
-tapioca-sdk@^1.5.5:
+tapioca-sdk@^1.5.6:
   version "1.5.6"
   resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.5.6.tgz#2646eb1c46787aa228449c48e25eac60200f3d2f"
   integrity sha512-2eHFWJzA5WhpMB5qf7c9riSc738mqJtZGOPi8tazCW/A/4MGBozMxzHVTzSO4t8cBmEacDEV3NvIjvwAjUTcAw==

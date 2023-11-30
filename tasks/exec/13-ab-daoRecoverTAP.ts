@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import _ from 'lodash';
 
 export const daoRecoverTAPFromAB__task = async (
-    {},
+    taskArgs: {},
     hre: HardhatRuntimeEnvironment,
 ) => {
     const tag = await hre.SDK.hardhatUtils.askForTag(hre, 'local');

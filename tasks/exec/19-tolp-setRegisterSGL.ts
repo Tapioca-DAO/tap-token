@@ -7,7 +7,7 @@ import { ERC20WithoutStrategy__factory } from '../../gitsub_tapioca-sdk/src/type
 import { YieldBox__factory } from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
 
 export const setRegisterSGLOnTOLP__task = async (
-    {},
+    taskArgs: {},
     hre: HardhatRuntimeEnvironment,
 ) => {
     const tag = await hre.SDK.hardhatUtils.askForTag(hre, 'local');

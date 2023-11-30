@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import inquirer from 'inquirer';
 
 export const setDistributeTwTapRewards__task = async (
-    {},
+    taskArgs: {},
     hre: HardhatRuntimeEnvironment,
 ) => {
     const tag = await hre.SDK.hardhatUtils.askForTag(hre, 'local');

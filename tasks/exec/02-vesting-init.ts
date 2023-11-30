@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import _ from 'lodash';
 import inquirer from 'inquirer';
 
-export const initVesting__task = async ({}, hre: HardhatRuntimeEnvironment) => {
+export const initVesting__task = async (taskArgs: {}, hre: HardhatRuntimeEnvironment) => {
     const tag = await hre.SDK.hardhatUtils.askForTag(hre, 'local');
     const vestingDep = await hre.SDK.hardhatUtils.getLocalContract(
         hre,
