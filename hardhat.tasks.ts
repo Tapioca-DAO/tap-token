@@ -15,16 +15,38 @@ import { glob } from 'typechain';
 import { configurePacketTypes__task } from './tasks/exec/configurePacketTypes';
 import { deployStack__task } from './tasks/deploy/deployStack';
 import { deployTapOFT__task } from './tasks/deploy/deployTapOFT';
-import { setRegisterSGL__task } from './tasks/exec/setRegisterSGL';
-import { setPaymentToken__task } from './tasks/exec/setPaymentToken';
-import { setRegisterTapOracle__task } from './tasks/exec/setRegisterTapOracle';
+import { setRegisterSGLOnTOLP__task } from './tasks/exec/19-tolp-setRegisterSGL';
+import { setPaymentTokenOnTOB__task } from './tasks/exec/16-tob-setPaymentToken';
 import { testParticipateCrossChain__task } from './tasks/exec/tests/test-participateCrossChain';
 import { testExitCrossChain__task } from './tasks/exec/tests/test-exitCrossChain';
-import { setTwTapRewardToken__task } from './tasks/exec/setTwTapRewardToken';
+import { setTwTapRewardToken__task } from './tasks/exec/04-twTap-setTwTapRewardToken';
 import { testClaimRewards__task } from './tasks/exec/tests/test-claimRewards';
-import { setDistributeTwTapRewards__task } from './tasks/exec/setDistributeTwTapRewards';
-import { setAdvanceWeek__task } from './tasks/exec/setAdvanceWeek';
+import { setDistributeTwTapRewards__task } from './tasks/exec/05-twTap-setDistributeTwTapRewards';
+import { setAdvanceWeek__task } from './tasks/exec/06-twTap-setAdvanceWeek';
 import { deployMockADB__task } from './tasks/deployMock/deployMockADB';
+import { registerUserForVesting__task } from './tasks/exec/01-vesting-registerUser';
+import { initVesting__task } from './tasks/exec/02-vesting-init';
+import { setMaxRewardTokensLength__task } from './tasks/exec/03-twTap-setMaxRewardTokensLength';
+import { setTapOracle__task } from './tasks/exec/07-ab-setTapOracle';
+import { setPhase2MerkleRoots__task } from './tasks/exec/08-ab-setPhase2MerkleRoots';
+import { registerUserForPhase__task } from './tasks/exec/09-ab-registerUserForPhase';
+import { setPaymentTokenOnAB__task } from './tasks/exec/10-ab-setPaymentToken';
+import { setPaymentTokenBeneficiaryAB__task } from './tasks/exec/11-ab-setPaymentTokenBeneficiary';
+import { collectPaymentTokensOnAB__task } from './tasks/exec/12-ab-collectPaymentTokens';
+import { daoRecoverTAPFromAB__task } from './tasks/exec/13-ab-daoRecoverTAP';
+import { setMinWeightFactorOnTOB__task } from './tasks/exec/14-tob-setMinWeightFactor';
+import { setTapOracleOnTOB__task } from './tasks/exec/15-tob-setTapOracle';
+import { setPaymentTokenBeneficiaryOnTOB__task } from './tasks/exec/17-tob-setPaymentTokenBeneficiary';
+import { collectPaymentTokensOnTOB__task } from './tasks/exec/18-tob-collectPaymentTokens';
+import { setSglPoolWeightOnTOLP__task } from './tasks/exec/20-tolp-setSglPoolWeight';
+import { activateSglPoolRescueOnTOLP__task } from './tasks/exec/21-tolp-activateSglPoolRescue';
+import { unregisterSingularityOnTOLP__task } from './tasks/exec/22-tolp-unregisterSingularity';
+import { setLockedUntilOnLtap__task } from './tasks/exec/23-ltap-setLockedUntil';
+import { rescueEthOnTap__task } from './tasks/exec/24-tap-rescueEth';
+import { setTwTapOnTap__task } from './tasks/exec/25-tap-setTwTap';
+import { setGovernanceChainIdentifierOnTap__task } from './tasks/exec/26-tap-setGovernanceChainIdentifier';
+import { updatePauseOnTap__task } from './tasks/exec/27-tap-updatePause';
+import { setMinterOnTap__task } from './tasks/exec/28-tap-setMinter';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -116,6 +138,12 @@ task(
 );
 
 task(
+    'setMaxRewardTokensLength',
+    'Set max reward array length',
+    setMaxRewardTokensLength__task,
+);
+
+task(
     'setDistributeTwTapRewards',
     'Distribute rewards for twTAP',
     setDistributeTwTapRewards__task,
@@ -123,15 +151,128 @@ task(
 task('setAdvanceWeek', 'Advance by 1 week', setAdvanceWeek__task);
 
 // ---- toLP
-task('setRegisterSGL', 'Register an SGL on tOLP', setRegisterSGL__task);
+task(
+    'setRegisterSGLOnTOLP',
+    'Register an SGL on tOLP',
+    setRegisterSGLOnTOLP__task,
+);
 
+task(
+    'setSglPoolWeightOnTOLP',
+    'Sets a registered SGL weight',
+    setSglPoolWeightOnTOLP__task,
+);
+
+task(
+    'activateSglPoolRescueOnTOLP',
+    'Activates SGL pool rescue on tOLP',
+    activateSglPoolRescueOnTOLP__task,
+);
+
+task(
+    'unregisterSingularityOnTOLP',
+    'Unregisters SGL on tOLP',
+    unregisterSingularityOnTOLP__task,
+);
 // ---- tOB
 task(
-    'setRegisterTapOracle',
+    'setPaymentTokenOnTOB',
     'Register an oracle on tOB',
-    setRegisterTapOracle__task,
+    setPaymentTokenOnTOB__task,
 );
-task('setPaymentToken', 'Register an oracle on tOB', setPaymentToken__task);
+
+task(
+    'registerUserForVesting',
+    'Add vesting for user',
+    registerUserForVesting__task,
+);
+
+task('initVesting', 'Inits user vesting', initVesting__task);
+
+task(
+    'setMinWeightFactorOnTOB',
+    'Sets the minimum weight factor',
+    setMinWeightFactorOnTOB__task,
+);
+
+task(
+    'setTapOracleOnTOB',
+    'Sets the Tap oracle on tOB',
+    setTapOracleOnTOB__task,
+);
+
+task(
+    'setPaymentTokenBeneficiaryOnTOB',
+    'Sets the payment token beneficiary on tOB',
+    setPaymentTokenBeneficiaryOnTOB__task,
+);
+
+task(
+    'collectPaymentTokensOnTOB',
+    'Collects payment tokens from tOB',
+    collectPaymentTokensOnTOB__task,
+);
+
+// --- AB
+task(
+    'setTapOracleOnAB',
+    'Sets TapOracle address on AirdropBroker',
+    setTapOracle__task,
+);
+
+task(
+    'setPhase2MerkleRoots',
+    'Sets phase 2 merkle roots on AirdropBroker',
+    setPhase2MerkleRoots__task,
+);
+
+task(
+    'registerUserForPhase',
+    'Register user on AirdropBroker',
+    registerUserForPhase__task,
+);
+
+task(
+    'setPaymentTokenOnAB',
+    'Set payment token on AirdropBroker',
+    setPaymentTokenOnAB__task,
+);
+
+task(
+    'setPaymentTokenBeneficiaryOnAB',
+    'Set payment token beneficiary on AirdropBroker',
+    setPaymentTokenBeneficiaryAB__task,
+);
+
+task(
+    'collectPaymentTokensOnAB',
+    'Collect payment tokens from AirdropBroker',
+    collectPaymentTokensOnAB__task,
+);
+
+task(
+    'daoRecoverTAPFromAB',
+    'Initiates a dao recover action on AirdropBroker',
+    daoRecoverTAPFromAB__task,
+);
+
+// --- LTAP
+task(
+    'setLockedUntilOnLtap',
+    'Set locked until on LTAP',
+    setLockedUntilOnLtap__task,
+);
+
+// --- TapOFT
+task('rescueEthOnTap', 'Rescue ETH on TapOFT', rescueEthOnTap__task);
+task('setTwTapOnTap', 'Set twTap on TapOFT', setTwTapOnTap__task);
+task(
+    'setGovernanceChainIdentifierOnTap',
+    'Set Governance chain identifier on TapOFT',
+    setGovernanceChainIdentifierOnTap__task,
+);
+task('updatePauseOnTap', 'Toggle pause on TapOFT', updatePauseOnTap__task);
+task('setMinterOnTap', 'Set minter on TapOFT', setMinterOnTap__task);
 
 // Tests
 task(
