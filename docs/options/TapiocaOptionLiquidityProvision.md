@@ -135,6 +135,29 @@ Needs to be called by `pendingOwner` to claim ownership.
 
 
 
+### eip712Domain
+
+```solidity
+function eip712Domain() external view returns (bytes1 fields, string name, string version, uint256 chainId, address verifyingContract, bytes32 salt, uint256[] extensions)
+```
+
+
+
+*See {EIP-5267}. _Available since v4.9._*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| fields | bytes1 | undefined |
+| name | string | undefined |
+| version | string | undefined |
+| chainId | uint256 | undefined |
+| verifyingContract | address | undefined |
+| salt | bytes32 | undefined |
+| extensions | uint256[] | undefined |
+
 ### getApproved
 
 ```solidity
@@ -854,6 +877,17 @@ event Burn(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosi
 | sglAssetID `indexed` | uint128 | undefined |
 | lockPosition  | LockPosition | undefined |
 
+### EIP712DomainChanged
+
+```solidity
+event EIP712DomainChanged()
+```
+
+
+
+*MAY be emitted to signal that the domain could have changed.*
+
+
 ### Mint
 
 ```solidity
@@ -1054,6 +1088,17 @@ error DuplicateAssetId()
 
 
 
+### InvalidShortString
+
+```solidity
+error InvalidShortString()
+```
+
+
+
+
+
+
 ### InvalidSingularity
 
 ```solidity
@@ -1152,5 +1197,21 @@ error SingularityNotActive()
 
 
 
+
+### StringTooLong
+
+```solidity
+error StringTooLong(string str)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| str | string | undefined |
 
 
