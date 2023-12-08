@@ -417,7 +417,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @notice Recover the unclaimed TAP from the contract.
     /// Should occur after the end of the airdrop, which is 8 epochs, or 41 days long.
     function daoRecoverTAP() external onlyOwner {
-        require(epoch == 9, "adb: too soon");
+        require(epoch >= 9, "adb: too soon");
         tapOFT.transfer(msg.sender, tapOFT.balanceOf(address(this)));
     }
 
