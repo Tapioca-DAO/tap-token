@@ -4,7 +4,7 @@ coverage
 coverage.json
 typechain
 package-lock.json
-
+docs
 
 #Hardhat files
 cache
