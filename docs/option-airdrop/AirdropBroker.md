@@ -27,6 +27,23 @@ function EPOCH_DURATION() external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### LAST_EPOCH
+
+```solidity
+function LAST_EPOCH() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### PCNFT
 
 ```solidity

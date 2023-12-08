@@ -186,15 +186,6 @@ describe('AirdropBroker', () => {
             await expect(adb.connect(users[0].wallet).participate('0x00')).to.be
                 .reverted;
 
-            // Get snapshot and go to epoch 5, which is incorrect
-            const snapshot = await takeSnapshot();
-            for (let i = 0; i < 5; i++) {
-                await newEpoch(adb);
-            }
-            await expect(adb.connect(users[0].wallet).participate('0x00')).to.be
-                .reverted;
-            await snapshot.restore();
-
             //---- test adb participation
             await newEpoch(adb);
             expect(await adb.epoch()).to.be.eq(BN(1));
@@ -574,15 +565,6 @@ describe('AirdropBroker', () => {
             //---- Can't participate if epoch is not started or finished
             await expect(adb.connect(users[0].wallet).participate('0x00')).to.be
                 .reverted;
-
-            // Get snapshot and go to epoch 5, which is incorrect
-            const snapshot = await takeSnapshot();
-            for (let i = 0; i < 5; i++) {
-                await newEpoch(adb);
-            }
-            await expect(adb.connect(users[0].wallet).participate('0x00')).to.be
-                .reverted;
-            await snapshot.restore();
 
             //---- test adb participation
             await newEpoch(adb);
