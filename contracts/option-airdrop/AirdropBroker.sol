@@ -109,6 +109,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     uint256 public constant PHASE_4_DISCOUNT = 330_000; //33 * 1e4;
 
     uint256 public EPOCH_DURATION = 2 days; // Becomes 7 days at the start of the phase 4
+    uint256 public constant LAST_EPOCH = 8; // 8 epochs, 41 days long
 
     /// =====-------======
 
@@ -233,7 +234,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     ) external whenNotPaused returns (uint256 aoTAPTokenID) {
         uint256 cachedEpoch = epoch;
         if (cachedEpoch == 0) revert NotStarted();
-        if (cachedEpoch > 4) revert Ended();
+        if (cachedEpoch > LAST_EPOCH) revert Ended();
 
         // Phase 1
         if (cachedEpoch == 1) {
@@ -242,7 +243,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
             aoTAPTokenID = _participatePhase2(_data); // _data = (uint256 role, bytes32[] _merkleProof)
         } else if (cachedEpoch == 3) {
             aoTAPTokenID = _participatePhase3(_data); // _data = (uint256 _tokenID)
-        } else if (cachedEpoch == 4) {
+        } else if (cachedEpoch >= 4) {
             aoTAPTokenID = _participatePhase4();
         }
 
@@ -417,7 +418,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @notice Recover the unclaimed TAP from the contract.
     /// Should occur after the end of the airdrop, which is 8 epochs, or 41 days long.
     function daoRecoverTAP() external onlyOwner {
-        require(epoch == 9, "adb: too soon");
+        require(epoch > LAST_EPOCH, "adb: too soon");
         tapOFT.transfer(msg.sender, tapOFT.balanceOf(address(this)));
     }
 
