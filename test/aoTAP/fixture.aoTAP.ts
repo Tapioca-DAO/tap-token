@@ -215,8 +215,8 @@ const generatePhase2Data = (role: number, merkleProof: string[]) => {
     );
 };
 
-const generatePhase3Data = (tokenID: number) => {
-    return hre.ethers.utils.defaultAbiCoder.encode(['uint256'], [tokenID]);
+const generatePhase3Data = (tokenIDs: number[]) => {
+    return hre.ethers.utils.defaultAbiCoder.encode(['uint256[]'], [tokenIDs]);
 };
 
 const getEncodedAddressOfToken = (tokenID: number) => {

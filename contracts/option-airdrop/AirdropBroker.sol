@@ -242,7 +242,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         } else if (cachedEpoch == 2) {
             aoTAPTokenID = _participatePhase2(_data); // _data = (uint256 role, bytes32[] _merkleProof)
         } else if (cachedEpoch == 3) {
-            aoTAPTokenID = _participatePhase3(_data); // _data = (uint256 _tokenID)
+            aoTAPTokenID = _participatePhase3(_data); // _data = (uint256[] _tokenID)
         } else if (cachedEpoch >= 4) {
             aoTAPTokenID = _participatePhase4();
         }
@@ -478,19 +478,30 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     function _participatePhase3(
         bytes calldata _data
     ) internal returns (uint256 oTAPTokenID) {
-        uint256 _tokenID = abi.decode(_data, (uint256));
+        uint256[] memory _tokenIDs = abi.decode(_data, (uint256[]));
 
-        if (PCNFT.ownerOf(_tokenID) != msg.sender) revert NotEligible();
-        address tokenIDToAddress = address(uint160(_tokenID));
-        if (userParticipation[tokenIDToAddress][3])
-            revert AlreadyParticipated();
-        // Close eligibility
-        // To avoid a potential attack vector, we cast token ID to an address instead of using _to,
-        // no conflict possible, tokenID goes from 0 ... 714.
-        userParticipation[tokenIDToAddress][3] = true;
+        uint256 arrLen = _tokenIDs.length;
+        address tokenIDToAddress;
+        for (uint256 i; i < arrLen; ) {
+            if (PCNFT.ownerOf(_tokenIDs[i]) != msg.sender) revert NotEligible();
+
+            // To avoid collision, we cast token ID to an address,
+            // no conflict possible, tokenID goes from 0 ... 714.
+            tokenIDToAddress = address(uint160(_tokenIDs[i]));
+            if (userParticipation[tokenIDToAddress][3]) {
+                revert AlreadyParticipated();
+            }
+
+            // Close eligibility
+            userParticipation[tokenIDToAddress][3] = true;
+
+            unchecked {
+                ++i;
+            }
+        }
 
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
-        uint256 eligibleAmount = PHASE_3_AMOUNT_PER_USER * 1e18;
+        uint256 eligibleAmount = arrLen * PHASE_3_AMOUNT_PER_USER * 1e18; // Phase 3 amount multiplied the number of PCNFTs
         uint128 discount = uint128(PHASE_3_DISCOUNT);
         oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
     }
