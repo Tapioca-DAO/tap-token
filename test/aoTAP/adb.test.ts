@@ -48,7 +48,7 @@ describe('AirdropBroker', () => {
         adb: AirdropBroker,
         aoTAP: AOTAP,
     ) => {
-        await adb.registerUserForPhase(
+        await adb.registerUsersForPhase(
             1,
             users.map((e) => e.address),
             amounts,
@@ -136,14 +136,14 @@ describe('AirdropBroker', () => {
             await expect(
                 adb
                     .connect(rndSigner)
-                    .registerUserForPhase(
+                    .registerUsersForPhase(
                         1,
                         [users[0].wallet.address],
                         [users[0].amount],
                     ),
             ).to.be.reverted;
 
-            await adb.registerUserForPhase(
+            await adb.registerUsersForPhase(
                 1,
                 users.map((e) => e.wallet.address),
                 users.map((e) => e.amount),
@@ -171,12 +171,12 @@ describe('AirdropBroker', () => {
             const users = await generatePhase1_4Signers({
                 initialAmount: 1_500_000,
             });
-            await adb.registerUserForPhase(
+            await adb.registerUsersForPhase(
                 1,
                 users.map((e) => e.wallet.address),
                 users.map((e) => e.amount),
             );
-            await adb.registerUserForPhase(
+            await adb.registerUsersForPhase(
                 4,
                 users.map((e) => e.wallet.address),
                 users.map((e) => e.amount),
@@ -565,7 +565,7 @@ describe('AirdropBroker', () => {
             const users = await generatePhase1_4Signers({
                 initialAmount: 500_000,
             });
-            await adb.registerUserForPhase(
+            await adb.registerUsersForPhase(
                 4,
                 users.map((e) => e.wallet.address),
                 users.map((e) => e.amount),

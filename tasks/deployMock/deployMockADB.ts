@@ -239,7 +239,7 @@ async function buildAfterDepSetup(
     calls.push({
         target: adbAddr,
         allowFailure: false,
-        callData: adb.interface.encodeFunctionData('registerUserForPhase', [
+        callData: adb.interface.encodeFunctionData('registerUsersForPhase', [
             1,
             phase1Registrations,
             phase1Registrations.map((e) =>
@@ -293,7 +293,7 @@ async function buildAfterDepSetup(
     calls.push({
         target: adbAddr,
         allowFailure: false,
-        callData: adb.interface.encodeFunctionData('registerUserForPhase', [
+        callData: adb.interface.encodeFunctionData('registerUsersForPhase', [
             4,
             phase4TwTapHolders,
             phase4TwTapHolders.map((e) =>
@@ -312,7 +312,7 @@ async function buildAfterDepSetup(
     calls.push({
         target: adbAddr,
         allowFailure: false,
-        callData: adb.interface.encodeFunctionData('registerUserForPhase', [
+        callData: adb.interface.encodeFunctionData('registerUsersForPhase', [
             4,
             phase4Registrations,
             phase4Registrations.map((e) =>
