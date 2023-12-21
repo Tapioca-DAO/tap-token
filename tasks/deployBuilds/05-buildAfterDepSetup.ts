@@ -19,8 +19,16 @@ export const buildAfterDepSetup = async (
             e.name === 'TapiocaOptionBrokerMock',
     )?.address;
 
-    if (!tapAddr || !tOBAddr || !twTapAddr) {
-        throw new Error('[-] One address not found');
+    if (!tapAddr) {
+        throw new Error('[-] TAP not found');
+    }
+
+    if (!tOBAddr) {
+        throw new Error('[-] tOB not found');
+    }
+
+    if (!twTapAddr) {
+        throw new Error('[-] twTap not found');
     }
 
     /**

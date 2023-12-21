@@ -13,6 +13,7 @@ import { buildTwTap } from '../deployBuilds/04-deployTwTap';
 import { buildAfterDepSetup } from '../deployBuilds/05-buildAfterDepSetup';
 import { loadVM } from '../utils';
 import { buildVesting } from '../deployBuilds/buildVesting';
+import inquirer from 'inquirer';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
@@ -22,10 +23,13 @@ export const deployStack__task = async (
     // Settings
     const tag = await hre.SDK.hardhatUtils.askForTag(hre, 'local');
     const signer = (await hre.ethers.getSigners())[0];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const chainInfo = hre.SDK.utils.getChainBy(
         'chainId',
         await hre.getChainId(),
     )!;
+    const isTestnet = chainInfo.tags[0] == 'testnet';
+
     const VM = await loadVM(hre, tag);
 
     if (taskArgs.load) {
@@ -51,24 +55,109 @@ export const deployStack__task = async (
         const lzEndpoint = chainInfo.address;
         const chainInfoAddresses =
             TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]!;
+
+        let vestingContributorsCliff = 31104000, // 12 months cliff
+            vestingContributorsPeriod = 93312000; // 36 months vesting
+        let vestingEarlySupportersCliff = 0,
+            vestingEarlySupportersPeriod = 62208000; // 24 months vesting
+        let vestingSupportersCliff = 0,
+            vestingSupportersPeriod = 46656000; // 18 months vesting
+        let tapiocaOptionBrokerEpochDuration = 604800; //7 days
+        if (!isTestnet) {
+            const addresses = `( teamAddress: ${chainInfoAddresses.teamAddress}; earlySupportersAddress: ${chainInfoAddresses.earlySupportersAddress}; supportersAddress: ${chainInfoAddresses.supportersAddress}; lbpAddress: ${chainInfoAddresses.lbpAddress}; daoAddress: ${chainInfoAddresses.daoAddress}; airdropAddress: ${chainInfoAddresses.airdropAddress})`;
+
+            const { isOk } = await inquirer.prompt({
+                type: 'confirm',
+                message: `Are you sure TAP distribution is updated ? ${addresses}`,
+                name: 'isOk',
+            });
+
+            if (!isOk) {
+                throw new Error('[-] Aborted');
+            }
+
+            tapiocaOptionBrokerEpochDuration = (
+                await inquirer.prompt({
+                    type: 'input',
+                    name: 'tapiocaOptionBrokerEpochDuration',
+                    message: 'Tapioca Option Broker epoch duration',
+                    default: tapiocaOptionBrokerEpochDuration,
+                })
+            ).tapiocaOptionBrokerEpochDuration;
+
+            vestingContributorsCliff = (
+                await inquirer.prompt({
+                    type: 'input',
+                    name: 'vestingContributorsCliff',
+                    message: 'Vesting contributors cliff',
+                    default: vestingContributorsCliff,
+                })
+            ).vestingContributorsCliff;
+
+            vestingContributorsPeriod = (
+                await inquirer.prompt({
+                    type: 'input',
+                    name: 'vestingContributorsPeriod',
+                    message: 'Vesting contributors period',
+                    default: vestingContributorsPeriod,
+                })
+            ).vestingContributorsPeriod;
+
+            vestingEarlySupportersCliff = (
+                await inquirer.prompt({
+                    type: 'input',
+                    name: 'vestingEarlySupportersCliff',
+                    message: 'Vesting early supporters cliff',
+                    default: vestingEarlySupportersCliff,
+                })
+            ).vestingEarlySupportersCliff;
+
+            vestingEarlySupportersPeriod = (
+                await inquirer.prompt({
+                    type: 'input',
+                    name: 'vestingEarlySupportersPeriod',
+                    message: 'Vesting early supporters period',
+                    default: vestingEarlySupportersPeriod,
+                })
+            ).vestingEarlySupportersPeriod;
+
+            vestingSupportersCliff = (
+                await inquirer.prompt({
+                    type: 'input',
+                    name: 'vestingSupportersCliff',
+                    message: 'Vesting supporters cliff',
+                    default: vestingSupportersCliff,
+                })
+            ).vestingSupportersCliff;
+
+            vestingSupportersPeriod = (
+                await inquirer.prompt({
+                    type: 'input',
+                    name: 'vestingSupportersPeriod',
+                    message: 'Vesting supporters period',
+                    default: vestingSupportersPeriod,
+                })
+            ).vestingSupportersPeriod;
+        }
+
         VM.add(
             await buildVesting(hre, 'VestingContributors', [
-                31104000, // 12 months cliff
-                93312000, // 36 months vesting
+                vestingContributorsCliff, // 12 months cliff
+                vestingContributorsPeriod, // 36 months vesting
                 signer.address,
             ]),
         )
             .add(
                 await buildVesting(hre, 'VestingEarlySupporters', [
-                    0, // 0 months cliff
-                    62208000, // 24 months vesting
+                    vestingEarlySupportersCliff, // 0 months cliff
+                    vestingEarlySupportersPeriod, // 24 months vesting
                     signer.address,
                 ]),
             )
             .add(
                 await buildVesting(hre, 'VestingSupporters', [
-                    0, // 0 months cliff
-                    46656000, // 18 months vesting
+                    vestingSupportersCliff, // 0 months cliff
+                    vestingSupportersPeriod, // 18 months vesting
                     signer.address,
                 ]),
             )
@@ -119,7 +208,7 @@ export const deployStack__task = async (
                         hre.ethers.constants.AddressZero, // oTAP
                         hre.ethers.constants.AddressZero, // TapOFT
                         signer.address,
-                        604800, // 7 days
+                        tapiocaOptionBrokerEpochDuration,
                         signer.address,
                     ],
                     [
