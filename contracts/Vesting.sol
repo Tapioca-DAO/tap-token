@@ -214,7 +214,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
 
         token = _token;
         uint256 availableToken = _token.balanceOf(address(this));
-        if (availableToken != _seededAmount) revert BalanceTooLow();
+        if (availableToken < _seededAmount) revert BalanceTooLow();
 
         seeded = _seededAmount;
         start = block.timestamp;
