@@ -140,7 +140,7 @@ contract TwTAP is
     error NotValid();
     error Registered();
     error TokenLimitReached();
-    error CannotCalim();
+    error CannotClaim();
     error Duplicate();
     error LockNotExpired();
     error LockNotAWeek();
@@ -281,7 +281,7 @@ contract TwTAP is
     //    WRITE
     // ===========
 
-    /// @notice Participate in twAMl voting and mint an oTAP position
+    /// @notice Participate in twAML voting and mint an twTap position
     /// @param _participant The address of the participant
     /// @param _amount The amount of TAP to participate with
     /// @param _duration The duration of the lock
@@ -527,7 +527,7 @@ contract TwTAP is
             _to != tokenOwner &&
             !isApprovedForAll(tokenOwner, msg.sender) &&
             getApproved(_tokenId) != msg.sender
-        ) revert CannotCalim();
+        ) revert CannotClaim();
     }
 
     function _claimRewards(uint256 _tokenId, address _to) internal {

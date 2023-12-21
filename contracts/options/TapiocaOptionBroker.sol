@@ -279,7 +279,7 @@ contract TapiocaOptionBroker is
     /// @param _tOLPTokenID The tokenId of the tOLP position
     function participate(
         uint256 _tOLPTokenID
-    ) external whenNotPaused returns (uint256 oTAPTokenID) {
+    ) external whenNotPaused nonReentrant returns (uint256 oTAPTokenID) {
         // Compute option parameters
         LockPosition memory lock = tOLP.getLock(_tOLPTokenID);
         bool isPositionActive = _isPositionActive(lock);
@@ -305,7 +305,7 @@ contract TapiocaOptionBroker is
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Revert if the lock 4x the cumulative
-        if (magnitude >= pool.cumulative * 4) revert TooLong();
+        if (magnitude > pool.cumulative * 4) revert TooLong();
 
         bool divergenceForce;
         // Participate in twAMl voting
