@@ -641,13 +641,18 @@ contract TapiocaOptionBroker is
         uint256 tapAmount,
         uint256 discount
     ) internal {
+        bool success;
+        (success, epochTAPValuation) = tapOracle.get(tapOracleData);
+        if (!success) revert Failed();
+
         // Get TAP valuation
         uint256 otcAmountInUSD = tapAmount * epochTAPValuation;
 
         // Get payment token valuation
-        (bool success, uint256 paymentTokenValuation) = _paymentTokenOracle
-            .oracle
-            .get(_paymentTokenOracle.oracleData);
+        uint256 paymentTokenValuation;
+        (success, paymentTokenValuation) = _paymentTokenOracle.oracle.get(
+            _paymentTokenOracle.oracleData
+        );
         if (!success) revert Failed();
 
         // Calculate payment amount and initiate the transfers
