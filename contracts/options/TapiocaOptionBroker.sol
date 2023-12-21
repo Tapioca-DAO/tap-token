@@ -305,7 +305,7 @@ contract TapiocaOptionBroker is
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Revert if the lock 4x the cumulative
-        if (magnitude >= pool.cumulative * 4) revert TooLong();
+        if (magnitude > pool.cumulative * 4) revert TooLong();
 
         bool divergenceForce;
         // Participate in twAMl voting
