@@ -71,6 +71,16 @@ const config: HardhatUserConfig & { dodoc: any } = {
                     },
                 },
             },
+            {
+                version: '0.8.19',
+                settings: {
+                    viaIR: process.env.NODE_ENV == 'coverage' ? false : true,
+                    optimizer: {
+                        enabled: true,
+                        runs: 500,
+                    },
+                },
+            },
         ],
     },
     namedAccounts: {
