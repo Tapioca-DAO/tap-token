@@ -156,9 +156,9 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         uint256 amount
     );
     event NewEpoch(uint256 indexed epoch, uint256 epochTAPValuation);
-
     event SetPaymentToken(ERC20 paymentToken, IOracle oracle, bytes oracleData);
     event SetTapOracle(IOracle oracle, bytes oracleData);
+    event Phase2MerkleRootsUpdated();
 
     // ==========
     //    READ
@@ -305,7 +305,6 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     }
 
     /// @notice Start a new epoch, extract TAP from the TapOFT contract,
-    ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
         if (block.timestamp < lastEpochUpdate + EPOCH_DURATION)
             revert TooSoon();
@@ -354,9 +353,10 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         bytes32[4] calldata _merkleRoots
     ) external onlyOwner {
         phase2MerkleRoots = _merkleRoots;
+        emit Phase2MerkleRootsUpdated();
     }
 
-    function registerUserForPhase(
+    function registerUsersForPhase(
         uint256 _phase,
         address[] calldata _users,
         uint256[] calldata _amounts
@@ -472,9 +472,9 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
     }
 
-    /// @notice Participate in phase 1 of the Airdrop. PCNFT holder will receive pre-defined discount and TAP.
-    /// @param _data The calldata. Needs to be the address of the user.
-    /// _data = (uint256 _tokenID)
+    /// @notice Participate in phase 3 of the Airdrop. PCNFT holder will receive pre-defined discount and TAP.
+    /// @param _data The calldata. Needs to be an array of PCNFT tokenIDs.
+    /// _data = (uint256 PCNFT tokenID[])
     function _participatePhase3(
         bytes calldata _data
     ) internal returns (uint256 oTAPTokenID) {
