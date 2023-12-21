@@ -112,8 +112,8 @@ const config: HardhatUserConfig & { dodoc: any } = {
         timeout: 4000000,
     },
     dodoc: {
-        runOnCompile: true,
-        freshOutput: true,
+        runOnCompile: false,
+        freshOutput: false,
     },
     typechain: {
         outDir: 'typechain',
