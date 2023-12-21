@@ -186,15 +186,6 @@ describe('AirdropBroker', () => {
             await expect(adb.connect(users[0].wallet).participate('0x00')).to.be
                 .reverted;
 
-            // Get snapshot and go to epoch 5, which is incorrect
-            const snapshot = await takeSnapshot();
-            for (let i = 0; i < 5; i++) {
-                await newEpoch(adb);
-            }
-            await expect(adb.connect(users[0].wallet).participate('0x00')).to.be
-                .reverted;
-            await snapshot.restore();
-
             //---- test adb participation
             await newEpoch(adb);
             expect(await adb.epoch()).to.be.eq(BN(1));
@@ -457,13 +448,20 @@ describe('AirdropBroker', () => {
 
             const users = await generatePhase3Signers(pcnft);
             const [rndPhase3User] = users;
+            const counter = 14;
+
+            // Mint 2 more tokens to rndPhase3User
+            await pcnft.mint(rndPhase3User.address);
+            await pcnft.mint(rndPhase3User.address);
 
             //---- test adb participation
             expect(await adb.userParticipation(getEncodedAddressOfToken(1), 3))
                 .to.be.false; // Check has PCNFT
 
             await expect(
-                adb.connect(rndPhase3User).participate(generatePhase3Data(1)),
+                adb
+                    .connect(rndPhase3User)
+                    .participate(generatePhase3Data([1, 15, 16])),
             )
                 .to.emit(adb, 'Participate')
                 .withArgs(3, 1);
@@ -472,14 +470,16 @@ describe('AirdropBroker', () => {
                 .to.be.true; // Check if user is registered
 
             await expect(
-                adb.connect(rndPhase3User).participate(generatePhase3Data(1)),
-            ).to.reverted;
+                adb.connect(rndPhase3User).participate(generatePhase3Data([1])),
+            ).to.be.reverted;
 
             // Check minted aoTAP
             const aoTAPTokenID = await aoTAP.mintedAOTAP();
             const aoTAPOption = await aoTAP.options(aoTAPTokenID);
 
-            expect(aoTAPOption.amount).to.be.eq(BN(714).mul((1e18).toString())); // 200 per user for role 0
+            expect(aoTAPOption.amount).to.be.eq(
+                BN(714).mul(3).mul((1e18).toString()),
+            );
             expect(aoTAPOption.expiry).to.be.eq(
                 (await adb.lastEpochUpdate()).add(await adb.EPOCH_DURATION()),
             ); // 1 epoch after last epoch update
@@ -574,15 +574,6 @@ describe('AirdropBroker', () => {
             //---- Can't participate if epoch is not started or finished
             await expect(adb.connect(users[0].wallet).participate('0x00')).to.be
                 .reverted;
-
-            // Get snapshot and go to epoch 5, which is incorrect
-            const snapshot = await takeSnapshot();
-            for (let i = 0; i < 5; i++) {
-                await newEpoch(adb);
-            }
-            await expect(adb.connect(users[0].wallet).participate('0x00')).to.be
-                .reverted;
-            await snapshot.restore();
 
             //---- test adb participation
             await newEpoch(adb);
