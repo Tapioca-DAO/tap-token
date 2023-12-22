@@ -102,6 +102,7 @@ contract TapiocaOptionBroker is
         public netDepositedForEpoch;
     /// =====-------======
 
+    error NotEqualDurations();
     error NotAuthorized();
     error NoActiveSingularities();
     error NoLiquidity();
@@ -130,6 +131,12 @@ contract TapiocaOptionBroker is
     ) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         tOLP = TapiocaOptionLiquidityProvision(_tOLP);
+
+        if (
+            _epochDuration !=
+            TapiocaOptionLiquidityProvision(_tOLP).EPOCH_DURATION()
+        ) revert NotEqualDurations();
+
         tapOFT = TapOFT(_tapOFT);
         oTAP = OTAP(_oTAP);
         EPOCH_DURATION = _epochDuration;

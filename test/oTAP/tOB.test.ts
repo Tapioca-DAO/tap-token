@@ -135,7 +135,7 @@ describe('TapiocaOptionBroker', () => {
 
         // Setup - register a singularity, mint and deposit in YB, lock in tOLP
         const amount = 1e8;
-        let lockDuration = BN(4);
+        let lockDuration = await tOB.EPOCH_DURATION();
         await tOLP.registerSingularity(
             sglTokenMock.address,
             sglTokenMockAsset,
