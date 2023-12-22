@@ -80,6 +80,7 @@ contract TapiocaOptionLiquidityProvision is
     error DuplicateAssetId();
     error AlreadyRegistered();
     error NotAuthorized();
+    error NotInRescueMode();
 
     constructor(
         address _yieldBox,
@@ -336,6 +337,7 @@ contract TapiocaOptionLiquidityProvision is
     ) external onlyOwner updateTotalSGLPoolWeights {
         uint256 sglAssetID = activeSingularities[singularity].sglAssetID;
         if (sglAssetID == 0) revert NotRegistered();
+        if (!activeSingularities[singularity].rescue) revert NotInRescueMode();
 
         unchecked {
             uint256[] memory _singularities = singularities;
