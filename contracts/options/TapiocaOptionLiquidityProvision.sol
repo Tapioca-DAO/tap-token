@@ -65,10 +65,11 @@ contract TapiocaOptionLiquidityProvision is
     uint256[] public singularities; // Array of active singularity asset IDs
 
     uint256 public totalSingularityPoolWeights; // Total weight of all active singularity pools
+    uint256 public immutable EPOCH_DURATION; // 7 days = 604800
 
     error NotRegistered();
     error InvalidSingularity();
-    error LockDurationNotValid();
+    error DurationTooShort();
     error SharesNotValid();
     error SingularityInRescueMode();
     error SingularityNotActive();
@@ -82,12 +83,14 @@ contract TapiocaOptionLiquidityProvision is
 
     constructor(
         address _yieldBox,
+        uint256 _epochDuration,
         address _owner
     )
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
         ERC721Permit("TapiocaOptionLiquidityProvision")
     {
         yieldBox = IYieldBox(_yieldBox);
+        EPOCH_DURATION = _epochDuration;
         owner = _owner;
     }
 
@@ -201,7 +204,7 @@ contract TapiocaOptionLiquidityProvision is
         uint128 _lockDuration,
         uint128 _ybShares
     ) external nonReentrant returns (uint256 tokenId) {
-        if (_lockDuration == 0) revert LockDurationNotValid();
+        if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
         if (_ybShares == 0) revert SharesNotValid();
 
         SingularityPool memory sgl = activeSingularities[_singularity];

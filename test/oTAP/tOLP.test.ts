@@ -202,7 +202,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
         } = await loadFixture(setupFixture);
 
         // Setup
-        const lockDuration = 1;
+        const lockDuration = await tOLP.EPOCH_DURATION();
         const lockAmount = 1e8;
         await tOLP.registerSingularity(
             sglTokenMock.address,
@@ -229,7 +229,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
         // Requirements
         await expect(
             tOLP.lock(signer.address, sglTokenMock.address, 0, lockShares),
-        ).to.reverted;
+        ).to.revertedWithCustomError(tOLP, 'DurationTooShort');
         await expect(
             tOLP.lock(signer.address, sglTokenMock.address, lockDuration, 0),
         ).to.reverted;
@@ -288,7 +288,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
         } = await loadFixture(setupFixture);
 
         // Setup
-        const lockDuration = 10;
+        const lockDuration = await tOLP.EPOCH_DURATION();
         const lockAmount = 1e8;
         await tOLP.registerSingularity(
             sglTokenMock.address,
@@ -322,7 +322,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
         // Requirements
         await expect(tOLP.unlock(tokenID, sglTokenMock.address, signer.address))
             .to.be.reverted;
-        await time_travel(10);
+        await time_travel(lockDuration.toNumber());
         await expect(
             tOLP.unlock(tokenID, sglTokenMock2.address, signer.address),
         ).to.be.reverted;
@@ -399,7 +399,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
         } = await loadFixture(setupFixture);
 
         // Setup
-        const lockDuration = 10;
+        const lockDuration = await tOLP.EPOCH_DURATION();
         const lockAmount = 1e8;
         await tOLP.registerSingularity(
             sglTokenMock.address,
@@ -536,7 +536,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
 
         // Setup sglTokenMock deposit
         {
-            const lockDuration = 10;
+            const lockDuration = await tOLP.EPOCH_DURATION();
             const lockAmount = 1e8;
 
             await sglTokenMock.freeMint(lockAmount);
@@ -567,7 +567,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
 
         // Setup sglTokenMock2 deposit + rescue withdrawal
         {
-            const lockDuration = 10;
+            const lockDuration = await tOLP.EPOCH_DURATION();
             const lockAmount = 1e8;
 
             await sglTokenMock2.freeMint(lockAmount);

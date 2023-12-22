@@ -66,7 +66,11 @@ export const setupFixture = async () => {
     const tapOracleMock = await OracleMock.deploy('TAP', 'TAP', BN(33e17));
     const tOLP = await (
         await ethers.getContractFactory('TapiocaOptionLiquidityProvision')
-    ).deploy(yieldBox.address, signer.address);
+    ).deploy(
+        yieldBox.address,
+        604800, // 7 days
+        signer.address,
+    );
     const oTAP = await (await ethers.getContractFactory('OTAP')).deploy();
     const tOB = await (
         await hre.ethers.getContractFactory('TapiocaOptionBroker')
