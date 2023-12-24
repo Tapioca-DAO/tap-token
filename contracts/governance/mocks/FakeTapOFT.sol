@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import {ERC20Mock} from "tapioca-sdk/dist/contracts/mocks/ERC20Mock.sol";
 import {TwTAP} from "../twTAP.sol";

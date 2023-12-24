@@ -62,19 +62,10 @@ const config: HardhatUserConfig & { dodoc: any } = {
                 },
             },
             {
-                version: '0.8.19',
+                version: '0.8.22',
                 settings: {
-                    viaIR: process.env.NODE_ENV == 'coverage' ? false : true,
-                    optimizer: {
-                        enabled: true,
-                        runs: 500,
-                    },
-                },
-            },
-            {
-                version: '0.8.19',
-                settings: {
-                    viaIR: process.env.NODE_ENV == 'coverage' ? false : true,
+                    evmVersion: 'paris', // Latest before Shanghai
+                    viaIR: true,
                     optimizer: {
                         enabled: true,
                         runs: 500,
