@@ -9,3 +9,7 @@ docs
 #Hardhat files
 cache
 artifacts
+
+# Forge files
+out
+cache_forge
