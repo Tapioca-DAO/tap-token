@@ -9,7 +9,7 @@ import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTM
 
 // External
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {BytesLib} from "../../libs/BytesLib.sol";
+import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 
 // Tapioca
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
