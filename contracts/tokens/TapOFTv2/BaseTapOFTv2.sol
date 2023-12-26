@@ -5,7 +5,7 @@ pragma solidity 0.8.22;
 import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
 // Tapioca
-import {TwTAP} from "../../governance/twTAP.sol";
+// import {TwTAP} from "../../governance/twTAP.sol";
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -21,7 +21,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 */
 
 contract BaseTapOFTv2 is OFT {
-    TwTAP public twTap;
+    // TwTAP public twTap;
 
     uint16 internal constant PT_LOCK_TWTAP = 870;
     uint16 internal constant PT_UNLOCK_TWTAP = 871;
