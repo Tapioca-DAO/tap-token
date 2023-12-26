@@ -9,3 +9,7 @@ docs
 #Hardhat files
 cache
 artifacts
+
+# Foundry files
+out
+cache_forge
