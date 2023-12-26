@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {IOAppMsgInspector} from "../../contracts/oapp/interfaces/IOAppMsgInspector.sol";
+import {IOAppMsgInspector} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppMsgInspector.sol";
 
 contract OFTInspectorMock is IOAppMsgInspector {
     function inspect(

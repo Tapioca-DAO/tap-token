@@ -2,34 +2,35 @@
 
 pragma solidity ^0.8.18;
 
-import { Test } from "forge-std/Test.sol";
-import { DoubleEndedQueue } from "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
+import {Test} from "forge-std/Test.sol";
+import {DoubleEndedQueue} from "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 
-import { UlnConfig, SetDefaultUlnConfigParam } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/UlnBase.sol";
-import { SetDefaultExecutorConfigParam, ExecutorConfig } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/SendLibBase.sol";
-import { ReceiveUln302 } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/uln302/ReceiveUln302.sol";
-import { DVN, ExecuteParam } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/dvn/DVN.sol";
-import { DVNFeeLib } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/dvn/DVNFeeLib.sol";
-import { IExecutor } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/interfaces/IExecutor.sol";
-import { Executor } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/Executor.sol";
-import { PriceFeed } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/PriceFeed.sol";
-import { ILayerZeroPriceFeed } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/interfaces/ILayerZeroPriceFeed.sol";
-import { IReceiveUlnE2 } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/interfaces/IReceiveUlnE2.sol";
-import { ReceiveUln302 } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/uln302/ReceiveUln302.sol";
-import { IMessageLib } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/IMessageLib.sol";
-import { EndpointV2 } from "@layerzerolabs/lz-evm-protocol-v2/contracts/EndpointV2.sol";
-import { ExecutorOptions } from "@layerzerolabs/lz-evm-protocol-v2/contracts/messagelib/libs/ExecutorOptions.sol";
-import { PacketV1Codec } from "@layerzerolabs/lz-evm-protocol-v2/contracts/messagelib/libs/PacketV1Codec.sol";
-import { Origin } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
+import {UlnConfig, SetDefaultUlnConfigParam} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/UlnBase.sol";
+import {SetDefaultExecutorConfigParam, ExecutorConfig} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/SendLibBase.sol";
+import {ReceiveUln302} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/uln302/ReceiveUln302.sol";
+import {DVN, ExecuteParam} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/dvn/DVN.sol";
+import {DVNFeeLib} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/dvn/DVNFeeLib.sol";
+import {IExecutor} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/interfaces/IExecutor.sol";
+import {Executor} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/Executor.sol";
+import {PriceFeed} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/PriceFeed.sol";
+import {ILayerZeroPriceFeed} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/interfaces/ILayerZeroPriceFeed.sol";
+import {IReceiveUlnE2} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/interfaces/IReceiveUlnE2.sol";
+import {ReceiveUln302} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/uln302/ReceiveUln302.sol";
+import {IMessageLib} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/IMessageLib.sol";
+import {EndpointV2} from "@layerzerolabs/lz-evm-protocol-v2/contracts/EndpointV2.sol";
+import {ExecutorOptions} from "@layerzerolabs/lz-evm-protocol-v2/contracts/messagelib/libs/ExecutorOptions.sol";
+import {PacketV1Codec} from "@layerzerolabs/lz-evm-protocol-v2/contracts/messagelib/libs/PacketV1Codec.sol";
+import {Origin} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
 
-import { OApp } from "../contracts/oapp/OApp.sol";
-import { OptionsBuilder } from "../contracts/oapp/libs/OptionsBuilder.sol";
+import {OApp} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
+import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 
-import { OptionsHelper } from "./OptionsHelper.sol";
-import { SendUln302Mock as SendUln302 } from "./mocks/SendUln302Mock.sol";
-import { SimpleMessageLibMock } from "./mocks/SimpleMessageLibMock.sol";
-import "./mocks/ExecutorFeeLibMock.sol";
+import {OptionsHelper} from "./OptionsHelper.sol";
+import {SendUln302Mock as SendUln302} from "./SendUln302Mock.sol";
+import {SimpleMessageLibMock} from "./SimpleMessageLibMock.sol";
+import "./ExecutorFeeLibMock.sol";
 
+// solhint-disable-next-line
 import "forge-std/console.sol";
 
 contract TestHelper is Test, OptionsHelper {
@@ -51,7 +52,7 @@ contract TestHelper is Test, OptionsHelper {
 
     uint256 public constant TREASURY_GAS_CAP = 1000000000000;
     uint256 public constant TREASURY_GAS_FOR_FEE_CAP = 100000;
-    
+
     uint128 public executorValueCap = 0.1 ether;
 
     function setUp() public virtual {}
@@ -69,7 +70,10 @@ contract TestHelper is Test, OptionsHelper {
      * @dev setup the endpoints
      * @param _endpointNum num of endpoints
      */
-    function setUpEndpoints(uint8 _endpointNum, LibraryType _libraryType) public {
+    function setUpEndpoints(
+        uint8 _endpointNum,
+        LibraryType _libraryType
+    ) public {
         EndpointV2[] memory endpointList = new EndpointV2[](_endpointNum);
         uint32[] memory eidList = new uint32[](_endpointNum);
 
@@ -98,7 +102,12 @@ contract TestHelper is Test, OptionsHelper {
                 SendUln302 sendUln;
                 ReceiveUln302 receiveUln;
                 {
-                    sendUln = new SendUln302(payable(this), endpointAddr, TREASURY_GAS_CAP, TREASURY_GAS_FOR_FEE_CAP);
+                    sendUln = new SendUln302(
+                        payable(this),
+                        endpointAddr,
+                        TREASURY_GAS_CAP,
+                        TREASURY_GAS_FOR_FEE_CAP
+                    );
                     receiveUln = new ReceiveUln302(endpointAddr);
                     endpointList[i].registerLibrary(address(sendUln));
                     endpointList[i].registerLibrary(address(receiveUln));
@@ -127,14 +136,24 @@ contract TestHelper is Test, OptionsHelper {
                     ExecutorFeeLib executorLib = new ExecutorFeeLibMock();
                     executor.setWorkerFeeLib(address(executorLib));
 
-                    dvn = new DVN(i + 1, messageLibs, address(priceFeed), signers, 1, admins);
+                    dvn = new DVN(
+                        i + 1,
+                        messageLibs,
+                        address(priceFeed),
+                        signers,
+                        1,
+                        admins
+                    );
                     DVNFeeLib dvnLib = new DVNFeeLib(1e18);
                     dvn.setWorkerFeeLib(address(dvnLib));
                 }
 
                 //todo: setDstGas
                 uint32 endpointNum = _endpointNum;
-                IExecutor.DstConfigParam[] memory dstConfigParams = new IExecutor.DstConfigParam[](endpointNum);
+                IExecutor.DstConfigParam[]
+                    memory dstConfigParams = new IExecutor.DstConfigParam[](
+                        endpointNum
+                    );
                 for (uint8 j = 0; j < endpointNum; j++) {
                     if (i == j) continue;
                     uint32 dstEid = j + 1;
@@ -144,7 +163,8 @@ contract TestHelper is Test, OptionsHelper {
                     defaultDVNs[0] = address(dvn);
 
                     {
-                        SetDefaultUlnConfigParam[] memory params = new SetDefaultUlnConfigParam[](1);
+                        SetDefaultUlnConfigParam[]
+                            memory params = new SetDefaultUlnConfigParam[](1);
                         UlnConfig memory ulnConfig = UlnConfig(
                             100,
                             uint8(defaultDVNs.length),
@@ -158,14 +178,24 @@ contract TestHelper is Test, OptionsHelper {
                     }
 
                     {
-                        SetDefaultExecutorConfigParam[] memory params = new SetDefaultExecutorConfigParam[](1);
-                        ExecutorConfig memory executorConfig = ExecutorConfig(10000, address(executor));
-                        params[0] = SetDefaultExecutorConfigParam(dstEid, executorConfig);
+                        SetDefaultExecutorConfigParam[]
+                            memory params = new SetDefaultExecutorConfigParam[](
+                                1
+                            );
+                        ExecutorConfig memory executorConfig = ExecutorConfig(
+                            10000,
+                            address(executor)
+                        );
+                        params[0] = SetDefaultExecutorConfigParam(
+                            dstEid,
+                            executorConfig
+                        );
                         sendUln.setDefaultExecutorConfigs(params);
                     }
 
                     {
-                        SetDefaultUlnConfigParam[] memory params = new SetDefaultUlnConfigParam[](1);
+                        SetDefaultUlnConfigParam[]
+                            memory params = new SetDefaultUlnConfigParam[](1);
                         UlnConfig memory ulnConfig = UlnConfig(
                             100,
                             uint8(defaultDVNs.length),
@@ -188,7 +218,10 @@ contract TestHelper is Test, OptionsHelper {
                     });
 
                     uint128 denominator = priceFeed.getPriceRatioDenominator();
-                    ILayerZeroPriceFeed.UpdatePrice[] memory prices = new ILayerZeroPriceFeed.UpdatePrice[](1);
+                    ILayerZeroPriceFeed.UpdatePrice[]
+                        memory prices = new ILayerZeroPriceFeed.UpdatePrice[](
+                            1
+                        );
                     prices[0] = ILayerZeroPriceFeed.UpdatePrice(
                         dstEid,
                         ILayerZeroPriceFeed.Price(1 * denominator, 1, 1)
@@ -197,7 +230,10 @@ contract TestHelper is Test, OptionsHelper {
                 }
                 executor.setDstConfig(dstConfigParams);
             } else if (_libraryType == LibraryType.SimpleMessageLib) {
-                SimpleMessageLibMock messageLib = new SimpleMessageLibMock(payable(this), address(endpointList[i]));
+                SimpleMessageLibMock messageLib = new SimpleMessageLibMock(
+                    payable(this),
+                    address(endpointList[i])
+                );
                 endpointList[i].registerLibrary(address(messageLib));
                 sendLibs[i] = address(messageLib);
                 receiveLibs[i] = address(messageLib);
@@ -227,7 +263,10 @@ contract TestHelper is Test, OptionsHelper {
     ) public returns (address[] memory oapps) {
         oapps = new address[](_oappNum);
         for (uint8 eid = _startEid; eid < _startEid + _oappNum; eid++) {
-            address oapp = _deployOApp(_oappCreationCode, abi.encode(address(endpoints[eid]), address(this), true));
+            address oapp = _deployOApp(
+                _oappCreationCode,
+                abi.encode(address(endpoints[eid]), address(this), true)
+            );
             oapps[eid - _startEid] = oapp;
         }
         // config
@@ -242,13 +281,22 @@ contract TestHelper is Test, OptionsHelper {
                 if (i == j) continue;
                 OApp remoteOApp = OApp(payable(oapps[j]));
                 uint32 remoteEid = (remoteOApp.endpoint()).eid();
-                localOApp.setPeer(remoteEid, addressToBytes32(address(remoteOApp)));
+                localOApp.setPeer(
+                    remoteEid,
+                    addressToBytes32(address(remoteOApp))
+                );
             }
         }
     }
 
-    function _deployOApp(bytes memory _oappBytecode, bytes memory _constructorArgs) internal returns (address addr) {
-        bytes memory bytecode = bytes.concat(abi.encodePacked(_oappBytecode), _constructorArgs);
+    function _deployOApp(
+        bytes memory _oappBytecode,
+        bytes memory _constructorArgs
+    ) internal returns (address addr) {
+        bytes memory bytecode = bytes.concat(
+            abi.encodePacked(_oappBytecode),
+            _constructorArgs
+        );
         assembly {
             addr := create(0, add(bytecode, 0x20), mload(bytecode))
             if iszero(extcodesize(addr)) {
@@ -257,10 +305,15 @@ contract TestHelper is Test, OptionsHelper {
         }
     }
 
-    function schedulePacket(bytes calldata _packetBytes, bytes calldata _options) public {
+    function schedulePacket(
+        bytes calldata _packetBytes,
+        bytes calldata _options
+    ) public {
         uint32 dstEid = _packetBytes.dstEid();
         bytes32 dstAddress = _packetBytes.receiver();
-        DoubleEndedQueue.Bytes32Deque storage queue = packetsQueue[dstEid][dstAddress];
+        DoubleEndedQueue.Bytes32Deque storage queue = packetsQueue[dstEid][
+            dstAddress
+        ];
         // front in, back out
         bytes32 guid = _packetBytes.guid();
         queue.pushFront(guid);
@@ -283,23 +336,40 @@ contract TestHelper is Test, OptionsHelper {
      * @param _dstAddress  destination address
      */
     function verifyPackets(uint32 _dstEid, address _dstAddress) public {
-        verifyPackets(_dstEid, bytes32(uint256(uint160(_dstAddress))), 0, address(0x0));
+        verifyPackets(
+            _dstEid,
+            bytes32(uint256(uint160(_dstAddress))),
+            0,
+            address(0x0)
+        );
     }
 
     /**
      * @dev dst UA receive/execute packets
      * @dev will NOT work calling this directly with composer IF the composed payload is different from the lzReceive msg payload
      */
-    function verifyPackets(uint32 _dstEid, bytes32 _dstAddress, uint256 _packetAmount, address _composer) public {
-        require(endpoints[_dstEid] != address(0), "endpoint not yet registered");
+    function verifyPackets(
+        uint32 _dstEid,
+        bytes32 _dstAddress,
+        uint256 _packetAmount,
+        address _composer
+    ) public {
+        require(
+            endpoints[_dstEid] != address(0),
+            "endpoint not yet registered"
+        );
 
-        DoubleEndedQueue.Bytes32Deque storage queue = packetsQueue[_dstEid][_dstAddress];
+        DoubleEndedQueue.Bytes32Deque storage queue = packetsQueue[_dstEid][
+            _dstAddress
+        ];
         uint256 pendingPacketsSize = queue.length();
         uint256 numberOfPackets;
         if (_packetAmount == 0) {
             numberOfPackets = queue.length();
         } else {
-            numberOfPackets = pendingPacketsSize > _packetAmount ? _packetAmount : pendingPacketsSize;
+            numberOfPackets = pendingPacketsSize > _packetAmount
+                ? _packetAmount
+                : pendingPacketsSize;
         }
         while (numberOfPackets > 0) {
             numberOfPackets--;
@@ -310,27 +380,54 @@ contract TestHelper is Test, OptionsHelper {
             this.validatePacket(packetBytes);
 
             bytes memory options = optionsLookup[guid];
-            if (_executorOptionExists(options, ExecutorOptions.OPTION_TYPE_NATIVE_DROP)) {
-                (uint256 amount, bytes32 receiver) = _parseExecutorNativeDropOption(options);
+            if (
+                _executorOptionExists(
+                    options,
+                    ExecutorOptions.OPTION_TYPE_NATIVE_DROP
+                )
+            ) {
+                (
+                    uint256 amount,
+                    bytes32 receiver
+                ) = _parseExecutorNativeDropOption(options);
                 address to = address(uint160(uint256(receiver)));
-                (bool sent, ) = to.call{ value: amount }("");
+                (bool sent, ) = to.call{value: amount}("");
                 require(sent, "Failed to send Ether");
             }
-            if (_executorOptionExists(options, ExecutorOptions.OPTION_TYPE_LZRECEIVE)) {
+            if (
+                _executorOptionExists(
+                    options,
+                    ExecutorOptions.OPTION_TYPE_LZRECEIVE
+                )
+            ) {
                 this.lzReceive(packetBytes, options);
             }
-            if (_composer != address(0) && _executorOptionExists(options, ExecutorOptions.OPTION_TYPE_LZCOMPOSE)) {
+            if (
+                _composer != address(0) &&
+                _executorOptionExists(
+                    options,
+                    ExecutorOptions.OPTION_TYPE_LZCOMPOSE
+                )
+            ) {
                 this.lzCompose(packetBytes, options, guid, _composer);
             }
         }
     }
 
-    function lzReceive(bytes calldata _packetBytes, bytes memory _options) external payable {
+    function lzReceive(
+        bytes calldata _packetBytes,
+        bytes memory _options
+    ) external payable {
         EndpointV2 endpoint = EndpointV2(endpoints[_packetBytes.dstEid()]);
-        (uint256 gas, uint256 value) = OptionsHelper._parseExecutorLzReceiveOption(_options);
+        (uint256 gas, uint256 value) = OptionsHelper
+            ._parseExecutorLzReceiveOption(_options);
 
-        Origin memory origin = Origin(_packetBytes.srcEid(), _packetBytes.sender(), _packetBytes.nonce());
-        endpoint.lzReceive{ value: value, gas: gas }(
+        Origin memory origin = Origin(
+            _packetBytes.srcEid(),
+            _packetBytes.sender(),
+            _packetBytes.nonce()
+        );
+        endpoint.lzReceive{value: value, gas: gas}(
             origin,
             _packetBytes.receiverB20(),
             _packetBytes.guid(),
@@ -366,20 +463,38 @@ contract TestHelper is Test, OptionsHelper {
         bytes calldata _composerMsg
     ) external payable {
         EndpointV2 endpoint = EndpointV2(endpoints[_dstEid]);
-        (uint16 index, uint256 gas, uint256 value) = _parseExecutorLzComposeOption(_options);
-        endpoint.lzCompose{ value: value, gas: gas }(_from, _to, _guid, index, _composerMsg, bytes(""));
+        (
+            uint16 index,
+            uint256 gas,
+            uint256 value
+        ) = _parseExecutorLzComposeOption(_options);
+        endpoint.lzCompose{value: value, gas: gas}(
+            _from,
+            _to,
+            _guid,
+            index,
+            _composerMsg,
+            bytes("")
+        );
     }
 
     function validatePacket(bytes calldata _packetBytes) external {
         uint32 dstEid = _packetBytes.dstEid();
         EndpointV2 endpoint = EndpointV2(endpoints[dstEid]);
-        (address receiveLib, ) = endpoint.getReceiveLibrary(_packetBytes.receiverB20(), _packetBytes.srcEid());
+        (address receiveLib, ) = endpoint.getReceiveLibrary(
+            _packetBytes.receiverB20(),
+            _packetBytes.srcEid()
+        );
         ReceiveUln302 dstUln = ReceiveUln302(receiveLib);
 
         (uint64 major, , ) = IMessageLib(receiveLib).version();
         if (major == 3) {
             // it is ultra light node
-            bytes memory config = dstUln.getConfig(_packetBytes.srcEid(), _packetBytes.receiverB20(), 2); // CONFIG_TYPE_ULN
+            bytes memory config = dstUln.getConfig(
+                _packetBytes.srcEid(),
+                _packetBytes.receiverB20(),
+                2
+            ); // CONFIG_TYPE_ULN
             DVN dvn = DVN(abi.decode(config, (UlnConfig)).requiredDVNs[0]);
 
             bytes memory packetHeader = _packetBytes.header();
@@ -394,13 +509,29 @@ contract TestHelper is Test, OptionsHelper {
                 100
             );
             {
-                bytes32 hash = dvn.hashCallData(dstEid, address(dstUln), verifyCalldata, block.timestamp + 1000);
-                bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
-                (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, ethSignedMessageHash); // matches dvn signer
+                bytes32 hash = dvn.hashCallData(
+                    dstEid,
+                    address(dstUln),
+                    verifyCalldata,
+                    block.timestamp + 1000
+                );
+                bytes32 ethSignedMessageHash = keccak256(
+                    abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
+                );
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+                    1,
+                    ethSignedMessageHash
+                ); // matches dvn signer
                 signatures = abi.encodePacked(r, s, v);
             }
             ExecuteParam[] memory params = new ExecuteParam[](1);
-            params[0] = ExecuteParam(dstEid, address(dstUln), verifyCalldata, block.timestamp + 1000, signatures);
+            params[0] = ExecuteParam(
+                dstEid,
+                address(dstUln),
+                verifyCalldata,
+                block.timestamp + 1000,
+                signatures
+            );
             dvn.execute(params);
 
             // commit verification
@@ -410,19 +541,40 @@ contract TestHelper is Test, OptionsHelper {
                 payloadHash
             );
             {
-                bytes32 hash = dvn.hashCallData(dstEid, address(dstUln), callData, block.timestamp + 1000);
-                bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
-                (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, ethSignedMessageHash); // matches dvn signer
+                bytes32 hash = dvn.hashCallData(
+                    dstEid,
+                    address(dstUln),
+                    callData,
+                    block.timestamp + 1000
+                );
+                bytes32 ethSignedMessageHash = keccak256(
+                    abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
+                );
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+                    1,
+                    ethSignedMessageHash
+                ); // matches dvn signer
                 signatures = abi.encodePacked(r, s, v);
             }
-            params[0] = ExecuteParam(dstEid, address(dstUln), callData, block.timestamp + 1000, signatures);
+            params[0] = ExecuteParam(
+                dstEid,
+                address(dstUln),
+                callData,
+                block.timestamp + 1000,
+                signatures
+            );
             dvn.execute(params);
         } else {
-            SimpleMessageLibMock(payable(receiveLib)).validatePacket(_packetBytes);
+            SimpleMessageLibMock(payable(receiveLib)).validatePacket(
+                _packetBytes
+            );
         }
     }
 
-    function assertGuid(bytes calldata packetBytes, bytes32 guid) external pure {
+    function assertGuid(
+        bytes calldata packetBytes,
+        bytes32 guid
+    ) external pure {
         bytes32 packetGuid = packetBytes.guid();
         require(packetGuid == guid, "guid not match");
     }
@@ -431,13 +583,23 @@ contract TestHelper is Test, OptionsHelper {
         endpoints[endpoint.eid()] = address(endpoint);
     }
 
-    function hasPendingPackets(uint16 _dstEid, bytes32 _dstAddress) public view returns (bool flag) {
-        DoubleEndedQueue.Bytes32Deque storage queue = packetsQueue[_dstEid][_dstAddress];
+    function hasPendingPackets(
+        uint16 _dstEid,
+        bytes32 _dstAddress
+    ) public view returns (bool flag) {
+        DoubleEndedQueue.Bytes32Deque storage queue = packetsQueue[_dstEid][
+            _dstAddress
+        ];
         return queue.length() > 0;
     }
 
-    function getNextInflightPacket(uint16 _dstEid, bytes32 _dstAddress) public view returns (bytes memory packetBytes) {
-        DoubleEndedQueue.Bytes32Deque storage queue = packetsQueue[_dstEid][_dstAddress];
+    function getNextInflightPacket(
+        uint16 _dstEid,
+        bytes32 _dstAddress
+    ) public view returns (bytes memory packetBytes) {
+        DoubleEndedQueue.Bytes32Deque storage queue = packetsQueue[_dstEid][
+            _dstAddress
+        ];
         if (queue.length() > 0) {
             bytes32 guid = queue.back();
             packetBytes = packets[guid];

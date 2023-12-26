@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {OFTAdapter} from "../../contracts/oft/OFTAdapter.sol";
+import {OFTAdapter} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTAdapter.sol";
 
 contract OFTAdapterMock is OFTAdapter {
     constructor(
