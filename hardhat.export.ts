@@ -65,7 +65,6 @@ const config: HardhatUserConfig & { dodoc: any } = {
                 version: '0.8.22',
                 settings: {
                     evmVersion: 'paris', // Latest before Shanghai
-                    viaIR: true,
                     optimizer: {
                         enabled: true,
                         runs: 500,
@@ -73,6 +72,9 @@ const config: HardhatUserConfig & { dodoc: any } = {
                 },
             },
         ],
+    },
+    paths: {
+        sources: './contracts/tokens/TapOFTv2', // TODO remove. For test LZv2 WIP only
     },
     namedAccounts: {
         deployer: 0,
