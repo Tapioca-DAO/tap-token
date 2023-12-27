@@ -439,7 +439,7 @@ contract TwTAP is
     /// @notice Indicate that (a) week(s) have passed and update running totals
     /// @notice Reverts if called in week 0. Let it.
     /// @param _limit Maximum number of weeks to process in one call
-    function advanceWeek(uint256 _limit) public nonReentrant {
+    function advanceWeek(uint256 _limit) public nonReentrant whenNotPaused {
         // TODO: Make whole function unchecked
         uint256 week = lastProcessedWeek;
         uint256 goal = currentWeek();
@@ -473,7 +473,7 @@ contract TwTAP is
     function distributeReward(
         uint256 _rewardTokenId,
         uint256 _amount
-    ) external nonReentrant {
+    ) external nonReentrant whenNotPaused {
         if (lastProcessedWeek != currentWeek()) revert AdvanceWeekFirst();
         WeekTotals storage totals = weekTotals[lastProcessedWeek];
         IERC20 rewardToken = rewardTokens[_rewardTokenId];
