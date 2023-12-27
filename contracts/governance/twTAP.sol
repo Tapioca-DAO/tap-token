@@ -495,6 +495,7 @@ contract TwTAP is
     //   OWNER
     // =========
     function setMaxRewardTokensLength(uint256 _length) external onlyOwner {
+        if (_length <= rewardTokens.length) revert NotValid();
         emit LogMaxRewardsLength(maxRewardTokens, _length, rewardTokens.length);
         maxRewardTokens = _length;
     }
