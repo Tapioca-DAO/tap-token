@@ -3,8 +3,10 @@ pragma solidity 0.8.19;
 
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
+
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 
@@ -36,7 +38,13 @@ struct AirdropTapOption {
     uint256 amount; // amount of eligible TAP
 }
 
-contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
+contract AOTAP is
+    ERC721,
+    ERC721Permit,
+    BaseBoringBatchable,
+    BoringOwnable,
+    ReentrancyGuard
+{
     uint256 public mintedAOTAP; // total number of AOTAP minted
     address public broker; // address of the onlyBroker
 
@@ -114,7 +122,7 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
         uint128 _expiry,
         uint128 _discount,
         uint256 _amount
-    ) external returns (uint256 tokenId) {
+    ) external nonReentrant returns (uint256 tokenId) {
         if (msg.sender != broker) revert OnlyBroker();
         tokenId = ++mintedAOTAP;
         _safeMint(_to, tokenId);
