@@ -123,7 +123,7 @@ contract BaseTapOFTv2 is OFT {
             _toSD(_amountToCreditLD),
             // @dev Must be include a non empty bytes if you want to compose, EVEN if you dont need it on the remote.
             // EVEN if you dont require an arbitrary payload to be sent... eg. '0x01'
-            abi.encode(_msgType, _composeMsg) // @dev Prepend `_msgType` on the compose msg.
+            abi.encodePacked(_msgType, _composeMsg) // @dev Prepend `_msgType` on the compose msg.
         );
 
         // @dev Combine the callers _extraOptions with the enforced options via the OAppOptionsType3.

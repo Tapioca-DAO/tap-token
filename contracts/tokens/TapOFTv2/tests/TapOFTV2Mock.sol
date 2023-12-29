@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
+// LZ
+import {SendParam} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+
 // Tapioca
 import {TapOFTV2} from "../TapOFTV2.sol";
 
@@ -23,7 +26,30 @@ contract TapOFTV2Mock is TapOFTV2 {
         address _owner
     ) TapOFTV2(_endpoint, _owner) {}
 
-    function mint(address _to, uint256 _amount) external {
-        _mint(_to, _amount);
+    /**
+     * @dev Internal function to build the message and options.
+     * @param _msgType The message type, either custom ones with `PT_` as a prefix, or default OFT ones.
+     * @param _sendParam The parameters for the send() operation.
+     * @param _extraOptions Additional options for the send() operation.
+     * @param _composeMsg The composed message for the send() operation.
+     * @param _amountToCreditLD The amount to credit in local decimals.
+     * @return message The encoded message.
+     * @return options The encoded options.
+     */
+    function buildMsgAndOptionsByType(
+        uint16 _msgType,
+        SendParam calldata _sendParam,
+        bytes calldata _extraOptions,
+        bytes calldata _composeMsg,
+        uint256 _amountToCreditLD
+    ) public view returns (bytes memory message, bytes memory options) {
+        return
+            _buildMsgAndOptionsByType(
+                _msgType,
+                _sendParam,
+                _extraOptions,
+                _composeMsg,
+                _amountToCreditLD
+            );
     }
 }

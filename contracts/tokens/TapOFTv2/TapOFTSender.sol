@@ -8,6 +8,8 @@ import {MessagingReceipt, OFTReceipt, SendParam, MessagingFee} from "@layerzerol
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 import {LZSendParam, LockTwTapPositionMsg} from "./ITapOFTv2.sol";
 
+import "forge-std/console.sol";
+
 /*
 
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -30,7 +32,7 @@ abstract contract TapOFTSender is BaseTapOFTv2 {
         LockTwTapPositionMsg calldata _lockTwTapPositionMsg
     ) external pure returns (bytes memory) {
         return
-            abi.encode(
+            abi.encodePacked(
                 _lockTwTapPositionMsg._user,
                 _lockTwTapPositionMsg._duration
             );
@@ -46,14 +48,14 @@ abstract contract TapOFTSender is BaseTapOFTv2 {
      *          - lzTokenFee: The lzToken fee.
      *      - _extraOptions Additional options for the send() operation.
      *      - refundAddress The address to refund the native fee to.
-     * @param duration The duration of the twTAP lock.
+     * @param _lockTwTapPositionMsg The encoded user and duration, see `buildLockTwTapPositionMsg()`
      *
      * @return msgReceipt The receipt for the send operation.
      * @return oftReceipt The OFT receipt information.
      **/
     function lockTwTapPosition(
         LZSendParam calldata _lzSendParam,
-        bytes calldata duration
+        bytes calldata _lockTwTapPositionMsg
     )
         external
         payable
@@ -69,7 +71,7 @@ abstract contract TapOFTSender is BaseTapOFTv2 {
                 _lzSendParam._extraOptions,
                 _lzSendParam._fee,
                 _lzSendParam.refundAddress,
-                duration
+                _lockTwTapPositionMsg
             );
     }
 
@@ -129,7 +131,8 @@ abstract contract TapOFTSender is BaseTapOFTv2 {
                 _composeMsg,
                 amountToCreditLD
             );
-
+        // console.log("0");
+        // console.logBytes(message);
         // @dev Sends the message to the LayerZero endpoint and returns the LayerZero msg receipt.
         msgReceipt = _lzSend(
             _sendParam.dstEid,

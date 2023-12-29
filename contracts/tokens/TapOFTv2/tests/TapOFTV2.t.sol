@@ -8,12 +8,13 @@ import {SendParam, MessagingFee, MessagingReceipt, OFTReceipt} from "@layerzerol
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
+import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 
 import {TestHelper} from "./mocks/TestHelper.sol";
 
 import {LZSendParam, LockTwTapPositionMsg} from "../ITapOFTv2.sol";
-import {TapOFTV2} from "../TapOFTV2.sol";
+import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
 
 contract TapOFTV2Test is TestHelper {
     using OptionsBuilder for bytes;
@@ -23,8 +24,8 @@ contract TapOFTV2Test is TestHelper {
     uint32 aEid = 1;
     uint32 bEid = 2;
 
-    TapOFTV2 aTapOFT;
-    TapOFTV2 bTapOFT;
+    TapOFTV2Mock aTapOFT;
+    TapOFTV2Mock bTapOFT;
 
     address public userA = address(0x1);
     address public userB = address(0x2);
@@ -40,16 +41,16 @@ contract TapOFTV2Test is TestHelper {
 
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
-        aTapOFT = TapOFTV2(
+        aTapOFT = TapOFTV2Mock(
             _deployOApp(
-                type(TapOFTV2).creationCode,
+                type(TapOFTV2Mock).creationCode,
                 abi.encode(address(endpoints[aEid]), address(this))
             )
         );
         vm.label(address(aTapOFT), "aTapOFT");
-        bTapOFT = TapOFTV2(
+        bTapOFT = TapOFTV2Mock(
             _deployOApp(
-                type(TapOFTV2).creationCode,
+                type(TapOFTV2Mock).creationCode,
                 abi.encode(address(endpoints[bEid]), address(this))
             )
         );
@@ -77,6 +78,12 @@ contract TapOFTV2Test is TestHelper {
         uint256 amountToSendLD = 1 ether;
         uint256 lockDuration = 80;
 
+        LockTwTapPositionMsg
+            memory lockTwTapPositionMsg = LockTwTapPositionMsg({
+                _user: address(this),
+                _duration: lockDuration
+            });
+
         // Prepare args call
         SendParam memory sendParam = SendParam({
             dstEid: bEid,
@@ -89,11 +96,16 @@ contract TapOFTV2Test is TestHelper {
             .addExecutorLzReceiveOption(1_000_000, 0)
             .addExecutorLzComposeOption(0, 1_000_000, 0); // 100k gas, 0 value // index 0, 100k gas, 0 value
 
-        bytes memory composeMsg = aTapOFT.buildLockTwTapPositionMsg(
-            LockTwTapPositionMsg({
-                _user: address(this),
-                _duration: lockDuration
-            })
+        bytes memory lockPosition = aTapOFT.buildLockTwTapPositionMsg(
+            lockTwTapPositionMsg
+        );
+
+        (bytes memory composeMsg, ) = aTapOFT.buildMsgAndOptionsByType(
+            PT_LOCK_TWTAP,
+            sendParam,
+            extraOptions,
+            lockPosition,
+            amountToSendLD
         );
         MessagingFee memory msgFee = aTapOFT.quoteSendPacket(
             PT_LOCK_TWTAP,
@@ -118,7 +130,7 @@ contract TapOFTV2Test is TestHelper {
             OFTReceipt memory oftReceipt
         ) = aTapOFT.lockTwTapPosition{value: msgFee.nativeFee}(
                 lzSendParam,
-                abi.encodePacked(lockDuration)
+                lockPosition
             );
         // vm.expectEmit(false, true, true, true);
         // emit OFTReceived(
@@ -137,6 +149,10 @@ contract TapOFTV2Test is TestHelper {
         verifyPackets(
             uint32(bEid),
             OFTMsgCodec.addressToBytes32(address(bTapOFT))
+        );
+        bytes memory composedMsg = abi.encodePacked(
+            PT_LOCK_TWTAP,
+            lockPosition
         );
         _callLzCompose(
             msgReceipt,
@@ -164,13 +180,26 @@ contract TapOFTV2Test is TestHelper {
         address caller_,
         bytes memory composeMsg
     ) internal {
+        address oftSendTo_ = address(this);
+
+        // Remove the prepend that OFTMsgCodec.encode adds on a composed message to get the actual OApp compose msg
+        bytes memory composeMsgWithoutToAddress = BytesLib.slice(
+            composeMsg,
+            40,
+            composeMsg.length - 40
+        );
         bytes memory composerMsg_ = OFTComposeMsgCodec.encode(
             msgReceipt.nonce,
             srcEid_,
             oftReceipt.amountCreditLD,
-            abi.encodePacked(PT_LOCK_TWTAP, composeMsg)
+            composeMsgWithoutToAddress
         );
-        console.logBytes(abi.encodePacked(PT_LOCK_TWTAP, composeMsg));
+        console.log("2");
+        // console.log(oftReceipt.amountCreditLD);
+        // console.log(oftSendTo_);
+        console.logBytes(composerMsg_);
+        console.log("");
+        // console.logBytes(composerMsg_);
         this.lzCompose(dstEid_, from_, options_, guid_, to_, composerMsg_);
     }
 }

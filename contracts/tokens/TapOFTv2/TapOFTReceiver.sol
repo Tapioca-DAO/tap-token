@@ -7,8 +7,11 @@ import {IOAppMsgInspector} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/in
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import {IOAppComposer} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppComposer.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
+import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
+
+import {LockTwTapPositionMsg} from "./ITapOFTv2.sol";
 
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 
@@ -80,7 +83,10 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
                 amountReceivedLD,
                 _message.composeMsg()
             );
-            console.logBytes(_message.composeMsg());
+            console.log("1");
+            console.logBytes(composeMsg);
+            console.log("");
+            // console.logBytes(composeMsg);
 
             // @dev Stores the lzCompose payload that will be executed in a separate tx.
             // Standardizes functionality for executing arbitrary contract invocation on some non-evm chains.
@@ -118,12 +124,41 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
             revert InvalidComposer(_from);
         }
 
-        // Parse message
-        (uint16 msgType, bytes memory composeMsg) = abi.decode(
-            _message,
-            (uint16, bytes)
+        // Decode message
+        uint64 nonce_ = OFTComposeMsgCodec.nonce(_message);
+        uint32 srcEid_ = OFTComposeMsgCodec.srcEid(_message);
+        uint256 amountReceivedLD_ = OFTComposeMsgCodec.amountLD(_message);
+        address composeSender = OFTComposeMsgCodec.bytes32ToAddress(
+            OFTComposeMsgCodec.composeFrom(_message)
+        );
+        bytes memory composeMsg_ = OFTComposeMsgCodec.composeMsg(_message);
+
+        // Decode OApp data
+        uint8 msgTypeOffset = 2;
+        uint8 userOffset = 22; // 2 bytes for msgType + 20 bytes for user
+
+        uint16 msgType = BytesLib.toUint16(
+            BytesLib.slice(composeMsg_, 0, msgTypeOffset),
+            0
+        );
+        address user = BytesLib.toAddress(
+            BytesLib.slice(composeMsg_, msgTypeOffset, userOffset),
+            0
         );
 
-        emit ComposeReceived(msgType, _guid, composeMsg);
+        uint256 duration = BytesLib.toUint256(
+            BytesLib.slice(
+                composeMsg_,
+                userOffset,
+                composeMsg_.length - userOffset
+            ),
+            0
+        );
+
+        console.log(msgType);
+        console.log(user);
+        console.log(duration);
+
+        // emit ComposeReceived(msgType, _guid, _message);
     }
 }
