@@ -12,6 +12,8 @@ import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 
+import "forge-std/console.sol";
+
 /*
 
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -78,6 +80,7 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
                 amountReceivedLD,
                 _message.composeMsg()
             );
+            console.logBytes(_message.composeMsg());
 
             // @dev Stores the lzCompose payload that will be executed in a separate tx.
             // Standardizes functionality for executing arbitrary contract invocation on some non-evm chains.
@@ -95,6 +98,7 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         emit OFTReceived(_guid, toAddress, amountToCreditLD, amountReceivedLD);
     }
 
+    // TODO - SANITIZE MSG TYPE
     /**
      * @notice Composes a LayerZero message from an OApp.
      * @dev The message comes in form: [msgType, composeMsg].

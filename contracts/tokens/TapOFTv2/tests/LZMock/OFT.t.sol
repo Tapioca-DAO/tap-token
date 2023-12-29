@@ -3,12 +3,12 @@ pragma solidity ^0.8.22;
 
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 
-import {OFTMock} from "../../contracts/tokens/TapOFTv2/mocks/OFTMock.sol";
+import {OFTMock} from "../mocks/OFTMock.sol";
 import {MessagingFee, MessagingReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
-import {OFTAdapterMock} from "../../contracts/tokens/TapOFTv2/mocks/OFTAdapterMock.sol";
-import {ERC20Mock} from "../../contracts/tokens/TapOFTv2/mocks/ERC20Mock.sol";
-import {OFTComposerMock} from "../../contracts/tokens/TapOFTv2/mocks/OFTComposerMock.sol";
-import {OFTInspectorMock, IOAppMsgInspector} from "../../contracts/tokens/TapOFTv2/mocks/OFTInspectorMock.sol";
+import {OFTAdapterMock} from "../mocks/OFTAdapterMock.sol";
+import {ERC20Mock} from "../mocks/ERC20Mock.sol";
+import {OFTComposerMock} from "../mocks/OFTComposerMock.sol";
+import {OFTInspectorMock, IOAppMsgInspector} from "../mocks/OFTInspectorMock.sol";
 import {IOAppOptionsType3, EnforcedOptionParam} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OAppOptionsType3.sol";
 
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
@@ -17,7 +17,7 @@ import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/li
 import {IOFT, SendParam, OFTReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {TestHelper} from "../../contracts/tokens/TapOFTv2/mocks/TestHelper.sol";
+import {TestHelper} from "../mocks/TestHelper.sol";
 
 contract OFTTest is TestHelper {
     using OptionsBuilder for bytes;
