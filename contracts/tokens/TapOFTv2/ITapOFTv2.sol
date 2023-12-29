@@ -19,6 +19,6 @@ struct LZSendParam {
 }
 
 struct LockTwTapPositionMsg {
-    address _user;
-    uint256 _duration;
+    address user;
+    uint256 duration;
 }

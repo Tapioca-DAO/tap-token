@@ -80,8 +80,8 @@ contract TapOFTV2Test is TestHelper {
 
         LockTwTapPositionMsg
             memory lockTwTapPositionMsg = LockTwTapPositionMsg({
-                _user: address(this),
-                _duration: lockDuration
+                user: address(this),
+                duration: lockDuration
             });
 
         // Prepare args call

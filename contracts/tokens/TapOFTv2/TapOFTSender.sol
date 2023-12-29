@@ -33,8 +33,8 @@ abstract contract TapOFTSender is BaseTapOFTv2 {
     ) external pure returns (bytes memory) {
         return
             abi.encodePacked(
-                _lockTwTapPositionMsg._user,
-                _lockTwTapPositionMsg._duration
+                _lockTwTapPositionMsg.user,
+                _lockTwTapPositionMsg.duration
             );
     }
 
@@ -48,7 +48,7 @@ abstract contract TapOFTSender is BaseTapOFTv2 {
      *          - lzTokenFee: The lzToken fee.
      *      - _extraOptions Additional options for the send() operation.
      *      - refundAddress The address to refund the native fee to.
-     * @param _lockTwTapPositionMsg The encoded user and duration, see `buildLockTwTapPositionMsg()`
+     * @param _lockTwTapPositionMsg The encoded msg, see `TapOFTMsgCoder.buildLockTwTapPositionMsg()`
      *
      * @return msgReceipt The receipt for the send operation.
      * @return oftReceipt The OFT receipt information.

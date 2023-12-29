@@ -12,7 +12,7 @@ import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
 import {LockTwTapPositionMsg} from "./ITapOFTv2.sol";
-
+import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 
 import "forge-std/console.sol";
@@ -125,40 +125,34 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         }
 
         // Decode message
-        uint64 nonce_ = OFTComposeMsgCodec.nonce(_message);
-        uint32 srcEid_ = OFTComposeMsgCodec.srcEid(_message);
-        uint256 amountReceivedLD_ = OFTComposeMsgCodec.amountLD(_message);
-        address composeSender = OFTComposeMsgCodec.bytes32ToAddress(
-            OFTComposeMsgCodec.composeFrom(_message)
-        );
-        bytes memory composeMsg_ = OFTComposeMsgCodec.composeMsg(_message);
+        (
+            uint64 nonce_,
+            uint32 srcEid_,
+            uint256 amountReceivedLD_,
+            address composeSender_,
+            uint16 msgType_,
+            bytes memory tapComposeMsg_
+        ) = TapOFTMsgCoder.decodeReceiverComposeMsg(_message);
 
-        // Decode OApp data
-        uint8 msgTypeOffset = 2;
-        uint8 userOffset = 22; // 2 bytes for msgType + 20 bytes for user
-
-        uint16 msgType = BytesLib.toUint16(
-            BytesLib.slice(composeMsg_, 0, msgTypeOffset),
-            0
-        );
-        address user = BytesLib.toAddress(
-            BytesLib.slice(composeMsg_, msgTypeOffset, userOffset),
-            0
-        );
-
-        uint256 duration = BytesLib.toUint256(
-            BytesLib.slice(
-                composeMsg_,
-                userOffset,
-                composeMsg_.length - userOffset
-            ),
-            0
-        );
-
-        console.log(msgType);
-        console.log(user);
-        console.log(duration);
+        if (msgType_ == PT_LOCK_TWTAP) {
+            console.logBytes(tapComposeMsg_);
+            _lockTwTapPositionReceiver(tapComposeMsg_, amountReceivedLD_);
+        }
 
         // emit ComposeReceived(msgType, _guid, _message);
+    }
+
+    function _lockTwTapPositionReceiver(
+        bytes memory _data,
+        uint256 _amount
+    ) internal virtual {
+        LockTwTapPositionMsg memory lockTwTapPositionMsg_ = TapOFTMsgCoder
+            .decodeLockTwpTapDstMsg(_data);
+
+        console.log(lockTwTapPositionMsg_.user);
+        console.log(lockTwTapPositionMsg_.duration);
+        console.log(_amount);
+
+        // @dev Lock the position.
     }
 }
