@@ -43,6 +43,12 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         bytes composeMsg
     );
 
+    event LockTwTapReceived(
+        address indexed user,
+        uint256 duration,
+        uint256 amount
+    );
+
     /**
      * @dev Slightly modified version of the OFT _lzReceive() operation.
      * The composed message is sent to `address(this)` instead of `toAddress`.
@@ -83,10 +89,6 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
                 amountReceivedLD,
                 _message.composeMsg()
             );
-            console.log("1");
-            console.logBytes(composeMsg);
-            console.log("");
-            // console.logBytes(composeMsg);
 
             // @dev Stores the lzCompose payload that will be executed in a separate tx.
             // Standardizes functionality for executing arbitrary contract invocation on some non-evm chains.
@@ -135,11 +137,10 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         ) = TapOFTMsgCoder.decodeReceiverComposeMsg(_message);
 
         if (msgType_ == PT_LOCK_TWTAP) {
-            console.logBytes(tapComposeMsg_);
             _lockTwTapPositionReceiver(tapComposeMsg_, amountReceivedLD_);
         }
 
-        // emit ComposeReceived(msgType, _guid, _message);
+        emit ComposeReceived(msgType_, _guid, _message);
     }
 
     function _lockTwTapPositionReceiver(
@@ -153,6 +154,11 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         console.log(lockTwTapPositionMsg_.duration);
         console.log(_amount);
 
+        emit LockTwTapReceived(
+            lockTwTapPositionMsg_.user,
+            lockTwTapPositionMsg_.duration,
+            _amount
+        );
         // @dev Lock the position.
     }
 }

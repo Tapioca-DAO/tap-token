@@ -131,8 +131,7 @@ abstract contract TapOFTSender is BaseTapOFTv2 {
                 _composeMsg,
                 amountToCreditLD
             );
-        // console.log("0");
-        // console.logBytes(message);
+
         // @dev Sends the message to the LayerZero endpoint and returns the LayerZero msg receipt.
         msgReceipt = _lzSend(
             _sendParam.dstEid,
