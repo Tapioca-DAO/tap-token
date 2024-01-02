@@ -214,7 +214,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     /// If there are unclaimed emissions from the previous week, they are added to the current week.
     /// If there are some TAP in the contract, use it as boosted TAP.
     /// @return the emitted amount
-    function emitForWeek() external onlyMinter returns (uint256) {
+    function emitForWeek() external onlyMinter notPaused returns (uint256) {
         if (_getChainId() != governanceChainIdentifier) revert NotValid();
 
         uint256 week = _timestampToWeek(block.timestamp);
