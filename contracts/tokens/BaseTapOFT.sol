@@ -53,7 +53,6 @@ abstract contract BaseTapOFT is OFTV2 {
     error LengthMismatch();
     error Failed();
     error NotAuthorized();
-    error ReasonTooLong();
 
     constructor(
         string memory _name,
