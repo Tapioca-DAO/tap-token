@@ -585,6 +585,9 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
             rawPaymentAmount -
             muldiv(rawPaymentAmount, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
 
-        paymentAmount = paymentAmount / (10 ** (18 - _paymentTokenDecimals));
+        uint256 pow = _paymentTokenDecimals > 18
+            ? _paymentTokenDecimals - 18
+            : 18 - _paymentTokenDecimals;
+        paymentAmount = paymentAmount / (10 ** pow);
     }
 }
