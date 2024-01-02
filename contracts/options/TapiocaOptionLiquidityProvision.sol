@@ -204,7 +204,7 @@ contract TapiocaOptionLiquidityProvision is
         IERC20 _singularity,
         uint128 _lockDuration,
         uint128 _ybShares
-    ) external nonReentrant returns (uint256 tokenId) {
+    ) external nonReentrant whenNotPaused returns (uint256 tokenId) {
         if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
         if (_ybShares == 0) revert SharesNotValid();
 
@@ -240,7 +240,7 @@ contract TapiocaOptionLiquidityProvision is
         uint256 _tokenId,
         IERC20 _singularity,
         address _to
-    ) external {
+    ) external whenNotPaused {
         if (!_exists(_tokenId)) revert PositionExpired();
 
         LockPosition memory lockPosition = lockPositions[_tokenId];
