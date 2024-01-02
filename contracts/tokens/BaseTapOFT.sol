@@ -53,6 +53,7 @@ abstract contract BaseTapOFT is OFTV2 {
     error LengthMismatch();
     error Failed();
     error NotAuthorized();
+    error ReasonTooLong();
 
     constructor(
         string memory _name,
@@ -168,7 +169,11 @@ abstract contract BaseTapOFT is OFTV2 {
             emit CallFailedStr(_srcChainId, _payload, _reason);
             _transferFrom(address(this), to, amount);
         } catch (bytes memory _reason) {
-            emit CallFailedBytes(_srcChainId, _payload, _reason);
+            emit CallFailedBytes(
+                _srcChainId,
+                _payload,
+                _reason.length > 1000 ? bytes("Reason too long") : _reason
+            );
             _transferFrom(address(this), to, amount);
 
             _storeFailedMessage(
@@ -176,7 +181,7 @@ abstract contract BaseTapOFT is OFTV2 {
                 _srcAddress,
                 _nonce,
                 _payload,
-                _reason
+                _reason.length > 1000 ? bytes("Reason too long") : _reason
             );
         }
     }
@@ -313,14 +318,18 @@ abstract contract BaseTapOFT is OFTV2 {
                 bytes(_reason)
             );
         } catch (bytes memory _reason) {
-            emit CallFailedBytes(_srcChainId, _payload, _reason);
+            emit CallFailedBytes(
+                _srcChainId,
+                _payload,
+                _reason.length > 1000 ? bytes("Reason too long") : _reason
+            );
 
             _storeFailedMessage(
                 _srcChainId,
                 _srcAddress,
                 _nonce,
                 _payload,
-                _reason
+                _reason.length > 1000 ? bytes("Reason too long") : _reason
             );
         }
     }
@@ -426,14 +435,18 @@ abstract contract BaseTapOFT is OFTV2 {
                 bytes(_reason)
             );
         } catch (bytes memory _reason) {
-            emit CallFailedBytes(_srcChainId, _payload, _reason);
+            emit CallFailedBytes(
+                _srcChainId,
+                _payload,
+                _reason.length > 1000 ? bytes("Reason too long") : _reason
+            );
 
             _storeFailedMessage(
                 _srcChainId,
                 _srcAddress,
                 _nonce,
                 _payload,
-                _reason
+                _reason.length > 1000 ? bytes("Reason too long") : _reason
             );
         }
     }
