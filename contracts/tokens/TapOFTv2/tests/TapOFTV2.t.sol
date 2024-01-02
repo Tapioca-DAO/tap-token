@@ -26,6 +26,7 @@ contract TapOFTV2Test is TestHelper {
 
     TapOFTV2Mock aTapOFT;
     TapOFTV2Mock bTapOFT;
+    address twTapAddr = address(0x0); // TODO Correct TwTAP contract usage and address
 
     address public userA = address(0x1);
     address public userB = address(0x2);
@@ -57,14 +58,14 @@ contract TapOFTV2Test is TestHelper {
         aTapOFT = TapOFTV2Mock(
             _deployOApp(
                 type(TapOFTV2Mock).creationCode,
-                abi.encode(address(endpoints[aEid]), address(this))
+                abi.encode(address(endpoints[aEid]), twTapAddr, address(this))
             )
         );
         vm.label(address(aTapOFT), "aTapOFT");
         bTapOFT = TapOFTV2Mock(
             _deployOApp(
                 type(TapOFTV2Mock).creationCode,
-                abi.encode(address(endpoints[bEid]), address(this))
+                abi.encode(address(endpoints[bEid]), twTapAddr, address(this))
             )
         );
         vm.label(address(bTapOFT), "bTapOFT");

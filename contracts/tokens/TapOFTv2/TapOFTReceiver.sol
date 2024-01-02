@@ -11,6 +11,9 @@ import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.s
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
+// Tapioca
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {ICommonData} from "tapioca-periph/contracts/interfaces/ICommonData.sol";
 import {LockTwTapPositionMsg} from "./ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
@@ -143,6 +146,19 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         emit ComposeReceived(msgType_, _guid, _message);
     }
 
+    // ********************* //
+    // ***** RECEIVERS ***** //
+    // ********************* //
+
+    /**
+     *
+     * @param _data The call data containing info about the lock.
+     *          - user::address: Address of the user to lock the TAP for.
+     *          - duration::uint256: Amount of time to lock for.
+     * @param _amount The amount to be locked.
+     */
+
+    // TODO sanitize the user to use approve on behalf of him
     function _lockTwTapPositionReceiver(
         bytes memory _data,
         uint256 _amount
@@ -160,5 +176,29 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
             _amount
         );
         // @dev Lock the position.
+    }
+
+    function _callApproval(ICommonData.IApproval[] memory approvals) private {
+        for (uint256 i; i < approvals.length; ) {
+            try
+                IERC20Permit(approvals[i].target).permit(
+                    approvals[i].owner,
+                    approvals[i].spender,
+                    approvals[i].value,
+                    approvals[i].deadline,
+                    approvals[i].v,
+                    approvals[i].r,
+                    approvals[i].s
+                )
+            {} catch Error(string memory reason) {
+                if (!approvals[i].allowFailure) {
+                    revert(reason);
+                }
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
     }
 }

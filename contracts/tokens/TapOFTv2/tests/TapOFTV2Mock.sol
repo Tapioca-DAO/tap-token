@@ -23,8 +23,9 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 contract TapOFTV2Mock is TapOFTV2 {
     constructor(
         address _endpoint,
+        address _twTap,
         address _owner
-    ) TapOFTV2(_endpoint, _owner) {}
+    ) TapOFTV2(_endpoint, _twTap, _owner) {}
 
     /**
      * @dev Internal function to build the message and options.

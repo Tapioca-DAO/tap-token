@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
-import "../tokens/TapOFT.sol";
+import {TapOFTV2} from "../tokens/TapOFTv2/TapOFTV2.sol";
 import "../twAML.sol";
 
 // ********************************************************************************
@@ -90,7 +90,7 @@ contract TwTAP is
 {
     using SafeERC20 for IERC20;
 
-    TapOFT public immutable tapOFT;
+    TapOFTV2 public immutable tapOFT;
 
     /// ===== TWAML ======
     TWAMLPool public twAML; // sglAssetId => twAMLPool
@@ -150,7 +150,7 @@ contract TwTAP is
         address payable _tapOFT,
         address _owner
     ) ERC721("Time Weighted TAP", "twTAP") ERC721Permit("Time Weighted TAP") {
-        tapOFT = TapOFT(_tapOFT);
+        tapOFT = TapOFTV2(_tapOFT);
         owner = _owner;
         creation = block.timestamp;
 
