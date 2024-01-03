@@ -131,12 +131,6 @@ contract TapiocaOptionBroker is
     ) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         tOLP = TapiocaOptionLiquidityProvision(_tOLP);
-
-        if (
-            _epochDuration !=
-            TapiocaOptionLiquidityProvision(_tOLP).EPOCH_DURATION()
-        ) revert NotEqualDurations();
-
         tapOFT = TapOFT(_tapOFT);
         oTAP = OTAP(_oTAP);
         EPOCH_DURATION = _epochDuration;
@@ -529,8 +523,12 @@ contract TapiocaOptionBroker is
         emit NewEpoch(epoch, epochTAP, epochTAPValuation);
     }
 
-    /// @notice Claim the Broker role of the oTAP contract
+    /// @notice Claim the Broker role of the oTAP contract.
+    /// @dev This acts as an initializer function
     function oTAPBrokerClaim() external {
+        // Make sure tOLP `EPOCH_DURATION` is the same as the broker `EPOCH_DURATION`
+        if (EPOCH_DURATION != tOLP.EPOCH_DURATION()) revert NotEqualDurations();
+
         oTAP.brokerClaim();
     }
 
