@@ -62,7 +62,7 @@ export const deployStack__task = async (
             vestingEarlySupportersPeriod = 62208000; // 24 months vesting
         let vestingSupportersCliff = 0,
             vestingSupportersPeriod = 46656000; // 18 months vesting
-        let tapiocaOptionBrokerEpochDuration = 604800; //7 days
+        let tapiocaOptionBrokerEpochDuration = 172800; // 2 days
         if (!isTestnet) {
             const addresses = `( teamAddress: ${chainInfoAddresses.teamAddress}; earlySupportersAddress: ${chainInfoAddresses.earlySupportersAddress}; supportersAddress: ${chainInfoAddresses.supportersAddress}; lbpAddress: ${chainInfoAddresses.lbpAddress}; daoAddress: ${chainInfoAddresses.daoAddress}; airdropAddress: ${chainInfoAddresses.airdropAddress})`;
 
@@ -173,7 +173,7 @@ export const deployStack__task = async (
                         chainInfoAddresses.lbpAddress,
                         chainInfoAddresses.daoAddress,
                         chainInfoAddresses.airdropAddress,
-                        EChainID.ARBITRUM_GOERLI, //governance chain
+                        EChainID.SEPOLIA, //governance chain
                         signer.address,
                     ],
                     [

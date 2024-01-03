@@ -9,7 +9,7 @@ export const buildVesting = async (
 ): Promise<IDeployerVMAdd<Vesting__factory>> => {
     return {
         contract: (await hre.ethers.getContractFactory(
-            deploymentName,
+            'Vesting',
         )) as Vesting__factory,
         deploymentName,
         args,

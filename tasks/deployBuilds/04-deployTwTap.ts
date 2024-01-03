@@ -11,7 +11,7 @@ export const buildTwTap = async (
     const deploymentName = 'TwTAP';
     return {
         contract: (await hre.ethers.getContractFactory(
-            deploymentName,
+            'TwTAP',
         )) as TwTAP__factory,
         deploymentName,
         args,
