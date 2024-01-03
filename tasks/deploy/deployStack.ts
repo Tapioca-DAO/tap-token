@@ -42,7 +42,7 @@ export const deployStack__task = async (
         const yieldBox = hre.SDK.db
             .loadGlobalDeployment(
                 tag,
-                TAPIOCA_PROJECTS_NAME.TapiocaBar,
+                TAPIOCA_PROJECTS_NAME.YieldBox,
                 chainInfo!.chainId,
             )
             .find((e) => e.name === 'YieldBox');
