@@ -164,6 +164,211 @@
                 "address": "0x3C6d5f6A63422a0376359369d505B3dE7B2E3E73",
                 "meta": {}
             }
+        ],
+        "11155111": [
+            {
+                "name": "aoTAPMock",
+                "address": "0x59dC9eDc5b0aD3e06003DDaB2b7A6B7ed37107b2",
+                "meta": {
+                    "args": [
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0x13b50455be764964fc02e7ad295f39de2ace2e95f3cf356b7fb633536f6150ba",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapOFTMock",
+                "address": "0x8f3d9F4ba95a65cf6250d1a09DbA8723EdECe1b0",
+                "meta": {
+                    "args": [
+                        "TapOFTMock",
+                        "TAPM",
+                        {
+                            "type": "BigNumber",
+                            "hex": "0x0de0b6b3a7640000"
+                        },
+                        18,
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0x63b626d0eb21333732f27ae6492d15b4400a90b0ba67ad0ea4279f31d0d50867",
+                    "create2": true
+                }
+            },
+            {
+                "name": "PCNFTMock",
+                "address": "0xB0286d2daAe7af721488bef19c760baA8312d20F",
+                "meta": {
+                    "args": [
+                        "PCNFTMock",
+                        "PCNFTMock"
+                    ],
+                    "salt": "0x6972dc5c146f3824a88e9dc47fc06d302d65db8be5fbedb557ca65b652f980c6",
+                    "create2": true
+                }
+            },
+            {
+                "name": "AirdropBroker",
+                "address": "0x2b6639Ea9250FB10a59c74bc24C74aC3F502Ceef",
+                "meta": {
+                    "args": [
+                        "0x59dC9eDc5b0aD3e06003DDaB2b7A6B7ed37107b2",
+                        "0x8f3d9F4ba95a65cf6250d1a09DbA8723EdECe1b0",
+                        "0xB0286d2daAe7af721488bef19c760baA8312d20F",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0x19e4df67e6a54d5a1655ee814e0b35e1349f194886d6b73eaff2e80982886b34",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapOracleMock",
+                "address": "0x77222E778aBBbAb59c13539c4493e641F1545358",
+                "meta": {
+                    "args": [
+                        "TapOracleMock",
+                        "TAPM",
+                        {
+                            "type": "BigNumber",
+                            "hex": "0x2dcbf4840eca0000"
+                        }
+                    ],
+                    "salt": "0xf5c36337b67424eb76f2b5e61ecd9ecf8544b14bb3343b56101d5e4faabfa370",
+                    "create2": true
+                }
+            },
+            {
+                "name": "DAIOracleMock",
+                "address": "0x091875891A8A77F7Dc8FA38FDA0098B9fB19863E",
+                "meta": {
+                    "args": [
+                        "DAIOracleMock",
+                        "DAIOracleMock",
+                        {
+                            "type": "BigNumber",
+                            "hex": "0x0de0b6b3a7640000"
+                        }
+                    ],
+                    "salt": "0x58dbb5b4cd78ab60d6dfdd8262c0cd9a89591252891ed2b8a3324718bf4e7417",
+                    "create2": true
+                }
+            },
+            {
+                "name": "DAIMock",
+                "address": "0xB4d7dE506fe25C621469E84125c6a05580aea5Cc",
+                "meta": {
+                    "args": [
+                        "DAIMock",
+                        "DAIMock",
+                        {
+                            "type": "BigNumber",
+                            "hex": "0x0de0b6b3a7640000"
+                        },
+                        18,
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0xb98732777040274e20db16c33a2f197a6ae3c3db598ae77fefbd6a85456e1abb",
+                    "create2": true
+                }
+            },
+            {
+                "name": "VestingContributors",
+                "address": "0xd4f38029a33Aa0F3E011baFBA748D73B46Deb2d5",
+                "meta": {
+                    "args": [
+                        31104000,
+                        93312000,
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0x1703aefff685ce220576972330f9c21eea4d27eb137f5843f9ca3572490d0ade",
+                    "create2": true
+                }
+            },
+            {
+                "name": "VestingEarlySupporters",
+                "address": "0x67E9A140B18f4412555728d569C3c1df099021CB",
+                "meta": {
+                    "args": [
+                        0,
+                        62208000,
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0x578e61fbe6c5bd04af0b6a1b4c923be4e0f0922253b47537d23dbb5f950c3f87",
+                    "create2": true
+                }
+            },
+            {
+                "name": "VestingSupporters",
+                "address": "0x62e42f566D94F467378280cA13737D23D8d08518",
+                "meta": {
+                    "args": [
+                        0,
+                        46656000,
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0xd80d34d6b99e90072bd4791b1622bbccf6f209345c28f1878748540136603cf2",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapOFT",
+                "address": "0xA02A1Be15cE35a7e271eD36689966162C1377D6F",
+                "meta": {
+                    "args": [
+                        "0xae92d5aD7583AD66E49A0c67BAd18F6ba52dDDc1",
+                        "0xd4f38029a33Aa0F3E011baFBA748D73B46Deb2d5",
+                        "0x67E9A140B18f4412555728d569C3c1df099021CB",
+                        "0x62e42f566D94F467378280cA13737D23D8d08518",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "421613",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0xe4d611a57d94189f85549edb62af4ee315f065b13c914f54e3ecffb2bf73cc22",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapiocaOptionLiquidityProvision",
+                "address": "0x57614f431D08833eeA78AA8A04DcD805B3e12af4",
+                "meta": {
+                    "args": [
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F",
+                        172800,
+                        "0x9e0DB53C2d1b6D420dA5726343537901FcE6D8fe"
+                    ],
+                    "salt": "0x0b3ffeba024cb4e15c3b814b080640d59f7989a974294008404eefdc4bf9e580",
+                    "create2": true
+                }
+            },
+            {
+                "name": "OTAP",
+                "address": "0x7662ad1b5CD9E8F40635388EE9B1ccce1428680e",
+                "meta": {
+                    "args": [],
+                    "salt": "0x4f49271d41462f8a71b6df86cbeaf6ef806ff858819562effac1522ec43fe377",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TwTAP",
+                "address": "0xe54A8037157c9720B9d510e4EBABDDA3de928866",
+                "meta": {
+                    "args": [
+                        "0xA02A1Be15cE35a7e271eD36689966162C1377D6F",
+                        "0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F"
+                    ],
+                    "salt": "0xeef5627825cbf18da5421c6a937b281a85dcddbdb00dbc4d8b574621133b7e29",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapiocaDeployer",
+                "address": "0x3D38200d198183ef4B7Ba483b9EE932551d747D1",
+                "meta": {}
+            }
         ]
     }
 }
