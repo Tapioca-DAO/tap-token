@@ -1,5 +1,31 @@
 {
     "default": {
+        "4002": [
+            {
+                "name": "TapOFT",
+                "address": "0x31C5fc40C0a6Fd3FC76053BF228579881acF7B8a",
+                "meta": {
+                    "args": [
+                        "0x7dcAD72640F835B0FA36EFD3D6d3ec902C7E5acf",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653",
+                        "421614",
+                        "0x40282d3Cf4890D9806BC1853e97a59C93D813653"
+                    ],
+                    "salt": "0xbd981f349e9386789a3664fe547a5484c3944027dddbc4738c88ea1f4ba5f8a6",
+                    "create2": true
+                }
+            },
+            {
+                "name": "TapiocaDeployer",
+                "address": "0x7a4E93c0c49E328BD228Fa88D9b4F837Ac28Ca26",
+                "meta": {}
+            }
+        ],
         "421614": [
             {
                 "name": "VestingContributors",
