@@ -139,11 +139,7 @@ abstract contract TWAML is FullMath {
             return _dMax;
         }
         uint256 target = (_magnitude * _dMax) / _cumulative;
-        target = target > _dMax
-            ? _dMax
-            : target < _dMin
-                ? _dMin
-                : target;
+        target = target > _dMax ? _dMax : target < _dMin ? _dMin : target;
         return target;
     }
 
