@@ -297,7 +297,8 @@ contract TapiocaOptionBroker is
             revert NotAuthorized();
 
         // Transfer tOLP position to this contract
-        tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
+        address owner = tOLP.ownerOf(_tOLPTokenID);
+        tOLP.transferFrom(owner, address(this), _tOLPTokenID);
 
         uint256 magnitude = computeMagnitude(
             uint256(lock.lockDuration),
