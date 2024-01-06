@@ -39,16 +39,20 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
 
-    uint16 RC_APPROVALS = 200;
+    /// @dev Approval msg type.
+    uint16 PT_APPROVALS = 200;
 
+    /// @dev Triggered if the address of the composer doesn't match current contract.
     error InvalidComposer(address composer);
 
+    /// @dev Compose received.
     event ComposeReceived(
         uint16 indexed msgType,
         bytes32 indexed guid,
         bytes composeMsg
     );
 
+    /// @dev twTAP lock operation received.
     event LockTwTapReceived(
         address indexed user,
         uint96 duration,

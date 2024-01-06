@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-// Tapioca
+//LZ
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OFTCore} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
+
+// Tapioca
 import {TapOFTReceiver} from "./TapOFTReceiver.sol";
 import {TapOFTSender} from "./TapOFTSender.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
-import {TwTAP} from "../../governance/twTAP.sol";
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -23,16 +24,11 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 */
 
 contract TapOFTV2 is TapOFTSender, TapOFTReceiver {
-    // TODO make sure it's 0x0 if not on host chain
-    TwTAP public twTap;
-
     constructor(
         address _endpoint,
         address _twTap,
         address _owner
-    ) BaseTapOFTv2(_endpoint, _owner) {
-        twTap = TwTAP(_twTap);
-    }
+    ) BaseTapOFTv2(_endpoint, _twTap, _owner) {}
 
     function _lzReceive(
         Origin calldata _origin,

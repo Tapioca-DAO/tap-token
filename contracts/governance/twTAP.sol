@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol";
+// External
+import {BoringOwnable} from "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
+import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// Tapioca
+import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol";
+import {ERC721Permit} from "tapioca-sdk/dist/contracts/util/ERC4494.sol"; // TODO audit
 import {TapOFTV2} from "../tokens/TapOFTv2/TapOFTV2.sol";
 import "../twAML.sol";
 

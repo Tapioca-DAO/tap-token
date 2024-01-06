@@ -14,6 +14,7 @@ import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.s
 
 // Tapioca
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
+import {TwTAP} from "../../governance/twTAP.sol";
 
 import "forge-std/console.sol";
 
@@ -38,26 +39,26 @@ contract BaseTapOFTv2 is OFT {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
 
-    // TwTAP public twTap;
-
     uint16 public constant PT_LOCK_TWTAP = 870;
     uint16 public constant PT_UNLOCK_TWTAP = 871;
     uint16 public constant PT_CLAIM_REWARDS = 872;
 
-    error TooSmall();
-    error LengthMismatch();
-    error Failed();
-    error NotAuthorized();
+    // TODO make sure it's 0x0 if not on host chain
+    TwTAP public twTap;
+
+    event PTMsgTypeSent(uint16 indexed msgType);
+
     error InvalidMsgType(uint16 msgType); // Invalid/Inexistent Tapioca msg type
     error InvalidMsgIndex(uint16 msgIndex, uint16 expectedIndex); // The msgIndex does not follow the sequence of indexes in the `_tapComposeMsg`
     error InvalidExtraOptionsIndex(uint16 msgIndex, uint16 expectedIndex); // The option index does not follow the sequence of indexes in the `_tapComposeMsg`
 
-    event PTMsgTypeSent(uint16 indexed msgType);
-
     constructor(
         address _endpoint,
+        address _twTap,
         address _owner
-    ) OFT("TAP", "TAP", _endpoint, _owner) {}
+    ) OFT("TAP", "TAP", _endpoint, _owner) {
+        twTap = TwTAP(_twTap);
+    }
 
     /**
      * @dev Slightly modified version of the OFT quoteSend() operation. Includes a `_msgType` parameter.
