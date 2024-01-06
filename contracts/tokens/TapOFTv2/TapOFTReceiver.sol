@@ -18,6 +18,7 @@ import {LockTwTapPositionMsg} from "./ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 
+// TODO remove console
 import "forge-std/console.sol";
 
 /*
@@ -38,6 +39,8 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
 
+    uint16 RC_APPROVALS = 200;
+
     error InvalidComposer(address composer);
 
     event ComposeReceived(
@@ -48,7 +51,7 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
 
     event LockTwTapReceived(
         address indexed user,
-        uint256 duration,
+        uint96 duration,
         uint256 amount
     );
 
@@ -72,7 +75,7 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         address /*_executor*/, // @dev unused in the default implementation.
         bytes calldata /*_extraData*/ // @dev unused in the default implementation.
     ) internal virtual override {
-        // @dev The src sending chain doesnt know the address length on this chain (potentially non-evm)
+        // @dev The src sending chain doesn't know the address length on this chain (potentially non-evm)
         // Thus everything is bytes32() encoded in flight.
         address toAddress = _message.sendTo().bytes32ToAddress();
         // @dev Convert the amount to credit into local decimals.
@@ -85,14 +88,6 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         );
 
         if (_message.isComposed()) {
-            // @dev Proprietary composeMsg format for the OFT.
-            bytes memory composeMsg = OFTComposeMsgCodec.encode(
-                _origin.nonce,
-                _origin.srcEid,
-                amountReceivedLD,
-                _message.composeMsg()
-            );
-
             // @dev Stores the lzCompose payload that will be executed in a separate tx.
             // Standardizes functionality for executing arbitrary contract invocation on some non-evm chains.
             // @dev The off-chain executor will listen and process the msg based on the src-chain-callers compose options passed.
@@ -102,7 +97,7 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
                 address(this), // Updated from default `toAddress`
                 _guid,
                 0 /* the index of the composed message*/,
-                composeMsg
+                _message.composeMsg()
             );
         }
 
@@ -129,21 +124,35 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
             revert InvalidComposer(_from);
         }
 
-        // Decode message
+        // Decode LZ compose message
+        (address composeSender_, bytes memory oftComposeMsg_) = TapOFTMsgCoder
+            .decodeLzComposeMsg(_message);
+
+        // Decode OFT compose message
         (
-            uint64 nonce_,
-            uint32 srcEid_,
-            uint256 amountReceivedLD_,
-            address composeSender_,
             uint16 msgType_,
-            bytes memory tapComposeMsg_
-        ) = TapOFTMsgCoder.decodeReceiverComposeMsg(_message);
+            ,
+            uint16 msgIndex_,
+            bytes memory tapComposeMsg_,
+            bytes memory nextMsg_
+        ) = TapOFTMsgCoder.decodeTapComposeMsg(oftComposeMsg_);
 
         if (msgType_ == PT_LOCK_TWTAP) {
-            _lockTwTapPositionReceiver(tapComposeMsg_, amountReceivedLD_);
+            _lockTwTapPositionReceiver(tapComposeMsg_);
         }
-
         emit ComposeReceived(msgType_, _guid, _message);
+
+        if (nextMsg_.length > 0) {
+            endpoint.sendCompose(
+                address(this),
+                _guid,
+                msgIndex_ + 1, // Increment the index
+                abi.encodePacked(
+                    OFTMsgCodec.addressToBytes32(composeSender_),
+                    nextMsg_
+                ) // Re encode the compose msg with the composeSender
+            );
+        }
     }
 
     // ********************* //
@@ -154,26 +163,23 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
      *
      * @param _data The call data containing info about the lock.
      *          - user::address: Address of the user to lock the TAP for.
-     *          - duration::uint256: Amount of time to lock for.
-     * @param _amount The amount to be locked.
+     *          - duration::uint96: Amount of time to lock for.
+     *          - amount::uint256: Amount of TAP to lock.
      */
 
     // TODO sanitize the user to use approve on behalf of him
-    function _lockTwTapPositionReceiver(
-        bytes memory _data,
-        uint256 _amount
-    ) internal virtual {
+    function _lockTwTapPositionReceiver(bytes memory _data) internal virtual {
         LockTwTapPositionMsg memory lockTwTapPositionMsg_ = TapOFTMsgCoder
             .decodeLockTwpTapDstMsg(_data);
 
         console.log(lockTwTapPositionMsg_.user);
         console.log(lockTwTapPositionMsg_.duration);
-        console.log(_amount);
+        console.log(lockTwTapPositionMsg_.amount);
 
         emit LockTwTapReceived(
             lockTwTapPositionMsg_.user,
             lockTwTapPositionMsg_.duration,
-            _amount
+            lockTwTapPositionMsg_.amount
         );
         // @dev Lock the position.
     }

@@ -3,8 +3,9 @@ pragma solidity 0.8.22;
 
 // LZ
 import {IOAppMsgInspector} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppMsgInspector.sol";
-import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
+import {ExecutorOptions} from "@layerzerolabs/lz-evm-protocol-v2/contracts/messagelib/libs/ExecutorOptions.sol";
 import {SendParam, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
 import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
 // External
@@ -12,6 +13,10 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 
 // Tapioca
+import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
+
+import "forge-std/console.sol";
+
 // import {TwTAP} from "../../governance/twTAP.sol";
 
 /*
@@ -35,14 +40,17 @@ contract BaseTapOFTv2 is OFT {
 
     // TwTAP public twTap;
 
-    uint16 internal constant PT_LOCK_TWTAP = 870;
-    uint16 internal constant PT_UNLOCK_TWTAP = 871;
-    uint16 internal constant PT_CLAIM_REWARDS = 872;
+    uint16 public constant PT_LOCK_TWTAP = 870;
+    uint16 public constant PT_UNLOCK_TWTAP = 871;
+    uint16 public constant PT_CLAIM_REWARDS = 872;
 
     error TooSmall();
     error LengthMismatch();
     error Failed();
     error NotAuthorized();
+    error InvalidMsgType(uint16 msgType); // Invalid/Inexistent Tapioca msg type
+    error InvalidMsgIndex(uint16 msgIndex, uint16 expectedIndex); // The msgIndex does not follow the sequence of indexes in the `_tapComposeMsg`
+    error InvalidExtraOptionsIndex(uint16 msgIndex, uint16 expectedIndex); // The option index does not follow the sequence of indexes in the `_tapComposeMsg`
 
     event PTMsgTypeSent(uint16 indexed msgType);
 
@@ -55,7 +63,6 @@ contract BaseTapOFTv2 is OFT {
      * @dev Slightly modified version of the OFT quoteSend() operation. Includes a `_msgType` parameter.
      * The `_buildMsgAndOptionsByType()` appends the packet type to the message.
      * @notice Provides a quote for the send() operation.
-     * @param _msgType The message type, either custom ones with `PT_` as a prefix, or default OFT ones.
      * @param _sendParam The parameters for the send() operation.
      * @param _extraOptions Additional options supplied by the caller to be used in the LayerZero message.
      * @param _payInLzToken Flag indicating whether the caller is paying in the LZ token.
@@ -68,7 +75,6 @@ contract BaseTapOFTv2 is OFT {
      *  - lzTokenFee: The lzToken fee.
      */
     function quoteSendPacket(
-        uint16 _msgType,
         SendParam calldata _sendParam,
         bytes calldata _extraOptions,
         bool _payInLzToken,
@@ -84,48 +90,54 @@ contract BaseTapOFTv2 is OFT {
         );
 
         // @dev Builds the options and OFT message to quote in the endpoint.
-        (
-            bytes memory message,
-            bytes memory options
-        ) = _buildMsgAndOptionsByType(
-                _msgType,
-                _sendParam,
-                _extraOptions,
-                _composeMsg,
-                amountToCreditLD
-            );
+        (bytes memory message, bytes memory options) = _buildOFTMsgAndOptions(
+            _sendParam,
+            _extraOptions,
+            _composeMsg,
+            amountToCreditLD
+        );
 
         // @dev Calculates the LayerZero fee for the send() operation.
         return _quote(_sendParam.dstEid, message, options, _payInLzToken);
     }
 
-    // TODO - SANITIZE MSG TYPE
     /**
-     * @dev Internal function to build the message and options.
-     * @param _msgType The message type, either custom ones with `PT_` as a prefix, or default OFT ones.
-     * @param _sendParam The parameters for the send() operation.
-     * @param _extraOptions Additional options for the send() operation.
-     * @param _composeMsg The composed message for the send() operation.
+     * @notice Buld an OFT message and option. The message contain OFT related info such as the amount to credit and the recipient.
+     * It also contains the `_composeMsg`, which is 1 or more TAP specific messages. See `_buildTapMsgAndOptions()`.
+     * The option is an aggregation of the OFT message as well as the TAP messages.
+     *
+     * @param _sendParam: The parameters for the send operation.
+     *      - dstEid::uint32: Destination endpoint ID.
+     *      - to::bytes32: Recipient address.
+     *      - amountToSendLD::uint256: Amount to send in local decimals.
+     *      - minAmountToCreditLD::uint256: Minimum amount to credit in local decimals.
+     * @param _extraOptions Additional options for the send() operation. If `_composeMsg` not empty, the `_extraOptions` should also contain the aggregation of its options.
+     * @param _composeMsg The composed message for the send() operation. Is a combination of 1 or more TAP specific messages.
      * @param _amountToCreditLD The amount to credit in local decimals.
+     *
      * @return message The encoded message.
-     * @return options The encoded options.
+     * @return options The combined LZ msgType + `_extraOptions` options.
      */
-    function _buildMsgAndOptionsByType(
-        uint16 _msgType,
+    function _buildOFTMsgAndOptions(
         SendParam calldata _sendParam,
         bytes calldata _extraOptions,
         bytes calldata _composeMsg,
         uint256 _amountToCreditLD
     ) internal view returns (bytes memory message, bytes memory options) {
+        bool hasCompose;
+
         // @dev This generated message has the msg.sender encoded into the payload so the remote knows who the caller is.
-        (message, ) = OFTMsgCodec.encode(
+        // @dev NOTE the returned message will append `msg.sender` only if the message is composed.
+        // If it's the case, it'll add the `address(msg.sender)` at the `amountToCredit` offset.
+        (message, hasCompose) = OFTMsgCodec.encode(
             _sendParam.to,
             _toSD(_amountToCreditLD),
-            // @dev Must be include a non empty bytes if you want to compose, EVEN if you dont need it on the remote.
-            // EVEN if you dont require an arbitrary payload to be sent... eg. '0x01'
-            abi.encodePacked(_msgType, _composeMsg) // @dev Prepend `_msgType` on the compose msg.
+            // @dev Must be include a non empty bytes if you want to compose, EVEN if you don't need it on the remote.
+            // EVEN if you don't require an arbitrary payload to be sent... eg. '0x01'
+            _composeMsg
         );
-
+        // @dev Change the msg type depending if its composed or not.
+        uint16 _msgType = hasCompose ? SEND_AND_CALL : SEND;
         // @dev Combine the callers _extraOptions with the enforced options via the OAppOptionsType3.
         options = combineOptions(_sendParam.dstEid, _msgType, _extraOptions);
 
@@ -133,5 +145,131 @@ contract BaseTapOFTv2 is OFT {
         // @dev If it fails inspection, needs to revert in the implementation. ie. does not rely on return boolean
         if (msgInspector != address(0))
             IOAppMsgInspector(msgInspector).inspect(message, options);
+    }
+
+    /**
+     * @dev Internal function to build the message and options.
+     *
+     * @param _msg The TAP message to be encoded.
+     * @param _msgType The message type, TAP custom ones, with `PT_` as a prefix.
+     * @param _msgIndex The index of the current TAP compose msg.
+     * @param _dstEid The destination endpoint ID.
+     * @param _extraOptions Extra options for this message. Used to add extra options or aggregate previous `_tapComposedMsg` options.
+     * @param _tapComposedMsg The previous TAP compose messages. Empty if this is the first message.
+     *
+     * @return message The encoded message.
+     * @return options The encoded options.
+     */
+    function _buildTapComposeMsgAndOptions(
+        bytes calldata _msg,
+        uint16 _msgType,
+        uint16 _msgIndex,
+        uint32 _dstEid,
+        bytes calldata _extraOptions,
+        bytes calldata _tapComposedMsg
+    ) internal view returns (bytes memory message, bytes memory options) {
+        _sanitizeMsgType(_msgType);
+        _sanitizeMsgIndex(_msgIndex, _tapComposedMsg);
+
+        message = TapOFTMsgCoder.encodeTapComposeMsg(
+            _msgType,
+            _msgIndex,
+            _msg,
+            _tapComposedMsg
+        );
+
+        _sanitizeExtraOptionsIndex(_msgIndex, _extraOptions);
+
+        // @dev Combine the callers _extraOptions with the enforced options via the OAppOptionsType3.
+        options = combineOptions(_dstEid, _msgType, _extraOptions);
+
+        // @dev Optionally inspect the message and options depending if the OApp owner has set a msg inspector.
+        // @dev If it fails inspection, needs to revert in the implementation. ie. does not rely on return boolean
+        if (msgInspector != address(0))
+            IOAppMsgInspector(msgInspector).inspect(message, options);
+    }
+
+    // TODO remove sanitization? If `_sendPacket()` is internal, then the msgType is what we expect it to be.
+    /**
+     * @dev Sanitizes the message type to match one of the Tapioca supported ones.
+     * @param _msgType The message type, custom ones with `PT_` as a prefix.
+     */
+    function _sanitizeMsgType(uint16 _msgType) internal pure {
+        if (
+            // Tapioca msg types
+            _msgType == PT_LOCK_TWTAP ||
+            _msgType == PT_UNLOCK_TWTAP ||
+            _msgType == PT_CLAIM_REWARDS
+        ) {
+            return;
+        }
+
+        revert InvalidMsgType(_msgType);
+    }
+
+    /**
+     * @dev Sanitizes the msgIndex to match the sequence of indexes in the `_tapComposeMsg`.
+     *
+     * @param _msgIndex The current message index.
+     * @param _tapComposeMsg The previous TAP compose messages. Empty if this is the first message.
+     */
+    function _sanitizeMsgIndex(
+        uint16 _msgIndex,
+        bytes calldata _tapComposeMsg
+    ) internal pure {
+        // If the msgIndex is 0 and there's no composeMsg, then it's the first message.
+        if (_tapComposeMsg.length == 0 && _msgIndex == 0) {
+            return;
+        }
+
+        uint16 _expectedMsgIndex;
+        // If there's a composeMsg, then the msgIndex must be greater than 0, and an increment of the previous msgIndex.
+        if (_tapComposeMsg.length > 0) {
+            // If the msgIndex is not 0, then it's not the first message. Check previous indexes.
+            _expectedMsgIndex =
+                TapOFTMsgCoder.decodeIndexOfTapComposeMsg(_tapComposeMsg) +
+                1; // Previous index + 1
+
+            if (_msgIndex == _expectedMsgIndex) {
+                return;
+            }
+        }
+
+        revert InvalidMsgIndex(_msgIndex, _expectedMsgIndex);
+    }
+
+    /**
+     * @dev Sanitizes the extra options index to match the sequence of indexes in the `_tapComposeMsg`.
+     * @dev Works only on a single option in the `_extraOptions`.
+     *
+     * Single option structure, see `OptionsBuilder.addExecutorLzComposeOption`
+     * ------------------------------------------------------------- *
+     * Name            | type     | start | end                      *
+     * ------------------------------------------------------------- *
+     * WORKER_ID       | uint16   | 0     | 2                        *
+     * ------------------------------------------------------------- *
+     * OPTION_LENGTH   | uint16   | 2     | 4                        *
+     * ------------------------------------------------------------- *
+     * OPTION_TYPE     | uint16   | 4     | 6                        *
+     * ------------------------------------------------------------- *
+     * INDEX           | uint16   | 6     | 8                        *
+     * ------------------------------------------------------------- *
+     * GAS             | uint128  | 8     | 24                       *
+     * ------------------------------------------------------------- *
+     * VALUE           | uint128  | 24    | 32                       *
+     * ------------------------------------------------------------- *
+     *
+     * @param _msgIndex The current message index.
+     * @param _extraOptions The extra options to be sanitized.
+     */
+    function _sanitizeExtraOptionsIndex(
+        uint16 _msgIndex,
+        bytes calldata _extraOptions
+    ) internal pure {
+        uint16 index = BytesLib.toUint16(_extraOptions[6:], 0);
+
+        if (index != _msgIndex) {
+            revert InvalidExtraOptionsIndex(index, _msgIndex);
+        }
     }
 }

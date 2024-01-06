@@ -5,8 +5,9 @@ pragma solidity 0.8.22;
 import {MessagingReceipt, OFTReceipt, SendParam, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 
 // Tapioca
-import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 import {LZSendParam, LockTwTapPositionMsg} from "./ITapOFTv2.sol";
+import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
+import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 
 import "forge-std/console.sol";
 
@@ -26,86 +27,81 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 abstract contract TapOFTSender is BaseTapOFTv2 {
     /**
+     * @notice Build a TapOFTv2 composed message and options. The composed message is a combination of 1 or more TAP specific messages.
+     * @dev Internal `_msgIndex` sanitization is done to avoid errors in the composed message and the options.
+     *
+     * @param _msg The TAP message to be encoded.
+     * @param _msgType The message type, TAP custom ones, with `PT_` as a prefix.
+     * @param _msgIndex The index of the current TAP compose msg.
+     * @param _dstEid The destination endpoint ID.
+     * @param _extraOptions Extra options for this message. Used to add extra options or aggregate previous `_tapComposeMsg` options.
+     * @param _tapComposeMsg The previous TAP compose messages. Empty if this is the first message.
+     *
+     * @return message The encoded message.
+     * @return options The encoded options.
+     */
+    function buildTapComposedMsg(
+        bytes calldata _msg,
+        uint16 _msgType,
+        uint16 _msgIndex,
+        uint32 _dstEid,
+        bytes calldata _extraOptions,
+        bytes calldata _tapComposeMsg
+    ) public view returns (bytes memory message, bytes memory options) {
+        return
+            _buildTapComposeMsgAndOptions(
+                _msg,
+                _msgType,
+                _msgIndex,
+                _dstEid,
+                _extraOptions,
+                _tapComposeMsg
+            );
+    }
+
+    /**
      * @notice Encodes the message for the lockTwTapPosition() operation.
      **/
     function buildLockTwTapPositionMsg(
         LockTwTapPositionMsg calldata _lockTwTapPositionMsg
-    ) external pure returns (bytes memory) {
-        return
-            abi.encodePacked(
-                _lockTwTapPositionMsg.user,
-                _lockTwTapPositionMsg.duration
-            );
+    ) public pure returns (bytes memory) {
+        return TapOFTMsgCoder.buildLockTwTapPositionMsg(_lockTwTapPositionMsg);
     }
 
-    /**
-     * @notice Opens a twTAP by participating in twAML.
-     *
-     * @param _lzSendParam The parameters for the send operation.
-     *      - _sendParam The parameters for the send operation.
-     *      - _fee The calculated fee for the send() operation.
-     *          - nativeFee: The native fee.
-     *          - lzTokenFee: The lzToken fee.
-     *      - _extraOptions Additional options for the send() operation.
-     *      - refundAddress The address to refund the native fee to.
-     * @param _lockTwTapPositionMsg The encoded msg, see `TapOFTMsgCoder.buildLockTwTapPositionMsg()`
-     *
-     * @return msgReceipt The receipt for the send operation.
-     * @return oftReceipt The OFT receipt information.
-     **/
-    function lockTwTapPosition(
-        LZSendParam calldata _lzSendParam,
-        bytes calldata _lockTwTapPositionMsg
-    )
-        external
-        payable
-        returns (
-            MessagingReceipt memory msgReceipt,
-            OFTReceipt memory oftReceipt
-        )
-    {
-        return
-            sendPacket(
-                PT_LOCK_TWTAP,
-                _lzSendParam._sendParam,
-                _lzSendParam._extraOptions,
-                _lzSendParam._fee,
-                _lzSendParam.refundAddress,
-                _lockTwTapPositionMsg
-            );
-    }
-
+    // TODO make it public or only internal? Making it public would require more sanitization/security checks
     /**
      * @dev Slightly modified version of the OFT send() operation. Includes a `_msgType` parameter.
      * The `_buildMsgAndOptionsByType()` appends the packet type to the message.
      * @dev Executes the send operation.
-     * @param _msgType The message type, either custom ones with `PT_` as a prefix, or default OFT ones.
-     * @param _sendParam The parameters for the send operation.
-     * @param _extraOptions Additional options for the send() operation.
-     * @param _fee The calculated fee for the send() operation.
-     *      - nativeFee: The native fee.
-     *      - lzTokenFee: The lzToken fee.
-     * @param _refundAddress The address to receive any excess funds.
-     * @param _composeMsg The composed message for the send() operation.
-     * @return msgReceipt The receipt for the send operation.
-     * @return oftReceipt The OFT receipt information.
+     * @param _lzSendParam The parameters for the send operation.
+     *      - _sendParam: The parameters for the send operation.
+     *          - dstEid::uint32: Destination endpoint ID.
+     *          - to::bytes32: Recipient address.
+     *          - amountToSendLD::uint256: Amount to send in local decimals.
+     *          - minAmountToCreditLD::uint256: Minimum amount to credit in local decimals.
+     *      - _fee: The calculated fee for the send() operation.
+     *          - nativeFee::uint256: The native fee.
+     *          - lzTokenFee::uint256: The lzToken fee.
+     *      - _extraOptions::bytes: Additional options for the send() operation.
+     *      - refundAddress::address: The address to refund the native fee to.
+     * @param _composeMsg The composed message for the send() operation. Is a combination of 1 or more TAP specific messages.
      *
-     * @dev MessagingReceipt: LayerZero msg receipt
-     *  - guid: The unique identifier for the sent message.
-     *  - nonce: The nonce of the sent message.
-     *  - fee: The LayerZero fee incurred for the message.
+     * @return msgReceipt The receipt for the send operation.
+     *      - guid::bytes32: The unique identifier for the sent message.
+     *      - nonce::uint64: The nonce of the sent message.
+     *      - fee: The LayerZero fee incurred for the message.
+     *          - nativeFee::uint256: The native fee.
+     *          - lzTokenFee::uint256: The lzToken fee.
+     * @return oftReceipt The OFT receipt information.
+     *      - amountDebitLD::uint256: Amount of tokens ACTUALLY debited in local decimals.
+     *      - amountCreditLD::uint256: Amount of tokens to be credited on the remote side.
      */
     function sendPacket(
-        uint16 _msgType,
-        SendParam calldata _sendParam,
-        bytes calldata _extraOptions,
-        MessagingFee calldata _fee,
-        address _refundAddress,
+        LZSendParam calldata _lzSendParam,
         bytes calldata _composeMsg
     )
         public
         payable
-        virtual
         returns (
             MessagingReceipt memory msgReceipt,
             OFTReceipt memory oftReceipt
@@ -115,30 +111,26 @@ abstract contract TapOFTSender is BaseTapOFTv2 {
         // - amountDebitedLD is the amount in local decimals that was ACTUALLY debited from the sender.
         // - amountToCreditLD is the amount in local decimals that will be credited to the recipient on the remote OFT instance.
         (uint256 amountDebitedLD, uint256 amountToCreditLD) = _debit(
-            _sendParam.amountToSendLD,
-            _sendParam.minAmountToCreditLD,
-            _sendParam.dstEid
+            _lzSendParam.sendParam.amountToSendLD,
+            _lzSendParam.sendParam.minAmountToCreditLD,
+            _lzSendParam.sendParam.dstEid
         );
 
         // @dev Builds the options and OFT message to quote in the endpoint.
-        (
-            bytes memory message,
-            bytes memory options
-        ) = _buildMsgAndOptionsByType(
-                _msgType,
-                _sendParam,
-                _extraOptions,
-                _composeMsg,
-                amountToCreditLD
-            );
+        (bytes memory message, bytes memory options) = _buildOFTMsgAndOptions(
+            _lzSendParam.sendParam,
+            _lzSendParam.extraOptions,
+            _composeMsg,
+            amountToCreditLD
+        );
 
         // @dev Sends the message to the LayerZero endpoint and returns the LayerZero msg receipt.
         msgReceipt = _lzSend(
-            _sendParam.dstEid,
+            _lzSendParam.sendParam.dstEid,
             message,
             options,
-            _fee,
-            _refundAddress
+            _lzSendParam.fee,
+            _lzSendParam.refundAddress
         );
         // @dev Formulate the OFT receipt.
         oftReceipt = OFTReceipt(amountDebitedLD, amountToCreditLD);
@@ -150,6 +142,5 @@ abstract contract TapOFTSender is BaseTapOFTv2 {
             amountToCreditLD,
             _composeMsg
         );
-        emit PTMsgTypeSent(_msgType);
     }
 }

@@ -4,6 +4,7 @@ pragma solidity 0.8.22;
 
 import "forge-std/Test.sol";
 
+// LZ
 import {SendParam, MessagingFee, MessagingReceipt, OFTReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
@@ -11,9 +12,12 @@ import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTM
 import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 
+// Lib
 import {TestHelper} from "./mocks/TestHelper.sol";
 
-import {LZSendParam, LockTwTapPositionMsg} from "../ITapOFTv2.sol";
+// Tapioca
+import {LZSendParam, LockTwTapPositionMsg, ITapOFTv2} from "../ITapOFTv2.sol";
+import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
 
 contract TapOFTV2Test is TestHelper {
@@ -86,26 +90,18 @@ contract TapOFTV2Test is TestHelper {
     }
 
     /**
-     * @dev test_lock_twTap_position() event checks
-     */
-    event LockTwTapReceived(
-        address indexed user,
-        uint256 duration,
-        uint256 amount
-    );
-
-    /**
      * @dev Test the OApp functionality of `TapOFTv2.lockTwTapPosition()` function.
      */
     function test_lock_twTap_position() public {
         // lock info
         uint256 amountToSendLD = 1 ether;
-        uint256 lockDuration = 80;
+        uint96 lockDuration = 80;
 
         LockTwTapPositionMsg
             memory lockTwTapPositionMsg = LockTwTapPositionMsg({
                 user: address(this),
-                duration: lockDuration
+                duration: lockDuration,
+                amount: amountToSendLD
             });
 
         // Prepare args call
@@ -115,34 +111,40 @@ contract TapOFTV2Test is TestHelper {
             amountToSendLD: amountToSendLD,
             minAmountToCreditLD: amountToSendLD
         });
-        bytes memory extraOptions = OptionsBuilder
-            .newOptions()
-            .addExecutorLzReceiveOption(1_000_000, 0)
-            .addExecutorLzComposeOption(0, 1_000_000, 0); // 100k gas, 0 value // index 0, 100k gas, 0 value
 
-        bytes memory lockPosition = aTapOFT.buildLockTwTapPositionMsg(
+        bytes memory lockPosition = TapOFTMsgCoder.buildLockTwTapPositionMsg(
             lockTwTapPositionMsg
         );
 
-        (bytes memory composeMsg, ) = aTapOFT.buildMsgAndOptionsByType(
-            PT_LOCK_TWTAP,
-            sendParam,
-            extraOptions,
+        bytes memory composeOptions = OptionsBuilder
+            .newOptions()
+            .addExecutorLzComposeOption(0, 1_000_000, 0);
+        (bytes memory composeMsg, ) = aTapOFT.buildTapComposedMsg(
             lockPosition,
-            amountToSendLD
+            PT_LOCK_TWTAP,
+            0,
+            sendParam.dstEid,
+            composeOptions,
+            bytes("") // Previous tapComposeMsg
+        );
+
+        bytes memory oftMsgOptions = OptionsBuilder.addExecutorLzReceiveOption(
+            composeOptions,
+            1_000_000,
+            0
         );
         MessagingFee memory msgFee = aTapOFT.quoteSendPacket(
-            PT_LOCK_TWTAP,
             sendParam,
-            extraOptions,
+            oftMsgOptions,
             false,
             composeMsg,
             ""
         );
+
         LZSendParam memory lzSendParam = LZSendParam({
-            _sendParam: sendParam,
-            _fee: msgFee,
-            _extraOptions: extraOptions,
+            sendParam: sendParam,
+            fee: msgFee,
+            extraOptions: oftMsgOptions,
             refundAddress: address(this)
         });
 
@@ -152,87 +154,89 @@ contract TapOFTV2Test is TestHelper {
         (
             MessagingReceipt memory msgReceipt,
             OFTReceipt memory oftReceipt
-        ) = aTapOFT.lockTwTapPosition{value: msgFee.nativeFee}(
+        ) = aTapOFT.sendPacket{value: msgFee.nativeFee}(
                 lzSendParam,
-                lockPosition
+                composeMsg
             );
 
         verifyPackets(
             uint32(bEid),
             OFTMsgCodec.addressToBytes32(address(bTapOFT))
         );
-        bytes memory composedMsg = abi.encodePacked(
-            PT_LOCK_TWTAP,
-            lockPosition
-        );
 
         vm.expectEmit(true, true, true, false);
-        emit LockTwTapReceived(
+        emit ITapOFTv2.LockTwTapReceived(
             lockTwTapPositionMsg.user,
             lockTwTapPositionMsg.duration,
             amountToSendLD
         );
 
         _callLzCompose(
-            PT_LOCK_TWTAP,
-            msgReceipt,
-            oftReceipt,
-            aEid,
-            bEid,
-            address(bTapOFT), // Compose creator (at lzReceive)
-            extraOptions,
-            msgReceipt.guid,
-            address(bTapOFT), // Compose receiver
-            composeMsg
+            LzOFTComposedData(
+                PT_LOCK_TWTAP,
+                msgReceipt.guid,
+                composeMsg,
+                bEid,
+                address(bTapOFT), // Compose creator (at lzReceive)
+                address(bTapOFT), // Compose receiver (at lzCompose)
+                address(this),
+                oftMsgOptions
+            )
         );
     }
 
     /**
+     * @dev Used to bypass stack too deep
+     *
+     * @param msgType The message type of the lz Compose.
+     * @param guid The message GUID.
+     * @param composeMsg The source raw OApp compose message.
+     * @param dstEid The destination EID.
+     * @param from The address initiating the composition, typically the OApp where the lzReceive was called.
+     * @param to The address of the lzCompose receiver.
+     * @param srcMsgSender The address of src EID OFT `msg.sender` call initiator .
+     * @param extraOptions The options passed in the source OFT call.
+     */
+    struct LzOFTComposedData {
+        uint16 msgType;
+        bytes32 guid;
+        bytes composeMsg;
+        uint32 dstEid;
+        address from;
+        address to;
+        address srcMsgSender;
+        bytes extraOptions;
+    }
+
+    /**
      * @notice Call lzCompose on the destination OApp.
+     *
      * @dev Be sure to verify the message by calling `TestHelper.verifyPackets()`.
      * @dev Will internally verify the emission of the `ComposeReceived` event with
      * the right msgType, GUID and lzReceive composer message.
      *
-     * @param msgType_ The message type of the lz Compose.
-     * @param msgReceipt The source message receipt.
-     * @param oftReceipt The source OFT receipt.
-     * @param srcEid_ The source EID.
-     * @param dstEid_ The destination EID.
-     * @param from_ The address initiating the composition, typically the OApp where the lzReceive was called.
-     * @param options_ The options passed in the source OApp call.
-     * @param guid_ The message GUID.
-     * @param to_ The address of the destination OApp.
-     * @param composeMsg The source raw OApp compose message.
+     * @param _lzOFTComposedData The data to pass to the lzCompose call.
      */
     function _callLzCompose(
-        uint16 msgType_,
-        MessagingReceipt memory msgReceipt,
-        OFTReceipt memory oftReceipt,
-        uint32 srcEid_,
-        uint32 dstEid_,
-        address from_,
-        bytes memory options_,
-        bytes32 guid_,
-        address to_,
-        bytes memory composeMsg
+        LzOFTComposedData memory _lzOFTComposedData
     ) internal {
-        address oftSendTo_ = address(this);
-
-        // Remove the prepend that OFTMsgCodec.encode adds on a composed message to get the actual OApp compose msg
-        bytes memory composeMsgWithoutToAddress = BytesLib.slice(
-            composeMsg,
-            40,
-            composeMsg.length - 40
-        );
-        bytes memory composerMsg_ = OFTComposeMsgCodec.encode(
-            msgReceipt.nonce,
-            srcEid_,
-            oftReceipt.amountCreditLD,
-            composeMsgWithoutToAddress
-        );
         vm.expectEmit(true, true, true, false);
-        emit ComposeReceived(msgType_, msgReceipt.guid, composerMsg_);
+        emit ComposeReceived(
+            _lzOFTComposedData.msgType,
+            _lzOFTComposedData.guid,
+            _lzOFTComposedData.composeMsg
+        );
 
-        this.lzCompose(dstEid_, from_, options_, guid_, to_, composerMsg_);
+        this.lzCompose(
+            _lzOFTComposedData.dstEid,
+            _lzOFTComposedData.from,
+            _lzOFTComposedData.extraOptions,
+            _lzOFTComposedData.guid,
+            _lzOFTComposedData.to,
+            abi.encodePacked(
+                OFTMsgCodec.addressToBytes32(_lzOFTComposedData.srcMsgSender),
+                _lzOFTComposedData.composeMsg
+            )
+        );
     }
 }
