@@ -2,8 +2,8 @@
 pragma solidity 0.8.22;
 
 // LZ
-import {IOAppMsgInspector} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppMsgInspector.sol";
 import {ExecutorOptions} from "@layerzerolabs/lz-evm-protocol-v2/contracts/messagelib/libs/ExecutorOptions.sol";
+import {IOAppMsgInspector} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppMsgInspector.sol";
 import {SendParam, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
 import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
@@ -43,22 +43,23 @@ contract BaseTapOFTv2 is OFT {
     uint16 public constant PT_UNLOCK_TWTAP = 871;
     uint16 public constant PT_CLAIM_REWARDS = 872;
 
-    // TODO make sure it's 0x0 if not on host chain
+    /// @dev Can't be set as constructor params because TwTAP is deployed after TapOFTv2. TwTAP constructor needs TapOFT as param.
     TwTAP public twTap;
 
-    event PTMsgTypeSent(uint16 indexed msgType);
-
+    error OnlyHostChain(); // Can execute an action only on host chain
     error InvalidMsgType(uint16 msgType); // Invalid/Inexistent Tapioca msg type
     error InvalidMsgIndex(uint16 msgIndex, uint16 expectedIndex); // The msgIndex does not follow the sequence of indexes in the `_tapComposeMsg`
     error InvalidExtraOptionsIndex(uint16 msgIndex, uint16 expectedIndex); // The option index does not follow the sequence of indexes in the `_tapComposeMsg`
 
     constructor(
         address _endpoint,
-        address _twTap,
         address _owner
-    ) OFT("TAP", "TAP", _endpoint, _owner) {
-        twTap = TwTAP(_twTap);
-    }
+    ) OFT("TAP", "TAP", _endpoint, _owner) {}
+
+    /**
+     * @notice set the twTAP address, can be done only once.
+     */
+    function setTwTAP(address _twTap) external virtual {}
 
     /**
      * @dev Slightly modified version of the OFT quoteSend() operation. Includes a `_msgType` parameter.
@@ -103,7 +104,7 @@ contract BaseTapOFTv2 is OFT {
     }
 
     /**
-     * @notice Buld an OFT message and option. The message contain OFT related info such as the amount to credit and the recipient.
+     * @notice Build an OFT message and option. The message contain OFT related info such as the amount to credit and the recipient.
      * It also contains the `_composeMsg`, which is 1 or more TAP specific messages. See `_buildTapMsgAndOptions()`.
      * The option is an aggregation of the OFT message as well as the TAP messages.
      *
@@ -273,4 +274,9 @@ contract BaseTapOFTv2 is OFT {
             revert InvalidExtraOptionsIndex(index, _msgIndex);
         }
     }
+
+    /**
+     * @dev Internal function to return the current EID.
+     */
+    function _getChainId() internal view virtual returns (uint32) {}
 }

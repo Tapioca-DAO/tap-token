@@ -12,6 +12,12 @@ interface ITapOFTv2 {
         uint96 duration,
         uint256 amount
     );
+
+    /**
+     * ERRORS
+     */
+    error TwTapAlreadySet();
+    error OnlyHostChain(); // Can execute an action only on host chain
 }
 
 /**
