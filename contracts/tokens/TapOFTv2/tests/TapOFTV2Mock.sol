@@ -23,65 +23,25 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 contract TapOFTV2Mock is TapOFTV2 {
     constructor(
         address _endpoint,
-        address _twTap,
+        address _contributors,
+        address _earlySupporters,
+        address _supporters,
+        address _lbp,
+        address _dao,
+        address _airdrop,
+        uint256 _governanceEid,
         address _owner
-    ) TapOFTV2(_endpoint, _twTap, _owner) {}
-
-    /**
-     * @dev Internal function to build the message and options.
-     *
-     * @param _msg The TAP message to be encoded, for example `TapOFTSender.buildLockTwTapPositionMsg()`.
-     * @param _msgType The message type, TAP custom ones, with `PT_` as a prefix.
-     * @param _msgIndex The index of the current TAP compose msg.
-     * @param _dstEid The destination endpoint ID.
-     * @param _extraOptions Extra options for this message. Used to add extra options or aggregate previous `_tapComposeMsg` options.
-     * @param _tapComposeMsg The previous TAP compose messages. Empty if this is the first message.
-     *
-     * @return message The encoded message.
-     * @return options The encoded options.
-     */
-    function buildTapComposeMsgAndOptions(
-        bytes calldata _msg,
-        uint16 _msgType,
-        uint16 _msgIndex,
-        uint32 _dstEid,
-        bytes calldata _extraOptions,
-        bytes calldata _tapComposeMsg
-    ) external view returns (bytes memory message, bytes memory options) {
-        return
-            _buildTapComposeMsgAndOptions(
-                _msg,
-                _msgType,
-                _msgIndex,
-                _dstEid,
-                _extraOptions,
-                _tapComposeMsg
-            );
-    }
-
-    /**
-     * @dev Internal function to build the message and options.
-     *
-     * @param _sendParam The parameters for the send() operation.
-     * @param _extraOptions Additional options for the send() operation.
-     * @param _composeMsg The composed message for the send() operation.
-     * @param _amountToCreditLD The amount to credit in local decimals.
-     *
-     * @return message The encoded message.
-     * @return options The encoded options.
-     */
-    function buildOFTMsgAndOptions(
-        SendParam calldata _sendParam,
-        bytes calldata _extraOptions,
-        bytes calldata _composeMsg,
-        uint256 _amountToCreditLD
-    ) external view returns (bytes memory message, bytes memory options) {
-        return
-            _buildOFTMsgAndOptions(
-                _sendParam,
-                _extraOptions,
-                _composeMsg,
-                _amountToCreditLD
-            );
-    }
+    )
+        TapOFTV2(
+            _endpoint,
+            _contributors,
+            _earlySupporters,
+            _supporters,
+            _lbp,
+            _dao,
+            _airdrop,
+            _governanceEid,
+            _owner
+        )
+    {}
 }
