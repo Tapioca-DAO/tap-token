@@ -17,6 +17,7 @@ import {TestHelper} from "./mocks/TestHelper.sol";
 
 // Tapioca
 import {LZSendParam, LockTwTapPositionMsg, ITapOFTv2} from "../ITapOFTv2.sol";
+import {TwTAP} from "../../../governance/TwTAP.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
 
@@ -30,11 +31,27 @@ contract TapOFTV2Test is TestHelper {
 
     TapOFTV2Mock aTapOFT;
     TapOFTV2Mock bTapOFT;
-    address twTapAddr = address(0x0); // TODO Correct TwTAP contract usage and address
 
     address public userA = address(0x1);
     address public userB = address(0x2);
     uint256 public initialBalance = 100 ether;
+
+    /**
+     * DEPLOY setup addresses
+     */
+    TwTAP twTap;
+    address _endpoint;
+    address _contributors = address(0x30);
+    address _earlySupporters = address(0x31);
+    address _supporters = address(0x32);
+    address _lbp = address(0x33);
+    address _dao = address(0x34);
+    address _airdrop = address(0x35);
+    uint256 _governanceEid = bEid;
+    address _owner = address(this);
+    /**
+     * DEPLOY setup addresses
+     */
 
     uint16 internal constant PT_LOCK_TWTAP = 870;
     uint16 internal constant PT_UNLOCK_TWTAP = 871;
@@ -62,17 +79,42 @@ contract TapOFTV2Test is TestHelper {
         aTapOFT = TapOFTV2Mock(
             _deployOApp(
                 type(TapOFTV2Mock).creationCode,
-                abi.encode(address(endpoints[aEid]), twTapAddr, address(this))
+                abi.encode(
+                    address(endpoints[aEid]),
+                    _contributors,
+                    _earlySupporters,
+                    _supporters,
+                    _lbp,
+                    _dao,
+                    _airdrop,
+                    _governanceEid,
+                    address(this)
+                )
             )
         );
         vm.label(address(aTapOFT), "aTapOFT");
         bTapOFT = TapOFTV2Mock(
             _deployOApp(
                 type(TapOFTV2Mock).creationCode,
-                abi.encode(address(endpoints[bEid]), twTapAddr, address(this))
+                abi.encode(
+                    address(endpoints[bEid]),
+                    _contributors,
+                    _earlySupporters,
+                    _supporters,
+                    _lbp,
+                    _dao,
+                    _airdrop,
+                    _governanceEid,
+                    address(this)
+                )
             )
         );
         vm.label(address(bTapOFT), "bTapOFT");
+
+        twTap = new TwTAP(payable(address(bTapOFT)), address(this));
+        vm.label(address(twTap), "twTAP");
+
+        bTapOFT.setTwTAP(address(twTap));
 
         // config and wire the ofts
         address[] memory ofts = new address[](2);
@@ -81,12 +123,45 @@ contract TapOFTV2Test is TestHelper {
         this.wireOApps(ofts);
     }
 
+    /**
+     * Allocation:
+     * ============
+     * DSO: 53,313,405
+     * DAO: 8m
+     * Contributors: 15m
+     * Early supporters: 3,686,595
+     * Supporters: 12.5m
+     * LBP: 5m
+     * Airdrop: 2.5m
+     * == 100M ==
+     */
     function test_constructor() public {
+        // A tests
         assertEq(aTapOFT.owner(), address(this));
-        assertEq(bTapOFT.owner(), address(this));
-
         assertEq(aTapOFT.token(), address(aTapOFT));
+        assertEq(aTapOFT.totalSupply(), 0);
+        assertEq(aTapOFT.governanceEid(), bEid);
+        assertEq(address(aTapOFT.endpoint()), address(endpoints[aEid]));
+        assertEq(address(aTapOFT.twTap()), address(0));
+
+        // B tests
+        assertEq(bTapOFT.owner(), address(this));
         assertEq(bTapOFT.token(), address(bTapOFT));
+        assertEq(bTapOFT.totalSupply(), 46_686_595 ether); // Everything minus DSO
+        assertEq(bTapOFT.INITIAL_SUPPLY(), 46_686_595 ether);
+        assertEq(bTapOFT.governanceEid(), bEid);
+        assertEq(address(bTapOFT.endpoint()), address(endpoints[bEid]));
+        assertEq(address(bTapOFT.twTap()), address(twTap));
+    }
+
+    function test_set_tw_tap() public {
+        // Can't set because not host chain
+        vm.expectRevert(ITapOFTv2.OnlyHostChain.selector);
+        aTapOFT.setTwTAP(address(twTap));
+
+        // Already set in `this.setUp()`
+        vm.expectRevert(ITapOFTv2.TwTapAlreadySet.selector);
+        bTapOFT.setTwTAP(address(twTap));
     }
 
     /**
