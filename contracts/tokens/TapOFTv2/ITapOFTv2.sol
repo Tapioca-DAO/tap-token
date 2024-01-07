@@ -20,6 +20,39 @@ interface ITapOFTv2 {
     error OnlyHostChain(); // Can execute an action only on host chain
 }
 
+struct ERC20PermitStruct {
+    address owner;
+    address spender;
+    uint256 value;
+    uint256 nonce;
+    uint256 deadline;
+}
+
+/**
+ * @param user The user address to lock in the tokens.
+ * @param duration The duration of the lock.
+ * @param amount The amount of TAP to lock.
+ */
+struct LockTwTapPositionMsg {
+    address user;
+    uint96 duration;
+    uint256 amount;
+}
+
+/**
+ * @notice Encodes the message for the ercPermitApproval() operation.
+ */
+struct ERC20PermitApprovalMsg {
+    address token;
+    address owner;
+    address spender;
+    uint256 value;
+    uint256 deadline;
+    uint8 v;
+    bytes32 r;
+    bytes32 s;
+}
+
 /**
  * @param sendParam The parameters for the send operation.
  * @param fee The calculated fee for the send() operation.
@@ -33,15 +66,4 @@ struct LZSendParam {
     MessagingFee fee;
     bytes extraOptions;
     address refundAddress;
-}
-
-/**
- * @param user The user address to lock in the tokens.
- * @param duration The duration of the lock.
- * @param amount The amount of TAP to lock.
- */
-struct LockTwTapPositionMsg {
-    address user;
-    uint96 duration;
-    uint256 amount;
 }

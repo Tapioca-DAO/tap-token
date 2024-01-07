@@ -13,8 +13,7 @@ import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
 // Tapioca
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
-import {ICommonData} from "tapioca-periph/contracts/interfaces/ICommonData.sol";
-import {LockTwTapPositionMsg} from "./ITapOFTv2.sol";
+import {ITapOFTv2, LockTwTapPositionMsg, ERC20PermitApprovalMsg} from "./ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 
@@ -38,9 +37,6 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
-
-    /// @dev Approval msg type.
-    uint16 PT_APPROVALS = 200;
 
     /// @dev Triggered if the address of the composer doesn't match current contract.
     error InvalidComposer(address composer);
@@ -143,7 +139,12 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
 
         if (msgType_ == PT_LOCK_TWTAP) {
             _lockTwTapPositionReceiver(tapComposeMsg_);
+        } else if (msgType_ == PT_APPROVALS) {
+            _erc20PermitApprovalReceiver(tapComposeMsg_);
+        } else {
+            revert InvalidMsgType(msgType_);
         }
+
         emit ComposeReceived(msgType_, _guid, _message);
 
         if (nextMsg_.length > 0) {
@@ -176,39 +177,43 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         LockTwTapPositionMsg memory lockTwTapPositionMsg_ = TapOFTMsgCoder
             .decodeLockTwpTapDstMsg(_data);
 
-        console.log(lockTwTapPositionMsg_.user);
-        console.log(lockTwTapPositionMsg_.duration);
-        console.log(lockTwTapPositionMsg_.amount);
+        /// @dev xChain user needs to have approved TapOFTv2 in a previous composedMsg.
+        transferFrom(
+            lockTwTapPositionMsg_.user,
+            address(this),
+            lockTwTapPositionMsg_.amount
+        );
+
+        approve(address(twTap), lockTwTapPositionMsg_.amount);
+        twTap.participate(
+            lockTwTapPositionMsg_.user,
+            lockTwTapPositionMsg_.amount,
+            lockTwTapPositionMsg_.duration
+        );
 
         emit LockTwTapReceived(
             lockTwTapPositionMsg_.user,
             lockTwTapPositionMsg_.duration,
             lockTwTapPositionMsg_.amount
         );
-        // @dev Lock the position.
     }
 
-    function _callApproval(ICommonData.IApproval[] memory approvals) private {
-        for (uint256 i; i < approvals.length; ) {
-            try
-                IERC20Permit(approvals[i].target).permit(
-                    approvals[i].owner,
-                    approvals[i].spender,
-                    approvals[i].value,
-                    approvals[i].deadline,
-                    approvals[i].v,
-                    approvals[i].r,
-                    approvals[i].s
-                )
-            {} catch Error(string memory reason) {
-                if (!approvals[i].allowFailure) {
-                    revert(reason);
-                }
-            }
+    /**
+     * @notice Approves tokens via permit.
+     * @param _data The call data containing info about the approvals. See `TapOFTSender.buildPermitApprovalMsg()`.
+     *      - token::address: Address of the token to approve.
+     *      - owner::address: Address of the owner of the tokens.
+     *      - spender::address: Address of the spender.
+     *      - value::uint256: Amount of tokens to approve.
+     *      - deadline::uint256: Deadline for the approval.
+     *      - v::uint8: v value of the signature.
+     *      - r::bytes32: r value of the signature.
+     *      - s::bytes32: s value of the signature.
+     */
+    function _erc20PermitApprovalReceiver(bytes memory _data) internal virtual {
+        ERC20PermitApprovalMsg[] memory approvals = TapOFTMsgCoder
+            .decodeArrayOfERC20PermitApprovalMsg(_data);
 
-            unchecked {
-                ++i;
-            }
-        }
+        tapOFTExtExec.erc20PermitApproval(approvals);
     }
 }

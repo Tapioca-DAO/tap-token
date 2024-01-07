@@ -13,6 +13,7 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 
 // Tapioca
+import {TapOFTExtExec} from "./extensions/TapOFTExtExec.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {TwTAP} from "../../governance/twTAP.sol";
 
@@ -39,6 +40,7 @@ contract BaseTapOFTv2 is OFT {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
 
+    uint16 public constant PT_APPROVALS = 500; // Use for ERC20Permit approvals
     uint16 public constant PT_LOCK_TWTAP = 870;
     uint16 public constant PT_UNLOCK_TWTAP = 871;
     uint16 public constant PT_CLAIM_REWARDS = 872;
@@ -46,15 +48,20 @@ contract BaseTapOFTv2 is OFT {
     /// @dev Can't be set as constructor params because TwTAP is deployed after TapOFTv2. TwTAP constructor needs TapOFT as param.
     TwTAP public twTap;
 
+    /// @dev Used to execute certain extern calls from the TapOFTv2 contract, such as ERC20Permit approvals.
+    TapOFTExtExec public tapOFTExtExec;
+
     error OnlyHostChain(); // Can execute an action only on host chain
-    error InvalidMsgType(uint16 msgType); // Invalid/Inexistent Tapioca msg type
+    error InvalidMsgType(uint16 msgType); // Triggered if the msgType is invalid on an `_lzCompose`.
     error InvalidMsgIndex(uint16 msgIndex, uint16 expectedIndex); // The msgIndex does not follow the sequence of indexes in the `_tapComposeMsg`
     error InvalidExtraOptionsIndex(uint16 msgIndex, uint16 expectedIndex); // The option index does not follow the sequence of indexes in the `_tapComposeMsg`
 
     constructor(
         address _endpoint,
         address _owner
-    ) OFT("TAP", "TAP", _endpoint, _owner) {}
+    ) OFT("TAP", "TAP", _endpoint, _owner) {
+        tapOFTExtExec = new TapOFTExtExec();
+    }
 
     /**
      * @notice set the twTAP address, can be done only once.
@@ -199,6 +206,7 @@ contract BaseTapOFTv2 is OFT {
     function _sanitizeMsgType(uint16 _msgType) internal pure {
         if (
             // Tapioca msg types
+            _msgType == PT_APPROVALS ||
             _msgType == PT_LOCK_TWTAP ||
             _msgType == PT_UNLOCK_TWTAP ||
             _msgType == PT_CLAIM_REWARDS

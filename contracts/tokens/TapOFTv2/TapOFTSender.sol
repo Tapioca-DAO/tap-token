@@ -5,7 +5,7 @@ pragma solidity 0.8.22;
 import {MessagingReceipt, OFTReceipt, SendParam, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 
 // Tapioca
-import {LZSendParam, LockTwTapPositionMsg} from "./ITapOFTv2.sol";
+import {LZSendParam, LockTwTapPositionMsg, ERC20PermitApprovalMsg} from "./ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 
@@ -26,6 +26,36 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 */
 
 abstract contract TapOFTSender is BaseTapOFTv2 {
+    /**
+     * @notice Encodes the message for the lockTwTapPosition() operation.
+     **/
+    function buildLockTwTapPositionMsg(
+        LockTwTapPositionMsg calldata _lockTwTapPositionMsg
+    ) public pure returns (bytes memory) {
+        return TapOFTMsgCoder.buildLockTwTapPositionMsg(_lockTwTapPositionMsg);
+    }
+
+    /**
+     * @notice Encode the message for the ercPermitApproval() operation.
+     * @param _erc20PermitApprovalMsg The ERC20 permit approval messages.
+     */
+    function buildPermitApprovalMsg(
+        ERC20PermitApprovalMsg[] calldata _erc20PermitApprovalMsg
+    ) public pure returns (bytes memory msg_) {
+        uint256 approvalsLength = _erc20PermitApprovalMsg.length;
+        for (uint256 i = 0; i < approvalsLength; ) {
+            msg_ = abi.encodePacked(
+                msg_,
+                TapOFTMsgCoder.buildERC20PermitApprovalMsg(
+                    _erc20PermitApprovalMsg[i]
+                )
+            );
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
     /**
      * @notice Build a TapOFTv2 composed message and options. The composed message is a combination of 1 or more TAP specific messages.
      * @dev Internal `_msgIndex` sanitization is done to avoid errors in the composed message and the options.
@@ -57,15 +87,6 @@ abstract contract TapOFTSender is BaseTapOFTv2 {
                 _extraOptions,
                 _tapComposeMsg
             );
-    }
-
-    /**
-     * @notice Encodes the message for the lockTwTapPosition() operation.
-     **/
-    function buildLockTwTapPositionMsg(
-        LockTwTapPositionMsg calldata _lockTwTapPositionMsg
-    ) public pure returns (bytes memory) {
-        return TapOFTMsgCoder.buildLockTwTapPositionMsg(_lockTwTapPositionMsg);
     }
 
     // TODO make it public or only internal? Making it public would require more sanitization/security checks

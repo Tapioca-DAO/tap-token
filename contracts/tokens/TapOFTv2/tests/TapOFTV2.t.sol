@@ -12,13 +12,16 @@ import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTM
 import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 
+// External
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 // Lib
 import {TestHelper} from "./mocks/TestHelper.sol";
 
 // Tapioca
-import {LZSendParam, LockTwTapPositionMsg, ITapOFTv2} from "../ITapOFTv2.sol";
-import {TwTAP} from "../../../governance/TwTAP.sol";
+import {ITapOFTv2, LockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC20PermitApprovalMsg} from "../ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
+import {TwTAP} from "../../../governance/TwTAP.sol";
 import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
 
 contract TapOFTV2Test is TestHelper {
@@ -32,8 +35,10 @@ contract TapOFTV2Test is TestHelper {
     TapOFTV2Mock aTapOFT;
     TapOFTV2Mock bTapOFT;
 
-    address public userA = address(0x1);
-    address public userB = address(0x2);
+    uint256 internal userAPKey = 0x1;
+    uint256 internal userABKey = 0x2;
+    address public userA = vm.addr(userAPKey);
+    address public userB = vm.addr(userABKey);
     uint256 public initialBalance = 100 ether;
 
     /**
@@ -53,6 +58,7 @@ contract TapOFTV2Test is TestHelper {
      * DEPLOY setup addresses
      */
 
+    uint16 internal constant PT_APPROVALS = 500;
     uint16 internal constant PT_LOCK_TWTAP = 870;
     uint16 internal constant PT_UNLOCK_TWTAP = 871;
     uint16 internal constant PT_CLAIM_REWARDS = 872;
@@ -154,6 +160,9 @@ contract TapOFTV2Test is TestHelper {
         assertEq(address(bTapOFT.twTap()), address(twTap));
     }
 
+    /**
+     * @dev Can only be set once, and on host chain.
+     */
     function test_set_tw_tap() public {
         // Can't set because not host chain
         vm.expectRevert(ITapOFTv2.OnlyHostChain.selector);
@@ -164,10 +173,149 @@ contract TapOFTV2Test is TestHelper {
         bTapOFT.setTwTAP(address(twTap));
     }
 
+    function test_erc20_permit() public {
+        ERC20PermitStruct memory permit_ = ERC20PermitStruct({
+            owner: userA,
+            spender: userB,
+            value: 1e18,
+            nonce: 0,
+            deadline: 1 days
+        });
+
+        bytes32 digest_ = aTapOFT.getTypedDataHash(permit_);
+        ERC20PermitApprovalMsg memory permitApproval_ = __getERC20PermitData(
+            permit_,
+            digest_,
+            address(aTapOFT),
+            userAPKey
+        );
+
+        aTapOFT.permit(
+            permit_.owner,
+            permit_.spender,
+            permit_.value,
+            permit_.deadline,
+            permitApproval_.v,
+            permitApproval_.r,
+            permitApproval_.s
+        );
+        assertEq(aTapOFT.allowance(userA, userB), 1e18);
+        assertEq(aTapOFT.nonces(userA), 1);
+    }
+
+    function test_tapOFT_erc20_approvals() public {
+        address userC_ = vm.addr(0x3);
+
+        ERC20PermitApprovalMsg memory permitApprovalB_;
+        ERC20PermitApprovalMsg memory permitApprovalC_;
+        bytes memory approvalsMsg_;
+
+        {
+            ERC20PermitStruct memory approvalUserB_ = ERC20PermitStruct({
+                owner: userA,
+                spender: userB,
+                value: 1e18,
+                nonce: 0,
+                deadline: 1 days
+            });
+            ERC20PermitStruct memory approvalUserC_ = ERC20PermitStruct({
+                owner: userA,
+                spender: userC_,
+                value: 2e18,
+                nonce: 1, // Nonce is 1 because we already called permit() on userB
+                deadline: 2 days
+            });
+
+            permitApprovalB_ = __getERC20PermitData(
+                approvalUserB_,
+                bTapOFT.getTypedDataHash(approvalUserB_),
+                address(bTapOFT),
+                userAPKey
+            );
+
+            permitApprovalC_ = __getERC20PermitData(
+                approvalUserC_,
+                bTapOFT.getTypedDataHash(approvalUserC_),
+                address(bTapOFT),
+                userAPKey
+            );
+
+            ERC20PermitApprovalMsg[]
+                memory approvals_ = new ERC20PermitApprovalMsg[](2);
+            approvals_[0] = permitApprovalB_;
+            approvals_[1] = permitApprovalC_;
+
+            approvalsMsg_ = aTapOFT.buildPermitApprovalMsg(approvals_);
+        }
+
+        (
+            SendParam memory sendParam_,
+            ,
+            bytes memory composeMsg_,
+            bytes memory oftMsgOptions_,
+            MessagingFee memory msgFee_,
+            LZSendParam memory lzSendParam_
+        ) = __prepareLzCall(
+                PrepareLzCall({
+                    dstEid: bEid,
+                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                    amountToSendLD: 0,
+                    minAmountToCreditLD: 0,
+                    msgType: PT_APPROVALS,
+                    composeMsgData: ComposeMsgData({
+                        index: 0,
+                        gas: 1_000_000,
+                        value: 0,
+                        data: approvalsMsg_,
+                        prevData: bytes("")
+                    }),
+                    lzReceiveGas: 1_000_000,
+                    lzReceiveValue: 0
+                })
+            );
+
+        (
+            MessagingReceipt memory msgReceipt_,
+            OFTReceipt memory oftReceipt_
+        ) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(
+                lzSendParam_,
+                composeMsg_
+            );
+
+        verifyPackets(
+            uint32(bEid),
+            OFTMsgCodec.addressToBytes32(address(bTapOFT))
+        );
+
+        vm.expectEmit(true, true, true, false);
+        emit IERC20.Approval(userA, userB, 1e18);
+
+        vm.expectEmit(true, true, true, false);
+        emit IERC20.Approval(userA, userC_, 1e18);
+
+        __callLzCompose(
+            LzOFTComposedData(
+                PT_APPROVALS,
+                msgReceipt_.guid,
+                composeMsg_,
+                bEid,
+                address(bTapOFT), // Compose creator (at lzReceive)
+                address(bTapOFT), // Compose receiver (at lzCompose)
+                address(this),
+                oftMsgOptions_
+            )
+        );
+
+        assertEq(bTapOFT.allowance(userA, userB), 1e18);
+        assertEq(bTapOFT.allowance(userA, userC_), 2e18);
+        assertEq(bTapOFT.nonces(userA), 2);
+    }
+
     /**
      * @dev Test the OApp functionality of `TapOFTv2.lockTwTapPosition()` function.
      */
     function test_lock_twTap_position() public {
+        // TODO use userA in msg.sender context
         // lock info
         uint256 amountToSendLD = 1 ether;
         uint96 lockDuration = 80;
@@ -179,64 +327,57 @@ contract TapOFTV2Test is TestHelper {
                 amount: amountToSendLD
             });
 
-        // Prepare args call
-        SendParam memory sendParam = SendParam({
-            dstEid: bEid,
-            to: OFTMsgCodec.addressToBytes32(address(this)),
-            amountToSendLD: amountToSendLD,
-            minAmountToCreditLD: amountToSendLD
-        });
-
-        bytes memory lockPosition = TapOFTMsgCoder.buildLockTwTapPositionMsg(
+        bytes memory lockPosition_ = TapOFTMsgCoder.buildLockTwTapPositionMsg(
             lockTwTapPositionMsg
         );
 
-        bytes memory composeOptions = OptionsBuilder
-            .newOptions()
-            .addExecutorLzComposeOption(0, 1_000_000, 0);
-        (bytes memory composeMsg, ) = aTapOFT.buildTapComposedMsg(
-            lockPosition,
-            PT_LOCK_TWTAP,
-            0,
-            sendParam.dstEid,
-            composeOptions,
-            bytes("") // Previous tapComposeMsg
-        );
-
-        bytes memory oftMsgOptions = OptionsBuilder.addExecutorLzReceiveOption(
-            composeOptions,
-            1_000_000,
-            0
-        );
-        MessagingFee memory msgFee = aTapOFT.quoteSendPacket(
-            sendParam,
-            oftMsgOptions,
-            false,
-            composeMsg,
-            ""
-        );
-
-        LZSendParam memory lzSendParam = LZSendParam({
-            sendParam: sendParam,
-            fee: msgFee,
-            extraOptions: oftMsgOptions,
-            refundAddress: address(this)
-        });
+        (
+            SendParam memory sendParam_,
+            bytes memory composeOptions_,
+            bytes memory composeMsg_,
+            bytes memory oftMsgOptions_,
+            MessagingFee memory msgFee_,
+            LZSendParam memory lzSendParam_
+        ) = __prepareLzCall(
+                PrepareLzCall({
+                    dstEid: bEid,
+                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                    amountToSendLD: amountToSendLD,
+                    minAmountToCreditLD: amountToSendLD,
+                    msgType: PT_LOCK_TWTAP,
+                    composeMsgData: ComposeMsgData({
+                        index: 0,
+                        gas: 1_000_000,
+                        value: 0,
+                        data: lockPosition_,
+                        prevData: bytes("")
+                    }),
+                    lzReceiveGas: 1_000_000,
+                    lzReceiveValue: 0
+                })
+            );
 
         // Mint necessary tokens
         deal(address(aTapOFT), address(this), amountToSendLD);
 
         (
-            MessagingReceipt memory msgReceipt,
-            OFTReceipt memory oftReceipt
-        ) = aTapOFT.sendPacket{value: msgFee.nativeFee}(
-                lzSendParam,
-                composeMsg
+            MessagingReceipt memory msgReceipt_,
+            OFTReceipt memory oftReceipt_
+        ) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(
+                lzSendParam_,
+                composeMsg_
             );
 
         verifyPackets(
             uint32(bEid),
             OFTMsgCodec.addressToBytes32(address(bTapOFT))
+        );
+
+        // Fake approval
+        bTapOFT.approve(address(bTapOFT), amountToSendLD);
+        console.log(
+            "bTapOFT.allowance(address(this), address(bTapOFT))",
+            bTapOFT.allowance(address(this), address(bTapOFT))
         );
 
         vm.expectEmit(true, true, true, false);
@@ -246,18 +387,104 @@ contract TapOFTV2Test is TestHelper {
             amountToSendLD
         );
 
-        _callLzCompose(
+        __callLzCompose(
             LzOFTComposedData(
                 PT_LOCK_TWTAP,
-                msgReceipt.guid,
-                composeMsg,
+                msgReceipt_.guid,
+                composeMsg_,
                 bEid,
                 address(bTapOFT), // Compose creator (at lzReceive)
                 address(bTapOFT), // Compose receiver (at lzCompose)
                 address(this),
-                oftMsgOptions
+                oftMsgOptions_
             )
         );
+    }
+
+    /**
+     * =================
+     *      HELPERS
+     * =================
+     */
+
+    struct ComposeMsgData {
+        uint8 index;
+        uint128 gas;
+        uint128 value;
+        bytes data;
+        bytes prevData;
+    }
+    struct PrepareLzCall {
+        uint32 dstEid;
+        bytes32 recipient;
+        uint256 amountToSendLD;
+        uint256 minAmountToCreditLD;
+        uint16 msgType;
+        ComposeMsgData composeMsgData;
+        uint128 lzReceiveGas;
+        uint128 lzReceiveValue;
+    }
+
+    /**
+     * @dev Helper to prepare an LZ call.
+     */
+    function __prepareLzCall(
+        PrepareLzCall memory _prepareLzCall
+    )
+        internal
+        view
+        returns (
+            SendParam memory sendParam_,
+            bytes memory composeOptions_,
+            bytes memory composeMsg_,
+            bytes memory oftMsgOptions_,
+            MessagingFee memory msgFee_,
+            LZSendParam memory lzSendParam_
+        )
+    {
+        // Prepare args call
+        sendParam_ = SendParam({
+            dstEid: _prepareLzCall.dstEid,
+            to: _prepareLzCall.recipient,
+            amountToSendLD: _prepareLzCall.amountToSendLD,
+            minAmountToCreditLD: _prepareLzCall.minAmountToCreditLD
+        });
+
+        composeOptions_ = OptionsBuilder
+            .newOptions()
+            .addExecutorLzComposeOption(
+                _prepareLzCall.composeMsgData.index,
+                _prepareLzCall.composeMsgData.gas,
+                _prepareLzCall.composeMsgData.value
+            );
+        (composeMsg_, ) = aTapOFT.buildTapComposedMsg(
+            _prepareLzCall.composeMsgData.data,
+            _prepareLzCall.msgType,
+            _prepareLzCall.composeMsgData.index,
+            sendParam_.dstEid,
+            composeOptions_,
+            _prepareLzCall.composeMsgData.prevData // Previous tapComposeMsg
+        );
+
+        oftMsgOptions_ = OptionsBuilder.addExecutorLzReceiveOption(
+            composeOptions_,
+            _prepareLzCall.lzReceiveGas,
+            _prepareLzCall.lzReceiveValue
+        );
+        msgFee_ = aTapOFT.quoteSendPacket(
+            sendParam_,
+            oftMsgOptions_,
+            false,
+            composeMsg_,
+            ""
+        );
+
+        lzSendParam_ = LZSendParam({
+            sendParam: sendParam_,
+            fee: msgFee_,
+            extraOptions: oftMsgOptions_,
+            refundAddress: address(this)
+        });
     }
 
     /**
@@ -292,7 +519,7 @@ contract TapOFTV2Test is TestHelper {
      *
      * @param _lzOFTComposedData The data to pass to the lzCompose call.
      */
-    function _callLzCompose(
+    function __callLzCompose(
         LzOFTComposedData memory _lzOFTComposedData
     ) internal {
         vm.expectEmit(true, true, true, false);
@@ -313,5 +540,32 @@ contract TapOFTV2Test is TestHelper {
                 _lzOFTComposedData.composeMsg
             )
         );
+    }
+
+    /**
+     * @dev Helper to build an ERC20PermitApprovalMsg.
+     * @param _permit The permit data.
+     * @param _digest The typed data digest.
+     * @param _token The token contract to receive the permit.
+     * @param _pkSigner The private key signer.
+     */
+    function __getERC20PermitData(
+        ERC20PermitStruct memory _permit,
+        bytes32 _digest,
+        address _token,
+        uint256 _pkSigner
+    ) internal view returns (ERC20PermitApprovalMsg memory permitApproval_) {
+        (uint8 v_, bytes32 r_, bytes32 s_) = vm.sign(_pkSigner, _digest);
+
+        permitApproval_ = ERC20PermitApprovalMsg({
+            token: _token,
+            owner: _permit.owner,
+            spender: _permit.spender,
+            value: _permit.value,
+            deadline: _permit.deadline,
+            v: v_,
+            r: r_,
+            s: s_
+        });
     }
 }
