@@ -42,7 +42,7 @@ contract TapOFTV2 is ERC20Permit, TapOFTSender, TapOFTReceiver, Pausable {
     uint256 constant DECAY_RATE_DECIMAL = 1e18;
 
     /// @notice seconds in a week
-    uint256 public constant EPOCH_TIME = 1 weeks; // 604800
+    uint256 public constant EPOCH_DURATION = 1 weeks; // 604800
 
     /// @notice starts time for emissions
     /// @dev initialized in the constructor with block.timestamp
@@ -89,6 +89,7 @@ contract TapOFTV2 is ERC20Permit, TapOFTSender, TapOFTReceiver, Pausable {
     // ==========
     // *ERRORS*
     // ==========
+    error NotValid(); // Generic error for simple functions
     error AddressWrong();
     error SupplyNotValid(); // Initial supply is not valid
     error AllowanceNotValid();
@@ -178,6 +179,128 @@ contract TapOFTV2 is ERC20Permit, TapOFTSender, TapOFTReceiver, Pausable {
             );
     }
 
+    /// =====================
+    /// View
+    /// =====================
+
+    /**
+     *  @notice returns token's decimals
+     */
+    function decimals() public pure override returns (uint8) {
+        return 18;
+    }
+
+    /// @notice Returns the current week
+    function getCurrentWeek() external view returns (uint256) {
+        return _timestampToWeek(block.timestamp);
+    }
+
+    /// @notice Returns the current week emission
+    function getCurrentWeekEmission() external view returns (uint256) {
+        return emissionForWeek[_timestampToWeek(block.timestamp)];
+    }
+
+    /**
+     * @notice Returns the current week given a timestamp
+     * @param timestamp The timestamp to use to compute the week
+     */
+    function timestampToWeek(
+        uint256 timestamp
+    ) external view returns (uint256) {
+        if (timestamp == 0) {
+            timestamp = block.timestamp;
+        }
+        if (timestamp < emissionsStartTime) return 0;
+
+        return _timestampToWeek(timestamp);
+    }
+
+    /// =====================
+    /// External
+    /// =====================
+
+    /**
+     * @notice Mint TAP for the current week. Follow the emission function.
+     *
+     * @param _to Address to send the minted TAP to
+     * @param _amount TAP amount
+     */
+    function extractTAP(
+        address _to,
+        uint256 _amount
+    ) external onlyMinter whenNotPaused {
+        if (_amount == 0) revert NotValid();
+
+        uint256 week = _timestampToWeek(block.timestamp);
+        if (emissionForWeek[week] < mintedInWeek[week] + _amount)
+            revert AllowanceNotValid();
+        _mint(_to, _amount);
+        mintedInWeek[week] += _amount;
+        emit Minted(msg.sender, _to, _amount);
+    }
+
+    /// @notice burns TAP
+    /// @param _amount TAP amount
+    function removeTAP(uint256 _amount) external whenNotPaused {
+        _burn(msg.sender, _amount);
+        emit Burned(msg.sender, _amount);
+    }
+
+    /// =====================
+    /// Minter
+    /// =====================
+
+    /**
+     * @notice Emit the TAP for the current week. Follow the emission function.
+     * If there are unclaimed emissions from the previous week, they are added to the current week.
+     * If there are some TAP in the contract, use it as boosted TAP.
+     *
+     * @return the emitted amount
+     */
+    function emitForWeek() external onlyMinter returns (uint256) {
+        if (_getChainId() != governanceEid) revert NotValid();
+
+        uint256 week = _timestampToWeek(block.timestamp);
+        if (emissionForWeek[week] > 0) return 0;
+
+        // Compute unclaimed emission from last week and add it to the current week emission
+        uint256 unclaimed;
+        if (week > 0) {
+            // Update DSO supply from last minted emissions
+            dso_supply -= mintedInWeek[week - 1];
+
+            // Push unclaimed emission from last week to the current week
+            unclaimed = emissionForWeek[week - 1] - mintedInWeek[week - 1];
+        }
+        uint256 emission = uint256(_computeEmission());
+        emission += unclaimed;
+
+        // Boosted TAP is burned and added to the emission to be minted on demand later on in `extractTAP()`
+        uint256 boostedTAP = balanceOf(address(this));
+        if (boostedTAP > 0) {
+            _burn(address(this), boostedTAP);
+            emission += boostedTAP; // Add TAP in the contract as boosted TAP
+            emit BoostedTAP(boostedTAP);
+        }
+
+        emissionForWeek[week] = emission;
+        emit Emitted(week, emission);
+
+        return emission;
+    }
+
+    /// =====================
+    /// Owner
+    /// =====================
+
+    /// @notice sets a new minter address
+    /// @param _minter the new address
+    function setMinter(address _minter) external onlyOwner {
+        if (_minter == address(0)) revert NotValid();
+        minter = _minter;
+        emit MinterUpdated(minter, _minter);
+    }
+
     /**
      * @notice set the twTAP address, can be done only once.
      */
@@ -188,6 +311,27 @@ contract TapOFTV2 is ERC20Permit, TapOFTSender, TapOFTReceiver, Pausable {
             revert TwTapAlreadySet();
         }
         twTap = TwTAP(_twTap);
+    }
+
+    /// =====================
+    /// Internal
+    /// =====================
+
+    /**
+     * @dev Returns the current week given a timestamp
+     * @param timestamp The timestamp to use to compute the week
+     */
+    function _timestampToWeek(
+        uint256 timestamp
+    ) internal view returns (uint256) {
+        return ((timestamp - emissionsStartTime) / EPOCH_DURATION);
+    }
+
+    /**
+     *  @notice returns the available emissions for a given supply
+     */
+    function _computeEmission() internal view returns (uint256 result) {
+        result = (dso_supply * decay_rate) / DECAY_RATE_DECIMAL;
     }
 
     /**
