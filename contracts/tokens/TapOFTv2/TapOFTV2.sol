@@ -66,25 +66,15 @@ contract TapOFTV2 is ERC20Permit, TapOFTSender, TapOFTReceiver, Pausable {
     // *EVENTS*
     // ==========
     /// @notice event emitted when a new minter is set
-    event MinterUpdated(address indexed _old, address indexed _new);
+    event MinterUpdated(address _old, address _new);
     /// @notice event emitted when a new emission is called
-    event Emitted(uint256 indexed week, uint256 indexed amount);
+    event Emitted(uint256 indexed week, uint256 amount);
     /// @notice event emitted when new TAP is minted
-    event Minted(
-        address indexed _by,
-        address indexed _to,
-        uint256 indexed _amount
-    );
+    event Minted(address indexed _by, address indexed _to, uint256 _amount);
     /// @notice event emitted when new TAP is burned
-    event Burned(address indexed _from, uint256 indexed _amount);
-    /// @notice event emitted when the governance chain identifier is updated
-    event GovernanceChainIdentifierUpdated(
-        uint256 indexed _old,
-        uint256 indexed _new
-    );
-    /// @notice event emitted when pause state is changed
-    event PausedUpdated(bool indexed oldState, bool indexed newState);
-    event BoostedTAP(uint256 indexed _amount);
+    event Burned(address indexed _from, uint256 _amount);
+
+    event BoostedTAP(uint256 _amount);
 
     // ==========
     // *ERRORS*
@@ -184,18 +174,22 @@ contract TapOFTV2 is ERC20Permit, TapOFTSender, TapOFTReceiver, Pausable {
     /// =====================
 
     /**
-     *  @notice returns token's decimals
+     * @notice returns token's decimals
      */
     function decimals() public pure override returns (uint8) {
         return 18;
     }
 
-    /// @notice Returns the current week
+    /**
+     * @notice Returns the current week
+     */
     function getCurrentWeek() external view returns (uint256) {
         return _timestampToWeek(block.timestamp);
     }
 
-    /// @notice Returns the current week emission
+    /**
+     * @notice Returns the current week emission
+     */
     function getCurrentWeekEmission() external view returns (uint256) {
         return emissionForWeek[_timestampToWeek(block.timestamp)];
     }
@@ -239,8 +233,10 @@ contract TapOFTV2 is ERC20Permit, TapOFTSender, TapOFTReceiver, Pausable {
         emit Minted(msg.sender, _to, _amount);
     }
 
-    /// @notice burns TAP
-    /// @param _amount TAP amount
+    /**
+     * @notice Burns TAP.
+     * @param _amount TAP amount.
+     */
     function removeTAP(uint256 _amount) external whenNotPaused {
         _burn(msg.sender, _amount);
         emit Burned(msg.sender, _amount);
@@ -255,7 +251,7 @@ contract TapOFTV2 is ERC20Permit, TapOFTSender, TapOFTReceiver, Pausable {
      * If there are unclaimed emissions from the previous week, they are added to the current week.
      * If there are some TAP in the contract, use it as boosted TAP.
      *
-     * @return the emitted amount
+     * @return the emitted amount.
      */
     function emitForWeek() external onlyMinter returns (uint256) {
         if (_getChainId() != governanceEid) revert NotValid();
@@ -293,8 +289,10 @@ contract TapOFTV2 is ERC20Permit, TapOFTSender, TapOFTReceiver, Pausable {
     /// Owner
     /// =====================
 
-    /// @notice sets a new minter address
-    /// @param _minter the new address
+    /**
+     * @notice Sets a new minter address.
+     * @param _minter the new address
+     */
     function setMinter(address _minter) external onlyOwner {
         if (_minter == address(0)) revert NotValid();
         minter = _minter;
