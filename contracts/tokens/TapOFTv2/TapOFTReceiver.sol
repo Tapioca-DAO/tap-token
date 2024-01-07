@@ -40,6 +40,7 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
 
     /// @dev Triggered if the address of the composer doesn't match current contract.
     error InvalidComposer(address composer);
+    error InsufficientAllowance(address owner, uint256 amount); // See `this.__internalTransferWithAllowance()`
 
     /// @dev Compose received.
     event ComposeReceived(
@@ -177,14 +178,13 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         LockTwTapPositionMsg memory lockTwTapPositionMsg_ = TapOFTMsgCoder
             .decodeLockTwpTapDstMsg(_data);
 
-        /// @dev xChain user needs to have approved TapOFTv2 in a previous composedMsg.
-        transferFrom(
+        /// @dev xChain user needs to have approved dst TapOFTv2 in a previous composedMsg.
+        _internalTransferWithAllowance(
             lockTwTapPositionMsg_.user,
-            address(this),
             lockTwTapPositionMsg_.amount
         );
 
-        approve(address(twTap), lockTwTapPositionMsg_.amount);
+        _approve(address(this), address(twTap), lockTwTapPositionMsg_.amount);
         twTap.participate(
             lockTwTapPositionMsg_.user,
             lockTwTapPositionMsg_.amount,
@@ -196,6 +196,23 @@ abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
             lockTwTapPositionMsg_.duration,
             lockTwTapPositionMsg_.amount
         );
+    }
+
+    /**
+     * @dev Performs a transfer with an allowance check and consumption. Can only transfer to this address.
+     * Use with caution. Check next operations to see where the tokens are sent.
+     * @param _from The account to transfer from.
+     * @param _amount The amount to transfer
+     */
+    function _internalTransferWithAllowance(
+        address _from,
+        uint256 _amount
+    ) internal {
+        if (allowance(_from, address(this)) < _amount) {
+            revert InsufficientAllowance(_from, _amount);
+        }
+        _spendAllowance(_from, address(this), _amount);
+        _transfer(_from, address(this), _amount);
     }
 
     /**

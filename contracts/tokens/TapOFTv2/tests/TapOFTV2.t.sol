@@ -14,6 +14,7 @@ import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 
 // External
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 // Lib
 import {TestHelper} from "./mocks/TestHelper.sol";
@@ -24,7 +25,7 @@ import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TwTAP} from "../../../governance/TwTAP.sol";
 import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
 
-contract TapOFTV2Test is TestHelper {
+contract TapOFTV2Test is TestHelper, IERC721Receiver {
     using OptionsBuilder for bytes;
     using OFTMsgCodec for bytes32;
     using OFTMsgCodec for bytes;
@@ -315,10 +316,10 @@ contract TapOFTV2Test is TestHelper {
      * @dev Test the OApp functionality of `TapOFTv2.lockTwTapPosition()` function.
      */
     function test_lock_twTap_position() public {
-        // TODO use userA in msg.sender context
+        // TODO use userA in msg.sender context?
         // lock info
         uint256 amountToSendLD = 1 ether;
-        uint96 lockDuration = 80;
+        uint96 lockDuration = 1 weeks;
 
         LockTwTapPositionMsg
             memory lockTwTapPositionMsg = LockTwTapPositionMsg({
@@ -373,12 +374,8 @@ contract TapOFTV2Test is TestHelper {
             OFTMsgCodec.addressToBytes32(address(bTapOFT))
         );
 
-        // Fake approval
+        // Initiate approval
         bTapOFT.approve(address(bTapOFT), amountToSendLD);
-        console.log(
-            "bTapOFT.allowance(address(this), address(bTapOFT))",
-            bTapOFT.allowance(address(this), address(bTapOFT))
-        );
 
         vm.expectEmit(true, true, true, false);
         emit ITapOFTv2.LockTwTapReceived(
@@ -399,6 +396,18 @@ contract TapOFTV2Test is TestHelper {
                 oftMsgOptions_
             )
         );
+    }
+
+    /**
+     * @dev Receiver for `TapOFTv2::PT_LOCK_TW_TAP` function.
+     */
+    function onERC721Received(
+        address, // operator
+        address, //from
+        uint256, // tokenId
+        bytes calldata // data
+    ) external override returns (bytes4) {
+        return this.onERC721Received.selector;
     }
 
     /**
