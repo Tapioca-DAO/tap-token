@@ -483,6 +483,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         uint256 arrLen = _tokenIDs.length;
         address tokenIDToAddress;
         for (uint256 i; i < arrLen; ) {
+            if (_tokenIDs[i] == 0 || _tokenIDs[i] > 700) revert NotValid();
             if (PCNFT.ownerOf(_tokenIDs[i]) != msg.sender) revert NotEligible();
 
             // To avoid collision, we cast token ID to an address,
