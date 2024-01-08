@@ -175,11 +175,8 @@ contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
      * @dev Fallback function should handle calls made by endpoint, which should go to the receiver module.
      */
     fallback() external payable {
-        bytes memory data = _executeModule(
-            uint8(ITapOFTv2.Module.TapOFTReceiver),
-            msg.data,
-            false
-        );
+        /// @dev Call the receiver module on fallback, assume it's gonna be called by endpoint.
+        _executeModule(uint8(ITapOFTv2.Module.TapOFTReceiver), msg.data, false);
     }
 
     receive() external payable {}
