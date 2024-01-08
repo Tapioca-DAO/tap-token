@@ -18,6 +18,12 @@ interface ITapOFTv2 {
      */
     error TwTapAlreadySet();
     error OnlyHostChain(); // Can execute an action only on host chain
+
+    enum Module {
+        NonModule, //0
+        TapOFTSender,
+        TapOFTReceiver
+    }
 }
 
 struct ERC20PermitStruct {

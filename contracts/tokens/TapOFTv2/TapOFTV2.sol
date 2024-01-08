@@ -3,6 +3,8 @@ pragma solidity 0.8.22;
 
 //LZ
 import {IMessagingChannel} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/IMessagingChannel.sol";
+import {MessagingReceipt, OFTReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import {OAppReceiver} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OAppReceiver.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OFTCore} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
@@ -11,8 +13,9 @@ import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 
 // Tapioca
+import {ModuleManager} from "./modules/ModuleManager.sol";
 import {TapOFTReceiver} from "./TapOFTReceiver.sol";
-import {ERC20PermitStruct} from "./ITapOFTv2.sol";
+import {ERC20PermitStruct, ITapOFTv2, LZSendParam} from "./ITapOFTv2.sol";
 import {TwTAP} from "../../governance/twTAP.sol";
 import {TapOFTSender} from "./TapOFTSender.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
@@ -33,7 +36,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 /// @title Tapioca OFTv2 token
 /// @notice OFT compatible TAP token
 /// @dev Emissions E(x)= E(x-1) - E(x-1) * D with E being total supply a x week, and D the initial decay rate
-contract TapOFTV2 is ERC20Permit, TapOFTSender, TapOFTReceiver, Pausable {
+contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
     uint256 public constant INITIAL_SUPPLY = 46_686_595 * 1e18; // Everything minus DSO
     uint256 public dso_supply = 53_313_405 * 1e18; // Emission supply for DSO
 
@@ -134,7 +137,9 @@ contract TapOFTV2 is ERC20Permit, TapOFTSender, TapOFTReceiver, Pausable {
         address _dao,
         address _airdrop,
         uint256 _governanceEid,
-        address _owner
+        address _owner,
+        address _tapOftSenderModule,
+        address _tapOFTReceiverModule
     ) BaseTapOFTv2(_endpoint, _owner) ERC20Permit("TapOFT") {
         if (_endpoint == address(0)) revert AddressWrong();
         governanceEid = _governanceEid;
@@ -150,23 +155,143 @@ contract TapOFTV2 is ERC20Permit, TapOFTSender, TapOFTReceiver, Pausable {
             if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
         }
         emissionsStartTime = block.timestamp;
+
+        // Initialize modules
+        if (_tapOftSenderModule == address(0)) revert NotValid();
+        if (_tapOFTReceiverModule == address(0)) revert NotValid();
+
+        _setModule(uint8(ITapOFTv2.Module.TapOFTSender), _tapOftSenderModule);
+        _setModule(
+            uint8(ITapOFTv2.Module.TapOFTReceiver),
+            _tapOFTReceiverModule
+        );
     }
 
-    function _lzReceive(
+    /// =====================
+    /// Module setup
+    /// =====================
+
+    /**
+     * @dev Fallback function should handle calls made by endpoint, which should go to the receiver module.
+     */
+    fallback() external payable {
+        bytes memory data = _executeModule(
+            uint8(ITapOFTv2.Module.TapOFTReceiver),
+            msg.data,
+            false
+        );
+    }
+
+    receive() external payable {}
+
+    /**
+     * @dev Slightly modified version of the OFT _lzReceive() operation.
+     * The composed message is sent to `address(this)` instead of `toAddress`.
+     * @dev Internal function to handle the receive on the LayerZero endpoint.
+     * @param _origin The origin information.
+     *  - srcEid: The source chain endpoint ID.
+     *  - sender: The sender address from the src chain.
+     *  - nonce: The nonce of the LayerZero message.
+     * @param _guid The unique identifier for the received LayerZero message.
+     * @param _message The encoded message.
+     * @dev _executor The address of the executor.
+     * @dev _extraData Additional data.
+     */
+    function lzReceive(
         Origin calldata _origin,
         bytes32 _guid,
         bytes calldata _message,
         address _executor, // @dev unused in the default implementation.
         bytes calldata _extraData // @dev unused in the default implementation.
-    ) internal virtual override(OFTCore, TapOFTReceiver) {
-        return
-            TapOFTReceiver._lzReceive(
+    ) public payable override {
+        // Call the internal OApp implementation of lzReceive.
+        _executeModule(
+            uint8(ITapOFTv2.Module.TapOFTReceiver),
+            abi.encodeWithSelector(
+                OAppReceiver.lzReceive.selector,
                 _origin,
                 _guid,
                 _message,
                 _executor,
                 _extraData
-            );
+            ),
+            false
+        );
+    }
+
+    /**
+     * @notice Execute a call to a module.
+     * @dev Example on how `_data` should be encoded:
+     *      - abi.encodeCall(IERC20.transfer, (to, amount));
+     * @dev Use abi.encodeCall to encode the function call and its parameters with type safety.
+     *
+     * @param _module The module to execute.
+     * @param _data The data to execute. Should be ABI encoded with the selector.
+     * @param _forwardRevert If true, forward the revert message from the module.
+     *
+     * @return returnData The return data from the module execution, if any.
+     */
+    function executeModule(
+        ITapOFTv2.Module _module,
+        bytes memory _data,
+        bool _forwardRevert
+    ) external payable returns (bytes memory returnData) {
+        return _executeModule(uint8(_module), _data, _forwardRevert);
+    }
+
+    /// ========================
+    /// Frequently used modules
+    /// ========================
+
+    /**
+     * @dev Slightly modified version of the OFT send() operation. Includes a `_msgType` parameter.
+     * The `_buildMsgAndOptionsByType()` appends the packet type to the message.
+     * @dev Executes the send operation.
+     * @param _lzSendParam The parameters for the send operation.
+     *      - _sendParam: The parameters for the send operation.
+     *          - dstEid::uint32: Destination endpoint ID.
+     *          - to::bytes32: Recipient address.
+     *          - amountToSendLD::uint256: Amount to send in local decimals.
+     *          - minAmountToCreditLD::uint256: Minimum amount to credit in local decimals.
+     *      - _fee: The calculated fee for the send() operation.
+     *          - nativeFee::uint256: The native fee.
+     *          - lzTokenFee::uint256: The lzToken fee.
+     *      - _extraOptions::bytes: Additional options for the send() operation.
+     *      - refundAddress::address: The address to refund the native fee to.
+     * @param _composeMsg The composed message for the send() operation. Is a combination of 1 or more TAP specific messages.
+     *
+     * @return msgReceipt The receipt for the send operation.
+     *      - guid::bytes32: The unique identifier for the sent message.
+     *      - nonce::uint64: The nonce of the sent message.
+     *      - fee: The LayerZero fee incurred for the message.
+     *          - nativeFee::uint256: The native fee.
+     *          - lzTokenFee::uint256: The lzToken fee.
+     * @return oftReceipt The OFT receipt information.
+     *      - amountDebitLD::uint256: Amount of tokens ACTUALLY debited in local decimals.
+     *      - amountCreditLD::uint256: Amount of tokens to be credited on the remote side.
+     */
+    function sendPacket(
+        LZSendParam calldata _lzSendParam,
+        bytes calldata _composeMsg
+    )
+        public
+        payable
+        returns (
+            MessagingReceipt memory msgReceipt,
+            OFTReceipt memory oftReceipt
+        )
+    {
+        (msgReceipt, oftReceipt) = abi.decode(
+            _executeModule(
+                uint8(ITapOFTv2.Module.TapOFTSender),
+                abi.encodeCall(
+                    TapOFTSender.sendPacket,
+                    (_lzSendParam, _composeMsg)
+                ),
+                false
+            ),
+            (MessagingReceipt, OFTReceipt)
+        );
     }
 
     /// =====================

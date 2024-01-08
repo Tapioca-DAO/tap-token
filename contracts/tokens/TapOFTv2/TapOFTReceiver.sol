@@ -29,9 +29,14 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 */
 
-abstract contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
+contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
+
+    constructor(
+        address _endpoint,
+        address _owner
+    ) BaseTapOFTv2(_endpoint, _owner) {}
 
     /// @dev Triggered if the address of the composer doesn't match current contract.
     error InvalidComposer(address composer);

@@ -30,7 +30,9 @@ contract TapOFTV2Mock is TapOFTV2 {
         address _dao,
         address _airdrop,
         uint256 _governanceEid,
-        address _owner
+        address _owner,
+        address _tapOftSenderModule,
+        address _tapOFTReceiverModule
     )
         TapOFTV2(
             _endpoint,
@@ -41,7 +43,9 @@ contract TapOFTV2Mock is TapOFTV2 {
             _dao,
             _airdrop,
             _governanceEid,
-            _owner
+            _owner,
+            _tapOftSenderModule,
+            _tapOFTReceiverModule
         )
     {}
 }

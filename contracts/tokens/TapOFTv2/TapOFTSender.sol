@@ -22,7 +22,12 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 */
 
-abstract contract TapOFTSender is BaseTapOFTv2 {
+contract TapOFTSender is BaseTapOFTv2 {
+    constructor(
+        address _endpoint,
+        address _owner
+    ) BaseTapOFTv2(_endpoint, _owner) {}
+
     // TODO make it public or only internal? Making it public would require more sanitization/security checks
     /**
      * @dev Slightly modified version of the OFT send() operation. Includes a `_msgType` parameter.

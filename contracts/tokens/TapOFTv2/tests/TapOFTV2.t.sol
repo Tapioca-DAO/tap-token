@@ -24,8 +24,11 @@ import {ITapOFTv2, LockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC20Pe
 import {TapOFTv2Helper} from "../extensions/TapOFTv2Helper.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TwTAP} from "../../../governance/TwTAP.sol";
+import {TapOFTReceiver} from "../TapOFTReceiver.sol";
+import {TapOFTSender} from "../TapOFTSender.sol";
 import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
 
+// TODO Split into multiple part?
 contract TapOFTV2Test is TestHelper, IERC721Receiver {
     using OptionsBuilder for bytes;
     using OFTMsgCodec for bytes32;
@@ -87,35 +90,63 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
         aTapOFT = TapOFTV2Mock(
-            _deployOApp(
-                type(TapOFTV2Mock).creationCode,
-                abi.encode(
-                    address(endpoints[aEid]),
-                    _contributors,
-                    _earlySupporters,
-                    _supporters,
-                    _lbp,
-                    _dao,
-                    _airdrop,
-                    _governanceEid,
-                    address(this)
+            payable(
+                _deployOApp(
+                    type(TapOFTV2Mock).creationCode,
+                    abi.encode(
+                        address(endpoints[aEid]),
+                        _contributors,
+                        _earlySupporters,
+                        _supporters,
+                        _lbp,
+                        _dao,
+                        _airdrop,
+                        _governanceEid,
+                        address(this),
+                        address(
+                            new TapOFTSender(
+                                address(endpoints[aEid]),
+                                address(this)
+                            )
+                        ),
+                        address(
+                            new TapOFTReceiver(
+                                address(endpoints[aEid]),
+                                address(this)
+                            )
+                        )
+                    )
                 )
             )
         );
         vm.label(address(aTapOFT), "aTapOFT");
         bTapOFT = TapOFTV2Mock(
-            _deployOApp(
-                type(TapOFTV2Mock).creationCode,
-                abi.encode(
-                    address(endpoints[bEid]),
-                    _contributors,
-                    _earlySupporters,
-                    _supporters,
-                    _lbp,
-                    _dao,
-                    _airdrop,
-                    _governanceEid,
-                    address(this)
+            payable(
+                _deployOApp(
+                    type(TapOFTV2Mock).creationCode,
+                    abi.encode(
+                        address(endpoints[bEid]),
+                        _contributors,
+                        _earlySupporters,
+                        _supporters,
+                        _lbp,
+                        _dao,
+                        _airdrop,
+                        _governanceEid,
+                        address(this),
+                        address(
+                            new TapOFTSender(
+                                address(endpoints[bEid]),
+                                address(this)
+                            )
+                        ),
+                        address(
+                            new TapOFTReceiver(
+                                address(endpoints[bEid]),
+                                address(this)
+                            )
+                        )
+                    )
                 )
             )
         );
@@ -410,7 +441,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         address, //from
         uint256, // tokenId
         bytes calldata // data
-    ) external override returns (bytes4) {
+    ) external pure override returns (bytes4) {
         return this.onERC721Received.selector;
     }
 
@@ -568,7 +599,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         bytes32 _digest,
         address _token,
         uint256 _pkSigner
-    ) internal view returns (ERC20PermitApprovalMsg memory permitApproval_) {
+    ) internal pure returns (ERC20PermitApprovalMsg memory permitApproval_) {
         (uint8 v_, bytes32 r_, bytes32 s_) = vm.sign(_pkSigner, _digest);
 
         permitApproval_ = ERC20PermitApprovalMsg({
