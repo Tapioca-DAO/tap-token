@@ -21,6 +21,7 @@ import {TestHelper} from "./mocks/TestHelper.sol";
 
 // Tapioca
 import {ITapOFTv2, LockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC20PermitApprovalMsg} from "../ITapOFTv2.sol";
+import {TapOFTv2Helper} from "../extensions/TapOFTv2Helper.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TwTAP} from "../../../governance/TwTAP.sol";
 import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
@@ -35,6 +36,8 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
 
     TapOFTV2Mock aTapOFT;
     TapOFTV2Mock bTapOFT;
+
+    TapOFTv2Helper tapOFTv2Helper;
 
     uint256 internal userAPKey = 0x1;
     uint256 internal userABKey = 0x2;
@@ -123,6 +126,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
 
         bTapOFT.setTwTAP(address(twTap));
 
+        tapOFTv2Helper = new TapOFTv2Helper();
         // config and wire the ofts
         address[] memory ofts = new address[](2);
         ofts[0] = address(aTapOFT);
@@ -246,7 +250,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
             approvals_[0] = permitApprovalB_;
             approvals_[1] = permitApprovalC_;
 
-            approvalsMsg_ = aTapOFT.buildPermitApprovalMsg(approvals_);
+            approvalsMsg_ = tapOFTv2Helper.buildPermitApprovalMsg(approvals_);
         }
 
         (
@@ -466,7 +470,8 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
                 _prepareLzCall.composeMsgData.gas,
                 _prepareLzCall.composeMsgData.value
             );
-        (composeMsg_, ) = aTapOFT.buildTapComposedMsg(
+        (composeMsg_, ) = tapOFTv2Helper.buildTapComposeMsgAndOptions(
+            aTapOFT,
             _prepareLzCall.composeMsgData.data,
             _prepareLzCall.msgType,
             _prepareLzCall.composeMsgData.index,

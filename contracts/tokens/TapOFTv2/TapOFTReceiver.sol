@@ -2,18 +2,13 @@
 pragma solidity 0.8.22;
 
 // LZ
-import {SendParam, MessagingReceipt, MessagingFee, OFTReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
-import {IOAppMsgInspector} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppMsgInspector.sol";
-import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import {IOAppComposer} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppComposer.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
-import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
 // Tapioca
-import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
-import {ITapOFTv2, LockTwTapPositionMsg, ERC20PermitApprovalMsg} from "./ITapOFTv2.sol";
+import {LockTwTapPositionMsg, ERC20PermitApprovalMsg} from "./ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 
