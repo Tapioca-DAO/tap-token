@@ -173,7 +173,7 @@ export const deployStack__task = async (
                         chainInfoAddresses.lbpAddress,
                         chainInfoAddresses.daoAddress,
                         chainInfoAddresses.airdropAddress,
-                        EChainID.SEPOLIA, //governance chain
+                        EChainID.ARBITRUM_SEPOLIA, //governance chain
                         signer.address,
                     ],
                     [
