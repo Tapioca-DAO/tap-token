@@ -24,22 +24,22 @@ library TapOFTMsgCoder {
      *
      * @param _msgType The message type, either custom ones with `PT_` as a prefix, or default OFT ones.
      * @param _msgIndex The index of the compose message to encode.
-     * @param _tapComposeMsg The Tap composed message.
-     * @return _msg The encoded message. Empty bytes if it's the end of compose message.
+     * @param _msg The Tap composed message.
+     * @return _tapComposedMsg The encoded message. Empty bytes if it's the end of compose message.
      */
     function encodeTapComposeMsg(
+        bytes memory _msg,
         uint16 _msgType,
         uint16 _msgIndex,
-        bytes memory _tapComposeMsg,
-        bytes memory _msg
+        bytes memory _tapComposedMsg
     ) internal pure returns (bytes memory) {
         return
             abi.encodePacked(
                 _msgType,
-                uint16(_tapComposeMsg.length),
+                uint16(_msg.length),
                 _msgIndex,
-                _tapComposeMsg,
-                _msg
+                _msg,
+                _tapComposedMsg
             );
     }
 
@@ -358,11 +358,14 @@ library TapOFTMsgCoder {
             );
 
         uint256 msgIndex_;
-        for (uint256 i = 0; i < msgCount_; i++) {
+        for (uint256 i; i < msgCount_; ) {
             erc20PermitApprovalMsgs_[i] = decodeERC20PermitApprovalMsg(
                 BytesLib.slice(_msg, msgIndex_, 189)
             );
-            msgIndex_ += 189;
+            unchecked {
+                msgIndex_ += 189;
+                ++i;
+            }
         }
 
         return erc20PermitApprovalMsgs_;

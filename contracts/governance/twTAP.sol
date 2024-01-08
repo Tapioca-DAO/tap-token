@@ -13,7 +13,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol";
 import {ERC721Permit} from "tapioca-sdk/dist/contracts/util/ERC4494.sol"; // TODO audit
 import {TapOFTV2} from "../tokens/TapOFTv2/TapOFTV2.sol";
-import "../twAML.sol";
+import {TWAML} from "../twAML.sol";
 
 // ********************************************************************************
 // *******************************,                 ,******************************

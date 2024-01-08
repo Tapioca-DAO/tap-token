@@ -43,7 +43,7 @@ abstract contract TapOFTSender is BaseTapOFTv2 {
         ERC20PermitApprovalMsg[] calldata _erc20PermitApprovalMsg
     ) public pure returns (bytes memory msg_) {
         uint256 approvalsLength = _erc20PermitApprovalMsg.length;
-        for (uint256 i = 0; i < approvalsLength; ) {
+        for (uint256 i; i < approvalsLength; ) {
             msg_ = abi.encodePacked(
                 msg_,
                 TapOFTMsgCoder.buildERC20PermitApprovalMsg(
