@@ -51,7 +51,7 @@ export const deployTapOFT__task = async (
             chainInfoAddresses.lbpAddress,
             chainInfoAddresses.daoAddress,
             chainInfoAddresses.airdropAddress,
-            EChainID.ARBITRUM_GOERLI, //governance chain
+            EChainID.ARBITRUM_SEPOLIA, //governance chain
             signer.address,
         ],
         [],
