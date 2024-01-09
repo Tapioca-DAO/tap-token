@@ -150,10 +150,8 @@ abstract contract BaseTapOFT is OFTV2 {
         uint64 _nonce,
         bytes memory _payload
     ) internal virtual {
-        (, , address to, uint64 amountSD, uint duration) = abi.decode(
-            _payload,
-            (uint16, address, address, uint64, uint256)
-        );
+        (, address sender, address to, uint64 amountSD, uint duration) = abi
+            .decode(_payload, (uint16, address, address, uint64, uint256));
 
         uint256 amount = _sd2ld(amountSD);
         _creditTo(_srcChainId, address(this), amount);
@@ -166,14 +164,14 @@ abstract contract BaseTapOFT is OFTV2 {
             // If the process fails, we send back the funds to the user
             // We send back the funds to the user
             emit CallFailedStr(_srcChainId, _payload, _reason);
-            _transferFrom(address(this), to, amount);
+            _transferFrom(address(this), sender, amount);
         } catch (bytes memory _reason) {
             emit CallFailedBytes(
                 _srcChainId,
                 _payload,
                 _reason.length > 1000 ? bytes("Reason too long") : _reason
             );
-            _transferFrom(address(this), to, amount);
+            _transferFrom(address(this), sender, amount);
 
             _storeFailedMessage(
                 _srcChainId,
