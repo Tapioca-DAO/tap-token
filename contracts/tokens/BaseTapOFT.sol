@@ -140,7 +140,7 @@ abstract contract BaseTapOFT is OFTV2 {
             lzDstChainId,
             msg.sender,
             LzLib.addressToBytes32(to),
-            0
+            amount
         );
     }
 
