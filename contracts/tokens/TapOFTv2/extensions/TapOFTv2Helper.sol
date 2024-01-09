@@ -9,7 +9,7 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 
 // Tapioca
 
-import {ITapOFTv2, LockTwTapPositionMsg, ERC20PermitApprovalMsg} from "../ITapOFTv2.sol";
+import {ITapOFTv2, LockTwTapPositionMsg, ERC20PermitApprovalMsg, UnlockTwTapPositionMsg} from "../ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TapOFTV2} from "../TapOFTV2.sol";
 
@@ -73,6 +73,28 @@ contract TapOFTv2Helper {
                 ++i;
             }
         }
+    }
+
+    /**
+     * @notice Encodes the message for the unlockTwTapPosition() operation.
+     **/
+    function buildUnlockTwpTapPositionMsg(
+        UnlockTwTapPositionMsg calldata _unlockTwTapPositionMsg
+    ) public pure returns (bytes memory) {
+        return
+            TapOFTMsgCoder.buildUnlockTwTapPositionMsg(_unlockTwTapPositionMsg);
+    }
+
+    /**
+     * @notice Decode an encoded message for the unlockTwTapPosition() operation.
+     *
+     * @param _msg The encoded message. see `TapOFTMsgCoder.buildUnlockTwTapPositionMsg()`
+     * @return unlockTwTapPositionMsg_ The needed data.
+     */
+    function decodeUnlockTwTapPositionMsg(
+        bytes calldata _msg
+    ) public pure returns (UnlockTwTapPositionMsg memory) {
+        return TapOFTMsgCoder.decodeUnlockTwTapPositionMsg(_msg);
     }
 
     /// =======================

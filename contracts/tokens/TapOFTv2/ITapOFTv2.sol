@@ -12,6 +12,12 @@ interface ITapOFTv2 {
         uint96 duration,
         uint256 amount
     );
+    /// @dev twTAP unlock operation received.
+    event UnlockTwTapReceived(
+        address indexed user,
+        uint256 tokenId,
+        uint256 amount
+    );
 
     /**
      * ERRORS
@@ -26,38 +32,9 @@ interface ITapOFTv2 {
     }
 }
 
-struct ERC20PermitStruct {
-    address owner;
-    address spender;
-    uint256 value;
-    uint256 nonce;
-    uint256 deadline;
-}
-
-/**
- * @param user The user address to lock in the tokens.
- * @param duration The duration of the lock.
- * @param amount The amount of TAP to lock.
- */
-struct LockTwTapPositionMsg {
-    address user;
-    uint96 duration;
-    uint256 amount;
-}
-
-/**
- * @notice Encodes the message for the ercPermitApproval() operation.
- */
-struct ERC20PermitApprovalMsg {
-    address token;
-    address owner;
-    address spender;
-    uint256 value;
-    uint256 deadline;
-    uint8 v;
-    bytes32 r;
-    bytes32 s;
-}
+/// =======================
+/// ========= LZ ==========
+/// =======================
 
 /**
  * @param sendParam The parameters for the send operation.
@@ -72,4 +49,58 @@ struct LZSendParam {
     MessagingFee fee;
     bytes extraOptions;
     address refundAddress;
+}
+
+/// =============================
+/// ========= EXTERNAL ==========
+/// =============================
+
+/**
+ * Structure of an ERC20 permit message.
+ */
+struct ERC20PermitStruct {
+    address owner;
+    address spender;
+    uint256 value;
+    uint256 nonce;
+    uint256 deadline;
+}
+
+/// ================================
+/// ========= TAP COMPOSE ==========
+/// ================================
+
+/**
+ * @param user The user address to lock in the tokens.
+ * @param duration The duration of the lock.
+ * @param amount The amount of TAP to lock.
+ */
+struct LockTwTapPositionMsg {
+    address user;
+    uint96 duration;
+    uint256 amount;
+}
+
+/**
+ * @dev Used in TapOFTv2Helper.
+ * @param user The user address to unlock the tokens.
+ * @param tokenId The tokenId of the TwTap position to unlock.
+ */
+struct UnlockTwTapPositionMsg {
+    address user;
+    uint256 tokenId;
+}
+
+/**
+ * @notice Encodes the message for the ercPermitApproval() operation.
+ */
+struct ERC20PermitApprovalMsg {
+    address token;
+    address owner;
+    address spender;
+    uint256 value;
+    uint256 deadline;
+    uint8 v;
+    bytes32 r;
+    bytes32 s;
 }

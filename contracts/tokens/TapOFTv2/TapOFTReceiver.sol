@@ -8,9 +8,10 @@ import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
 // Tapioca
-import {LockTwTapPositionMsg, ERC20PermitApprovalMsg} from "./ITapOFTv2.sol";
+import {LockTwTapPositionMsg, ERC20PermitApprovalMsg, UnlockTwTapPositionMsg} from "./ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
+import {TapOFTSender} from "./TapOFTSender.sol";
 
 // TODO remove console
 import "forge-std/console.sol";
@@ -38,8 +39,12 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         address _owner
     ) BaseTapOFTv2(_endpoint, _owner) {}
 
-    /// @dev Triggered if the address of the composer doesn't match current contract.
+    /**
+     *  @dev Triggered if the address of the composer doesn't match current contract in `lzCompose`.
+     * Compose caller and receiver are the same address, which is this.
+     */
     error InvalidComposer(address composer);
+    error InvalidCaller(address caller); // Should be the endpoint address
     error InsufficientAllowance(address owner, uint256 amount); // See `this.__internalTransferWithAllowance()`
 
     /// @dev Compose received.
@@ -55,19 +60,29 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         uint96 duration,
         uint256 amount
     );
+    /// @dev twTAP unlock operation received.
+    event UnlockTwTapReceived(
+        address indexed user,
+        uint256 tokenId,
+        uint256 amount
+    );
 
     /**
+     * @dev !!! FIRST ENTRYPOINT, COMPOSE MSG ARE TO BE BUILT HERE  !!!
+     *
      * @dev Slightly modified version of the OFT _lzReceive() operation.
      * The composed message is sent to `address(this)` instead of `toAddress`.
      * @dev Internal function to handle the receive on the LayerZero endpoint.
+     * @dev Caller is verified on the public function. See `OAppReceiver.lzReceive()`.
+     *
      * @param _origin The origin information.
      *  - srcEid: The source chain endpoint ID.
      *  - sender: The sender address from the src chain.
      *  - nonce: The nonce of the LayerZero message.
      * @param _guid The unique identifier for the received LayerZero message.
      * @param _message The encoded message.
-     * @dev _executor The address of the executor.
-     * @dev _extraData Additional data.
+     * _executor The address of the executor.
+     * _extraData Additional data.
      */
     function _lzReceive(
         Origin calldata _origin,
@@ -107,8 +122,15 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
 
     // TODO - SANITIZE MSG TYPE
     /**
+     * @dev !!! SECOND ENTRYPOINT, CALLER NEEDS TO BE VERIFIED !!!
+     *
      * @notice Composes a LayerZero message from an OApp.
-     * @dev The message comes in form: [msgType, composeMsg].
+     * @dev The message comes in form:
+     *      - [composeSender::address][oftComposeMsg::bytes]
+     *                                          |
+     *                                          |
+     *                        [msgType::uint16, composeMsg::bytes]
+     *
      * @param _from The address initiating the composition, typically the OApp where the lzReceive was called.
      * @param _guid The unique identifier for the corresponding LayerZero src/dst tx.
      * @param _message The composed message payload in bytes. NOT necessarily the same payload passed via lzReceive.
@@ -120,16 +142,19 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         address, // _executor The address of the executor for the composed message.
         bytes calldata // _extraData Additional arbitrary data in bytes passed by the entity who executes the lzCompose.
     ) external payable override {
-        // Validate the from.
+        // Validate the from and the caller.
         if (_from != address(this)) {
             revert InvalidComposer(_from);
         }
+        if (msg.sender != address(endpoint)) {
+            revert InvalidCaller(msg.sender);
+        }
 
-        // Decode LZ compose message
+        // Decode LZ compose message.
         (address composeSender_, bytes memory oftComposeMsg_) = TapOFTMsgCoder
             .decodeLzComposeMsg(_message);
 
-        // Decode OFT compose message
+        // Decode OFT compose message.
         (
             uint16 msgType_,
             ,
@@ -138,10 +163,12 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
             bytes memory nextMsg_
         ) = TapOFTMsgCoder.decodeTapComposeMsg(oftComposeMsg_);
 
-        if (msgType_ == PT_LOCK_TWTAP) {
-            _lockTwTapPositionReceiver(tapComposeMsg_);
-        } else if (msgType_ == PT_APPROVALS) {
+        if (msgType_ == PT_APPROVALS) {
             _erc20PermitApprovalReceiver(tapComposeMsg_);
+        } else if (msgType_ == PT_LOCK_TWTAP) {
+            _lockTwTapPositionReceiver(tapComposeMsg_);
+        } else if (msgType_ == PT_UNLOCK_TWTAP) {
+            _unlockTwTapPositionReceiver(tapComposeMsg_);
         } else {
             revert InvalidMsgType(msgType_);
         }
@@ -166,6 +193,8 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
     // ********************* //
 
     /**
+     * @dev Locks TAP for the user in the twTAP contract.
+     * @dev The user needs to have approved the TapOFTv2 contract to spend the TAP.
      *
      * @param _data The call data containing info about the lock.
      *          - user::address: Address of the user to lock the TAP for.
@@ -195,6 +224,46 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
             lockTwTapPositionMsg_.user,
             lockTwTapPositionMsg_.duration,
             lockTwTapPositionMsg_.amount
+        );
+    }
+
+    /**
+     * @dev Unlocks TAP for the user in the twTAP contract.
+     * @dev !!! The user needs to have given TwTAP allowance to this contract  !!!
+     *
+     * @param _data The call data containing info about the lock.
+     *          - unlockTwTapPositionMsg_::UnlockTwTapPositionMsg: Unlocking data.
+     */
+    function _unlockTwTapPositionReceiver(bytes memory _data) internal virtual {
+        UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_ = TapOFTMsgCoder
+            .decodeUnlockTwTapPositionMsg(_data);
+
+        // Exit position. Will send TAP to this address
+        uint256 tapAmount_ = twTap.exitPosition(
+            unlockTwTapPositionMsg_.tokenId,
+            unlockTwTapPositionMsg_.user
+        );
+
+        // Override the sendParam with the harvested amount
+        // unlockTwTapPositionMsg_
+        //     .retrieveTapParam
+        //     .sendParam
+        //     .amountToSendLD = tapAmount_;
+        // unlockTwTapPositionMsg_
+        //     .retrieveTapParam
+        //     .sendParam
+        //     .minAmountToCreditLD = tapAmount_;
+
+        // // Send back packet
+        // TapOFTSender(msg.sender).sendPacket(
+        //     unlockTwTapPositionMsg_.retrieveTapParam,
+        //     bytes("")
+        // );
+
+        emit UnlockTwTapReceived(
+            unlockTwTapPositionMsg_.user,
+            unlockTwTapPositionMsg_.tokenId,
+            tapAmount_
         );
     }
 

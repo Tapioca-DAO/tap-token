@@ -7,7 +7,7 @@ import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTM
 import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 
 // Tapioca
-import {ITapOFTv2, LockTwTapPositionMsg, ERC20PermitApprovalMsg} from "./ITapOFTv2.sol";
+import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, ERC20PermitApprovalMsg} from "./ITapOFTv2.sol";
 
 import "forge-std/console.sol";
 
@@ -207,6 +207,48 @@ library TapOFTMsgCoder {
 
         // Return structured data
         lockTwTapPositionMsg_ = LockTwTapPositionMsg(user, duration, amount);
+    }
+
+    /**
+     * @notice Encodes the message for the unlockTwTapPosition() operation.
+     **/
+    function buildUnlockTwTapPositionMsg(
+        UnlockTwTapPositionMsg memory _msg
+    ) internal pure returns (bytes memory) {
+        return abi.encodePacked(_msg.user, _msg.tokenId);
+    }
+
+    /**
+     * @notice Decode an encoded message for the unlockTwTapPosition() operation.
+     *
+     * @param _msg The encoded message. see `TapOFTMsgCoder.buildUnlockTwTapPositionMsg()`
+     *          - user::address: The user address.
+     *          - tokenId::uint256: The tokenId of the TwTap position to unlock.
+     * @return unlockTwTapPositionMsg_ The needed data.
+     */
+    function decodeUnlockTwTapPositionMsg(
+        bytes memory _msg
+    )
+        internal
+        pure
+        returns (UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_)
+    {
+        // Offsets
+        uint8 userOffset_ = 20;
+
+        // Decoded data
+        address user_ = BytesLib.toAddress(
+            BytesLib.slice(_msg, 0, userOffset_),
+            0
+        );
+
+        uint256 tokenId_ = BytesLib.toUint256(
+            BytesLib.slice(_msg, userOffset_, 32),
+            0
+        );
+
+        // Return structured data
+        unlockTwTapPositionMsg_ = UnlockTwTapPositionMsg(user_, tokenId_);
     }
 
     /**

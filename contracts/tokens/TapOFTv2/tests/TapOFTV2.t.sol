@@ -20,7 +20,7 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 import {TestHelper} from "./mocks/TestHelper.sol";
 
 // Tapioca
-import {ITapOFTv2, LockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC20PermitApprovalMsg} from "../ITapOFTv2.sol";
+import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC20PermitApprovalMsg} from "../ITapOFTv2.sol";
 import {TapOFTv2Helper} from "../extensions/TapOFTv2Helper.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TwTAP} from "../../../governance/TwTAP.sol";
@@ -422,6 +422,110 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         __callLzCompose(
             LzOFTComposedData(
                 PT_LOCK_TWTAP,
+                msgReceipt_.guid,
+                composeMsg_,
+                bEid,
+                address(bTapOFT), // Compose creator (at lzReceive)
+                address(bTapOFT), // Compose receiver (at lzCompose)
+                address(this),
+                oftMsgOptions_
+            )
+        );
+    }
+
+    /**
+     * @dev Test the OApp functionality of `TapOFTv2.unlockTwTapPosition()` function.
+     */
+    function test_unlock_twTap_position() public {
+        /**
+         * Prepare vars
+         */
+
+        // lock info
+        uint256 lockAmount_ = 1 ether;
+        uint96 lockDuration_ = 1 weeks;
+        uint256 tokenId_; // tokenId of the TwTap position
+
+        /**
+         * Setup
+         */
+        {
+            deal(address(bTapOFT), address(this), lockAmount_);
+            bTapOFT.approve(address(twTap), lockAmount_);
+            tokenId_ = twTap.participate(
+                address(this),
+                lockAmount_,
+                lockDuration_
+            );
+
+            // Skip block timestamp to
+            skip(lockDuration_);
+        }
+
+        /**
+         * Actions
+         */
+
+        UnlockTwTapPositionMsg
+            memory unlockTwTapPosition_ = UnlockTwTapPositionMsg({
+                user: address(this),
+                tokenId: tokenId_
+            });
+        bytes memory unlockTwTapPositionMsg_ = tapOFTv2Helper
+            .buildUnlockTwpTapPositionMsg(unlockTwTapPosition_);
+
+        (
+            SendParam memory sendParam_,
+            bytes memory composeOptions_,
+            bytes memory composeMsg_,
+            bytes memory oftMsgOptions_,
+            MessagingFee memory msgFee_,
+            LZSendParam memory lzSendParam_
+        ) = __prepareLzCall(
+                PrepareLzCall({
+                    dstEid: bEid,
+                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                    amountToSendLD: 0,
+                    minAmountToCreditLD: 0,
+                    msgType: PT_UNLOCK_TWTAP,
+                    composeMsgData: ComposeMsgData({
+                        index: 0,
+                        gas: 1_000_000,
+                        value: 0,
+                        data: unlockTwTapPositionMsg_,
+                        prevData: bytes("")
+                    }),
+                    lzReceiveGas: 1_000_000,
+                    lzReceiveValue: 0
+                })
+            );
+
+        (
+            MessagingReceipt memory msgReceipt_,
+            OFTReceipt memory oftReceipt_
+        ) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(
+                lzSendParam_,
+                composeMsg_
+            );
+
+        verifyPackets(
+            uint32(bEid),
+            OFTMsgCodec.addressToBytes32(address(bTapOFT))
+        );
+
+        // Initiate approval
+        bTapOFT.approve(address(bTapOFT), lockAmount_);
+
+        vm.expectEmit(true, true, true, false);
+        emit ITapOFTv2.UnlockTwTapReceived(
+            unlockTwTapPosition_.user,
+            unlockTwTapPosition_.tokenId,
+            lockAmount_
+        );
+
+        __callLzCompose(
+            LzOFTComposedData(
+                PT_UNLOCK_TWTAP,
                 msgReceipt_.guid,
                 composeMsg_,
                 bEid,
