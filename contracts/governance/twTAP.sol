@@ -143,7 +143,7 @@ contract TwTAP is
     error NotValid();
     error Registered();
     error TokenLimitReached();
-    error CannotClaim();
+    error NotApproved(uint256 tokenId, address owner, address spender);
     error Duplicate();
     error LockNotExpired();
     error LockNotAWeek();
@@ -199,9 +199,12 @@ contract TwTAP is
         return participant;
     }
 
-    /// @notice Amount currently claimable for each reward token
-    /// @dev index 0 will ALWAYS return 0, as it's used by address(0x0)
-    /// @return claimable amounts mapped by reward token
+    /**
+     * @notice Amount currently claimable for each reward token.
+     * @dev index 0 will ALWAYS return 0, as it's used by address(0x0).
+     * @dev Should be safe to claim even after position exit.
+     * @return claimable amounts mapped by reward token
+     */
     function claimable(
         uint256 _tokenId
     ) public view returns (uint256[] memory) {
@@ -387,9 +390,14 @@ contract TwTAP is
         // TODO: Mint event?
     }
 
-    /// @notice claims all rewards distributed since token mint or last claim.
-    /// @param _tokenId tokenId whose rewards to claim
-    /// @param _to address to receive the rewards
+    ///
+
+    /**
+     *  @notice claims all rewards distributed since token mint or last claim.
+     * @dev Should be safe to claim even after position exit.
+     *  @param _tokenId tokenId whose rewards to claim
+     * @param _to address to receive the rewards
+     */
     function claimRewards(
         uint256 _tokenId,
         address _to
@@ -398,45 +406,23 @@ contract TwTAP is
         _claimRewards(_tokenId, _to);
     }
 
-    /// @notice claims all rewards distributed since token mint or last claim, and send them to another chain.
-    /// @param _tokenId The tokenId of the twTAP position
-    /// @param _rewardTokens The address of the reward token
-    function claimAndSendRewards(
-        uint256 _tokenId,
-        IERC20[] calldata _rewardTokens
-    ) external nonReentrant whenNotPaused {
-        if (msg.sender != address(tapOFT)) revert NotAuthorized();
-        _claimRewardsOn(_tokenId, address(tapOFT), _rewardTokens);
-    }
-
-    /// @notice claims the TAP locked in a position whose votes have expired,
-    /// @notice and undoes the effect on the twAML calculations.
-    /// @param _tokenId tokenId whose locked TAP to claim
-    /// @param _to address to receive the TAP
-    function releaseTap(
+    /**
+     * @notice Claim rewards, exit a twAML participation, delete the voting power if existing and send the TAP to `_to`.
+     * @param _tokenId The tokenId of the twTAP position.
+     * @param _to address to receive the TAP.
+     */
+    function exitPosition(
         uint256 _tokenId,
         address _to
     ) external nonReentrant whenNotPaused {
-        _requireClaimPermission(_to, _tokenId);
+        {
+            address owner_ = ownerOf(_tokenId);
+            if (_to != owner_) {
+                _requireClaimPermission(_to, _tokenId);
+            }
+        }
+        _claimRewards(_tokenId, _to);
         _releaseTap(_tokenId, _to);
-    }
-
-    /// @notice Exit a twAML participation and delete the voting power if existing
-    /// @param _tokenId The tokenId of the twTAP position
-    function exitPosition(
-        uint256 _tokenId
-    ) external nonReentrant whenNotPaused {
-        address to = ownerOf(_tokenId);
-        _releaseTap(_tokenId, to);
-    }
-
-    /// @notice Exit a twAML participation and send the withdrawn TAP to tapOFT to send it to another chain.
-    /// @param _tokenId The tokenId of the twTAP position
-    function exitPositionAndSendTap(
-        uint256 _tokenId
-    ) external nonReentrant whenNotPaused returns (uint256) {
-        if (msg.sender != address(tapOFT)) revert NotAuthorized();
-        return _releaseTap(_tokenId, address(tapOFT));
     }
 
     /// @notice Indicate that (a) week(s) have passed and update running totals
@@ -502,14 +488,21 @@ contract TwTAP is
         maxRewardTokens = _length;
     }
 
-    function addRewardToken(IERC20 token) external onlyOwner returns (uint256) {
-        if (rewardTokenIndex[token] != 0) revert Registered();
+    /**
+     * @notice Add a reward token to the list of reward tokens.
+     * @param _token The address of the reward token.
+     */
+    // TODO Check if it should be one type of token only? Like OFT?
+    function addRewardToken(
+        IERC20 _token
+    ) external onlyOwner returns (uint256) {
+        if (rewardTokenIndex[_token] != 0) revert Registered();
         if (rewardTokens.length + 1 > maxRewardTokens)
             revert TokenLimitReached();
-        rewardTokens.push(token);
+        rewardTokens.push(_token);
 
         uint256 newTokenIndex = rewardTokens.length - 1;
-        rewardTokenIndex[token] = newTokenIndex;
+        rewardTokenIndex[_token] = newTokenIndex;
 
         return newTokenIndex;
     }
@@ -530,7 +523,7 @@ contract TwTAP is
             _to != tokenOwner &&
             !isApprovedForAll(tokenOwner, msg.sender) &&
             getApproved(_tokenId) != msg.sender
-        ) revert CannotClaim();
+        ) revert NotApproved(_tokenId, tokenOwner, msg.sender);
     }
 
     function _claimRewards(uint256 _tokenId, address _to) internal {
@@ -548,38 +541,14 @@ contract TwTAP is
         }
     }
 
-    function _claimRewardsOn(
-        uint256 _tokenId,
-        address _to,
-        IERC20[] memory _rewardTokens
-    ) internal {
-        uint256[] memory amounts = claimable(_tokenId);
-        address[] memory _reviewed = new address[](_rewardTokens.length);
-
-        unchecked {
-            uint256 len = _rewardTokens.length;
-            for (uint256 i; i < len; ) {
-                // Check for duplicates
-                if (_existInArray(address(_rewardTokens[i]), _reviewed))
-                    revert Duplicate();
-                _reviewed[i] = address(_rewardTokens[i]);
-
-                // Get amount and reward token index
-                uint256 claimableIndex = rewardTokenIndex[_rewardTokens[i]];
-                uint256 amount = amounts[claimableIndex];
-
-                //if caller uses a token that is not in the list, it will be skipped
-                // Because index would target address(0x0)
-                if (amount > 0) {
-                    // Math is safe: `amount` calculated safely in `claimable()`
-                    claimed[_tokenId][claimableIndex] += amount;
-                    rewardTokens[claimableIndex].safeTransfer(_to, amount);
-                }
-                ++i;
-            }
-        }
-    }
-
+    /**
+     * @notice Release the TAP locked in a position whose votes have expired.
+     * @dev Clean up the twAML participation and delete the voting power if existing.
+     * @dev !!!!!!!!!! Make sure to verify ownership of `_tokenId` and `_to` !!!!!!!!!!
+     *
+     * @param _tokenId tokenId whose locked TAP to claim
+     * @param _to address to receive the TAP
+     */
     function _releaseTap(
         uint256 _tokenId,
         address _to
