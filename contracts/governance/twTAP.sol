@@ -390,39 +390,42 @@ contract TwTAP is
         // TODO: Mint event?
     }
 
-    ///
-
     /**
-     *  @notice claims all rewards distributed since token mint or last claim.
+     * @notice claims all rewards distributed since token mint or last claim.
      * @dev Should be safe to claim even after position exit.
-     *  @param _tokenId tokenId whose rewards to claim
+     *
+     * @param _tokenId tokenId whose rewards to claim
      * @param _to address to receive the rewards
+     *
+     * @return amounts_ Claimed amount of each reward token.
      */
     function claimRewards(
         uint256 _tokenId,
         address _to
-    ) external nonReentrant whenNotPaused {
+    ) external nonReentrant whenNotPaused returns (uint256[] memory amounts_) {
         _requireClaimPermission(_to, _tokenId);
-        _claimRewards(_tokenId, _to);
+        amounts_ = _claimRewards(_tokenId, _to);
     }
 
     /**
-     * @notice Claim rewards, exit a twAML participation, delete the voting power if existing and send the TAP to `_to`.
+     * @notice Exit a twAML participation, delete the voting power if existing and send the TAP to `_to`.
+     *
      * @param _tokenId The tokenId of the twTAP position.
      * @param _to address to receive the TAP.
+     *
+     * @return tapAmount_ The amount of TAP released.
      */
     function exitPosition(
         uint256 _tokenId,
         address _to
-    ) external nonReentrant whenNotPaused {
+    ) external nonReentrant whenNotPaused returns (uint256 tapAmount_) {
         {
             address owner_ = ownerOf(_tokenId);
             if (_to != owner_) {
                 _requireClaimPermission(_to, _tokenId);
             }
         }
-        _claimRewards(_tokenId, _to);
-        _releaseTap(_tokenId, _to);
+        tapAmount_ = _releaseTap(_tokenId, _to);
     }
 
     /// @notice Indicate that (a) week(s) have passed and update running totals
@@ -526,12 +529,19 @@ contract TwTAP is
         ) revert NotApproved(_tokenId, tokenOwner, msg.sender);
     }
 
-    function _claimRewards(uint256 _tokenId, address _to) internal {
-        uint256[] memory amounts = claimable(_tokenId);
-        uint256 len = amounts.length;
+    /**
+     * @dev Claim rewards on a token.
+     * @return amounts_ Claimed amount of each reward token.
+     */
+    function _claimRewards(
+        uint256 _tokenId,
+        address _to
+    ) internal returns (uint256[] memory amounts_) {
+        amounts_ = claimable(_tokenId);
+        uint256 len = amounts_.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
-                uint256 amount = amounts[i];
+                uint256 amount = amounts_[i];
                 if (amount > 0) {
                     // Math is safe: `amount` calculated safely in `claimable()`
                     claimed[_tokenId][i] += amount;
