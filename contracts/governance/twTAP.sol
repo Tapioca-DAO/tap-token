@@ -184,6 +184,13 @@ contract TwTAP is
     //    READ
     // ==========
 
+    /**
+     * @notice Return the address of reward tokens.
+     */
+    function getRewardTokens() external view returns (IERC20[] memory) {
+        return rewardTokens;
+    }
+
     function currentWeek() public view returns (uint256) {
         return (block.timestamp - creation) / EPOCH_DURATION;
     }
