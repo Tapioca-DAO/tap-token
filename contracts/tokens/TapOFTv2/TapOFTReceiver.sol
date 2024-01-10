@@ -8,7 +8,7 @@ import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
 // Tapioca
-import {LockTwTapPositionMsg, ERC20PermitApprovalMsg, UnlockTwTapPositionMsg} from "./ITapOFTv2.sol";
+import {LockTwTapPositionMsg, ERC20PermitApprovalMsg, UnlockTwTapPositionMsg, LZSendParam} from "./ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 import {TapOFTSender} from "./TapOFTSender.sol";
@@ -64,6 +64,11 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
     event UnlockTwTapReceived(
         address indexed user,
         uint256 tokenId,
+        uint256 amount
+    );
+    event RemoteTransferReceived(
+        uint256 indexed dstEid,
+        address indexed to,
         uint256 amount
     );
 
@@ -130,6 +135,7 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
      *                                          |
      *                                          |
      *                        [msgType::uint16, composeMsg::bytes]
+     * @dev The composeSender is the user that initiated the `sendPacket()` call on the srcChain.
      *
      * @param _from The address initiating the composition, typically the OApp where the lzReceive was called.
      * @param _guid The unique identifier for the corresponding LayerZero src/dst tx.
@@ -163,12 +169,15 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
             bytes memory nextMsg_
         ) = TapOFTMsgCoder.decodeTapComposeMsg(oftComposeMsg_);
 
+        console.log("msgType_", msgType_);
         if (msgType_ == PT_APPROVALS) {
             _erc20PermitApprovalReceiver(tapComposeMsg_);
         } else if (msgType_ == PT_LOCK_TWTAP) {
             _lockTwTapPositionReceiver(tapComposeMsg_);
         } else if (msgType_ == PT_UNLOCK_TWTAP) {
             _unlockTwTapPositionReceiver(tapComposeMsg_);
+        } else if (msgType_ == PT_REMOTE_TRANSFER) {
+            _remoteTransfer(tapComposeMsg_);
         } else {
             revert InvalidMsgType(msgType_);
         }
@@ -244,26 +253,42 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
             unlockTwTapPositionMsg_.user
         );
 
-        // Override the sendParam with the harvested amount
-        // unlockTwTapPositionMsg_
-        //     .retrieveTapParam
-        //     .sendParam
-        //     .amountToSendLD = tapAmount_;
-        // unlockTwTapPositionMsg_
-        //     .retrieveTapParam
-        //     .sendParam
-        //     .minAmountToCreditLD = tapAmount_;
-
-        // // Send back packet
-        // TapOFTSender(msg.sender).sendPacket(
-        //     unlockTwTapPositionMsg_.retrieveTapParam,
-        //     bytes("")
-        // );
-
         emit UnlockTwTapReceived(
             unlockTwTapPositionMsg_.user,
             unlockTwTapPositionMsg_.tokenId,
             tapAmount_
+        );
+    }
+
+    /**
+     * @dev Transfers tokens from this contract to the recipient on the chain A. Flow of calls is: A->B->A.
+     * @dev The user needs to have approved the TapOFTv2 contract to spend the TAP.
+     *
+     * @param _data The call data containing info about the transfer (LZSendParam).
+     */
+    function _remoteTransfer(bytes memory _data) internal virtual {
+        LZSendParam memory lzSendParam_ = TapOFTMsgCoder
+            .decodeRemoteTransferMsg(_data);
+
+        address sendTo_ = OFTMsgCodec.bytes32ToAddress(
+            lzSendParam_.sendParam.to
+        );
+        /// @dev xChain user needs to have approved dst TapOFTv2 in a previous composedMsg.
+        _internalTransferWithAllowance(
+            sendTo_,
+            lzSendParam_.sendParam.amountToSendLD
+        );
+
+        // Send back packet
+        TapOFTSender(address(this)).sendPacket{value: msg.value}(
+            lzSendParam_,
+            bytes("")
+        );
+
+        emit RemoteTransferReceived(
+            lzSendParam_.sendParam.dstEid,
+            sendTo_,
+            lzSendParam_.sendParam.amountToSendLD
         );
     }
 

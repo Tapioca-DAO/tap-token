@@ -7,7 +7,7 @@ import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTM
 import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 
 // Tapioca
-import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, ERC20PermitApprovalMsg} from "./ITapOFTv2.sol";
+import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, ERC20PermitApprovalMsg, LZSendParam} from "./ITapOFTv2.sol";
 
 import "forge-std/console.sol";
 
@@ -249,6 +249,26 @@ library TapOFTMsgCoder {
 
         // Return structured data
         unlockTwTapPositionMsg_ = UnlockTwTapPositionMsg(user_, tokenId_);
+    }
+
+    /**
+     * @notice Encodes the message for the `remoteTransfer` operation.
+     * @param _lzSendParam The LZ send param to pass on the remote chain. (B->A)
+     */
+    function buildRemoteTransferMsg(
+        LZSendParam memory _lzSendParam
+    ) internal pure returns (bytes memory) {
+        return abi.encode(_lzSendParam);
+    }
+
+    /**
+     * @notice Decode the message for the `remoteTransfer` operation.
+     * @param _msg The LZ send param to pass on the remote chain. (B->A)
+     */
+    function decodeRemoteTransferMsg(
+        bytes memory _msg
+    ) internal pure returns (LZSendParam memory lzSendParam_) {
+        return abi.decode(_msg, (LZSendParam));
     }
 
     /**

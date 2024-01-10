@@ -9,7 +9,7 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 
 // Tapioca
 
-import {ITapOFTv2, LockTwTapPositionMsg, ERC20PermitApprovalMsg, UnlockTwTapPositionMsg} from "../ITapOFTv2.sol";
+import {ITapOFTv2, LockTwTapPositionMsg, ERC20PermitApprovalMsg, UnlockTwTapPositionMsg, LZSendParam} from "../ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TapOFTV2} from "../TapOFTV2.sol";
 
@@ -32,10 +32,14 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
  * @notice Used as a helper contract to build calls to the TapOFTv2 contract and view functions.
  */
 contract TapOFTv2Helper {
+    // LZ
+    uint16 public constant SEND = 1;
+    // Tapioca
     uint16 public constant PT_APPROVALS = 500;
     uint16 public constant PT_LOCK_TWTAP = 870;
     uint16 public constant PT_UNLOCK_TWTAP = 871;
     uint16 public constant PT_CLAIM_REWARDS = 872;
+    uint16 public constant PT_REMOTE_TRANSFER = 700;
 
     error InvalidMsgType(uint16 msgType); // Triggered if the msgType is invalid on an `_lzCompose`.
     error InvalidMsgIndex(uint16 msgIndex, uint16 expectedIndex); // The msgIndex does not follow the sequence of indexes in the `_tapComposeMsg`
@@ -86,15 +90,13 @@ contract TapOFTv2Helper {
     }
 
     /**
-     * @notice Decode an encoded message for the unlockTwTapPosition() operation.
-     *
-     * @param _msg The encoded message. see `TapOFTMsgCoder.buildUnlockTwTapPositionMsg()`
-     * @return unlockTwTapPositionMsg_ The needed data.
+     * @notice Encodes the message for the `remoteTransfer` operation.
+     * @param _lzSendParam The LZ send param to pass on the remote chain. (B->A)
      */
-    function decodeUnlockTwTapPositionMsg(
-        bytes calldata _msg
-    ) public pure returns (UnlockTwTapPositionMsg memory) {
-        return TapOFTMsgCoder.decodeUnlockTwTapPositionMsg(_msg);
+    function buildRemoteTransferMsg(
+        LZSendParam memory _lzSendParam
+    ) public pure returns (bytes memory) {
+        return TapOFTMsgCoder.buildRemoteTransferMsg(_lzSendParam);
     }
 
     /// =======================
@@ -146,11 +148,14 @@ contract TapOFTv2Helper {
      */
     function _sanitizeMsgType(uint16 _msgType) internal pure {
         if (
+            // LZ
+            _msgType == SEND ||
             // Tapioca msg types
             _msgType == PT_APPROVALS ||
             _msgType == PT_LOCK_TWTAP ||
             _msgType == PT_UNLOCK_TWTAP ||
-            _msgType == PT_CLAIM_REWARDS
+            _msgType == PT_CLAIM_REWARDS ||
+            _msgType == PT_REMOTE_TRANSFER
         ) {
             return;
         }
