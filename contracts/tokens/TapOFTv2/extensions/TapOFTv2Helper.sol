@@ -9,7 +9,7 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 
 // Tapioca
 
-import {ITapOFTv2, LockTwTapPositionMsg, ERC20PermitApprovalMsg, UnlockTwTapPositionMsg, LZSendParam} from "../ITapOFTv2.sol";
+import {ITapOFTv2, LockTwTapPositionMsg, ERC20PermitApprovalMsg, UnlockTwTapPositionMsg, LZSendParam, ClaimTwTapRewardsMsg} from "../ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TapOFTV2} from "../TapOFTV2.sol";
 
@@ -31,6 +31,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
  * @author TapiocaDAO
  * @notice Used as a helper contract to build calls to the TapOFTv2 contract and view functions.
  */
+// TODO build a helper for the LZSendParam and message fee
 contract TapOFTv2Helper {
     // LZ
     uint16 public constant SEND = 1;
@@ -97,6 +98,23 @@ contract TapOFTv2Helper {
         LZSendParam memory _lzSendParam
     ) public pure returns (bytes memory) {
         return TapOFTMsgCoder.buildRemoteTransferMsg(_lzSendParam);
+    }
+
+    /**
+     * @notice Encodes the message for the `claimTwpTapRewards` operation.
+     * @dev !!! NOTE: Will get all the claimable rewards for the TwTap position.
+     * The caller must ensure that the TwTap contract is approved to claim the.
+     * @dev The amount field is trivial in this message as it'll be overwritten by the receiver contract.
+     * Any dust amount will be sent to the user on the same chain as TwTap.
+     *
+     * @param _claimTwTapRewardsMsg The claim rewards message.
+     *        - tokenId::uint256: The tokenId of the TwTap position to claim rewards from.
+     *        - lzSendParams::LZSendParam[]: The LZ send params to pass on the remote chain. (B->A)
+     */
+    function buildClaimRewardsMsg(
+        ClaimTwTapRewardsMsg memory _claimTwTapRewardsMsg
+    ) public pure returns (bytes memory) {
+        return TapOFTMsgCoder.buildClaimTwTapRewards(_claimTwTapRewardsMsg);
     }
 
     /// =======================

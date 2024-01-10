@@ -7,8 +7,11 @@ import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTM
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
+// External
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 // Tapioca
-import {LockTwTapPositionMsg, ERC20PermitApprovalMsg, UnlockTwTapPositionMsg, LZSendParam} from "./ITapOFTv2.sol";
+import {LockTwTapPositionMsg, ERC20PermitApprovalMsg, UnlockTwTapPositionMsg, LZSendParam, ClaimTwTapRewardsMsg} from "./ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 import {TapOFTSender} from "./TapOFTSender.sol";
@@ -46,6 +49,8 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
     error InvalidComposer(address composer);
     error InvalidCaller(address caller); // Should be the endpoint address
     error InsufficientAllowance(address owner, uint256 amount); // See `this.__internalTransferWithAllowance()`
+    // See `this._claimTwpTapRewardsReceiver()`. Triggered if the length of the claimed rewards are not equal to the length of the lzSendParam array.
+    error InvalidSendParamLength(uint256 expectedLength, uint256 actualLength);
 
     /// @dev Compose received.
     event ComposeReceived(
@@ -68,6 +73,11 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
     );
     event RemoteTransferReceived(
         uint256 indexed dstEid,
+        address indexed to,
+        uint256 amount
+    );
+    event ClaimRewardReceived(
+        address indexed token,
         address indexed to,
         uint256 amount
     );
@@ -169,15 +179,16 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
             bytes memory nextMsg_
         ) = TapOFTMsgCoder.decodeTapComposeMsg(oftComposeMsg_);
 
-        console.log("msgType_", msgType_);
         if (msgType_ == PT_APPROVALS) {
             _erc20PermitApprovalReceiver(tapComposeMsg_);
         } else if (msgType_ == PT_LOCK_TWTAP) {
             _lockTwTapPositionReceiver(tapComposeMsg_);
         } else if (msgType_ == PT_UNLOCK_TWTAP) {
             _unlockTwTapPositionReceiver(tapComposeMsg_);
+        } else if (msgType_ == PT_CLAIM_REWARDS) {
+            _claimTwpTapRewardsReceiver(tapComposeMsg_);
         } else if (msgType_ == PT_REMOTE_TRANSFER) {
-            _remoteTransfer(tapComposeMsg_);
+            _remoteTransferReceiver(tapComposeMsg_);
         } else {
             revert InvalidMsgType(msgType_);
         }
@@ -266,7 +277,7 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
      *
      * @param _data The call data containing info about the transfer (LZSendParam).
      */
-    function _remoteTransfer(bytes memory _data) internal virtual {
+    function _remoteTransferReceiver(bytes memory _data) internal virtual {
         LZSendParam memory lzSendParam_ = TapOFTMsgCoder
             .decodeRemoteTransferMsg(_data);
 
@@ -290,6 +301,83 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
             sendTo_,
             lzSendParam_.sendParam.amountToSendLD
         );
+    }
+
+    /**
+     * @dev Transfers tokens from this contract to the recipient on the chain A. Flow of calls is: A->B->A.
+     * @dev !!! The user needs to have given TwTAP allowance to this contract  !!!
+     *
+     * @param _data The call data containing info about the transfer (LZSendParam).
+     */
+    function _claimTwpTapRewardsReceiver(bytes memory _data) internal virtual {
+        ClaimTwTapRewardsMsg memory claimTwTapRewardsMsg_ = TapOFTMsgCoder
+            .decodeClaimTwTapRewardsMsg(_data);
+
+        // Claim rewards, make sure to have approved this contract on TwTap.
+        uint256[] memory claimedAmount_ = twTap.claimRewards(
+            claimTwTapRewardsMsg_.tokenId,
+            address(this)
+        );
+
+        // Check if the claimed amount is equal to the amount of sendParam
+        if (
+            (claimedAmount_.length - 1) != // Remove 1 because the first index doesn't count.
+            claimTwTapRewardsMsg_.sendParam.length
+        ) {
+            revert InvalidSendParamLength(
+                claimedAmount_.length,
+                claimTwTapRewardsMsg_.sendParam.length
+            );
+        }
+
+        // Loop over the tokens, and send them.
+        IERC20[] memory rewardTokens_ = twTap.getRewardTokens();
+        uint256 rewardTokensLength_ = rewardTokens_.length;
+
+        /// @dev Reward token indexes starts at 1, 0 is reserved.
+        /// The index of the claimedAmount_ array is the same as the reward token index.
+        /// The index of claimTwTapRewardsMsg_.sendParam should be the same as the reward token index - 1, since it doesn't have the reserved 0 index.
+        /// Take that into account when accessing the arrays.
+        for (uint256 i = 1; i < rewardTokensLength_; ) {
+            uint256 sendParamIndex = i - 1; // Remove 1 to account for the reserved 0 index.
+            address sendTo_ = OFTMsgCodec.bytes32ToAddress(
+                claimTwTapRewardsMsg_.sendParam[sendParamIndex].sendParam.to
+            );
+            address rewardToken_ = address(rewardTokens_[i]);
+
+            // Sanitize the amount to send
+            uint256 amountWithoutDust = _removeDust(claimedAmount_[i]);
+            uint256 dust = claimedAmount_[i] - amountWithoutDust;
+
+            // Send the dust back to the user locally
+            if (dust > 0) {
+                // TODO Use SafeTransfer
+                IERC20(rewardToken_).transfer(sendTo_, dust);
+            }
+
+            // Add 1 to `claimedAmount_` index because the first index is reserved.
+            claimTwTapRewardsMsg_
+                .sendParam[sendParamIndex]
+                .sendParam
+                .amountToSendLD = amountWithoutDust; // Set the amount to send to the claimed amount
+            claimTwTapRewardsMsg_
+                .sendParam[sendParamIndex]
+                .sendParam
+                .minAmountToCreditLD = amountWithoutDust; // Set the amount to send to the claimed amount
+
+            // Send back packet
+            TapOFTSender(rewardToken_).sendPacket{
+                value: claimTwTapRewardsMsg_
+                    .sendParam[sendParamIndex]
+                    .fee
+                    .nativeFee
+            }(claimTwTapRewardsMsg_.sendParam[sendParamIndex], bytes(""));
+
+            emit ClaimRewardReceived(rewardToken_, sendTo_, amountWithoutDust);
+            unchecked {
+                ++i;
+            }
+        }
     }
 
     /**

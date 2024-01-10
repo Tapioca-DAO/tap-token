@@ -11,16 +11,17 @@ import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/li
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
 import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
+import {ERC20Mock} from "./mocks/ERC20Mock.sol";
 
 // External
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Lib
 import {TestHelper} from "./mocks/TestHelper.sol";
 
 // Tapioca
-import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC20PermitApprovalMsg} from "../ITapOFTv2.sol";
+import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC20PermitApprovalMsg, ClaimTwTapRewardsMsg} from "../ITapOFTv2.sol";
 import {TapOFTv2Helper} from "../extensions/TapOFTv2Helper.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TwTAP} from "../../../governance/TwTAP.sol";
@@ -321,10 +322,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
                 composeMsg_
             );
 
-        verifyPackets(
-            uint32(bEid),
-            OFTMsgCodec.addressToBytes32(address(bTapOFT))
-        );
+        verifyPackets(uint32(bEid), address(bTapOFT));
 
         vm.expectEmit(true, true, true, false);
         emit IERC20.Approval(userA, userB, 1e18);
@@ -408,10 +406,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
                 composeMsg_
             );
 
-        verifyPackets(
-            uint32(bEid),
-            OFTMsgCodec.addressToBytes32(address(bTapOFT))
-        );
+        verifyPackets(uint32(bEid), address(bTapOFT));
 
         // Initiate approval
         bTapOFT.approve(address(bTapOFT), amountToSendLD);
@@ -513,10 +508,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
                 composeMsg_
             );
 
-        verifyPackets(
-            uint32(bEid),
-            OFTMsgCodec.addressToBytes32(address(bTapOFT))
-        );
+        verifyPackets(uint32(bEid), address(bTapOFT));
 
         // Initiate approval
         bTapOFT.approve(address(bTapOFT), lockAmount_);
@@ -622,26 +614,330 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
                 composeMsg_
             );
 
-        verifyPackets(
-            uint32(bEid),
-            OFTMsgCodec.addressToBytes32(address(bTapOFT))
+        {
+            verifyPackets(uint32(bEid), address(bTapOFT));
+
+            // Initiate approval
+            bTapOFT.approve(address(bTapOFT), tokenAmount_); // Needs to be pre approved on B chain to be able to transfer
+
+            __callLzCompose(
+                LzOFTComposedData(
+                    PT_REMOTE_TRANSFER,
+                    msgReceipt_.guid,
+                    composeMsg_,
+                    bEid,
+                    address(bTapOFT), // Compose creator (at lzReceive)
+                    address(bTapOFT), // Compose receiver (at lzCompose)
+                    address(this),
+                    oftMsgOptions_
+                )
+            );
+        }
+
+        // Check arrival
+        {
+            assertEq(aTapOFT.balanceOf(address(this)), 0);
+            verifyPackets(uint32(aEid), address(aTapOFT)); // Verify B->A transfer
+            assertEq(aTapOFT.balanceOf(address(this)), tokenAmount_);
+        }
+    }
+
+    // Stack to deep
+    struct TestClaimRewardsData {
+        TapOFTV2Mock erc20Mock1;
+        TapOFTV2Mock erc20Mock1Dst;
+        TapOFTV2Mock erc20Mock2;
+        TapOFTV2Mock erc20Mock2Dst;
+        uint256 tokenAmount1;
+        uint256 tokenAmount2;
+        uint256 tokenId;
+        LZSendParam remoteLzSendParam1;
+        LZSendParam remoteLzSendParam2;
+        MessagingFee remoteMsgFee1;
+        MessagingFee remoteMsgFee2;
+        uint256 expectReceive1;
+        uint256 expectReceive2;
+    }
+
+    /**
+     * @dev Test the OApp functionality of `TapOFTv2.unlockTwTapPosition()` function.
+     */
+    function test_claim_rewards() public {
+        // Init vars
+        TestClaimRewardsData memory testData_;
+        testData_.erc20Mock1 = _createNewToftToken(
+            "ERCM1",
+            address(endpoints[bEid])
+        );
+        testData_.erc20Mock1Dst = _createNewToftToken(
+            "ERCM1",
+            address(endpoints[aEid])
         );
 
-        // Initiate approval
-        bTapOFT.approve(address(bTapOFT), tokenAmount_); // Needs to be pre approved on B chain to be able to transfer
+        testData_.erc20Mock2 = _createNewToftToken(
+            "ERCM2",
+            address(endpoints[bEid])
+        );
+        testData_.erc20Mock2Dst = _createNewToftToken(
+            "ERCM2",
+            address(endpoints[aEid])
+        );
 
-        __callLzCompose(
-            LzOFTComposedData(
-                PT_REMOTE_TRANSFER,
-                msgReceipt_.guid,
-                composeMsg_,
-                bEid,
-                address(bTapOFT), // Compose creator (at lzReceive)
-                address(bTapOFT), // Compose receiver (at lzCompose)
+        testData_.tokenAmount1 = 1 ether;
+        testData_.tokenAmount2 = 2 ether;
+
+        /**
+         * Token setup
+         */
+        {
+            address[] memory ofts = new address[](2);
+
+            // Wire OFT mock 1
+            ofts[0] = address(testData_.erc20Mock1);
+            ofts[1] = address(testData_.erc20Mock1Dst);
+            this.wireOApps(ofts);
+
+            // Wire OFT mock 2
+            ofts[0] = address(testData_.erc20Mock2);
+            ofts[1] = address(testData_.erc20Mock2Dst);
+            this.wireOApps(ofts);
+        }
+
+        /**
+         * TwTAP setup
+         */
+        {
+            uint256 lockAmount_ = 1 ether;
+            // Participate
+            deal(address(bTapOFT), address(this), lockAmount_);
+            bTapOFT.approve(address(twTap), lockAmount_);
+            testData_.tokenId = twTap.participate(
                 address(this),
-                oftMsgOptions_
-            )
-        );
+                lockAmount_,
+                1 weeks
+            );
+
+            // Distribute rewards
+            deal(
+                address(testData_.erc20Mock1),
+                address(this),
+                testData_.tokenAmount1
+            );
+            deal(
+                address(testData_.erc20Mock2),
+                address(this),
+                testData_.tokenAmount2
+            );
+
+            twTap.addRewardToken(testData_.erc20Mock1);
+            twTap.addRewardToken(testData_.erc20Mock2);
+
+            testData_.erc20Mock1.approve(
+                address(twTap),
+                testData_.tokenAmount1
+            );
+            testData_.erc20Mock2.approve(
+                address(twTap),
+                testData_.tokenAmount2
+            );
+
+            // Skip block timestamp to
+            skip(1 weeks);
+
+            twTap.advanceWeek(1);
+            twTap.distributeReward(1, testData_.tokenAmount1); // Token index starts a 1, 0 is reserved
+            twTap.distributeReward(2, testData_.tokenAmount2);
+
+            // Compute claimable and receivable amounts. Without dust
+            uint256[] memory claimableAmounts_ = twTap.claimable(
+                testData_.tokenId
+            );
+            testData_.expectReceive1 = bTapOFT.removeDust(claimableAmounts_[1]);
+            testData_.expectReceive2 = bTapOFT.removeDust(claimableAmounts_[2]);
+        }
+
+        /**
+         * LZ calls setup
+         */
+        LZSendParam[] memory claimTwTapRewardsParam_ = new LZSendParam[](2);
+
+        {
+            // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
+            (
+                ,
+                ,
+                ,
+                ,
+                testData_.remoteMsgFee1,
+                testData_.remoteLzSendParam1
+            ) = __prepareLzCall( // B->A data
+                testData_.erc20Mock1,
+                PrepareLzCall({
+                    dstEid: aEid,
+                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                    amountToSendLD: testData_.tokenAmount1,
+                    minAmountToCreditLD: testData_.tokenAmount1,
+                    msgType: SEND,
+                    composeMsgData: ComposeMsgData({
+                        index: 0,
+                        gas: 0,
+                        value: 0,
+                        data: bytes(""),
+                        prevData: bytes("")
+                    }),
+                    lzReceiveGas: 500_000,
+                    lzReceiveValue: 0
+                })
+            );
+            // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
+            (
+                ,
+                ,
+                ,
+                ,
+                testData_.remoteMsgFee2,
+                testData_.remoteLzSendParam2
+            ) = __prepareLzCall( // B->A data
+                testData_.erc20Mock2,
+                PrepareLzCall({
+                    dstEid: aEid,
+                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                    amountToSendLD: testData_.tokenAmount2,
+                    minAmountToCreditLD: testData_.tokenAmount2,
+                    msgType: SEND,
+                    composeMsgData: ComposeMsgData({
+                        index: 0,
+                        gas: 0,
+                        value: 0,
+                        data: bytes(""),
+                        prevData: bytes("")
+                    }),
+                    lzReceiveGas: 500_000,
+                    lzReceiveValue: 0
+                })
+            );
+
+            claimTwTapRewardsParam_[0] = testData_.remoteLzSendParam1;
+            claimTwTapRewardsParam_[1] = testData_.remoteLzSendParam2;
+        }
+
+        /**
+         * Actions
+         */
+        bytes memory claimTwTapRewardsMsg_;
+        {
+            ClaimTwTapRewardsMsg
+                memory claimTwTapRewards_ = ClaimTwTapRewardsMsg({
+                    tokenId: testData_.tokenId,
+                    sendParam: claimTwTapRewardsParam_
+                });
+            claimTwTapRewardsMsg_ = tapOFTv2Helper.buildClaimRewardsMsg(
+                claimTwTapRewards_
+            );
+        }
+
+        bytes memory composeMsg_;
+        bytes memory oftMsgOptions_;
+        MessagingFee memory msgFee_;
+        LZSendParam memory lzSendParam_;
+        {
+            (
+                ,
+                ,
+                composeMsg_,
+                oftMsgOptions_,
+                msgFee_,
+                lzSendParam_
+            ) = __prepareLzCall(
+                aTapOFT,
+                PrepareLzCall({
+                    dstEid: bEid,
+                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                    amountToSendLD: 0,
+                    minAmountToCreditLD: 0,
+                    msgType: PT_CLAIM_REWARDS,
+                    composeMsgData: ComposeMsgData({
+                        index: 0,
+                        gas: 1_000_000,
+                        value: uint128(
+                            testData_.remoteMsgFee1.nativeFee +
+                                testData_.remoteMsgFee2.nativeFee
+                        ), // TODO Should we care about verifying cast boundaries?
+                        data: claimTwTapRewardsMsg_,
+                        prevData: bytes("")
+                    }),
+                    lzReceiveGas: 500_000,
+                    lzReceiveValue: 0
+                })
+            );
+        }
+
+        (
+            MessagingReceipt memory msgReceipt_,
+            OFTReceipt memory oftReceipt_
+        ) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(
+                lzSendParam_,
+                composeMsg_
+            );
+
+        {
+            // A->B
+            // Verify first sent packets
+
+            verifyPackets(uint32(bEid), address(bTapOFT));
+
+            // Initiate approval
+
+            twTap.approve(address(bTapOFT), testData_.tokenId);
+
+            __callLzCompose(
+                LzOFTComposedData(
+                    PT_CLAIM_REWARDS,
+                    msgReceipt_.guid,
+                    composeMsg_,
+                    bEid,
+                    address(bTapOFT), // Compose creator (at lzReceive)
+                    address(bTapOFT), // Compose receiver (at lzCompose)
+                    address(this),
+                    oftMsgOptions_
+                )
+            );
+        }
+
+        // B->A
+        // Verify second sent packets
+        {
+            assertEq(testData_.erc20Mock1Dst.balanceOf(address(this)), 0);
+            assertEq(testData_.erc20Mock2Dst.balanceOf(address(this)), 0);
+
+            verifyPackets(uint32(aEid), address(testData_.erc20Mock1Dst));
+            verifyPackets(uint32(aEid), address(testData_.erc20Mock2Dst));
+
+            // Check sent balance
+            assertEq(
+                testData_.erc20Mock1Dst.balanceOf(address(this)),
+                testData_.expectReceive1,
+                "testData_.expectReceive1 received should be equal to claimable amount"
+            );
+            assertEq(
+                testData_.erc20Mock2Dst.balanceOf(address(this)),
+                testData_.expectReceive2,
+                "testData_.expectReceive2 received should be equal to claimable amount"
+            );
+            // Check credited dust. Accept a delta of 1
+            assertApproxEqAbs(
+                testData_.erc20Mock1.balanceOf(address(this)),
+                testData_.tokenAmount1 - testData_.expectReceive1,
+                1,
+                "Dust1 should be credited to dust address"
+            );
+            assertApproxEqAbs(
+                testData_.erc20Mock2.balanceOf(address(this)),
+                testData_.tokenAmount2 - testData_.expectReceive2,
+                1,
+                "Dust2 should be credited to dust address"
+            );
+        }
     }
 
     /**
@@ -829,5 +1125,32 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
             r: r_,
             s: s_
         });
+    }
+
+    function _createNewToftToken(
+        string memory _tokenLabel,
+        address _endpoint
+    ) internal returns (TapOFTV2Mock newToken_) {
+        newToken_ = TapOFTV2Mock(
+            payable(
+                _deployOApp(
+                    type(TapOFTV2Mock).creationCode,
+                    abi.encode(
+                        _endpoint,
+                        _contributors,
+                        _earlySupporters,
+                        _supporters,
+                        _lbp,
+                        _dao,
+                        _airdrop,
+                        _governanceEid,
+                        address(this),
+                        address(new TapOFTSender(_endpoint, address(this))),
+                        address(new TapOFTReceiver(_endpoint, address(this)))
+                    )
+                )
+            )
+        );
+        vm.label(address(newToken_), _tokenLabel);
     }
 }

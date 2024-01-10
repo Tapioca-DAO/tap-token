@@ -7,7 +7,7 @@ import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTM
 import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 
 // Tapioca
-import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, ERC20PermitApprovalMsg, LZSendParam} from "./ITapOFTv2.sol";
+import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, ERC20PermitApprovalMsg, LZSendParam, ClaimTwTapRewardsMsg} from "./ITapOFTv2.sol";
 
 import "forge-std/console.sol";
 
@@ -269,6 +269,34 @@ library TapOFTMsgCoder {
         bytes memory _msg
     ) internal pure returns (LZSendParam memory lzSendParam_) {
         return abi.decode(_msg, (LZSendParam));
+    }
+
+    /**
+     * @notice Encodes the message for the `claimTwpTapRewards` operation.
+     * @param _claimTwTapRewardsMsg Struct of the call.
+     *        - tokenId::uint256: The tokenId of the TwTap position to claim rewards from.
+     *        - lzSendParams::LZSendParam[]: The LZ send params to pass on the remote chain. (B->A)
+     */
+    function buildClaimTwTapRewards(
+        ClaimTwTapRewardsMsg memory _claimTwTapRewardsMsg
+    ) internal pure returns (bytes memory) {
+        return abi.encode(_claimTwTapRewardsMsg);
+    }
+
+    /**
+     * @notice Decode the message for the `claimTwpTapRewards` operation.
+     * @param _msg The LZ send params to pass on the remote chain. (B->A)
+     *        - tokenId::uint256: The tokenId of the TwTap position to claim rewards from.
+     *        - lzSendParams::LZSendParam[]: The LZ send params to pass on the remote chain. (B->A)
+     */
+    function decodeClaimTwTapRewardsMsg(
+        bytes memory _msg
+    )
+        internal
+        pure
+        returns (ClaimTwTapRewardsMsg memory claimTwTapRewardsMsg_)
+    {
+        return abi.decode(_msg, (ClaimTwTapRewardsMsg));
     }
 
     /**

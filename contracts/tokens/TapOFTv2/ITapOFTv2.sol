@@ -92,6 +92,16 @@ struct UnlockTwTapPositionMsg {
 }
 
 /**
+ * @dev Used in TapOFTv2Helper.
+ * @param tokenId The tokenId of the TwTap position to claim rewards from.
+ * @param sendParam The parameter for the send operation.
+ */
+struct ClaimTwTapRewardsMsg {
+    uint256 tokenId;
+    LZSendParam[] sendParam;
+}
+
+/**
  * @notice Encodes the message for the ercPermitApproval() operation.
  */
 struct ERC20PermitApprovalMsg {
