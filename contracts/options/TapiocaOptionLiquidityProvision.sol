@@ -82,11 +82,7 @@ contract TapiocaOptionLiquidityProvision is
     error NotAuthorized();
     error NotInRescueMode();
 
-    constructor(
-        address _yieldBox,
-        uint256 _epochDuration,
-        address _owner
-    )
+    constructor(address _yieldBox, uint256 _epochDuration, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
         ERC721Permit("TapiocaOptionLiquidityProvision")
     {
@@ -98,19 +94,9 @@ contract TapiocaOptionLiquidityProvision is
     // ==========
     //   EVENTS
     // ==========
-    event Mint(
-        address indexed to,
-        uint128 indexed sglAssetID,
-        LockPosition lockPosition
-    );
-    event Burn(
-        address indexed to,
-        uint128 indexed sglAssetID,
-        LockPosition lockPosition
-    );
-    event UpdateTotalSingularityPoolWeights(
-        uint256 totalSingularityPoolWeights
-    );
+    event Mint(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition);
+    event Burn(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition);
+    event UpdateTotalSingularityPoolWeights(uint256 totalSingularityPoolWeights);
     event SetSGLPoolWeight(address indexed sgl, uint256 poolWeight);
     event ActivateSGLPoolRescue(address sgl);
     event RegisterSingularity(address sgl, uint256 assetID);
@@ -130,9 +116,7 @@ contract TapiocaOptionLiquidityProvision is
     // =========
     /// @notice Returns the lock position of a given tOLP NFT and if it's active
     /// @param _tokenId tOLP NFT ID
-    function getLock(
-        uint256 _tokenId
-    ) external view returns (LockPosition memory) {
+    function getLock(uint256 _tokenId) external view returns (LockPosition memory) {
         return lockPositions[_tokenId];
     }
 
@@ -144,20 +128,14 @@ contract TapiocaOptionLiquidityProvision is
 
     /// @notice Returns the active singularity pool data, excluding the ones in rescue
     /// @return pools Array of SingularityPool
-    function getSingularityPools()
-        external
-        view
-        returns (SingularityPool[] memory)
-    {
+    function getSingularityPools() external view returns (SingularityPool[] memory) {
         uint256[] memory _singularities = singularities;
         uint256 len = _singularities.length;
 
         SingularityPool[] memory pools = new SingularityPool[](len);
         unchecked {
             for (uint256 i; i < len; ++i) {
-                SingularityPool memory sgl = activeSingularities[
-                    sglAssetIDToAddress[_singularities[i]]
-                ];
+                SingularityPool memory sgl = activeSingularities[sglAssetIDToAddress[_singularities[i]]];
                 // If the pool is in rescue, don't return it
                 if (sgl.rescue) {
                     continue;
@@ -171,21 +149,15 @@ contract TapiocaOptionLiquidityProvision is
     /// @notice Returns the total amount of locked YieldBox shares for a given singularity market
     /// @return shares Amount of YieldBox shares locked
     /// @return amount Amount of YieldBox shares locked converted in amount
-    function getTotalPoolDeposited(
-        uint256 _sglAssetId
-    ) external view returns (uint256 shares, uint256 amount) {
-        shares = activeSingularities[sglAssetIDToAddress[_sglAssetId]]
-            .totalDeposited;
+    function getTotalPoolDeposited(uint256 _sglAssetId) external view returns (uint256 shares, uint256 amount) {
+        shares = activeSingularities[sglAssetIDToAddress[_sglAssetId]].totalDeposited;
         amount = yieldBox.toAmount(_sglAssetId, shares, false);
     }
 
     /// @notice Return an approval or ownership status of a given address for a given tOLP NFT
     /// @param _spender Address to check
     /// @param _tokenId tOLP NFT ID
-    function isApprovedOrOwner(
-        address _spender,
-        uint256 _tokenId
-    ) external view returns (bool) {
+    function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool) {
         return _isApprovedOrOwner(_spender, _tokenId);
     }
 
@@ -199,12 +171,11 @@ contract TapiocaOptionLiquidityProvision is
     /// @param _lockDuration Duration of the lock
     /// @param _ybShares Amount of YieldBox shares to lock
     /// @return tokenId The ID of the minted NFT
-    function lock(
-        address _to,
-        IERC20 _singularity,
-        uint128 _lockDuration,
-        uint128 _ybShares
-    ) external nonReentrant returns (uint256 tokenId) {
+    function lock(address _to, IERC20 _singularity, uint128 _lockDuration, uint128 _ybShares)
+        external
+        nonReentrant
+        returns (uint256 tokenId)
+    {
         if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
         if (_ybShares == 0) revert SharesNotValid();
 
@@ -236,11 +207,7 @@ contract TapiocaOptionLiquidityProvision is
     /// @param _tokenId ID of the position to unlock
     /// @param _singularity Singularity market address
     /// @param _to Address to send the tokens to
-    function unlock(
-        uint256 _tokenId,
-        IERC20 _singularity,
-        address _to
-    ) external {
+    function unlock(uint256 _tokenId, IERC20 _singularity, address _to) external {
         if (!_exists(_tokenId)) revert PositionExpired();
 
         LockPosition memory lockPosition = lockPositions[_tokenId];
@@ -249,13 +216,11 @@ contract TapiocaOptionLiquidityProvision is
         // If the singularity is in rescue, the lock can be unlocked at any time
         if (!sgl.rescue) {
             // If not, the lock must be expired
-            if (
-                block.timestamp <
-                lockPosition.lockTime + lockPosition.lockDuration
-            ) revert LockNotExpired();
+            if (block.timestamp < lockPosition.lockTime + lockPosition.lockDuration) revert LockNotExpired();
         }
-        if (sgl.sglAssetID != lockPosition.sglAssetID)
+        if (sgl.sglAssetID != lockPosition.sglAssetID) {
             revert InvalidSingularity();
+        }
 
         if (!_isApprovedOrOwner(msg.sender, _tokenId)) revert NotAuthorized();
 
@@ -263,14 +228,8 @@ contract TapiocaOptionLiquidityProvision is
         delete lockPositions[_tokenId];
 
         // Transfer the YieldBox position back to the owner
-        yieldBox.transfer(
-            address(this),
-            _to,
-            lockPosition.sglAssetID,
-            lockPosition.ybShares
-        );
-        activeSingularities[_singularity].totalDeposited -= lockPosition
-            .ybShares;
+        yieldBox.transfer(address(this), _to, lockPosition.sglAssetID, lockPosition.ybShares);
+        activeSingularities[_singularity].totalDeposited -= lockPosition.ybShares;
 
         emit Burn(_to, lockPosition.sglAssetID, lockPosition);
     }
@@ -282,12 +241,10 @@ contract TapiocaOptionLiquidityProvision is
     /// @notice Sets the pool weight of a given singularity market
     /// @param singularity Singularity market address
     /// @param weight Weight of the pool
-    function setSGLPoolWEight(
-        IERC20 singularity,
-        uint256 weight
-    ) external onlyOwner updateTotalSGLPoolWeights {
-        if (activeSingularities[singularity].sglAssetID == 0)
+    function setSGLPoolWEight(IERC20 singularity, uint256 weight) external onlyOwner updateTotalSGLPoolWeights {
+        if (activeSingularities[singularity].sglAssetID == 0) {
             revert NotRegistered();
+        }
         activeSingularities[singularity].poolWeight = weight;
 
         emit SetSGLPoolWeight(address(singularity), weight);
@@ -295,9 +252,7 @@ contract TapiocaOptionLiquidityProvision is
 
     /// @notice Sets the rescue status of a given singularity market
     /// @param singularity Singularity market address
-    function activateSGLPoolRescue(
-        IERC20 singularity
-    ) external onlyOwner updateTotalSGLPoolWeights {
+    function activateSGLPoolRescue(IERC20 singularity) external onlyOwner updateTotalSGLPoolWeights {
         SingularityPool memory sgl = activeSingularities[singularity];
         if (sgl.sglAssetID == 0) revert NotRegistered();
         if (sgl.rescue) revert AlreadyActive();
@@ -311,16 +266,18 @@ contract TapiocaOptionLiquidityProvision is
     /// @param singularity Singularity market address
     /// @param assetID YieldBox asset ID of the singularity market
     /// @param weight Weight of the pool
-    function registerSingularity(
-        IERC20 singularity,
-        uint256 assetID,
-        uint256 weight
-    ) external onlyOwner updateTotalSGLPoolWeights {
+    function registerSingularity(IERC20 singularity, uint256 assetID, uint256 weight)
+        external
+        onlyOwner
+        updateTotalSGLPoolWeights
+    {
         if (assetID == 0) revert AssetIdNotValid();
-        if (sglAssetIDToAddress[assetID] != IERC20(address(0)))
+        if (sglAssetIDToAddress[assetID] != IERC20(address(0))) {
             revert DuplicateAssetId();
-        if (activeSingularities[singularity].sglAssetID != 0)
+        }
+        if (activeSingularities[singularity].sglAssetID != 0) {
             revert AlreadyRegistered();
+        }
 
         activeSingularities[singularity].sglAssetID = assetID;
         activeSingularities[singularity].poolWeight = weight > 0 ? weight : 1;
@@ -332,9 +289,7 @@ contract TapiocaOptionLiquidityProvision is
 
     /// @notice Un-registers a singularity market
     /// @param singularity Singularity market address
-    function unregisterSingularity(
-        IERC20 singularity
-    ) external onlyOwner updateTotalSGLPoolWeights {
+    function unregisterSingularity(IERC20 singularity) external onlyOwner updateTotalSGLPoolWeights {
         uint256 sglAssetID = activeSingularities[singularity].sglAssetID;
         if (sglAssetID == 0) revert NotRegistered();
         if (!activeSingularities[singularity].rescue) revert NotInRescueMode();
@@ -375,9 +330,7 @@ contract TapiocaOptionLiquidityProvision is
         uint256 total;
         uint256 len = singularities.length;
         for (uint256 i; i < len; i++) {
-            SingularityPool memory sgl = activeSingularities[
-                sglAssetIDToAddress[singularities[i]]
-            ];
+            SingularityPool memory sgl = activeSingularities[sglAssetIDToAddress[singularities[i]]];
             if (!sgl.rescue) {
                 total += sgl.poolWeight;
             }
