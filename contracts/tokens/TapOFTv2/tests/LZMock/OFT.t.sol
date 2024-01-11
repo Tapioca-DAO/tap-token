@@ -9,7 +9,10 @@ import {OFTAdapterMock} from "../mocks/OFTAdapterMock.sol";
 import {ERC20Mock} from "../mocks/ERC20Mock.sol";
 import {OFTComposerMock} from "../mocks/OFTComposerMock.sol";
 import {OFTInspectorMock, IOAppMsgInspector} from "../mocks/OFTInspectorMock.sol";
-import {IOAppOptionsType3, EnforcedOptionParam} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OAppOptionsType3.sol";
+import {
+    IOAppOptionsType3,
+    EnforcedOptionParam
+} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OAppOptionsType3.sol";
 
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
@@ -47,38 +50,18 @@ contract OFTTest is TestHelper {
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
         aOFT = OFTMock(
-            _deployOApp(
-                type(OFTMock).creationCode,
-                abi.encode(
-                    "aOFT",
-                    "aOFT",
-                    address(endpoints[aEid]),
-                    address(this)
-                )
-            )
+            _deployOApp(type(OFTMock).creationCode, abi.encode("aOFT", "aOFT", address(endpoints[aEid]), address(this)))
         );
 
         bOFT = OFTMock(
-            _deployOApp(
-                type(OFTMock).creationCode,
-                abi.encode(
-                    "bOFT",
-                    "bOFT",
-                    address(endpoints[bEid]),
-                    address(this)
-                )
-            )
+            _deployOApp(type(OFTMock).creationCode, abi.encode("bOFT", "bOFT", address(endpoints[bEid]), address(this)))
         );
 
         cERC20Mock = new ERC20Mock("cToken", "cToken");
         cOFTAdapter = OFTAdapterMock(
             _deployOApp(
                 type(OFTAdapterMock).creationCode,
-                abi.encode(
-                    address(cERC20Mock),
-                    address(endpoints[cEid]),
-                    address(this)
-                )
+                abi.encode(address(cERC20Mock), address(endpoints[cEid]), address(this))
             )
         );
 
@@ -114,35 +97,15 @@ contract OFTTest is TestHelper {
 
     function test_send_oft() public {
         uint256 tokensToSend = 1 ether;
-        SendParam memory sendParam = SendParam(
-            bEid,
-            addressToBytes32(userB),
-            tokensToSend,
-            tokensToSend
-        );
-        bytes memory options = OptionsBuilder
-            .newOptions()
-            .addExecutorLzReceiveOption(200000, 0);
-        MessagingFee memory fee = aOFT.quoteSend(
-            sendParam,
-            options,
-            false,
-            "",
-            ""
-        );
+        SendParam memory sendParam = SendParam(bEid, addressToBytes32(userB), tokensToSend, tokensToSend);
+        bytes memory options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
+        MessagingFee memory fee = aOFT.quoteSend(sendParam, options, false, "", "");
 
         assertEq(aOFT.balanceOf(userA), initialBalance);
         assertEq(bOFT.balanceOf(userB), initialBalance);
 
         vm.prank(userA);
-        aOFT.send{value: fee.nativeFee}(
-            sendParam,
-            options,
-            fee,
-            payable(address(this)),
-            "",
-            ""
-        );
+        aOFT.send{value: fee.nativeFee}(sendParam, options, fee, payable(address(this)), "", "");
         verifyPackets(bEid, addressToBytes32(address(bOFT)));
 
         assertEq(aOFT.balanceOf(userA), initialBalance - tokensToSend);
@@ -154,40 +117,18 @@ contract OFTTest is TestHelper {
 
         OFTComposerMock composer = new OFTComposerMock();
 
-        SendParam memory sendParam = SendParam(
-            bEid,
-            addressToBytes32(address(composer)),
-            tokensToSend,
-            tokensToSend
-        );
-        bytes memory options = OptionsBuilder
-            .newOptions()
-            .addExecutorLzReceiveOption(200000, 0)
-            .addExecutorLzComposeOption(0, 500000, 0);
+        SendParam memory sendParam = SendParam(bEid, addressToBytes32(address(composer)), tokensToSend, tokensToSend);
+        bytes memory options =
+            OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0).addExecutorLzComposeOption(0, 500000, 0);
         bytes memory composeMsg = hex"1234";
-        MessagingFee memory fee = aOFT.quoteSend(
-            sendParam,
-            options,
-            false,
-            composeMsg,
-            ""
-        );
+        MessagingFee memory fee = aOFT.quoteSend(sendParam, options, false, composeMsg, "");
 
         assertEq(aOFT.balanceOf(userA), initialBalance);
         assertEq(bOFT.balanceOf(address(composer)), 0);
 
         vm.prank(userA);
-        (
-            MessagingReceipt memory msgReceipt,
-            OFTReceipt memory oftReceipt
-        ) = aOFT.send{value: fee.nativeFee}(
-                sendParam,
-                options,
-                fee,
-                payable(address(this)),
-                composeMsg,
-                ""
-            );
+        (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) =
+            aOFT.send{value: fee.nativeFee}(sendParam, options, fee, payable(address(this)), composeMsg, "");
         verifyPackets(bEid, addressToBytes32(address(bOFT)));
 
         // lzCompose params
@@ -197,10 +138,7 @@ contract OFTTest is TestHelper {
         bytes32 guid_ = msgReceipt.guid;
         address to_ = address(composer);
         bytes memory composerMsg_ = OFTComposeMsgCodec.encode(
-            msgReceipt.nonce,
-            aEid,
-            oftReceipt.amountCreditLD,
-            abi.encodePacked(addressToBytes32(userA), composeMsg)
+            msgReceipt.nonce, aEid, oftReceipt.amountCreditLD, abi.encodePacked(addressToBytes32(userA), composeMsg)
         );
         this.lzCompose(dstEid_, from_, options_, guid_, to_, composerMsg_);
 
@@ -221,18 +159,10 @@ contract OFTTest is TestHelper {
         bytes memory composeMsg = hex"1234";
 
         bytes memory message = OFTComposeMsgCodec.encode(
-            nonce,
-            srcEid,
-            amountCreditLD,
-            abi.encodePacked(addressToBytes32(msg.sender), composeMsg)
+            nonce, srcEid, amountCreditLD, abi.encodePacked(addressToBytes32(msg.sender), composeMsg)
         );
-        (
-            uint64 nonce_,
-            uint32 srcEid_,
-            uint256 amountCreditLD_,
-            bytes32 composeFrom_,
-            bytes memory composeMsg_
-        ) = this.decodeOFTComposeMsgCodec(message);
+        (uint64 nonce_, uint32 srcEid_, uint256 amountCreditLD_, bytes32 composeFrom_, bytes memory composeMsg_) =
+            this.decodeOFTComposeMsgCodec(message);
 
         assertEq(nonce_, nonce);
         assertEq(srcEid_, srcEid);
@@ -241,18 +171,10 @@ contract OFTTest is TestHelper {
         assertEq(composeMsg_, composeMsg);
     }
 
-    function decodeOFTComposeMsgCodec(
-        bytes calldata message
-    )
+    function decodeOFTComposeMsgCodec(bytes calldata message)
         public
         pure
-        returns (
-            uint64 nonce,
-            uint32 srcEid,
-            uint256 amountCreditLD,
-            bytes32 composeFrom,
-            bytes memory composeMsg
-        )
+        returns (uint64 nonce, uint32 srcEid, uint256 amountCreditLD, bytes32 composeFrom, bytes memory composeMsg)
     {
         nonce = OFTComposeMsgCodec.nonce(message);
         srcEid = OFTComposeMsgCodec.srcEid(message);
@@ -270,11 +192,7 @@ contract OFTTest is TestHelper {
         assertEq(aOFT.removeDust(amountToSendLD), 1.234567 ether);
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IOFT.SlippageExceeded.selector,
-                aOFT.removeDust(amountToSendLD),
-                minAmountToCreditLD
-            )
+            abi.encodeWithSelector(IOFT.SlippageExceeded.selector, aOFT.removeDust(amountToSendLD), minAmountToCreditLD)
         );
         aOFT.debit(amountToSendLD, minAmountToCreditLD, dstEid);
     }
@@ -284,22 +202,13 @@ contract OFTTest is TestHelper {
         uint256 minAmountToCreditLD = 1.00000001 ether;
         uint32 dstEid = aEid;
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IOFT.SlippageExceeded.selector,
-                amountToSendLD,
-                minAmountToCreditLD
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IOFT.SlippageExceeded.selector, amountToSendLD, minAmountToCreditLD));
         aOFT.debit(amountToSendLD, minAmountToCreditLD, dstEid);
     }
 
     function test_toLD() public {
         uint64 amountSD = 1000;
-        assertEq(
-            amountSD * aOFT.decimalConversionRate(),
-            aOFT.toLD(uint64(amountSD))
-        );
+        assertEq(amountSD * aOFT.decimalConversionRate(), aOFT.toLD(uint64(amountSD)));
     }
 
     function test_toSD() public {
@@ -316,11 +225,7 @@ contract OFTTest is TestHelper {
         assertEq(aOFT.balanceOf(address(this)), 0);
 
         vm.prank(userA);
-        (uint256 amountDebitedLD, uint256 amountToCreditLD) = aOFT.debit(
-            amountToSendLD,
-            minAmountToCreditLD,
-            dstEid
-        );
+        (uint256 amountDebitedLD, uint256 amountToCreditLD) = aOFT.debit(amountToSendLD, minAmountToCreditLD, dstEid);
 
         assertEq(amountDebitedLD, amountToSendLD);
         assertEq(amountToCreditLD, amountToSendLD);
@@ -344,23 +249,13 @@ contract OFTTest is TestHelper {
 
         // reverts if a user tries to spend the tokens via debitThis AND the minimum exceeds the balance inside contract
         vm.prank(userB);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IOFT.SlippageExceeded.selector,
-                amountToSendLD,
-                minAmountToCreditLD + 1
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IOFT.SlippageExceeded.selector, amountToSendLD, minAmountToCreditLD + 1));
         aOFT.debit(amountToSendLD, minAmountToCreditLD + 1, dstEid);
         assertEq(aOFT.balanceOf(address(aOFT)), amountToSendLD);
 
         // Someone else can spend the tokens the user sent into the contract
         vm.prank(userB);
-        (uint256 amountDebitedLD, uint256 amountToCreditLD) = aOFT.debit(
-            0,
-            minAmountToCreditLD,
-            dstEid
-        );
+        (uint256 amountDebitedLD, uint256 amountToCreditLD) = aOFT.debit(0, minAmountToCreditLD, dstEid);
 
         assertEq(amountDebitedLD, amountToSendLD);
         assertEq(amountToCreditLD, amountToSendLD);
@@ -393,23 +288,14 @@ contract OFTTest is TestHelper {
         assertEq(cERC20Mock.balanceOf(address(cOFTAdapter)), 0);
 
         vm.prank(userC);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IOFT.SlippageExceeded.selector,
-                amountToSendLD,
-                minAmountToCreditLD + 1
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IOFT.SlippageExceeded.selector, amountToSendLD, minAmountToCreditLD + 1));
         cOFTAdapter.debitView(amountToSendLD, minAmountToCreditLD + 1, dstEid);
 
         vm.prank(userC);
         cERC20Mock.approve(address(cOFTAdapter), amountToSendLD);
         vm.prank(userC);
-        (uint256 amountDebitedLD, uint256 amountToCreditLD) = cOFTAdapter.debit(
-            amountToSendLD,
-            minAmountToCreditLD,
-            dstEid
-        );
+        (uint256 amountDebitedLD, uint256 amountToCreditLD) =
+            cOFTAdapter.debit(amountToSendLD, minAmountToCreditLD, dstEid);
 
         assertEq(amountDebitedLD, amountToSendLD);
         assertEq(amountToCreditLD, amountToSendLD);
@@ -438,23 +324,13 @@ contract OFTTest is TestHelper {
 
         // reverts if a user tries to spend the tokens via debitThis AND the minimum exceeds the balance inside contract
         vm.prank(userB);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IOFT.SlippageExceeded.selector,
-                amountToSendLD,
-                minAmountToCreditLD + 1
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IOFT.SlippageExceeded.selector, amountToSendLD, minAmountToCreditLD + 1));
         cOFTAdapter.debit(0, minAmountToCreditLD + 1, dstEid);
         assertEq(cERC20Mock.balanceOf(address(cOFTAdapter)), amountToSendLD);
 
         // Someone else can spend the tokens another user has sent into the contract
         vm.prank(userB);
-        (uint256 amountDebitedLD, uint256 amountToCreditLD) = cOFTAdapter.debit(
-            0,
-            minAmountToCreditLD,
-            dstEid
-        );
+        (uint256 amountDebitedLD, uint256 amountToCreditLD) = cOFTAdapter.debit(0, minAmountToCreditLD, dstEid);
 
         assertEq(amountDebitedLD, amountToSendLD);
         assertEq(amountToCreditLD, amountToSendLD);
@@ -476,16 +352,9 @@ contract OFTTest is TestHelper {
         cERC20Mock.transfer(address(cOFTAdapter), amountToCreditLD);
         cOFTAdapter.increaseOutboundAmount(amountToCreditLD);
 
-        uint256 amountReceived = cOFTAdapter.credit(
-            userB,
-            amountToCreditLD,
-            srcEid
-        );
+        uint256 amountReceived = cOFTAdapter.credit(userB, amountToCreditLD, srcEid);
 
-        assertEq(
-            cERC20Mock.balanceOf(userC),
-            initialBalance - amountToCreditLD
-        );
+        assertEq(cERC20Mock.balanceOf(userC), initialBalance - amountToCreditLD);
         assertEq(cERC20Mock.balanceOf(address(userB)), amountReceived);
         assertEq(cERC20Mock.balanceOf(address(cOFTAdapter)), 0);
         assertEq(cOFTAdapter.outboundAmount(), 0);
@@ -508,11 +377,7 @@ contract OFTTest is TestHelper {
 
         // Someone else can spend the tokens the user sent into the contract
         vm.prank(userB);
-        (uint256 amountDebitedLD, uint256 amountToCreditLD) = cOFTAdapter.debit(
-            0,
-            minAmountToCreditLD,
-            dstEid
-        );
+        (uint256 amountDebitedLD, uint256 amountToCreditLD) = cOFTAdapter.debit(0, minAmountToCreditLD, dstEid);
 
         assertEq(amountDebitedLD, cOFTAdapter.removeDust(amountToSendLD));
         assertEq(amountToCreditLD, amountDebitedLD);
@@ -522,17 +387,10 @@ contract OFTTest is TestHelper {
         assertEq(cERC20Mock.balanceOf(address(cOFTAdapter)), amountToSendLD);
     }
 
-    function decodeOFTMsgCodec(
-        bytes calldata message
-    )
+    function decodeOFTMsgCodec(bytes calldata message)
         public
         pure
-        returns (
-            bool isComposed,
-            bytes32 sendTo,
-            uint64 amountSD,
-            bytes memory composeMsg
-        )
+        returns (bool isComposed, bytes32 sendTo, uint64 amountSD, bytes memory composeMsg)
     {
         isComposed = OFTMsgCodec.isComposed(message);
         sendTo = OFTMsgCodec.sendTo(message);
@@ -547,39 +405,20 @@ contract OFTTest is TestHelper {
         uint256 minAmountToCreditLD = aOFT.removeDust(amountToSendLD);
 
         // params for buildMsgAndOptions
-        SendParam memory sendParam = SendParam(
-            dstEid,
-            to,
-            amountToSendLD,
-            minAmountToCreditLD
-        );
-        bytes memory extraOptions = OptionsBuilder
-            .newOptions()
-            .addExecutorLzReceiveOption(200000, 0);
+        SendParam memory sendParam = SendParam(dstEid, to, amountToSendLD, minAmountToCreditLD);
+        bytes memory extraOptions = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
         bytes memory composeMsg = hex"1234";
         uint256 amountToCreditLD = minAmountToCreditLD;
 
-        (bytes memory message, ) = aOFT.buildMsgAndOptions(
-            sendParam,
-            extraOptions,
-            composeMsg,
-            amountToCreditLD
-        );
+        (bytes memory message,) = aOFT.buildMsgAndOptions(sendParam, extraOptions, composeMsg, amountToCreditLD);
 
-        (
-            bool isComposed_,
-            bytes32 sendTo_,
-            uint64 amountSD_,
-            bytes memory composeMsg_
-        ) = this.decodeOFTMsgCodec(message);
+        (bool isComposed_, bytes32 sendTo_, uint64 amountSD_, bytes memory composeMsg_) =
+            this.decodeOFTMsgCodec(message);
 
         assertEq(isComposed_, true);
         assertEq(sendTo_, to);
         assertEq(amountSD_, aOFT.toSD(amountToCreditLD));
-        bytes memory expectedComposeMsg = abi.encodePacked(
-            addressToBytes32(address(this)),
-            composeMsg
-        );
+        bytes memory expectedComposeMsg = abi.encodePacked(addressToBytes32(address(this)), composeMsg);
         assertEq(composeMsg_, expectedComposeMsg);
     }
 
@@ -590,31 +429,15 @@ contract OFTTest is TestHelper {
         uint256 minAmountToCreditLD = aOFT.removeDust(amountToSendLD);
 
         // params for buildMsgAndOptions
-        SendParam memory sendParam = SendParam(
-            dstEid,
-            to,
-            amountToSendLD,
-            minAmountToCreditLD
-        );
-        bytes memory extraOptions = OptionsBuilder
-            .newOptions()
-            .addExecutorLzReceiveOption(200000, 0);
+        SendParam memory sendParam = SendParam(dstEid, to, amountToSendLD, minAmountToCreditLD);
+        bytes memory extraOptions = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
         bytes memory composeMsg = "";
         uint256 amountToCreditLD = minAmountToCreditLD;
 
-        (bytes memory message, ) = aOFT.buildMsgAndOptions(
-            sendParam,
-            extraOptions,
-            composeMsg,
-            amountToCreditLD
-        );
+        (bytes memory message,) = aOFT.buildMsgAndOptions(sendParam, extraOptions, composeMsg, amountToCreditLD);
 
-        (
-            bool isComposed_,
-            bytes32 sendTo_,
-            uint64 amountSD_,
-            bytes memory composeMsg_
-        ) = this.decodeOFTMsgCodec(message);
+        (bool isComposed_, bytes32 sendTo_, uint64 amountSD_, bytes memory composeMsg_) =
+            this.decodeOFTMsgCodec(message);
 
         assertEq(isComposed_, false);
         assertEq(sendTo_, to);
@@ -625,15 +448,10 @@ contract OFTTest is TestHelper {
     function test_set_enforced_options() public {
         uint32 eid = 1;
 
-        bytes memory optionsTypeOne = OptionsBuilder
-            .newOptions()
-            .addExecutorLzReceiveOption(200000, 0);
-        bytes memory optionsTypeTwo = OptionsBuilder
-            .newOptions()
-            .addExecutorLzReceiveOption(250000, 0);
+        bytes memory optionsTypeOne = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
+        bytes memory optionsTypeTwo = OptionsBuilder.newOptions().addExecutorLzReceiveOption(250000, 0);
 
-        EnforcedOptionParam[]
-            memory enforcedOptions = new EnforcedOptionParam[](2);
+        EnforcedOptionParam[] memory enforcedOptions = new EnforcedOptionParam[](2);
         enforcedOptions[0] = EnforcedOptionParam(eid, 1, optionsTypeOne);
         enforcedOptions[1] = EnforcedOptionParam(eid, 2, optionsTypeTwo);
 
@@ -645,34 +463,18 @@ contract OFTTest is TestHelper {
 
     function test_assert_options_type3_revert() public {
         uint32 eid = 1;
-        EnforcedOptionParam[]
-            memory enforcedOptions = new EnforcedOptionParam[](1);
+        EnforcedOptionParam[] memory enforcedOptions = new EnforcedOptionParam[](1);
 
         enforcedOptions[0] = EnforcedOptionParam(eid, 1, hex"0004"); // not type 3
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IOAppOptionsType3.InvalidOptions.selector,
-                hex"0004"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IOAppOptionsType3.InvalidOptions.selector, hex"0004"));
         aOFT.setEnforcedOptions(enforcedOptions);
 
         enforcedOptions[0] = EnforcedOptionParam(eid, 1, hex"0002"); // not type 3
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IOAppOptionsType3.InvalidOptions.selector,
-                hex"0002"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IOAppOptionsType3.InvalidOptions.selector, hex"0002"));
         aOFT.setEnforcedOptions(enforcedOptions);
 
         enforcedOptions[0] = EnforcedOptionParam(eid, 1, hex"0001"); // not type 3
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IOAppOptionsType3.InvalidOptions.selector,
-                hex"0001"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IOAppOptionsType3.InvalidOptions.selector, hex"0001"));
         aOFT.setEnforcedOptions(enforcedOptions);
 
         enforcedOptions[0] = EnforcedOptionParam(eid, 1, hex"0003"); // not type 3
@@ -683,32 +485,18 @@ contract OFTTest is TestHelper {
         uint32 eid = 1;
         uint16 msgType = 1;
 
-        bytes memory enforcedOptions = OptionsBuilder
-            .newOptions()
-            .addExecutorLzReceiveOption(200000, 0);
-        EnforcedOptionParam[]
-            memory enforcedOptionsArray = new EnforcedOptionParam[](1);
-        enforcedOptionsArray[0] = EnforcedOptionParam(
-            eid,
-            msgType,
-            enforcedOptions
-        );
+        bytes memory enforcedOptions = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
+        EnforcedOptionParam[] memory enforcedOptionsArray = new EnforcedOptionParam[](1);
+        enforcedOptionsArray[0] = EnforcedOptionParam(eid, msgType, enforcedOptions);
         aOFT.setEnforcedOptions(enforcedOptionsArray);
 
-        bytes memory extraOptions = OptionsBuilder
-            .newOptions()
+        bytes memory extraOptions =
+            OptionsBuilder.newOptions().addExecutorNativeDropOption(1.2345 ether, addressToBytes32(userA));
+
+        bytes memory expectedOptions = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0)
             .addExecutorNativeDropOption(1.2345 ether, addressToBytes32(userA));
 
-        bytes memory expectedOptions = OptionsBuilder
-            .newOptions()
-            .addExecutorLzReceiveOption(200000, 0)
-            .addExecutorNativeDropOption(1.2345 ether, addressToBytes32(userA));
-
-        bytes memory combinedOptions = aOFT.combineOptions(
-            eid,
-            msgType,
-            extraOptions
-        );
+        bytes memory combinedOptions = aOFT.combineOptions(eid, msgType, extraOptions);
         assertEq(combinedOptions, expectedOptions);
     }
 
@@ -716,21 +504,12 @@ contract OFTTest is TestHelper {
         uint32 eid = 1;
         uint16 msgType = 1;
 
-        bytes memory enforcedOptions = OptionsBuilder
-            .newOptions()
-            .addExecutorLzReceiveOption(200000, 0);
-        EnforcedOptionParam[]
-            memory enforcedOptionsArray = new EnforcedOptionParam[](1);
-        enforcedOptionsArray[0] = EnforcedOptionParam(
-            eid,
-            msgType,
-            enforcedOptions
-        );
+        bytes memory enforcedOptions = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
+        EnforcedOptionParam[] memory enforcedOptionsArray = new EnforcedOptionParam[](1);
+        enforcedOptionsArray[0] = EnforcedOptionParam(eid, msgType, enforcedOptions);
         aOFT.setEnforcedOptions(enforcedOptionsArray);
 
-        bytes memory expectedOptions = OptionsBuilder
-            .newOptions()
-            .addExecutorLzReceiveOption(200000, 0);
+        bytes memory expectedOptions = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
 
         bytes memory combinedOptions = aOFT.combineOptions(eid, msgType, "");
         assertEq(combinedOptions, expectedOptions);
@@ -740,19 +519,13 @@ contract OFTTest is TestHelper {
         uint32 eid = 1;
         uint16 msgType = 1;
 
-        bytes memory extraOptions = OptionsBuilder
-            .newOptions()
-            .addExecutorNativeDropOption(1.2345 ether, addressToBytes32(userA));
+        bytes memory extraOptions =
+            OptionsBuilder.newOptions().addExecutorNativeDropOption(1.2345 ether, addressToBytes32(userA));
 
-        bytes memory expectedOptions = OptionsBuilder
-            .newOptions()
-            .addExecutorNativeDropOption(1.2345 ether, addressToBytes32(userA));
+        bytes memory expectedOptions =
+            OptionsBuilder.newOptions().addExecutorNativeDropOption(1.2345 ether, addressToBytes32(userA));
 
-        bytes memory combinedOptions = aOFT.combineOptions(
-            eid,
-            msgType,
-            extraOptions
-        );
+        bytes memory combinedOptions = aOFT.combineOptions(eid, msgType, extraOptions);
         assertEq(combinedOptions, expectedOptions);
     }
 
@@ -763,25 +536,13 @@ contract OFTTest is TestHelper {
         uint256 minAmountToCreditLD = aOFT.removeDust(amountToSendLD);
 
         // params for buildMsgAndOptions
-        SendParam memory sendParam = SendParam(
-            dstEid,
-            to,
-            amountToSendLD,
-            minAmountToCreditLD
-        );
-        bytes memory extraOptions = OptionsBuilder
-            .newOptions()
-            .addExecutorLzReceiveOption(200000, 0);
+        SendParam memory sendParam = SendParam(dstEid, to, amountToSendLD, minAmountToCreditLD);
+        bytes memory extraOptions = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
         bytes memory composeMsg = "";
         uint256 amountToCreditLD = minAmountToCreditLD;
 
         // doesnt revert
-        (bytes memory message, ) = aOFT.buildMsgAndOptions(
-            sendParam,
-            extraOptions,
-            composeMsg,
-            amountToCreditLD
-        );
+        (bytes memory message,) = aOFT.buildMsgAndOptions(sendParam, extraOptions, composeMsg, amountToCreditLD);
 
         // deploy a universal inspector, it automatically reverts
         oAppInspector = new OFTInspectorMock();
@@ -789,18 +550,7 @@ contract OFTTest is TestHelper {
         aOFT.setMsgInspector(address(oAppInspector));
 
         // does revert because inspector is set
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IOAppMsgInspector.InspectionFailed.selector,
-                message,
-                extraOptions
-            )
-        );
-        (message, ) = aOFT.buildMsgAndOptions(
-            sendParam,
-            extraOptions,
-            composeMsg,
-            amountToCreditLD
-        );
+        vm.expectRevert(abi.encodeWithSelector(IOAppMsgInspector.InspectionFailed.selector, message, extraOptions));
+        (message,) = aOFT.buildMsgAndOptions(sendParam, extraOptions, composeMsg, amountToCreditLD);
     }
 }

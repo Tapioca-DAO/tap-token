@@ -27,11 +27,9 @@ contract TapOFTExtExec {
      * @notice Executes an ERC20 permit approval.
      * @param _approvals The ERC20 permit approval messages.
      */
-    function erc20PermitApproval(
-        ERC20PermitApprovalMsg[] calldata _approvals
-    ) public {
+    function erc20PermitApproval(ERC20PermitApprovalMsg[] calldata _approvals) public {
         uint256 approvalsLength = _approvals.length;
-        for (uint256 i = 0; i < approvalsLength; ) {
+        for (uint256 i = 0; i < approvalsLength;) {
             IERC20Permit(_approvals[i].token).permit(
                 _approvals[i].owner,
                 _approvals[i].spender,

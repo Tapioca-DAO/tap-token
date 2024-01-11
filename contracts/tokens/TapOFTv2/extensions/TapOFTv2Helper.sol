@@ -9,7 +9,14 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 
 // Tapioca
 
-import {ITapOFTv2, LockTwTapPositionMsg, ERC20PermitApprovalMsg, UnlockTwTapPositionMsg, LZSendParam, ClaimTwTapRewardsMsg} from "../ITapOFTv2.sol";
+import {
+    ITapOFTv2,
+    LockTwTapPositionMsg,
+    ERC20PermitApprovalMsg,
+    UnlockTwTapPositionMsg,
+    LZSendParam,
+    ClaimTwTapRewardsMsg
+} from "../ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TapOFTV2} from "../TapOFTV2.sol";
 
@@ -52,10 +59,13 @@ contract TapOFTv2Helper {
 
     /**
      * @notice Encodes the message for the lockTwTapPosition() operation.
-     **/
-    function buildLockTwTapPositionMsg(
-        LockTwTapPositionMsg calldata _lockTwTapPositionMsg
-    ) public pure returns (bytes memory) {
+     *
+     */
+    function buildLockTwTapPositionMsg(LockTwTapPositionMsg calldata _lockTwTapPositionMsg)
+        public
+        pure
+        returns (bytes memory)
+    {
         return TapOFTMsgCoder.buildLockTwTapPositionMsg(_lockTwTapPositionMsg);
     }
 
@@ -63,17 +73,14 @@ contract TapOFTv2Helper {
      * @notice Encode the message for the ercPermitApproval() operation.
      * @param _erc20PermitApprovalMsg The ERC20 permit approval messages.
      */
-    function buildPermitApprovalMsg(
-        ERC20PermitApprovalMsg[] calldata _erc20PermitApprovalMsg
-    ) public pure returns (bytes memory msg_) {
+    function buildPermitApprovalMsg(ERC20PermitApprovalMsg[] calldata _erc20PermitApprovalMsg)
+        public
+        pure
+        returns (bytes memory msg_)
+    {
         uint256 approvalsLength = _erc20PermitApprovalMsg.length;
-        for (uint256 i; i < approvalsLength; ) {
-            msg_ = abi.encodePacked(
-                msg_,
-                TapOFTMsgCoder.buildERC20PermitApprovalMsg(
-                    _erc20PermitApprovalMsg[i]
-                )
-            );
+        for (uint256 i; i < approvalsLength;) {
+            msg_ = abi.encodePacked(msg_, TapOFTMsgCoder.buildERC20PermitApprovalMsg(_erc20PermitApprovalMsg[i]));
             unchecked {
                 ++i;
             }
@@ -82,21 +89,21 @@ contract TapOFTv2Helper {
 
     /**
      * @notice Encodes the message for the unlockTwTapPosition() operation.
-     **/
-    function buildUnlockTwpTapPositionMsg(
-        UnlockTwTapPositionMsg calldata _unlockTwTapPositionMsg
-    ) public pure returns (bytes memory) {
-        return
-            TapOFTMsgCoder.buildUnlockTwTapPositionMsg(_unlockTwTapPositionMsg);
+     *
+     */
+    function buildUnlockTwpTapPositionMsg(UnlockTwTapPositionMsg calldata _unlockTwTapPositionMsg)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return TapOFTMsgCoder.buildUnlockTwTapPositionMsg(_unlockTwTapPositionMsg);
     }
 
     /**
      * @notice Encodes the message for the `remoteTransfer` operation.
      * @param _lzSendParam The LZ send param to pass on the remote chain. (B->A)
      */
-    function buildRemoteTransferMsg(
-        LZSendParam memory _lzSendParam
-    ) public pure returns (bytes memory) {
+    function buildRemoteTransferMsg(LZSendParam memory _lzSendParam) public pure returns (bytes memory) {
         return TapOFTMsgCoder.buildRemoteTransferMsg(_lzSendParam);
     }
 
@@ -111,9 +118,11 @@ contract TapOFTv2Helper {
      *        - tokenId::uint256: The tokenId of the TwTap position to claim rewards from.
      *        - lzSendParams::LZSendParam[]: The LZ send params to pass on the remote chain. (B->A)
      */
-    function buildClaimRewardsMsg(
-        ClaimTwTapRewardsMsg memory _claimTwTapRewardsMsg
-    ) public pure returns (bytes memory) {
+    function buildClaimRewardsMsg(ClaimTwTapRewardsMsg memory _claimTwTapRewardsMsg)
+        public
+        pure
+        returns (bytes memory)
+    {
         return TapOFTMsgCoder.buildClaimTwTapRewards(_claimTwTapRewardsMsg);
     }
 
@@ -146,12 +155,7 @@ contract TapOFTv2Helper {
         _sanitizeMsgType(_msgType);
         _sanitizeMsgIndex(_msgIndex, _tapComposedMsg);
 
-        message = TapOFTMsgCoder.encodeTapComposeMsg(
-            _msg,
-            _msgType,
-            _msgIndex,
-            _tapComposedMsg
-        );
+        message = TapOFTMsgCoder.encodeTapComposeMsg(_msg, _msgType, _msgIndex, _tapComposedMsg);
 
         _sanitizeExtraOptionsIndex(_msgIndex, _extraOptions);
 
@@ -167,13 +171,10 @@ contract TapOFTv2Helper {
     function _sanitizeMsgType(uint16 _msgType) internal pure {
         if (
             // LZ
-            _msgType == SEND ||
+            _msgType == SEND
             // Tapioca msg types
-            _msgType == PT_APPROVALS ||
-            _msgType == PT_LOCK_TWTAP ||
-            _msgType == PT_UNLOCK_TWTAP ||
-            _msgType == PT_CLAIM_REWARDS ||
-            _msgType == PT_REMOTE_TRANSFER
+            || _msgType == PT_APPROVALS || _msgType == PT_LOCK_TWTAP || _msgType == PT_UNLOCK_TWTAP
+                || _msgType == PT_CLAIM_REWARDS || _msgType == PT_REMOTE_TRANSFER
         ) {
             return;
         }
@@ -187,10 +188,7 @@ contract TapOFTv2Helper {
      * @param _msgIndex The current message index.
      * @param _tapComposeMsg The previous TAP compose messages. Empty if this is the first message.
      */
-    function _sanitizeMsgIndex(
-        uint16 _msgIndex,
-        bytes calldata _tapComposeMsg
-    ) internal pure {
+    function _sanitizeMsgIndex(uint16 _msgIndex, bytes calldata _tapComposeMsg) internal pure {
         // If the msgIndex is 0 and there's no composeMsg, then it's the first message.
         if (_tapComposeMsg.length == 0 && _msgIndex == 0) {
             return;
@@ -200,9 +198,7 @@ contract TapOFTv2Helper {
         // If there's a composeMsg, then the msgIndex must be greater than 0, and an increment of the previous msgIndex.
         if (_tapComposeMsg.length > 0) {
             // If the msgIndex is not 0, then it's not the first message. Check previous indexes.
-            _expectedMsgIndex =
-                TapOFTMsgCoder.decodeIndexOfTapComposeMsg(_tapComposeMsg) +
-                1; // Previous index + 1
+            _expectedMsgIndex = TapOFTMsgCoder.decodeIndexOfTapComposeMsg(_tapComposeMsg) + 1; // Previous index + 1
 
             if (_msgIndex == _expectedMsgIndex) {
                 return;
@@ -236,10 +232,7 @@ contract TapOFTv2Helper {
      * @param _msgIndex The current message index.
      * @param _extraOptions The extra options to be sanitized.
      */
-    function _sanitizeExtraOptionsIndex(
-        uint16 _msgIndex,
-        bytes calldata _extraOptions
-    ) internal pure {
+    function _sanitizeExtraOptionsIndex(uint16 _msgIndex, bytes calldata _extraOptions) internal pure {
         uint16 index = BytesLib.toUint16(_extraOptions[6:], 0);
 
         if (index != _msgIndex) {

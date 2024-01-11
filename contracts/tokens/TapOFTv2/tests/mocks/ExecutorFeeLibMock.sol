@@ -7,7 +7,7 @@ import {ExecutorFeeLib} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/Exec
 contract ExecutorFeeLibMock is ExecutorFeeLib {
     constructor() ExecutorFeeLib(1e18) {}
 
-    function _isV1Eid(uint32 /*_eid*/) internal pure override returns (bool) {
+    function _isV1Eid(uint32 /*_eid*/ ) internal pure override returns (bool) {
         return false;
     }
 }

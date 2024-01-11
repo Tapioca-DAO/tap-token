@@ -7,17 +7,9 @@ interface ITapOFTv2 {
     /**
      * EVENTS
      */
-    event LockTwTapReceived(
-        address indexed user,
-        uint96 duration,
-        uint256 amount
-    );
+    event LockTwTapReceived(address indexed user, uint96 duration, uint256 amount);
     /// @dev twTAP unlock operation received.
-    event UnlockTwTapReceived(
-        address indexed user,
-        uint256 tokenId,
-        uint256 amount
-    );
+    event UnlockTwTapReceived(address indexed user, uint256 tokenId, uint256 amount);
 
     /**
      * ERRORS

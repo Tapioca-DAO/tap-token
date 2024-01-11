@@ -20,11 +20,7 @@ contract SendUln302Mock is SendUln302 {
         testHelper = TestHelper(_verifyHelper);
     }
 
-    function send(
-        Packet calldata _packet,
-        bytes calldata _options,
-        bool _payInLzToken
-    )
+    function send(Packet calldata _packet, bytes calldata _options, bool _payInLzToken)
         public
         override
         returns (MessagingFee memory fee, bytes memory encodedPacket)

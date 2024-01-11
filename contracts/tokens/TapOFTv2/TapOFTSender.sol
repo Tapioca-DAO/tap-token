@@ -2,7 +2,9 @@
 pragma solidity 0.8.22;
 
 // LZ
-import {MessagingReceipt, OFTReceipt, SendParam} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import {
+    MessagingReceipt, OFTReceipt, SendParam
+} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 
 // Tapioca
 import {LZSendParam} from "./ITapOFTv2.sol";
@@ -23,10 +25,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 */
 
 contract TapOFTSender is BaseTapOFTv2 {
-    constructor(
-        address _endpoint,
-        address _owner
-    ) BaseTapOFTv2(_endpoint, _owner) {}
+    constructor(address _endpoint, address _owner) BaseTapOFTv2(_endpoint, _owner) {}
 
     // TODO make it public or only internal? Making it public would require more sanitization/security checks
     /**
@@ -56,16 +55,10 @@ contract TapOFTSender is BaseTapOFTv2 {
      *      - amountDebitLD::uint256: Amount of tokens ACTUALLY debited in local decimals.
      *      - amountCreditLD::uint256: Amount of tokens to be credited on the remote side.
      */
-    function sendPacket(
-        LZSendParam calldata _lzSendParam,
-        bytes calldata _composeMsg
-    )
+    function sendPacket(LZSendParam calldata _lzSendParam, bytes calldata _composeMsg)
         public
         payable
-        returns (
-            MessagingReceipt memory msgReceipt,
-            OFTReceipt memory oftReceipt
-        )
+        returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
     {
         // @dev Applies the token transfers regarding this send() operation.
         // - amountDebitedLD is the amount in local decimals that was ACTUALLY debited from the sender.
@@ -77,30 +70,15 @@ contract TapOFTSender is BaseTapOFTv2 {
         );
 
         // @dev Builds the options and OFT message to quote in the endpoint.
-        (bytes memory message, bytes memory options) = _buildOFTMsgAndOptions(
-            _lzSendParam.sendParam,
-            _lzSendParam.extraOptions,
-            _composeMsg,
-            amountToCreditLD
-        );
+        (bytes memory message, bytes memory options) =
+            _buildOFTMsgAndOptions(_lzSendParam.sendParam, _lzSendParam.extraOptions, _composeMsg, amountToCreditLD);
 
         // @dev Sends the message to the LayerZero endpoint and returns the LayerZero msg receipt.
-        msgReceipt = _lzSend(
-            _lzSendParam.sendParam.dstEid,
-            message,
-            options,
-            _lzSendParam.fee,
-            _lzSendParam.refundAddress
-        );
+        msgReceipt =
+            _lzSend(_lzSendParam.sendParam.dstEid, message, options, _lzSendParam.fee, _lzSendParam.refundAddress);
         // @dev Formulate the OFT receipt.
         oftReceipt = OFTReceipt(amountDebitedLD, amountToCreditLD);
 
-        emit OFTSent(
-            msgReceipt.guid,
-            msg.sender,
-            amountDebitedLD,
-            amountToCreditLD,
-            _composeMsg
-        );
+        emit OFTSent(msgReceipt.guid, msg.sender, amountDebitedLD, amountToCreditLD, _composeMsg);
     }
 }

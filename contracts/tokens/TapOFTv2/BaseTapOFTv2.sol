@@ -55,10 +55,7 @@ contract BaseTapOFTv2 is OFT {
     error OnlyHostChain(); // Can execute an action only on host chain
     error InvalidMsgType(uint16 msgType); // Triggered if the msgType is invalid on an `_lzCompose`.
 
-    constructor(
-        address _endpoint,
-        address _owner
-    ) OFT("TAP", "TAP", _endpoint, _owner) {
+    constructor(address _endpoint, address _owner) OFT("TAP", "TAP", _endpoint, _owner) {
         tapOFTExtExec = new TapOFTExtExec();
     }
 
@@ -75,9 +72,7 @@ contract BaseTapOFTv2 is OFT {
      * @dev Prevents the loss of dust when moving amounts between chains with different decimals.
      * @dev eg. uint(123) with a conversion rate of 100 becomes uint(100).
      */
-    function removeDust(
-        uint256 _amountLD
-    ) public view virtual returns (uint256 amountLD) {
+    function removeDust(uint256 _amountLD) public view virtual returns (uint256 amountLD) {
         return _removeDust(_amountLD);
     }
 
@@ -105,19 +100,12 @@ contract BaseTapOFTv2 is OFT {
     ) external view virtual returns (MessagingFee memory msgFee) {
         // @dev mock the amount to credit, this is the same operation used in the send().
         // The quote is as similar as possible to the actual send() operation.
-        (, uint256 amountToCreditLD) = _debitView(
-            _sendParam.amountToSendLD,
-            _sendParam.minAmountToCreditLD,
-            _sendParam.dstEid
-        );
+        (, uint256 amountToCreditLD) =
+            _debitView(_sendParam.amountToSendLD, _sendParam.minAmountToCreditLD, _sendParam.dstEid);
 
         // @dev Builds the options and OFT message to quote in the endpoint.
-        (bytes memory message, bytes memory options) = _buildOFTMsgAndOptions(
-            _sendParam,
-            _extraOptions,
-            _composeMsg,
-            amountToCreditLD
-        );
+        (bytes memory message, bytes memory options) =
+            _buildOFTMsgAndOptions(_sendParam, _extraOptions, _composeMsg, amountToCreditLD);
 
         // @dev Calculates the LayerZero fee for the send() operation.
         return _quote(_sendParam.dstEid, message, options, _payInLzToken);
@@ -165,8 +153,9 @@ contract BaseTapOFTv2 is OFT {
 
         // @dev Optionally inspect the message and options depending if the OApp owner has set a msg inspector.
         // @dev If it fails inspection, needs to revert in the implementation. ie. does not rely on return boolean
-        if (msgInspector != address(0))
+        if (msgInspector != address(0)) {
             IOAppMsgInspector(msgInspector).inspect(message, options);
+        }
     }
 
     /**

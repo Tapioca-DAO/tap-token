@@ -9,17 +9,11 @@ contract SimpleMessageLibMock is SimpleMessageLib {
     // offchain packets schedule
     TestHelper public testHelper;
 
-    constructor(
-        address payable _verifyHelper,
-        address _endpoint
-    ) SimpleMessageLib(_endpoint, address(0x0)) {
+    constructor(address payable _verifyHelper, address _endpoint) SimpleMessageLib(_endpoint, address(0x0)) {
         testHelper = TestHelper(_verifyHelper);
     }
 
-    function _handleMessagingParamsHook(
-        bytes memory _encodedPacket,
-        bytes memory _options
-    ) internal override {
+    function _handleMessagingParamsHook(bytes memory _encodedPacket, bytes memory _options) internal override {
         testHelper.schedulePacket(_encodedPacket, _options);
     }
 }

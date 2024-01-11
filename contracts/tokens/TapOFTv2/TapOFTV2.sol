@@ -161,10 +161,7 @@ contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
         if (_tapOFTReceiverModule == address(0)) revert NotValid();
 
         _setModule(uint8(ITapOFTv2.Module.TapOFTSender), _tapOftSenderModule);
-        _setModule(
-            uint8(ITapOFTv2.Module.TapOFTReceiver),
-            _tapOFTReceiverModule
-        );
+        _setModule(uint8(ITapOFTv2.Module.TapOFTReceiver), _tapOFTReceiverModule);
     }
 
     /// =====================
@@ -204,14 +201,7 @@ contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
         // Call the internal OApp implementation of lzReceive.
         _executeModule(
             uint8(ITapOFTv2.Module.TapOFTReceiver),
-            abi.encodeWithSelector(
-                OAppReceiver.lzReceive.selector,
-                _origin,
-                _guid,
-                _message,
-                _executor,
-                _extraData
-            ),
+            abi.encodeWithSelector(OAppReceiver.lzReceive.selector, _origin, _guid, _message, _executor, _extraData),
             false
         );
     }
@@ -228,11 +218,11 @@ contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
      *
      * @return returnData The return data from the module execution, if any.
      */
-    function executeModule(
-        ITapOFTv2.Module _module,
-        bytes memory _data,
-        bool _forwardRevert
-    ) external payable returns (bytes memory returnData) {
+    function executeModule(ITapOFTv2.Module _module, bytes memory _data, bool _forwardRevert)
+        external
+        payable
+        returns (bytes memory returnData)
+    {
         return _executeModule(uint8(_module), _data, _forwardRevert);
     }
 
@@ -267,24 +257,15 @@ contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
      *      - amountDebitLD::uint256: Amount of tokens ACTUALLY debited in local decimals.
      *      - amountCreditLD::uint256: Amount of tokens to be credited on the remote side.
      */
-    function sendPacket(
-        LZSendParam calldata _lzSendParam,
-        bytes calldata _composeMsg
-    )
+    function sendPacket(LZSendParam calldata _lzSendParam, bytes calldata _composeMsg)
         public
         payable
-        returns (
-            MessagingReceipt memory msgReceipt,
-            OFTReceipt memory oftReceipt
-        )
+        returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
     {
         (msgReceipt, oftReceipt) = abi.decode(
             _executeModule(
                 uint8(ITapOFTv2.Module.TapOFTSender),
-                abi.encodeCall(
-                    TapOFTSender.sendPacket,
-                    (_lzSendParam, _composeMsg)
-                ),
+                abi.encodeCall(TapOFTSender.sendPacket, (_lzSendParam, _composeMsg)),
                 false
             ),
             (MessagingReceipt, OFTReceipt)
@@ -320,9 +301,7 @@ contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
      * @notice Returns the current week given a timestamp
      * @param timestamp The timestamp to use to compute the week
      */
-    function timestampToWeek(
-        uint256 timestamp
-    ) external view returns (uint256) {
+    function timestampToWeek(uint256 timestamp) external view returns (uint256) {
         if (timestamp == 0) {
             timestamp = block.timestamp;
         }
@@ -335,12 +314,9 @@ contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
      * @dev Returns the hash of the struct used by the permit function.
      * @param _permitData Struct containing permit data.
      */
-    function getTypedDataHash(
-        ERC20PermitStruct calldata _permitData
-    ) public view returns (bytes32) {
-        bytes32 permitTypeHash_ = keccak256(
-            "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
-        );
+    function getTypedDataHash(ERC20PermitStruct calldata _permitData) public view returns (bytes32) {
+        bytes32 permitTypeHash_ =
+            keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
         bytes32 structHash_ = keccak256(
             abi.encode(
@@ -365,15 +341,13 @@ contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
      * @param _to Address to send the minted TAP to
      * @param _amount TAP amount
      */
-    function extractTAP(
-        address _to,
-        uint256 _amount
-    ) external onlyMinter whenNotPaused {
+    function extractTAP(address _to, uint256 _amount) external onlyMinter whenNotPaused {
         if (_amount == 0) revert NotValid();
 
         uint256 week = _timestampToWeek(block.timestamp);
-        if (emissionForWeek[week] < mintedInWeek[week] + _amount)
+        if (emissionForWeek[week] < mintedInWeek[week] + _amount) {
             revert AllowanceNotValid();
+        }
         _mint(_to, _amount);
         mintedInWeek[week] += _amount;
         emit Minted(msg.sender, _to, _amount);
@@ -448,9 +422,7 @@ contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
     /**
      * @notice set the twTAP address, can be done only once.
      */
-    function setTwTAP(
-        address _twTap
-    ) external override onlyOwner onlyHostChain {
+    function setTwTAP(address _twTap) external override onlyOwner onlyHostChain {
         if (address(twTap) != address(0)) {
             revert TwTapAlreadySet();
         }
@@ -465,9 +437,7 @@ contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
      * @dev Returns the current week given a timestamp
      * @param timestamp The timestamp to use to compute the week
      */
-    function _timestampToWeek(
-        uint256 timestamp
-    ) internal view returns (uint256) {
+    function _timestampToWeek(uint256 timestamp) internal view returns (uint256) {
         return ((timestamp - emissionsStartTime) / EPOCH_DURATION);
     }
 

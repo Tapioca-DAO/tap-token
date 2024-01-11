@@ -5,7 +5,12 @@ pragma solidity 0.8.22;
 import "forge-std/Test.sol";
 
 // LZ
-import {SendParam, MessagingFee, MessagingReceipt, OFTReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import {
+    SendParam,
+    MessagingFee,
+    MessagingReceipt,
+    OFTReceipt
+} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
@@ -21,7 +26,15 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TestHelper} from "./mocks/TestHelper.sol";
 
 // Tapioca
-import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC20PermitApprovalMsg, ClaimTwTapRewardsMsg} from "../ITapOFTv2.sol";
+import {
+    ITapOFTv2,
+    LockTwTapPositionMsg,
+    UnlockTwTapPositionMsg,
+    LZSendParam,
+    ERC20PermitStruct,
+    ERC20PermitApprovalMsg,
+    ClaimTwTapRewardsMsg
+} from "../ITapOFTv2.sol";
 import {TapOFTv2Helper} from "../extensions/TapOFTv2Helper.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TwTAP} from "../../../governance/TwTAP.sol";
@@ -77,11 +90,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
      * @dev TapOFTv2 global event checks
      */
     event OFTReceived(bytes32, address, uint256, uint256);
-    event ComposeReceived(
-        uint16 indexed msgType,
-        bytes32 indexed guid,
-        bytes composeMsg
-    );
+    event ComposeReceived(uint16 indexed msgType, bytes32 indexed guid, bytes composeMsg);
 
     /**
      * @dev Setup the OApps by deploying them and setting up the endpoints.
@@ -213,21 +222,12 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
     }
 
     function test_erc20_permit() public {
-        ERC20PermitStruct memory permit_ = ERC20PermitStruct({
-            owner: userA,
-            spender: userB,
-            value: 1e18,
-            nonce: 0,
-            deadline: 1 days
-        });
+        ERC20PermitStruct memory permit_ =
+            ERC20PermitStruct({owner: userA, spender: userB, value: 1e18, nonce: 0, deadline: 1 days});
 
         bytes32 digest_ = aTapOFT.getTypedDataHash(permit_);
-        ERC20PermitApprovalMsg memory permitApproval_ = __getERC20PermitData(
-            permit_,
-            digest_,
-            address(aTapOFT),
-            userAPKey
-        );
+        ERC20PermitApprovalMsg memory permitApproval_ =
+            __getERC20PermitData(permit_, digest_, address(aTapOFT), userAPKey);
 
         aTapOFT.permit(
             permit_.owner,
@@ -250,13 +250,8 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         bytes memory approvalsMsg_;
 
         {
-            ERC20PermitStruct memory approvalUserB_ = ERC20PermitStruct({
-                owner: userA,
-                spender: userB,
-                value: 1e18,
-                nonce: 0,
-                deadline: 1 days
-            });
+            ERC20PermitStruct memory approvalUserB_ =
+                ERC20PermitStruct({owner: userA, spender: userB, value: 1e18, nonce: 0, deadline: 1 days});
             ERC20PermitStruct memory approvalUserC_ = ERC20PermitStruct({
                 owner: userA,
                 spender: userC_,
@@ -266,21 +261,14 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
             });
 
             permitApprovalB_ = __getERC20PermitData(
-                approvalUserB_,
-                bTapOFT.getTypedDataHash(approvalUserB_),
-                address(bTapOFT),
-                userAPKey
+                approvalUserB_, bTapOFT.getTypedDataHash(approvalUserB_), address(bTapOFT), userAPKey
             );
 
             permitApprovalC_ = __getERC20PermitData(
-                approvalUserC_,
-                bTapOFT.getTypedDataHash(approvalUserC_),
-                address(bTapOFT),
-                userAPKey
+                approvalUserC_, bTapOFT.getTypedDataHash(approvalUserC_), address(bTapOFT), userAPKey
             );
 
-            ERC20PermitApprovalMsg[]
-                memory approvals_ = new ERC20PermitApprovalMsg[](2);
+            ERC20PermitApprovalMsg[] memory approvals_ = new ERC20PermitApprovalMsg[](2);
             approvals_[0] = permitApprovalB_;
             approvals_[1] = permitApprovalC_;
 
@@ -295,32 +283,27 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
             MessagingFee memory msgFee_,
             LZSendParam memory lzSendParam_
         ) = __prepareLzCall(
-                aTapOFT,
-                PrepareLzCall({
-                    dstEid: bEid,
-                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
-                    amountToSendLD: 0,
-                    minAmountToCreditLD: 0,
-                    msgType: PT_APPROVALS,
-                    composeMsgData: ComposeMsgData({
-                        index: 0,
-                        gas: 1_000_000,
-                        value: 0,
-                        data: approvalsMsg_,
-                        prevData: bytes("")
-                    }),
-                    lzReceiveGas: 1_000_000,
-                    lzReceiveValue: 0
-                })
-            );
+            aTapOFT,
+            PrepareLzCall({
+                dstEid: bEid,
+                recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                amountToSendLD: 0,
+                minAmountToCreditLD: 0,
+                msgType: PT_APPROVALS,
+                composeMsgData: ComposeMsgData({
+                    index: 0,
+                    gas: 1_000_000,
+                    value: 0,
+                    data: approvalsMsg_,
+                    prevData: bytes("")
+                }),
+                lzReceiveGas: 1_000_000,
+                lzReceiveValue: 0
+            })
+        );
 
-        (
-            MessagingReceipt memory msgReceipt_,
-            OFTReceipt memory oftReceipt_
-        ) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(
-                lzSendParam_,
-                composeMsg_
-            );
+        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
+            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         verifyPackets(uint32(bEid), address(bTapOFT));
 
@@ -357,16 +340,10 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         uint256 amountToSendLD = 1 ether;
         uint96 lockDuration = 1 weeks;
 
-        LockTwTapPositionMsg
-            memory lockTwTapPositionMsg = LockTwTapPositionMsg({
-                user: address(this),
-                duration: lockDuration,
-                amount: amountToSendLD
-            });
+        LockTwTapPositionMsg memory lockTwTapPositionMsg =
+            LockTwTapPositionMsg({user: address(this), duration: lockDuration, amount: amountToSendLD});
 
-        bytes memory lockPosition_ = TapOFTMsgCoder.buildLockTwTapPositionMsg(
-            lockTwTapPositionMsg
-        );
+        bytes memory lockPosition_ = TapOFTMsgCoder.buildLockTwTapPositionMsg(lockTwTapPositionMsg);
 
         (
             SendParam memory sendParam_,
@@ -376,35 +353,30 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
             MessagingFee memory msgFee_,
             LZSendParam memory lzSendParam_
         ) = __prepareLzCall(
-                aTapOFT,
-                PrepareLzCall({
-                    dstEid: bEid,
-                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
-                    amountToSendLD: amountToSendLD,
-                    minAmountToCreditLD: amountToSendLD,
-                    msgType: PT_LOCK_TWTAP,
-                    composeMsgData: ComposeMsgData({
-                        index: 0,
-                        gas: 1_000_000,
-                        value: 0,
-                        data: lockPosition_,
-                        prevData: bytes("")
-                    }),
-                    lzReceiveGas: 1_000_000,
-                    lzReceiveValue: 0
-                })
-            );
+            aTapOFT,
+            PrepareLzCall({
+                dstEid: bEid,
+                recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                amountToSendLD: amountToSendLD,
+                minAmountToCreditLD: amountToSendLD,
+                msgType: PT_LOCK_TWTAP,
+                composeMsgData: ComposeMsgData({
+                    index: 0,
+                    gas: 1_000_000,
+                    value: 0,
+                    data: lockPosition_,
+                    prevData: bytes("")
+                }),
+                lzReceiveGas: 1_000_000,
+                lzReceiveValue: 0
+            })
+        );
 
         // Mint necessary tokens
         deal(address(aTapOFT), address(this), amountToSendLD);
 
-        (
-            MessagingReceipt memory msgReceipt_,
-            OFTReceipt memory oftReceipt_
-        ) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(
-                lzSendParam_,
-                composeMsg_
-            );
+        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
+            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         verifyPackets(uint32(bEid), address(bTapOFT));
 
@@ -412,11 +384,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         bTapOFT.approve(address(bTapOFT), amountToSendLD);
 
         vm.expectEmit(true, true, true, false);
-        emit ITapOFTv2.LockTwTapReceived(
-            lockTwTapPositionMsg.user,
-            lockTwTapPositionMsg.duration,
-            amountToSendLD
-        );
+        emit ITapOFTv2.LockTwTapReceived(lockTwTapPositionMsg.user, lockTwTapPositionMsg.duration, amountToSendLD);
 
         __callLzCompose(
             LzOFTComposedData(
@@ -451,11 +419,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         {
             deal(address(bTapOFT), address(this), lockAmount_);
             bTapOFT.approve(address(twTap), lockAmount_);
-            tokenId_ = twTap.participate(
-                address(this),
-                lockAmount_,
-                lockDuration_
-            );
+            tokenId_ = twTap.participate(address(this), lockAmount_, lockDuration_);
 
             // Skip block timestamp to
             skip(lockDuration_);
@@ -465,13 +429,9 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
          * Actions
          */
 
-        UnlockTwTapPositionMsg
-            memory unlockTwTapPosition_ = UnlockTwTapPositionMsg({
-                user: address(this),
-                tokenId: tokenId_
-            });
-        bytes memory unlockTwTapPositionMsg_ = tapOFTv2Helper
-            .buildUnlockTwpTapPositionMsg(unlockTwTapPosition_);
+        UnlockTwTapPositionMsg memory unlockTwTapPosition_ =
+            UnlockTwTapPositionMsg({user: address(this), tokenId: tokenId_});
+        bytes memory unlockTwTapPositionMsg_ = tapOFTv2Helper.buildUnlockTwpTapPositionMsg(unlockTwTapPosition_);
 
         (
             ,
@@ -481,32 +441,27 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
             MessagingFee memory msgFee_,
             LZSendParam memory lzSendParam_
         ) = __prepareLzCall(
-                aTapOFT,
-                PrepareLzCall({
-                    dstEid: bEid,
-                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
-                    amountToSendLD: 0,
-                    minAmountToCreditLD: 0,
-                    msgType: PT_UNLOCK_TWTAP,
-                    composeMsgData: ComposeMsgData({
-                        index: 0,
-                        gas: 1_000_000,
-                        value: 0,
-                        data: unlockTwTapPositionMsg_,
-                        prevData: bytes("")
-                    }),
-                    lzReceiveGas: 1_000_000,
-                    lzReceiveValue: 0
-                })
-            );
+            aTapOFT,
+            PrepareLzCall({
+                dstEid: bEid,
+                recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                amountToSendLD: 0,
+                minAmountToCreditLD: 0,
+                msgType: PT_UNLOCK_TWTAP,
+                composeMsgData: ComposeMsgData({
+                    index: 0,
+                    gas: 1_000_000,
+                    value: 0,
+                    data: unlockTwTapPositionMsg_,
+                    prevData: bytes("")
+                }),
+                lzReceiveGas: 1_000_000,
+                lzReceiveValue: 0
+            })
+        );
 
-        (
-            MessagingReceipt memory msgReceipt_,
-            OFTReceipt memory oftReceipt_
-        ) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(
-                lzSendParam_,
-                composeMsg_
-            );
+        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
+            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         verifyPackets(uint32(bEid), address(bTapOFT));
 
@@ -514,11 +469,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         bTapOFT.approve(address(bTapOFT), lockAmount_);
 
         vm.expectEmit(true, true, true, false);
-        emit ITapOFTv2.UnlockTwTapReceived(
-            unlockTwTapPosition_.user,
-            unlockTwTapPosition_.tokenId,
-            lockAmount_
-        );
+        emit ITapOFTv2.UnlockTwTapReceived(unlockTwTapPosition_.user, unlockTwTapPosition_.tokenId, lockAmount_);
 
         __callLzCompose(
             LzOFTComposedData(
@@ -550,7 +501,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
             deal(address(bTapOFT), address(this), tokenAmount_);
 
             // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
-            (, , , , remoteMsgFee_, remoteLzSendParam_) = __prepareLzCall( // B->A data
+            (,,,, remoteMsgFee_, remoteLzSendParam_) = __prepareLzCall( // B->A data
                 bTapOFT,
                 PrepareLzCall({
                     dstEid: aEid,
@@ -558,13 +509,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
                     amountToSendLD: tokenAmount_,
                     minAmountToCreditLD: tokenAmount_,
                     msgType: SEND,
-                    composeMsgData: ComposeMsgData({
-                        index: 0,
-                        gas: 0,
-                        value: 0,
-                        data: bytes(""),
-                        prevData: bytes("")
-                    }),
+                    composeMsgData: ComposeMsgData({index: 0, gas: 0, value: 0, data: bytes(""), prevData: bytes("")}),
                     lzReceiveGas: 500_000,
                     lzReceiveValue: 0
                 })
@@ -575,9 +520,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
          * Actions
          */
 
-        bytes memory remoteTransferMsg_ = tapOFTv2Helper.buildRemoteTransferMsg(
-            remoteLzSendParam_
-        );
+        bytes memory remoteTransferMsg_ = tapOFTv2Helper.buildRemoteTransferMsg(remoteLzSendParam_);
 
         (
             ,
@@ -587,32 +530,27 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
             MessagingFee memory msgFee_,
             LZSendParam memory lzSendParam_
         ) = __prepareLzCall(
-                aTapOFT,
-                PrepareLzCall({
-                    dstEid: bEid,
-                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
-                    amountToSendLD: 0,
-                    minAmountToCreditLD: 0,
-                    msgType: PT_REMOTE_TRANSFER,
-                    composeMsgData: ComposeMsgData({
-                        index: 0,
-                        gas: 500_000,
-                        value: uint128(remoteMsgFee_.nativeFee), // TODO Should we care about verifying cast boundaries?
-                        data: remoteTransferMsg_,
-                        prevData: bytes("")
-                    }),
-                    lzReceiveGas: 500_000,
-                    lzReceiveValue: 0
-                })
-            );
+            aTapOFT,
+            PrepareLzCall({
+                dstEid: bEid,
+                recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                amountToSendLD: 0,
+                minAmountToCreditLD: 0,
+                msgType: PT_REMOTE_TRANSFER,
+                composeMsgData: ComposeMsgData({
+                    index: 0,
+                    gas: 500_000,
+                    value: uint128(remoteMsgFee_.nativeFee), // TODO Should we care about verifying cast boundaries?
+                    data: remoteTransferMsg_,
+                    prevData: bytes("")
+                }),
+                lzReceiveGas: 500_000,
+                lzReceiveValue: 0
+            })
+        );
 
-        (
-            MessagingReceipt memory msgReceipt_,
-            OFTReceipt memory oftReceipt_
-        ) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(
-                lzSendParam_,
-                composeMsg_
-            );
+        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
+            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         {
             verifyPackets(uint32(bEid), address(bTapOFT));
@@ -665,23 +603,11 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
     function test_claim_rewards() public {
         // Init vars
         TestClaimRewardsData memory testData_;
-        testData_.erc20Mock1 = _createNewToftToken(
-            "ERCM1",
-            address(endpoints[bEid])
-        );
-        testData_.erc20Mock1Dst = _createNewToftToken(
-            "ERCM1",
-            address(endpoints[aEid])
-        );
+        testData_.erc20Mock1 = _createNewToftToken("ERCM1", address(endpoints[bEid]));
+        testData_.erc20Mock1Dst = _createNewToftToken("ERCM1", address(endpoints[aEid]));
 
-        testData_.erc20Mock2 = _createNewToftToken(
-            "ERCM2",
-            address(endpoints[bEid])
-        );
-        testData_.erc20Mock2Dst = _createNewToftToken(
-            "ERCM2",
-            address(endpoints[aEid])
-        );
+        testData_.erc20Mock2 = _createNewToftToken("ERCM2", address(endpoints[bEid]));
+        testData_.erc20Mock2Dst = _createNewToftToken("ERCM2", address(endpoints[aEid]));
 
         testData_.tokenAmount1 = 1 ether;
         testData_.tokenAmount2 = 2 ether;
@@ -711,35 +637,17 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
             // Participate
             deal(address(bTapOFT), address(this), lockAmount_);
             bTapOFT.approve(address(twTap), lockAmount_);
-            testData_.tokenId = twTap.participate(
-                address(this),
-                lockAmount_,
-                1 weeks
-            );
+            testData_.tokenId = twTap.participate(address(this), lockAmount_, 1 weeks);
 
             // Distribute rewards
-            deal(
-                address(testData_.erc20Mock1),
-                address(this),
-                testData_.tokenAmount1
-            );
-            deal(
-                address(testData_.erc20Mock2),
-                address(this),
-                testData_.tokenAmount2
-            );
+            deal(address(testData_.erc20Mock1), address(this), testData_.tokenAmount1);
+            deal(address(testData_.erc20Mock2), address(this), testData_.tokenAmount2);
 
             twTap.addRewardToken(testData_.erc20Mock1);
             twTap.addRewardToken(testData_.erc20Mock2);
 
-            testData_.erc20Mock1.approve(
-                address(twTap),
-                testData_.tokenAmount1
-            );
-            testData_.erc20Mock2.approve(
-                address(twTap),
-                testData_.tokenAmount2
-            );
+            testData_.erc20Mock1.approve(address(twTap), testData_.tokenAmount1);
+            testData_.erc20Mock2.approve(address(twTap), testData_.tokenAmount2);
 
             // Skip block timestamp to
             skip(1 weeks);
@@ -749,9 +657,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
             twTap.distributeReward(2, testData_.tokenAmount2);
 
             // Compute claimable and receivable amounts. Without dust
-            uint256[] memory claimableAmounts_ = twTap.claimable(
-                testData_.tokenId
-            );
+            uint256[] memory claimableAmounts_ = twTap.claimable(testData_.tokenId);
             testData_.expectReceive1 = bTapOFT.removeDust(claimableAmounts_[1]);
             testData_.expectReceive2 = bTapOFT.removeDust(claimableAmounts_[2]);
         }
@@ -763,14 +669,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
 
         {
             // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
-            (
-                ,
-                ,
-                ,
-                ,
-                testData_.remoteMsgFee1,
-                testData_.remoteLzSendParam1
-            ) = __prepareLzCall( // B->A data
+            (,,,, testData_.remoteMsgFee1, testData_.remoteLzSendParam1) = __prepareLzCall( // B->A data
                 testData_.erc20Mock1,
                 PrepareLzCall({
                     dstEid: aEid,
@@ -778,26 +677,13 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
                     amountToSendLD: testData_.tokenAmount1,
                     minAmountToCreditLD: testData_.tokenAmount1,
                     msgType: SEND,
-                    composeMsgData: ComposeMsgData({
-                        index: 0,
-                        gas: 0,
-                        value: 0,
-                        data: bytes(""),
-                        prevData: bytes("")
-                    }),
+                    composeMsgData: ComposeMsgData({index: 0, gas: 0, value: 0, data: bytes(""), prevData: bytes("")}),
                     lzReceiveGas: 500_000,
                     lzReceiveValue: 0
                 })
             );
             // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
-            (
-                ,
-                ,
-                ,
-                ,
-                testData_.remoteMsgFee2,
-                testData_.remoteLzSendParam2
-            ) = __prepareLzCall( // B->A data
+            (,,,, testData_.remoteMsgFee2, testData_.remoteLzSendParam2) = __prepareLzCall( // B->A data
                 testData_.erc20Mock2,
                 PrepareLzCall({
                     dstEid: aEid,
@@ -805,13 +691,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
                     amountToSendLD: testData_.tokenAmount2,
                     minAmountToCreditLD: testData_.tokenAmount2,
                     msgType: SEND,
-                    composeMsgData: ComposeMsgData({
-                        index: 0,
-                        gas: 0,
-                        value: 0,
-                        data: bytes(""),
-                        prevData: bytes("")
-                    }),
+                    composeMsgData: ComposeMsgData({index: 0, gas: 0, value: 0, data: bytes(""), prevData: bytes("")}),
                     lzReceiveGas: 500_000,
                     lzReceiveValue: 0
                 })
@@ -826,14 +706,9 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
          */
         bytes memory claimTwTapRewardsMsg_;
         {
-            ClaimTwTapRewardsMsg
-                memory claimTwTapRewards_ = ClaimTwTapRewardsMsg({
-                    tokenId: testData_.tokenId,
-                    sendParam: claimTwTapRewardsParam_
-                });
-            claimTwTapRewardsMsg_ = tapOFTv2Helper.buildClaimRewardsMsg(
-                claimTwTapRewards_
-            );
+            ClaimTwTapRewardsMsg memory claimTwTapRewards_ =
+                ClaimTwTapRewardsMsg({tokenId: testData_.tokenId, sendParam: claimTwTapRewardsParam_});
+            claimTwTapRewardsMsg_ = tapOFTv2Helper.buildClaimRewardsMsg(claimTwTapRewards_);
         }
 
         bytes memory composeMsg_;
@@ -841,14 +716,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         MessagingFee memory msgFee_;
         LZSendParam memory lzSendParam_;
         {
-            (
-                ,
-                ,
-                composeMsg_,
-                oftMsgOptions_,
-                msgFee_,
-                lzSendParam_
-            ) = __prepareLzCall(
+            (,, composeMsg_, oftMsgOptions_, msgFee_, lzSendParam_) = __prepareLzCall(
                 aTapOFT,
                 PrepareLzCall({
                     dstEid: bEid,
@@ -859,10 +727,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
                     composeMsgData: ComposeMsgData({
                         index: 0,
                         gas: 1_000_000,
-                        value: uint128(
-                            testData_.remoteMsgFee1.nativeFee +
-                                testData_.remoteMsgFee2.nativeFee
-                        ), // TODO Should we care about verifying cast boundaries?
+                        value: uint128(testData_.remoteMsgFee1.nativeFee + testData_.remoteMsgFee2.nativeFee), // TODO Should we care about verifying cast boundaries?
                         data: claimTwTapRewardsMsg_,
                         prevData: bytes("")
                     }),
@@ -872,13 +737,8 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
             );
         }
 
-        (
-            MessagingReceipt memory msgReceipt_,
-            OFTReceipt memory oftReceipt_
-        ) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(
-                lzSendParam_,
-                composeMsg_
-            );
+        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
+            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         {
             // A->B
@@ -965,6 +825,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         bytes data;
         bytes prevData;
     }
+
     struct PrepareLzCall {
         uint32 dstEid;
         bytes32 recipient;
@@ -979,10 +840,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
     /**
      * @dev Helper to prepare an LZ call.
      */
-    function __prepareLzCall(
-        TapOFTV2Mock tapOFTToken,
-        PrepareLzCall memory _prepareLzCall
-    )
+    function __prepareLzCall(TapOFTV2Mock tapOFTToken, PrepareLzCall memory _prepareLzCall)
         internal
         view
         returns (
@@ -1003,15 +861,13 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         });
 
         if (_prepareLzCall.composeMsgData.data.length != 0) {
-            composeOptions_ = OptionsBuilder
-                .newOptions()
-                .addExecutorLzComposeOption(
-                    _prepareLzCall.composeMsgData.index,
-                    _prepareLzCall.composeMsgData.gas,
-                    _prepareLzCall.composeMsgData.value
-                );
+            composeOptions_ = OptionsBuilder.newOptions().addExecutorLzComposeOption(
+                _prepareLzCall.composeMsgData.index,
+                _prepareLzCall.composeMsgData.gas,
+                _prepareLzCall.composeMsgData.value
+            );
 
-            (composeMsg_, ) = tapOFTv2Helper.buildTapComposeMsgAndOptions(
+            (composeMsg_,) = tapOFTv2Helper.buildTapComposeMsgAndOptions(
                 tapOFTToken,
                 _prepareLzCall.composeMsgData.data,
                 _prepareLzCall.msgType,
@@ -1023,19 +879,11 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         }
 
         oftMsgOptions_ = OptionsBuilder.addExecutorLzReceiveOption(
-            composeOptions_.length > 0
-                ? composeOptions_
-                : OptionsBuilder.newOptions(),
+            composeOptions_.length > 0 ? composeOptions_ : OptionsBuilder.newOptions(),
             _prepareLzCall.lzReceiveGas,
             _prepareLzCall.lzReceiveValue
         );
-        msgFee_ = tapOFTToken.quoteSendPacket(
-            sendParam_,
-            oftMsgOptions_,
-            false,
-            composeMsg_,
-            ""
-        );
+        msgFee_ = tapOFTToken.quoteSendPacket(sendParam_, oftMsgOptions_, false, composeMsg_, "");
 
         lzSendParam_ = LZSendParam({
             sendParam: sendParam_,
@@ -1077,15 +925,9 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
      *
      * @param _lzOFTComposedData The data to pass to the lzCompose call.
      */
-    function __callLzCompose(
-        LzOFTComposedData memory _lzOFTComposedData
-    ) internal {
+    function __callLzCompose(LzOFTComposedData memory _lzOFTComposedData) internal {
         vm.expectEmit(true, true, true, false);
-        emit ComposeReceived(
-            _lzOFTComposedData.msgType,
-            _lzOFTComposedData.guid,
-            _lzOFTComposedData.composeMsg
-        );
+        emit ComposeReceived(_lzOFTComposedData.msgType, _lzOFTComposedData.guid, _lzOFTComposedData.composeMsg);
 
         this.lzCompose(
             _lzOFTComposedData.dstEid,
@@ -1094,8 +936,7 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
             _lzOFTComposedData.guid,
             _lzOFTComposedData.to,
             abi.encodePacked(
-                OFTMsgCodec.addressToBytes32(_lzOFTComposedData.srcMsgSender),
-                _lzOFTComposedData.composeMsg
+                OFTMsgCodec.addressToBytes32(_lzOFTComposedData.srcMsgSender), _lzOFTComposedData.composeMsg
             )
         );
     }
@@ -1107,12 +948,11 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
      * @param _token The token contract to receive the permit.
      * @param _pkSigner The private key signer.
      */
-    function __getERC20PermitData(
-        ERC20PermitStruct memory _permit,
-        bytes32 _digest,
-        address _token,
-        uint256 _pkSigner
-    ) internal pure returns (ERC20PermitApprovalMsg memory permitApproval_) {
+    function __getERC20PermitData(ERC20PermitStruct memory _permit, bytes32 _digest, address _token, uint256 _pkSigner)
+        internal
+        pure
+        returns (ERC20PermitApprovalMsg memory permitApproval_)
+    {
         (uint8 v_, bytes32 r_, bytes32 s_) = vm.sign(_pkSigner, _digest);
 
         permitApproval_ = ERC20PermitApprovalMsg({
@@ -1127,10 +967,10 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
         });
     }
 
-    function _createNewToftToken(
-        string memory _tokenLabel,
-        address _endpoint
-    ) internal returns (TapOFTV2Mock newToken_) {
+    function _createNewToftToken(string memory _tokenLabel, address _endpoint)
+        internal
+        returns (TapOFTV2Mock newToken_)
+    {
         newToken_ = TapOFTV2Mock(
             payable(
                 _deployOApp(
