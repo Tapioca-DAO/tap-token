@@ -152,6 +152,8 @@ describe('TapiocaOptionLiquidityProvision', () => {
         ).to.be.reverted;
 
         // Unregister a singularity
+        await tOLP.activateSGLPoolRescue(sglTokenMock.address);
+
         await expect(tOLP.unregisterSingularity(sglTokenMock.address))
             .to.emit(tOLP, 'UnregisterSingularity')
             .withArgs(sglTokenMock.address, sglTokenMockAsset)
@@ -169,6 +171,7 @@ describe('TapiocaOptionLiquidityProvision', () => {
             sglTokenMock2Asset,
         ]);
 
+        await tOLP.activateSGLPoolRescue(sglTokenMock2.address);
         await expect(tOLP.unregisterSingularity(sglTokenMock2.address))
             .to.emit(tOLP, 'UnregisterSingularity')
             .withArgs(sglTokenMock2.address, sglTokenMock2Asset)
