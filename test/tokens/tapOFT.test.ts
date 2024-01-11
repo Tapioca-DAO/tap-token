@@ -225,7 +225,7 @@ describe('tapOFT', () => {
         it('should not mint when paused', async () => {
             await tapiocaOFT0.setMinter(signer.address);
             await tapiocaOFT0.updatePause(true);
-            await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.not.be
+            await expect(tapiocaOFT0.connect(signer).emitForWeek()).to.be
                 .reverted;
             await expect(
                 tapiocaOFT0.extractTAP(
