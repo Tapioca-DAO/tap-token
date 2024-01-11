@@ -55,22 +55,26 @@ describe('tapOFT', () => {
             signer,
             LZEndpointMockCurrentChain.address,
             signer.address,
+            chainId,
         )) as TapOFT;
         tapiocaOFT1 = (await deployTapiocaOFT(
             signer,
             LZEndpointMockGovernance.address,
             signer.address,
+            11,
         )) as TapOFT;
 
         toft0 = (await deployTapiocaOFT(
             signer,
             LZEndpointMockCurrentChain.address,
             normalUser.address,
+            chainId,
         )) as any as TapiocaOFT;
         toft1 = (await deployTapiocaOFT(
             signer,
             LZEndpointMockGovernance.address,
             normalUser.address,
+            11,
         )) as any as TapiocaOFT;
 
         // OFT Setup

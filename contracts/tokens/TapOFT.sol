@@ -281,7 +281,7 @@ contract TapOFT is BaseTapOFT, ERC20Permit {
     /// @notice Return the current chain ID.
     /// @dev Useful for testing.
     function _getChainId() private view returns (uint256) {
-        return block.chainid;
+        return ILayerZeroEndpoint(lzEndpoint).getChainId();
     }
 
     /// @notice returns the available emissions for a given supply
