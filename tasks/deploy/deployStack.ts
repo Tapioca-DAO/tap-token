@@ -194,9 +194,9 @@ export const deployStack__task = async (
             )
             .add(
                 await buildTOLP(hre, 'TapiocaOptionLiquidityProvision', [
-                    signer.address,
-                    tapiocaOptionBrokerEpochDuration,
                     yieldBox?.address,
+                    tapiocaOptionBrokerEpochDuration,
+                    signer.address,
                 ]),
             )
             .add(await buildOTAP(hre, 'OTAP'))
