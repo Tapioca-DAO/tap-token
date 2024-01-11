@@ -2,8 +2,6 @@
 
 pragma solidity 0.8.22;
 
-import "forge-std/Test.sol";
-
 // LZ
 import {
     SendParam,
@@ -11,19 +9,15 @@ import {
     MessagingReceipt,
     OFTReceipt
 } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
-import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
+import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
 import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
-import {ERC20Mock} from "./mocks/ERC20Mock.sol";
 
 // External
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-// Lib
-import {TestHelper} from "./mocks/TestHelper.sol";
 
 // Tapioca
 import {
@@ -42,8 +36,13 @@ import {TapOFTReceiver} from "../TapOFTReceiver.sol";
 import {TapOFTSender} from "../TapOFTSender.sol";
 import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
 
+// Tapioca tests
+import {TapTestHelper} from "./TapTestHelper.t.sol";
+
+import "forge-std/Test.sol";
+
 // TODO Split into multiple part?
-contract TapOFTV2Test is TestHelper, IERC721Receiver {
+contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     using OptionsBuilder for bytes;
     using OFTMsgCodec for bytes32;
     using OFTMsgCodec for bytes;
@@ -939,32 +938,6 @@ contract TapOFTV2Test is TestHelper, IERC721Receiver {
                 OFTMsgCodec.addressToBytes32(_lzOFTComposedData.srcMsgSender), _lzOFTComposedData.composeMsg
             )
         );
-    }
-
-    /**
-     * @dev Helper to build an ERC20PermitApprovalMsg.
-     * @param _permit The permit data.
-     * @param _digest The typed data digest.
-     * @param _token The token contract to receive the permit.
-     * @param _pkSigner The private key signer.
-     */
-    function __getERC20PermitData(ERC20PermitStruct memory _permit, bytes32 _digest, address _token, uint256 _pkSigner)
-        internal
-        pure
-        returns (ERC20PermitApprovalMsg memory permitApproval_)
-    {
-        (uint8 v_, bytes32 r_, bytes32 s_) = vm.sign(_pkSigner, _digest);
-
-        permitApproval_ = ERC20PermitApprovalMsg({
-            token: _token,
-            owner: _permit.owner,
-            spender: _permit.spender,
-            value: _permit.value,
-            deadline: _permit.deadline,
-            v: v_,
-            r: r_,
-            s: s_
-        });
     }
 
     function _createNewToftToken(string memory _tokenLabel, address _endpoint)
