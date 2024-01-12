@@ -63,11 +63,19 @@ struct Participation {
     uint40 lastActive; // Last week that the staker shares in rewards
 }
 
+// TODO: Prove that overflow is impossible
 struct TWAMLPool {
     uint256 totalParticipants;
     uint256 averageMagnitude;
     uint256 totalDeposited;
     uint256 cumulative;
+}
+// Should be same as TWAMLPool, but with int256 instead of uint256
+struct TWAMLExitPool {
+    int256 totalParticipants;
+    int256 averageMagnitude;
+    int256 totalDeposited;
+    int256 cumulative;
 }
 
 struct WeekTotals {
@@ -93,7 +101,9 @@ contract TwTAP is
     TapOFT public immutable tapOFT;
 
     /// ===== TWAML ======
-    TWAMLPool public twAML; // sglAssetId => twAMLPool
+    TWAMLPool public twAML; // epoch => twAMLPool, Real twAML
+    // TODO check for potential overflows
+    mapping(uint256 epoch => TWAMLExitPool twAML) public twAMLExit; // epoch => TWAMLExitPool, pre computed exists, applied to twAML on `advanceWeek()`
 
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
@@ -312,6 +322,7 @@ contract TwTAP is
         bool divergenceForce;
         bool hasVotingPower = _amount >=
             computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
+
         if (hasVotingPower) {
             pool.totalParticipants++; // Save participation
             pool.averageMagnitude =
@@ -380,6 +391,27 @@ contract TwTAP is
         weekTotals[w0 + 1].netActiveVotes += int256(votes);
         weekTotals[w1 + 1].netActiveVotes -= int256(votes);
 
+        // Exit only if voting power is enough
+        if (hasVotingPower) {
+            // Prepare position exit
+            TWAMLExitPool memory exitPoolEffect = _computeTwAmlExit(
+                participants[tokenId]
+            );
+            uint256 exitWeek = _timestampToWeek(_duration + block.timestamp);
+            TWAMLExitPool memory cachedExitWeek = twAMLExit[exitWeek];
+
+            // Exit position
+            twAMLExit[exitWeek] = TWAMLExitPool({
+                totalParticipants: cachedExitWeek.totalParticipants +
+                    exitPoolEffect.totalParticipants,
+                averageMagnitude: 0, // Not computed
+                totalDeposited: cachedExitWeek.totalDeposited +
+                    exitPoolEffect.totalDeposited,
+                cumulative: cachedExitWeek.cumulative +
+                    exitPoolEffect.cumulative
+            });
+        }
+
         emit Participate(_participant, _amount, multiplier);
         // TODO: Mint event?
     }
@@ -438,11 +470,27 @@ contract TwTAP is
 
     /// @notice Indicate that (a) week(s) have passed and update running totals
     /// @notice Reverts if called in week 0. Let it.
+    /// @dev The function ports the running totals from the previous week to the new one
+    /// @dev The function ports the twAML from the previous week to the new one, accounting for deltas
     /// @param _limit Maximum number of weeks to process in one call
     function advanceWeek(uint256 _limit) public nonReentrant whenNotPaused {
-        // TODO: Make whole function unchecked
+        // TODO: Make whole function unchecked?
         uint256 week = lastProcessedWeek;
         uint256 goal = currentWeek();
+
+        // Port twAML state from prev week to new one
+        TWAMLExitPool memory prevTwAMl = twAMLExit[goal];
+        TWAMLPool memory currentTwAMl = twAML;
+
+        // TODO check for overflows
+        currentTwAMl.totalParticipants -= uint256(-prevTwAMl.totalParticipants); // `totalParticipants` we negate it because it's always a negative number.
+        currentTwAMl.totalDeposited -= uint256(-prevTwAMl.totalDeposited); // `totalDeposited` is always negative.
+        currentTwAMl.cumulative -= uint256(-prevTwAMl.cumulative); // `cumulative` is always negative.
+
+        // AverageMagnitude is not ported, it's computed on the fly on `participate()`
+        twAML = currentTwAMl; // Update twAML
+
+        // Port totals
         unchecked {
             if (goal - week > _limit) {
                 goal = week + _limit;
@@ -578,6 +626,9 @@ contract TwTAP is
         }
     }
 
+    /**
+     * @notice Release the TAP position and transfer it to `_to`.
+     */
     function _releaseTap(
         uint256 _tokenId,
         address _to
@@ -589,43 +640,36 @@ contract TwTAP is
         }
 
         releasedAmount = position.tapAmount;
-
-        // Remove participation
-        if (position.hasVotingPower) {
-            TWAMLPool memory pool = twAML;
-            unchecked {
-                --pool.totalParticipants;
-            }
-
-            // Inverse of the participation. The participation entry tracks
-            // the average magnitude as it was at the time the participant
-            // entered. When going the other way around, this value matches the
-            // one in the pool, but here it does not.
-            if (position.divergenceForce) {
-                if (pool.cumulative > position.averageMagnitude) {
-                    pool.cumulative -= position.averageMagnitude;
-                } else {
-                    pool.cumulative = 0;
-                }
-            } else {
-                pool.cumulative += position.averageMagnitude;
-            }
-
-            // Save new weight
-            pool.totalDeposited -= position.tapAmount;
-
-            twAML = pool; // Save twAML exit
-            emit AMLDivergence(
-                pool.cumulative,
-                pool.averageMagnitude,
-                pool.totalParticipants
-            ); // Register new voting power event
-        }
-
         participants[_tokenId].tapReleased = true;
         tapOFT.transfer(_to, releasedAmount);
 
         emit ExitPosition(_tokenId, releasedAmount);
+    }
+
+    /**
+     * @notice Compute the inverse effect of a new participation to account for the exit after the lock expires.
+     */
+    function _computeTwAmlExit(
+        Participation memory position
+    ) internal returns (TWAMLExitPool memory pool) {
+        unchecked {
+            --pool.totalParticipants;
+        }
+
+        int256 positionAverageMagnitude = int256(position.averageMagnitude);
+
+        // Inverse of the participation. The participation entry tracks
+        // the average magnitude as it was at the time the participant
+        // entered. When going the other way around, this value matches the
+        // one in the pool, but here it does not.
+        if (position.divergenceForce) {
+            pool.cumulative -= positionAverageMagnitude;
+        } else {
+            pool.cumulative += positionAverageMagnitude;
+        }
+
+        // Save new weight
+        pool.totalDeposited -= int256(uint256(position.tapAmount));
     }
 
     /// @notice Checks if an element is in an array
@@ -644,6 +688,13 @@ contract TwTAP is
             }
         }
         return false;
+    }
+
+    /// @notice returns week for timestamp
+    function _timestampToWeek(
+        uint256 timestamp
+    ) internal view returns (uint256) {
+        return ((timestamp - creation) / EPOCH_DURATION);
     }
 
     /// @notice Returns the chain ID of the current network.
