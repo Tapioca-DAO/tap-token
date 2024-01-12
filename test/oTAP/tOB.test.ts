@@ -374,6 +374,7 @@ describe('TapiocaOptionBroker', () => {
         expect(await oTAP.exists(oTAPTknID)).to.be.false;
 
         // Check AML update
+        await tOB.newEpoch();
         const newPoolState = await tOB.twAML(sglTokenMockAsset);
 
         expect(newPoolState.totalParticipants).to.be.equal(
@@ -422,6 +423,7 @@ describe('TapiocaOptionBroker', () => {
         const _oTAPTknID = await oTAP.mintedOTAP();
         await oTAP.connect(user).approve(tOB.address, _oTAPTknID);
         await tOB.connect(user).exitPosition(_oTAPTknID);
+        await tOB.newEpoch();
 
         expect(await tOB.twAML(sglTokenMockAsset)).to.be.deep.equal(
             newPoolState,
@@ -1694,12 +1696,12 @@ describe('TapiocaOptionBroker', () => {
         // );
         // Just A Participate
         // console.log('Just A participation');
+        const prevPoolState = await tOB.twAML(sglTokenMockAsset);
         await tOLP.approve(tOB.address, tokenID.sub(1));
         await tOB.participate(tokenID.sub(1));
         const participationA = await tOB.participants(tokenID.sub(1));
         const oTAPTknID = await oTAP.mintedOTAP();
         await time.increase(lockDurationA);
-        const prevPoolState = await tOB.twAML(sglTokenMockAsset);
         // console.log('[B4] Just A Cumulative: ', await prevPoolState.cumulative);
         // console.log('[B4] Just A Average: ', participationA.averageMagnitude);
         await oTAP.approve(tOB.address, oTAPTknID);
@@ -1768,6 +1770,7 @@ describe('TapiocaOptionBroker', () => {
         await time.increase(lockDurationA / 2 + 1);
         await oTAP.approve(tOB.address, ATknID);
         await tOB.exitPosition(ATknID);
+        await tOB.newEpoch();
         const exitAPoolState = await tOB.twAML(sglTokenMockAsset);
         const ctime3 = new Date();
         // console.log();
@@ -1780,7 +1783,9 @@ describe('TapiocaOptionBroker', () => {
         //     await exitAPoolState.cumulative,
         // );
         // console.log('[A4] Just B Average: ', xparticipationB.averageMagnitude);
-        expect(exitAPoolState.cumulative).to.be.equal(353055);
+        expect(exitAPoolState.cumulative).to.be.equal(
+            await tOB.EPOCH_DURATION(),
+        ); // All participation are exited.Return to initiate state
 
         //TIme skip end B
         await time.increase(lockDurationB);
