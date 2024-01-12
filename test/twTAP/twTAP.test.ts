@@ -171,6 +171,7 @@ describe('twTAP', () => {
         expect(await tapOFT.balanceOf(twtap.address)).to.be.equal(0);
 
         // Check AML update
+        await twtap.advanceWeek(1); // Advance week to update AML
         const newPoolState = await twtap.twAML();
 
         expect(newPoolState.totalParticipants).to.be.equal(
@@ -199,6 +200,7 @@ describe('twTAP', () => {
 
         const _twTAPTokenID = await twtap.mintedTWTap();
         await twtap.exitPosition(_twTAPTokenID);
+        await twtap.advanceWeek(1); // Advance week to update AML
 
         expect(await twtap.twAML()).to.be.deep.equal(newPoolState); // No change in AML state
         expect((await twtap.twAML()).cumulative).to.be.equal(WEEK);

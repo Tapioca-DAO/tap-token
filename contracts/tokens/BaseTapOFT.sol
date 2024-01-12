@@ -159,7 +159,7 @@ abstract contract BaseTapOFT is OFTV2 {
 
         // We participate and mint with TapOFT as a receiver
         try
-            twTap.participate{gas: 310_000}(to, amount, duration) // Should consume 300_848 gas
+            twTap.participate{gas: 410_000}(to, amount, duration) // Should consume 300_848 gas
         {} catch Error(string memory _reason) {
             // If the process fails, we send back the funds to the user
             // We send back the funds to the user
