@@ -70,11 +70,11 @@ struct TWAMLPool {
     uint256 totalDeposited;
     uint256 cumulative;
 }
-// Should be same as TWAMLPool, but with int256 instead of uint256
+/// @dev Should be same as TWAMLPool, but with int256 instead of uint256 on `cumulative`
 struct TWAMLExitPool {
-    int256 totalParticipants;
-    int256 averageMagnitude;
-    int256 totalDeposited;
+    uint256 totalParticipants;
+    uint256 averageMagnitude;
+    uint256 totalDeposited;
     int256 cumulative;
 }
 
@@ -394,21 +394,20 @@ contract TwTAP is
         // Exit only if voting power is enough
         if (hasVotingPower) {
             // Prepare position exit
-            TWAMLExitPool memory exitPoolEffect = _computeTwAmlExit(
-                participants[tokenId]
-            );
             uint256 exitWeek = _timestampToWeek(_duration + block.timestamp);
             TWAMLExitPool memory cachedExitWeek = twAMLExit[exitWeek];
 
-            // Exit position
+            // Aggregate Exit position
             twAMLExit[exitWeek] = TWAMLExitPool({
-                totalParticipants: cachedExitWeek.totalParticipants +
-                    exitPoolEffect.totalParticipants,
+                totalParticipants: cachedExitWeek.totalParticipants + 1,
                 averageMagnitude: 0, // Not computed
-                totalDeposited: cachedExitWeek.totalDeposited +
-                    exitPoolEffect.totalDeposited,
+                totalDeposited: cachedExitWeek.totalDeposited + _amount,
                 cumulative: cachedExitWeek.cumulative +
-                    exitPoolEffect.cumulative
+                    (
+                        divergenceForce
+                            ? int256(pool.averageMagnitude)
+                            : -int256(pool.averageMagnitude)
+                    )
             });
         }
 
@@ -483,9 +482,13 @@ contract TwTAP is
         TWAMLPool memory currentTwAMl = twAML;
 
         // TODO check for overflows
-        currentTwAMl.totalParticipants -= uint256(-prevTwAMl.totalParticipants); // `totalParticipants` we negate it because it's always a negative number.
-        currentTwAMl.totalDeposited -= uint256(-prevTwAMl.totalDeposited); // `totalDeposited` is always negative.
-        currentTwAMl.cumulative -= uint256(-prevTwAMl.cumulative); // `cumulative` is always negative.
+        currentTwAMl.totalParticipants -= prevTwAMl.totalParticipants;
+        currentTwAMl.totalDeposited -= prevTwAMl.totalDeposited;
+        if (prevTwAMl.cumulative > 0) {
+            currentTwAMl.cumulative -= uint256(prevTwAMl.cumulative);
+        } else {
+            currentTwAMl.cumulative += uint256(-prevTwAMl.cumulative);
+        }
 
         // AverageMagnitude is not ported, it's computed on the fly on `participate()`
         twAML = currentTwAMl; // Update twAML
@@ -644,32 +647,6 @@ contract TwTAP is
         tapOFT.transfer(_to, releasedAmount);
 
         emit ExitPosition(_tokenId, releasedAmount);
-    }
-
-    /**
-     * @notice Compute the inverse effect of a new participation to account for the exit after the lock expires.
-     */
-    function _computeTwAmlExit(
-        Participation memory position
-    ) internal returns (TWAMLExitPool memory pool) {
-        unchecked {
-            --pool.totalParticipants;
-        }
-
-        int256 positionAverageMagnitude = int256(position.averageMagnitude);
-
-        // Inverse of the participation. The participation entry tracks
-        // the average magnitude as it was at the time the participant
-        // entered. When going the other way around, this value matches the
-        // one in the pool, but here it does not.
-        if (position.divergenceForce) {
-            pool.cumulative -= positionAverageMagnitude;
-        } else {
-            pool.cumulative += positionAverageMagnitude;
-        }
-
-        // Save new weight
-        pool.totalDeposited -= int256(uint256(position.tapAmount));
     }
 
     /// @notice Checks if an element is in an array
