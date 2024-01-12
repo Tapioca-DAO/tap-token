@@ -55,6 +55,14 @@ struct TWAMLPool {
     uint256 cumulative;
 }
 
+/// @dev Should be same as TWAMLPool, but with int256 instead of uint256 on `cumulative`
+struct TWAMLExitPool {
+    uint256 totalParticipants;
+    uint256 averageMagnitude;
+    uint256 totalDeposited;
+    int256 cumulative;
+}
+
 struct PaymentTokenOracle {
     IOracle oracle;
     bytes oracleData;
@@ -87,6 +95,9 @@ contract TapiocaOptionBroker is
 
     /// ===== TWAML ======
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
+    // TODO check for potential overflows
+    mapping(uint256 epoch => mapping(uint256 sglAssetId => TWAMLExitPool twAML))
+        public twAMLExit; // epoch => TWAMLExitPool, pre computed exists, applied to twAML on `advanceWeek()`
 
     uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, 10%
     uint256 constant dMAX = 500_000; // 50 * 1e4; 5% - 50% discount
@@ -136,6 +147,7 @@ contract TapiocaOptionBroker is
         EPOCH_DURATION = _epochDuration;
         owner = _owner;
         emissionsStartTime = block.timestamp;
+        // TODO seed cumulative?
     }
 
     // ==========
@@ -349,6 +361,30 @@ contract TapiocaOptionBroker is
             pool.averageMagnitude
         );
 
+        // Exit only if voting power is enough
+        if (hasVotingPower) {
+            // Prepare position exit
+            uint256 exitWeek = _timestampToWeek(
+                lock.lockDuration + block.timestamp
+            );
+            TWAMLExitPool memory cachedExitWeek = twAMLExit[exitWeek][
+                lock.sglAssetID
+            ];
+
+            // Aggregate Exit position
+            twAMLExit[exitWeek][lock.sglAssetID] = TWAMLExitPool({
+                totalParticipants: cachedExitWeek.totalParticipants + 1,
+                averageMagnitude: 0, // Not computed
+                totalDeposited: cachedExitWeek.totalDeposited + lock.ybShares,
+                cumulative: cachedExitWeek.cumulative +
+                    (
+                        divergenceForce
+                            ? int256(pool.averageMagnitude)
+                            : -int256(pool.averageMagnitude)
+                    )
+            });
+        }
+
         // Record amount for next epoch exercise
         netDepositedForEpoch[epoch + 1][lock.sglAssetID] += int256(
             uint256(lock.ybShares)
@@ -392,38 +428,6 @@ contract TapiocaOptionBroker is
         if (!isSGLInRescueMode) {
             if (block.timestamp < lock.lockTime + lock.lockDuration)
                 revert LockNotExpired();
-        }
-
-        Participation memory participation = participants[oTAPPosition.tOLP];
-
-        // Remove participation
-        // If the SGL is in rescue mode, bypass the voting power removal
-        if (!isSGLInRescueMode && participation.hasVotingPower) {
-            TWAMLPool memory pool = twAML[lock.sglAssetID];
-
-            if (participation.divergenceForce) {
-                if (pool.cumulative > participation.averageMagnitude) {
-                    pool.cumulative -= participation.averageMagnitude;
-                } else {
-                    pool.cumulative = 0;
-                }
-            } else {
-                pool.cumulative += participation.averageMagnitude;
-            }
-
-            pool.totalDeposited -= lock.ybShares;
-
-            unchecked {
-                --pool.totalParticipants;
-            }
-
-            twAML[lock.sglAssetID] = pool; // Save twAML exit
-            emit AMLDivergence(
-                epoch,
-                pool.cumulative,
-                pool.averageMagnitude,
-                pool.totalParticipants
-            ); // Register new voting power event
         }
 
         // Delete participation and burn oTAP position
@@ -511,7 +515,31 @@ contract TapiocaOptionBroker is
         uint256[] memory singularities = tOLP.getSingularities();
         if (singularities.length == 0) revert NoActiveSingularities();
 
+        // Increment the epoch
         epoch++;
+
+        // Compute TWAML exits
+        uint256 len = singularities.length;
+        uint256 cachedEpoch = epoch;
+        for (uint256 i; i < len; ) {
+            uint256 sglAssetID = singularities[i];
+            TWAMLExitPool memory exitDelta = twAMLExit[cachedEpoch][sglAssetID];
+            TWAMLPool memory currentTwAMl = twAML[sglAssetID];
+
+            currentTwAMl.totalParticipants -= exitDelta.totalParticipants;
+            currentTwAMl.totalDeposited -= exitDelta.totalDeposited;
+            if (exitDelta.cumulative > 0) {
+                currentTwAMl.cumulative -= uint256(exitDelta.cumulative);
+            } else {
+                currentTwAMl.cumulative += uint256(-exitDelta.cumulative);
+            }
+
+            twAML[sglAssetID] = currentTwAMl;
+
+            unchecked {
+                ++i;
+            }
+        }
 
         // Extract TAP + emit to gauges
         uint256 epochTAP = tapOFT.emitForWeek();
@@ -521,7 +549,7 @@ contract TapiocaOptionBroker is
         bool success;
         (success, epochTAPValuation) = tapOracle.get(tapOracleData);
         if (!success) revert Failed();
-        emit NewEpoch(epoch, epochTAP, epochTAPValuation);
+        emit NewEpoch(cachedEpoch, epochTAP, epochTAPValuation);
     }
 
     /// @notice Claim the Broker role of the oTAP contract.
