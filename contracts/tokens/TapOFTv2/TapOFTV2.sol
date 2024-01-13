@@ -13,9 +13,9 @@ import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 
 // Tapioca
+import {ERC20PermitStruct, ITapOFTv2, LZSendParam} from "./ITapOFTv2.sol";
 import {ModuleManager} from "./modules/ModuleManager.sol";
 import {TapOFTReceiver} from "./TapOFTReceiver.sol";
-import {ERC20PermitStruct, ITapOFTv2, LZSendParam} from "./ITapOFTv2.sol";
 import {TwTAP} from "../../governance/twTAP.sol";
 import {TapOFTSender} from "./TapOFTSender.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";

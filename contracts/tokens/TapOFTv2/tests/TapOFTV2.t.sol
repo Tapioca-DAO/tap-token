@@ -17,6 +17,7 @@ import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 
 // External
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Tapioca
@@ -26,7 +27,9 @@ import {
     UnlockTwTapPositionMsg,
     LZSendParam,
     ERC20PermitStruct,
+    ERC721PermitStruct,
     ERC20PermitApprovalMsg,
+    ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg
 } from "../ITapOFTv2.sol";
 import {TapOFTv2Helper} from "../extensions/TapOFTv2Helper.sol";
@@ -38,6 +41,7 @@ import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
 
 // Tapioca
 import {TapTestHelper} from "./TapTestHelper.t.sol";
+import {ERC721Mock} from "./ERC721Mock.sol";
 
 import "forge-std/Test.sol";
 
@@ -80,6 +84,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
     uint16 internal constant SEND = 1; // Send LZ message type
     uint16 internal constant PT_APPROVALS = 500;
+    uint16 internal constant PT_NFT_APPROVALS = 501;
     uint16 internal constant PT_LOCK_TWTAP = 870;
     uint16 internal constant PT_UNLOCK_TWTAP = 871;
     uint16 internal constant PT_CLAIM_REWARDS = 872;
@@ -97,6 +102,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     function setUp() public override {
         vm.deal(userA, 1000 ether);
         vm.deal(userB, 1000 ether);
+        vm.label(userA, "userA");
+        vm.label(userB, "userB");
 
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
@@ -241,6 +248,27 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         assertEq(aTapOFT.nonces(userA), 1);
     }
 
+    function test_erc721_permit() public {
+        ERC721Mock erc721Mock = new ERC721Mock("Mock","Mock");
+        vm.label(address(erc721Mock), "erc721Mock");
+        erc721Mock.mint(address(this), 1);
+
+        ERC721PermitStruct memory permit_ = ERC721PermitStruct({spender: userB, tokenId: 1, nonce: 0, deadline: 1 days});
+
+        bytes32 digest_ = erc721Mock.getTypedDataHash(permit_);
+        ERC721PermitApprovalMsg memory permitApproval_ =
+            __getERC721PermitData(permit_, digest_, address(erc721Mock), userAPKey);
+
+        erc721Mock.permit(
+            permit_.spender, permit_.tokenId, permit_.deadline, permitApproval_.v, permitApproval_.r, permitApproval_.s
+        );
+        assertEq(erc721Mock.getApproved(1), userB);
+        assertEq(erc721Mock.nonces(userA), 1);
+    }
+
+    /**
+     * ERC20 APPROVALS
+     */
     function test_tapOFT_erc20_approvals() public {
         address userC_ = vm.addr(0x3);
 
@@ -329,6 +357,106 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         assertEq(bTapOFT.allowance(userA, userB), 1e18);
         assertEq(bTapOFT.allowance(userA, userC_), 2e18);
         assertEq(bTapOFT.nonces(userA), 2);
+    }
+
+    /**
+     * ERC721 APPROVALS
+     */
+    function test_tapOFT_erc721_approvals() public {
+        address userC_ = vm.addr(0x3);
+        // Mint tokenId
+        {
+            deal(address(userA), address(this), 1e18);
+            deal(address(userB), address(this), 1e18);
+            vm.startPrank(userA);
+            bTapOFT.approve(address(twTap), 1e18);
+            twTap.participate(address(this), 1e18, 1 weeks);
+
+            vm.startPrank(userB);
+            bTapOFT.approve(address(twTap), 1e18);
+            twTap.participate(address(this), 1e18, 1 weeks);
+            vm.stopPrank();
+        }
+
+        ERC721PermitApprovalMsg memory permitApprovalB_;
+        ERC721PermitApprovalMsg memory permitApprovalC_;
+        bytes memory approvalsMsg_;
+
+        {
+            ERC721PermitStruct memory approvalUserB_ =
+                ERC721PermitStruct({spender: userB, tokenId: 1, nonce: 0, deadline: 1 days});
+            ERC721PermitStruct memory approvalUserC_ =
+                ERC721PermitStruct({spender: userC_, tokenId: 2, nonce: 0, deadline: 1 days});
+
+            permitApprovalB_ =
+                __getERC721PermitData(approvalUserB_, twTap.getTypedDataHash(approvalUserB_), address(twTap), userAPKey);
+
+            permitApprovalC_ =
+                __getERC721PermitData(approvalUserC_, twTap.getTypedDataHash(approvalUserC_), address(twTap), userAPKey);
+
+            ERC721PermitApprovalMsg[] memory approvals_ = new ERC721PermitApprovalMsg[](2);
+            approvals_[0] = permitApprovalB_;
+            approvals_[1] = permitApprovalC_;
+
+            approvalsMsg_ = tapOFTv2Helper.buildNftPermitApprovalMsg(approvals_);
+        }
+
+        (
+            SendParam memory sendParam_,
+            ,
+            bytes memory composeMsg_,
+            bytes memory oftMsgOptions_,
+            MessagingFee memory msgFee_,
+            LZSendParam memory lzSendParam_
+        ) = _prepareLzCall(
+            aTapOFT,
+            PrepareLzCallData({
+                dstEid: bEid,
+                recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                amountToSendLD: 0,
+                minAmountToCreditLD: 0,
+                msgType: PT_NFT_APPROVALS,
+                composeMsgData: ComposeMsgData({
+                    index: 0,
+                    gas: 1_000_000,
+                    value: 0,
+                    data: approvalsMsg_,
+                    prevData: bytes(""),
+                    prevOptionsData: bytes("")
+                }),
+                lzReceiveGas: 1_000_000,
+                lzReceiveValue: 0
+            })
+        );
+
+        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
+            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+
+        verifyPackets(uint32(bEid), address(bTapOFT));
+
+        vm.expectEmit(true, true, true, false);
+        emit IERC721.Approval(userA, userB, 1);
+
+        vm.expectEmit(true, true, true, false);
+        emit IERC721.Approval(userB, userC_, 2);
+
+        __callLzCompose(
+            LzOFTComposedData(
+                PT_NFT_APPROVALS,
+                msgReceipt_.guid,
+                composeMsg_,
+                bEid,
+                address(bTapOFT), // Compose creator (at lzReceive)
+                address(bTapOFT), // Compose receiver (at lzCompose)
+                address(this),
+                oftMsgOptions_
+            )
+        );
+
+        assertEq(twTap.getApproved(1), userB);
+        assertEq(twTap.getApproved(2), userC_);
+        assertEq(twTap.nonces(userA), 1);
+        assertEq(twTap.nonces(userB), 1);
     }
 
     /**
@@ -827,8 +955,11 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
     /**
      * @dev Integration test with both ERC20Permit and lockTwTapPosition
+     * @dev `userA` should be the sender
      */
     function test_multi_compose() public {
+        vm.startPrank(userA);
+
         // Global vars
         uint256 amountToSendLD = 1 ether;
         uint96 lockDuration = 1 weeks;
@@ -850,7 +981,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             ERC20PermitApprovalMsg memory permitApproval_;
             bytes memory approvalsMsg_;
 
-            ERC20PermitStruct memory approvalUserB_ = ERC20PermitStruct({
+            ERC20PermitStruct memory bTapOftApproval_ = ERC20PermitStruct({
                 owner: userA,
                 spender: address(bTapOFT),
                 value: amountToSendLD,
@@ -859,7 +990,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             });
 
             permitApproval_ = __getERC20PermitData(
-                approvalUserB_, bTapOFT.getTypedDataHash(approvalUserB_), address(bTapOFT), userAPKey
+                bTapOftApproval_, bTapOFT.getTypedDataHash(bTapOftApproval_), address(bTapOFT), userAPKey
             );
 
             ERC20PermitApprovalMsg[] memory approvals_ = new ERC20PermitApprovalMsg[](1);
@@ -871,7 +1002,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                 aTapOFT,
                 PrepareLzCallData({
                     dstEid: bEid,
-                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                    recipient: OFTMsgCodec.addressToBytes32(userA),
                     amountToSendLD: 0,
                     minAmountToCreditLD: 0,
                     msgType: PT_APPROVALS,
@@ -890,7 +1021,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         }
         // Second packet setup, we add first packet into the composed call
         LockTwTapPositionMsg memory lockTwTapPositionMsg_ =
-            LockTwTapPositionMsg({user: address(this), duration: lockDuration, amount: amountToSendLD});
+            LockTwTapPositionMsg({user: userA, duration: lockDuration, amount: amountToSendLD});
         {
             bytes memory lockPosition_ = TapOFTMsgCoder.buildLockTwTapPositionMsg(lockTwTapPositionMsg_);
 
@@ -899,7 +1030,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                 aTapOFT,
                 PrepareLzCallData({
                     dstEid: bEid,
-                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                    recipient: OFTMsgCodec.addressToBytes32(userA),
                     amountToSendLD: amountToSendLD,
                     minAmountToCreditLD: amountToSendLD,
                     msgType: PT_LOCK_TWTAP,
@@ -917,7 +1048,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             );
 
             // Mint necessary tokens
-            deal(address(aTapOFT), address(this), amountToSendLD);
+            deal(address(aTapOFT), userA, amountToSendLD);
         }
 
         // Send packets
@@ -935,7 +1066,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     bEid,
                     address(bTapOFT), // Compose creator (at lzReceive).
                     address(bTapOFT), // Compose receiver (at lzCompose).
-                    address(this),
+                    userA,
                     lzSendPacketOptions_ // All of the options aggregated options.
                 )
             );
@@ -958,7 +1089,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     bEid,
                     address(bTapOFT), // Compose creator (at lzReceive).
                     address(bTapOFT), // Compose receiver (at lzCompose).
-                    address(this),
+                    userA,
                     lockTwTapOftMsgOptions_ // All of the options, except the previous ones.
                 )
             );
@@ -966,7 +1097,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
         {
             Participation memory participation = twTap.getParticipation(1);
-            assertEq(twTap.ownerOf(1), address(this));
+            assertEq(twTap.ownerOf(1), userA);
             assertEq(participation.tapAmount, amountToSendLD);
             assertEq(participation.expiry, block.timestamp + lockDuration);
         }

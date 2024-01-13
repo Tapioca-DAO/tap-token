@@ -13,6 +13,7 @@ import {
     ITapOFTv2,
     LockTwTapPositionMsg,
     ERC20PermitApprovalMsg,
+    ERC721PermitApprovalMsg,
     UnlockTwTapPositionMsg,
     LZSendParam,
     ClaimTwTapRewardsMsg
@@ -72,7 +73,7 @@ contract TapOFTv2Helper {
     }
 
     /**
-     * @notice Encode the message for the ercPermitApproval() operation.
+     * @notice Encode the message for the _erc20PermitApprovalReceiver() operation.
      * @param _erc20PermitApprovalMsg The ERC20 permit approval messages.
      */
     function buildPermitApprovalMsg(ERC20PermitApprovalMsg[] calldata _erc20PermitApprovalMsg)
@@ -83,6 +84,24 @@ contract TapOFTv2Helper {
         uint256 approvalsLength = _erc20PermitApprovalMsg.length;
         for (uint256 i; i < approvalsLength;) {
             msg_ = abi.encodePacked(msg_, TapOFTMsgCoder.buildERC20PermitApprovalMsg(_erc20PermitApprovalMsg[i]));
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /**
+     * @notice Encode the message for the _erc721PermitApprovalReceiver() operation.
+     * @param _erc721PermitApprovalMsg The ERC721 permit approval messages.
+     */
+    function buildNftPermitApprovalMsg(ERC721PermitApprovalMsg[] calldata _erc721PermitApprovalMsg)
+        public
+        pure
+        returns (bytes memory msg_)
+    {
+        uint256 approvalsLength = _erc721PermitApprovalMsg.length;
+        for (uint256 i; i < approvalsLength;) {
+            msg_ = abi.encodePacked(msg_, TapOFTMsgCoder.buildERC721PermitApprovalMsg(_erc721PermitApprovalMsg[i]));
             unchecked {
                 ++i;
             }
