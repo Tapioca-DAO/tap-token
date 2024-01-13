@@ -41,9 +41,12 @@ contract BaseTapOFTv2 is OFT {
     using OFTMsgCodec for bytes32;
 
     uint16 internal constant PT_APPROVALS = 500; // Use for ERC20Permit approvals
+    uint16 internal constant PT_NFT_APPROVALS = 501; // Use for ERC721Permit approvals
+
     uint16 internal constant PT_LOCK_TWTAP = 870;
     uint16 internal constant PT_UNLOCK_TWTAP = 871;
     uint16 internal constant PT_CLAIM_REWARDS = 872;
+
     uint16 internal constant PT_REMOTE_TRANSFER = 700; // Use for transferring tokens from the contract from another chain
 
     /// @dev Can't be set as constructor params because TwTAP is deployed after TapOFTv2. TwTAP constructor needs TapOFT as param.

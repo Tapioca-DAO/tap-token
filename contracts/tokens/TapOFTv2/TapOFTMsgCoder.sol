@@ -13,6 +13,7 @@ import {
     LockTwTapPositionMsg,
     UnlockTwTapPositionMsg,
     ERC20PermitApprovalMsg,
+    ERC721PermitApprovalMsg,
     LZSendParam,
     ClaimTwTapRewardsMsg
 } from "./ITapOFTv2.sol";
@@ -428,7 +429,7 @@ library TapOFTMsgCoder {
     }
 
     /**
-     * @notice Encodes the message for the `TapOFTReceiver.erc20PermitApprovalReceiver()` operation.
+     * @notice Encodes the message for the `TapOFTReceiver._erc20PermitApprovalReceiver()` operation.
      */
     function buildERC20PermitApprovalMsg(ERC20PermitApprovalMsg memory _erc20PermitApprovalMsg)
         internal
@@ -444,6 +445,25 @@ library TapOFTMsgCoder {
             _erc20PermitApprovalMsg.v,
             _erc20PermitApprovalMsg.r,
             _erc20PermitApprovalMsg.s
+        );
+    }
+
+    /**
+     * @notice Encodes the message for the `TapOFTReceiver._erc721PermitApprovalReceiver()` operation.
+     */
+    function buildERC721PermitApprovalMsg(ERC721PermitApprovalMsg memory _erc721PermitApprovalMsg)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodePacked(
+            _erc721PermitApprovalMsg.token,
+            _erc721PermitApprovalMsg.spender,
+            _erc721PermitApprovalMsg.tokenId,
+            _erc721PermitApprovalMsg.deadline,
+            _erc721PermitApprovalMsg.v,
+            _erc721PermitApprovalMsg.r,
+            _erc721PermitApprovalMsg.s
         );
     }
 

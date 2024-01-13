@@ -2,7 +2,9 @@
 pragma solidity 0.8.22;
 
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
-import {ITapOFTv2, LockTwTapPositionMsg, ERC20PermitApprovalMsg} from "../ITapOFTv2.sol";
+
+import {ERC20PermitApprovalMsg, ERC721PermitApprovalMsg} from "../ITapOFTv2.sol";
+import {ERC721Permit} from "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -34,6 +36,27 @@ contract TapOFTExtExec {
                 _approvals[i].owner,
                 _approvals[i].spender,
                 _approvals[i].value,
+                _approvals[i].deadline,
+                _approvals[i].v,
+                _approvals[i].r,
+                _approvals[i].s
+            );
+            unchecked {
+                ++i;
+            }
+        }
+    }
+    /**
+     * @notice Executes an ERC721 permit approval.
+     * @param _approvals The ERC721 permit approval messages.
+     */
+
+    function erc721PermitApproval(ERC721PermitApprovalMsg[] calldata _approvals) public {
+        uint256 approvalsLength = _approvals.length;
+        for (uint256 i = 0; i < approvalsLength;) {
+            ERC721Permit(_approvals[i].token).permit(
+                _approvals[i].spender,
+                _approvals[i].tokenId,
                 _approvals[i].deadline,
                 _approvals[i].v,
                 _approvals[i].r,

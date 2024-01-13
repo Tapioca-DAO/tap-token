@@ -47,17 +47,6 @@ struct LZSendParam {
 /// ========= EXTERNAL ==========
 /// =============================
 
-/**
- * Structure of an ERC20 permit message.
- */
-struct ERC20PermitStruct {
-    address owner;
-    address spender;
-    uint256 value;
-    uint256 nonce;
-    uint256 deadline;
-}
-
 /// ================================
 /// ========= TAP COMPOSE ==========
 /// ================================
@@ -94,6 +83,17 @@ struct ClaimTwTapRewardsMsg {
 }
 
 /**
+ * Structure of an ERC20 permit message.
+ */
+struct ERC20PermitStruct {
+    address owner;
+    address spender;
+    uint256 value;
+    uint256 nonce;
+    uint256 deadline;
+}
+
+/**
  * @notice Encodes the message for the ercPermitApproval() operation.
  */
 struct ERC20PermitApprovalMsg {
@@ -101,6 +101,29 @@ struct ERC20PermitApprovalMsg {
     address owner;
     address spender;
     uint256 value;
+    uint256 deadline;
+    uint8 v;
+    bytes32 r;
+    bytes32 s;
+}
+
+/**
+ * Structure of an ERC721 permit message.
+ */
+struct ERC721PermitStruct {
+    address spender;
+    uint256 tokenId;
+    uint256 nonce;
+    uint256 deadline;
+}
+
+/**
+ * @notice Encodes the message for the ercPermitApproval() operation.
+ */
+struct ERC721PermitApprovalMsg {
+    address token;
+    address spender;
+    uint256 tokenId;
     uint256 deadline;
     uint8 v;
     bytes32 r;

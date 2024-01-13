@@ -154,6 +154,8 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
 
         if (msgType_ == PT_APPROVALS) {
             _erc20PermitApprovalReceiver(tapComposeMsg_);
+        } else if (msgType_ == PT_NFT_APPROVALS) {
+            _erc721PermitApprovalReceiver(tapComposeMsg_);
         } else if (msgType_ == PT_LOCK_TWTAP) {
             _lockTwTapPositionReceiver(tapComposeMsg_);
         } else if (msgType_ == PT_UNLOCK_TWTAP) {
@@ -315,7 +317,7 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
 
     /**
      * @notice Approves tokens via permit.
-     * @param _data The call data containing info about the approvals. See `TapOFTSender.buildPermitApprovalMsg()`.
+     * @param _data The call data containing info about the approvals.
      *      - token::address: Address of the token to approve.
      *      - owner::address: Address of the owner of the tokens.
      *      - spender::address: Address of the spender.
@@ -326,6 +328,23 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
      *      - s::bytes32: s value of the signature.
      */
     function _erc20PermitApprovalReceiver(bytes memory _data) internal virtual {
+        ERC20PermitApprovalMsg[] memory approvals = TapOFTMsgCoder.decodeArrayOfERC20PermitApprovalMsg(_data);
+
+        tapOFTExtExec.erc20PermitApproval(approvals);
+    }
+
+    /**
+     * @notice Approves NFT tokens via permit.
+     * @param _data The call data containing info about the approvals.
+     *      - token::address: Address of the token to approve.
+     *      - spender::address: Address of the spender.
+     *      - tokenId::uint256: TokenId of the token to approve.
+     *      - deadline::uint256: Deadline for the approval.
+     *      - v::uint8: v value of the signature.
+     *      - r::bytes32: r value of the signature.
+     *      - s::bytes32: s value of the signature.
+     */
+    function _erc721PermitApprovalReceiver(bytes memory _data) internal virtual {
         ERC20PermitApprovalMsg[] memory approvals = TapOFTMsgCoder.decodeArrayOfERC20PermitApprovalMsg(_data);
 
         tapOFTExtExec.erc20PermitApproval(approvals);
