@@ -12,6 +12,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // Tapioca
 import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol";
 import {ERC721Permit} from "tapioca-sdk/dist/contracts/util/ERC4494.sol"; // TODO audit
+import {ERC721PermitStruct} from "../tokens/TapOFTv2/ITapOFTv2.sol";
 import {TapOFTV2} from "../tokens/TapOFTv2/TapOFTV2.sol";
 import {TWAML} from "../twAML.sol";
 
@@ -83,14 +84,7 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TwTAP is
-    TWAML,
-    ERC721,
-    ERC721Permit,
-    BoringOwnable,
-    ReentrancyGuard,
-    Pausable
-{
+contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
     TapOFTV2 public immutable tapOFT;
@@ -132,11 +126,7 @@ contract TwTAP is
     uint256 public lastProcessedWeek;
     mapping(uint256 => WeekTotals) public weekTotals;
 
-    event LogMaxRewardsLength(
-        uint256 indexed _oldLength,
-        uint256 indexed _newLength,
-        uint256 indexed _currentLength
-    );
+    event LogMaxRewardsLength(uint256 indexed _oldLength, uint256 indexed _newLength, uint256 indexed _currentLength);
 
     error NotAuthorized();
     error AdvanceWeekFirst();
@@ -149,10 +139,10 @@ contract TwTAP is
     error LockNotAWeek();
 
     /// =====-------======
-    constructor(
-        address payable _tapOFT,
-        address _owner
-    ) ERC721("Time Weighted TAP", "twTAP") ERC721Permit("Time Weighted TAP") {
+    constructor(address payable _tapOFT, address _owner)
+        ERC721("Time Weighted TAP", "twTAP")
+        ERC721Permit("Time Weighted TAP")
+    {
         tapOFT = TapOFTV2(_tapOFT);
         owner = _owner;
         creation = block.timestamp;
@@ -168,15 +158,9 @@ contract TwTAP is
     // ==========
     //   EVENTS
     // ==========
-    event Participate(
-        address indexed participant,
-        uint256 indexed tapAmount,
-        uint256 indexed multiplier
-    );
+    event Participate(address indexed participant, uint256 indexed tapAmount, uint256 indexed multiplier);
     event AMLDivergence(
-        uint256 indexed cumulative,
-        uint256 indexed averageMagnitude,
-        uint256 indexed totalParticipants
+        uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 indexed totalParticipants
     );
     event ExitPosition(uint256 indexed tokenId, uint256 indexed amount);
 
@@ -196,9 +180,7 @@ contract TwTAP is
     }
 
     /// @notice Return the participation of a token. Returns 0 votes for expired tokens.
-    function getParticipation(
-        uint _tokenId
-    ) external view returns (Participation memory participant) {
+    function getParticipation(uint256 _tokenId) external view returns (Participation memory participant) {
         participant = participants[_tokenId];
         if (participant.expiry <= block.timestamp) {
             participant.multiplier = 0;
@@ -212,9 +194,7 @@ contract TwTAP is
      * @dev Should be safe to claim even after position exit.
      * @return claimable amounts mapped by reward token
      */
-    function claimable(
-        uint256 _tokenId
-    ) public view returns (uint256[] memory) {
+    function claimable(uint256 _tokenId) public view returns (uint256[] memory) {
         uint256 len = rewardTokens.length;
         uint256[] memory result = new uint256[](len);
 
@@ -242,7 +222,7 @@ contract TwTAP is
         WeekTotals storage cur = weekTotals[week];
         WeekTotals storage prev = weekTotals[position.lastInactive];
 
-        for (uint256 i; i < len; ) {
+        for (uint256 i; i < len;) {
             // Math is safe (but we do the checks anyway):
             //
             // -- The `totalDistPerVote[i]` values are increasing as a
@@ -290,6 +270,21 @@ contract TwTAP is
         return result;
     }
 
+    /**
+     * @dev Returns the hash of the struct used by the permit function.
+     * @param _permitData Struct containing permit data.
+     */
+    function getTypedDataHash(ERC721PermitStruct calldata _permitData) public view returns (bytes32) {
+        bytes32 permitTypeHash_ = keccak256("Permit(address spender,uint256 tokenId,uint256 nonce,uint256 deadline)");
+
+        bytes32 structHash_ = keccak256(
+            abi.encode(
+                permitTypeHash_, _permitData.spender, _permitData.tokenId, _permitData.nonce, _permitData.deadline
+            )
+        );
+        return _hashTypedDataV4(structHash_);
+    }
+
     // ===========
     //    WRITE
     // ===========
@@ -298,11 +293,12 @@ contract TwTAP is
     /// @param _participant The address of the participant
     /// @param _amount The amount of TAP to participate with
     /// @param _duration The duration of the lock
-    function participate(
-        address _participant,
-        uint256 _amount,
-        uint256 _duration
-    ) external whenNotPaused nonReentrant returns (uint256 tokenId) {
+    function participate(address _participant, uint256 _amount, uint256 _duration)
+        external
+        whenNotPaused
+        nonReentrant
+        returns (uint256 tokenId)
+    {
         if (_duration < EPOCH_DURATION) revert LockNotAWeek();
 
         // Transfer TAP to this contract
@@ -314,22 +310,14 @@ contract TwTAP is
         uint256 magnitude = computeMagnitude(_duration, pool.cumulative);
         // Revert if the lock 4x the cumulative
         if (magnitude >= pool.cumulative * 4) revert NotValid();
-        uint256 multiplier = computeTarget(
-            dMIN,
-            dMAX,
-            magnitude,
-            pool.cumulative
-        );
+        uint256 multiplier = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Calculate twAML voting weight
         bool divergenceForce;
-        bool hasVotingPower = _amount >=
-            computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
+        bool hasVotingPower = _amount >= computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
         if (hasVotingPower) {
             pool.totalParticipants++; // Save participation
-            pool.averageMagnitude =
-                (pool.averageMagnitude + magnitude) /
-                pool.totalParticipants; // compute new average magnitude
+            pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
 
             // Compute and save new cumulative
             divergenceForce = _duration >= pool.cumulative;
@@ -349,11 +337,7 @@ contract TwTAP is
             pool.totalDeposited += _amount;
 
             twAML = pool; // Save twAML participation
-            emit AMLDivergence(
-                pool.cumulative,
-                pool.averageMagnitude,
-                pool.totalParticipants
-            );
+            emit AMLDivergence(pool.cumulative, pool.averageMagnitude, pool.totalParticipants);
         }
 
         // Mint twTAP position
@@ -406,10 +390,12 @@ contract TwTAP is
      *
      * @return amounts_ Claimed amount of each reward token.
      */
-    function claimRewards(
-        uint256 _tokenId,
-        address _to
-    ) external nonReentrant whenNotPaused returns (uint256[] memory amounts_) {
+    function claimRewards(uint256 _tokenId, address _to)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256[] memory amounts_)
+    {
         _requireClaimPermission(_to, _tokenId);
         amounts_ = _claimRewards(_tokenId, _to);
     }
@@ -422,10 +408,12 @@ contract TwTAP is
      *
      * @return tapAmount_ The amount of TAP released.
      */
-    function exitPosition(
-        uint256 _tokenId,
-        address _to
-    ) external nonReentrant whenNotPaused returns (uint256 tapAmount_) {
+    function exitPosition(uint256 _tokenId, address _to)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256 tapAmount_)
+    {
         {
             address owner_ = ownerOf(_tokenId);
             if (_to != owner_) {
@@ -453,7 +441,7 @@ contract TwTAP is
             WeekTotals storage next = weekTotals[++week];
             // TODO: Prove that math is safe
             next.netActiveVotes += prev.netActiveVotes;
-            for (uint256 i; i < len; ) {
+            for (uint256 i; i < len;) {
                 next.totalDistPerVote[i] += prev.totalDistPerVote[i];
                 unchecked {
                     ++i;
@@ -469,10 +457,7 @@ contract TwTAP is
     /// @notice Total rewards cannot exceed 2^128 tokens.
     /// @param _rewardTokenId index of the reward in `rewardTokens`
     /// @param _amount amount of reward token to distribute.
-    function distributeReward(
-        uint256 _rewardTokenId,
-        uint256 _amount
-    ) external nonReentrant {
+    function distributeReward(uint256 _rewardTokenId, uint256 _amount) external nonReentrant {
         if (lastProcessedWeek != currentWeek()) revert AdvanceWeekFirst();
         WeekTotals storage totals = weekTotals[lastProcessedWeek];
         IERC20 rewardToken = rewardTokens[_rewardTokenId];
@@ -482,9 +467,7 @@ contract TwTAP is
         // Cast is safe: `netActiveVotes` is at most zero by construction of
         // weekly totals and the requirement that they are up to date.
         // TODO: Word this better
-        totals.totalDistPerVote[_rewardTokenId] +=
-            (_amount * DIST_PRECISION) /
-            uint256(totals.netActiveVotes);
+        totals.totalDistPerVote[_rewardTokenId] += (_amount * DIST_PRECISION) / uint256(totals.netActiveVotes);
 
         if (_amount == 0) revert NotValid();
         rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
@@ -503,12 +486,11 @@ contract TwTAP is
      * @param _token The address of the reward token.
      */
     // TODO Check if it should be one type of token only? Like OFT?
-    function addRewardToken(
-        IERC20 _token
-    ) external onlyOwner returns (uint256) {
+    function addRewardToken(IERC20 _token) external onlyOwner returns (uint256) {
         if (rewardTokenIndex[_token] != 0) revert Registered();
-        if (rewardTokens.length + 1 > maxRewardTokens)
+        if (rewardTokens.length + 1 > maxRewardTokens) {
             revert TokenLimitReached();
+        }
         rewardTokens.push(_token);
 
         uint256 newTokenIndex = rewardTokens.length - 1;
@@ -523,16 +505,11 @@ contract TwTAP is
 
     // Mirrors the implementation of _isApprovedOrOwner, with the modification
     // that it is allowed if `_to` is the owner:
-    function _requireClaimPermission(
-        address _to,
-        uint256 _tokenId
-    ) internal view {
+    function _requireClaimPermission(address _to, uint256 _tokenId) internal view {
         address tokenOwner = ownerOf(_tokenId);
         if (
-            msg.sender != tokenOwner &&
-            _to != tokenOwner &&
-            !isApprovedForAll(tokenOwner, msg.sender) &&
-            getApproved(_tokenId) != msg.sender
+            msg.sender != tokenOwner && _to != tokenOwner && !isApprovedForAll(tokenOwner, msg.sender)
+                && getApproved(_tokenId) != msg.sender
         ) revert NotApproved(_tokenId, tokenOwner, msg.sender);
     }
 
@@ -540,10 +517,7 @@ contract TwTAP is
      * @dev Claim rewards on a token.
      * @return amounts_ Claimed amount of each reward token.
      */
-    function _claimRewards(
-        uint256 _tokenId,
-        address _to
-    ) internal returns (uint256[] memory amounts_) {
+    function _claimRewards(uint256 _tokenId, address _to) internal returns (uint256[] memory amounts_) {
         amounts_ = claimable(_tokenId);
         uint256 len = amounts_.length;
         unchecked {
@@ -566,10 +540,7 @@ contract TwTAP is
      * @param _tokenId tokenId whose locked TAP to claim
      * @param _to address to receive the TAP
      */
-    function _releaseTap(
-        uint256 _tokenId,
-        address _to
-    ) internal returns (uint256 releasedAmount) {
+    function _releaseTap(uint256 _tokenId, address _to) internal returns (uint256 releasedAmount) {
         Participation memory position = participants[_tokenId];
         if (position.expiry > block.timestamp) revert LockNotExpired();
         if (position.tapReleased) {
@@ -603,11 +574,7 @@ contract TwTAP is
             pool.totalDeposited -= position.tapAmount;
 
             twAML = pool; // Save twAML exit
-            emit AMLDivergence(
-                pool.cumulative,
-                pool.averageMagnitude,
-                pool.totalParticipants
-            ); // Register new voting power event
+            emit AMLDivergence(pool.cumulative, pool.averageMagnitude, pool.totalParticipants); // Register new voting power event
         }
 
         participants[_tokenId].tapReleased = true;
@@ -619,10 +586,7 @@ contract TwTAP is
     /// @notice Checks if an element is in an array
     /// @param _check The element to check
     /// @param _array The array to check in
-    function _existInArray(
-        address _check,
-        address[] memory _array
-    ) internal pure returns (bool) {
+    function _existInArray(address _check, address[] memory _array) internal pure returns (bool) {
         uint256 len = _array.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
@@ -643,9 +607,7 @@ contract TwTAP is
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ERC721) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }
