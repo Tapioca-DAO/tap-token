@@ -31,12 +31,12 @@ import {
 } from "../ITapOFTv2.sol";
 import {TapOFTv2Helper} from "../extensions/TapOFTv2Helper.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
-import {TwTAP} from "../../../governance/TwTAP.sol";
+import {TwTAP, Participation} from "../../../governance/TwTAP.sol";
 import {TapOFTReceiver} from "../TapOFTReceiver.sol";
 import {TapOFTSender} from "../TapOFTSender.sol";
 import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
 
-// Tapioca tests
+// Tapioca
 import {TapTestHelper} from "./TapTestHelper.t.sol";
 
 import "forge-std/Test.sol";
@@ -65,15 +65,15 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
      * DEPLOY setup addresses
      */
     TwTAP twTap;
-    address _endpoint;
-    address _contributors = address(0x30);
-    address _earlySupporters = address(0x31);
-    address _supporters = address(0x32);
-    address _lbp = address(0x33);
-    address _dao = address(0x34);
-    address _airdrop = address(0x35);
-    uint256 _governanceEid = bEid;
-    address _owner = address(this);
+    address __endpoint;
+    address __contributors = address(0x30);
+    address __earlySupporters = address(0x31);
+    address __supporters = address(0x32);
+    address __lbp = address(0x33);
+    address __dao = address(0x34);
+    address __airdrop = address(0x35);
+    uint256 __governanceEid = bEid;
+    address __owner = address(this);
     /**
      * DEPLOY setup addresses
      */
@@ -106,13 +106,13 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     type(TapOFTV2Mock).creationCode,
                     abi.encode(
                         address(endpoints[aEid]),
-                        _contributors,
-                        _earlySupporters,
-                        _supporters,
-                        _lbp,
-                        _dao,
-                        _airdrop,
-                        _governanceEid,
+                        __contributors,
+                        __earlySupporters,
+                        __supporters,
+                        __lbp,
+                        __dao,
+                        __airdrop,
+                        __governanceEid,
                         address(this),
                         address(
                             new TapOFTSender(
@@ -137,13 +137,13 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     type(TapOFTV2Mock).creationCode,
                     abi.encode(
                         address(endpoints[bEid]),
-                        _contributors,
-                        _earlySupporters,
-                        _supporters,
-                        _lbp,
-                        _dao,
-                        _airdrop,
-                        _governanceEid,
+                        __contributors,
+                        __earlySupporters,
+                        __supporters,
+                        __lbp,
+                        __dao,
+                        __airdrop,
+                        __governanceEid,
                         address(this),
                         address(
                             new TapOFTSender(
@@ -281,9 +281,9 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             bytes memory oftMsgOptions_,
             MessagingFee memory msgFee_,
             LZSendParam memory lzSendParam_
-        ) = __prepareLzCall(
+        ) = _prepareLzCall(
             aTapOFT,
-            PrepareLzCall({
+            PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
                 amountToSendLD: 0,
@@ -294,7 +294,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     gas: 1_000_000,
                     value: 0,
                     data: approvalsMsg_,
-                    prevData: bytes("")
+                    prevData: bytes(""),
+                    prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 1_000_000,
                 lzReceiveValue: 0
@@ -351,9 +352,9 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             bytes memory oftMsgOptions_,
             MessagingFee memory msgFee_,
             LZSendParam memory lzSendParam_
-        ) = __prepareLzCall(
+        ) = _prepareLzCall(
             aTapOFT,
-            PrepareLzCall({
+            PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
                 amountToSendLD: amountToSendLD,
@@ -364,7 +365,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     gas: 1_000_000,
                     value: 0,
                     data: lockPosition_,
-                    prevData: bytes("")
+                    prevData: bytes(""),
+                    prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 1_000_000,
                 lzReceiveValue: 0
@@ -439,9 +441,9 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             bytes memory oftMsgOptions_,
             MessagingFee memory msgFee_,
             LZSendParam memory lzSendParam_
-        ) = __prepareLzCall(
+        ) = _prepareLzCall(
             aTapOFT,
-            PrepareLzCall({
+            PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
                 amountToSendLD: 0,
@@ -452,7 +454,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     gas: 1_000_000,
                     value: 0,
                     data: unlockTwTapPositionMsg_,
-                    prevData: bytes("")
+                    prevData: bytes(""),
+                    prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 1_000_000,
                 lzReceiveValue: 0
@@ -500,15 +503,22 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             deal(address(bTapOFT), address(this), tokenAmount_);
 
             // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
-            (,,,, remoteMsgFee_, remoteLzSendParam_) = __prepareLzCall( // B->A data
+            (,,,, remoteMsgFee_, remoteLzSendParam_) = _prepareLzCall( // B->A data
                 bTapOFT,
-                PrepareLzCall({
+                PrepareLzCallData({
                     dstEid: aEid,
                     recipient: OFTMsgCodec.addressToBytes32(address(this)),
                     amountToSendLD: tokenAmount_,
                     minAmountToCreditLD: tokenAmount_,
                     msgType: SEND,
-                    composeMsgData: ComposeMsgData({index: 0, gas: 0, value: 0, data: bytes(""), prevData: bytes("")}),
+                    composeMsgData: ComposeMsgData({
+                        index: 0,
+                        gas: 0,
+                        value: 0,
+                        data: bytes(""),
+                        prevData: bytes(""),
+                        prevOptionsData: bytes("")
+                    }),
                     lzReceiveGas: 500_000,
                     lzReceiveValue: 0
                 })
@@ -528,9 +538,9 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             bytes memory oftMsgOptions_,
             MessagingFee memory msgFee_,
             LZSendParam memory lzSendParam_
-        ) = __prepareLzCall(
+        ) = _prepareLzCall(
             aTapOFT,
-            PrepareLzCall({
+            PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
                 amountToSendLD: 0,
@@ -541,7 +551,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     gas: 500_000,
                     value: uint128(remoteMsgFee_.nativeFee), // TODO Should we care about verifying cast boundaries?
                     data: remoteTransferMsg_,
-                    prevData: bytes("")
+                    prevData: bytes(""),
+                    prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 500_000,
                 lzReceiveValue: 0
@@ -668,29 +679,43 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
         {
             // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
-            (,,,, testData_.remoteMsgFee1, testData_.remoteLzSendParam1) = __prepareLzCall( // B->A data
+            (,,,, testData_.remoteMsgFee1, testData_.remoteLzSendParam1) = _prepareLzCall( // B->A data
                 testData_.erc20Mock1,
-                PrepareLzCall({
+                PrepareLzCallData({
                     dstEid: aEid,
                     recipient: OFTMsgCodec.addressToBytes32(address(this)),
                     amountToSendLD: testData_.tokenAmount1,
                     minAmountToCreditLD: testData_.tokenAmount1,
                     msgType: SEND,
-                    composeMsgData: ComposeMsgData({index: 0, gas: 0, value: 0, data: bytes(""), prevData: bytes("")}),
+                    composeMsgData: ComposeMsgData({
+                        index: 0,
+                        gas: 0,
+                        value: 0,
+                        data: bytes(""),
+                        prevData: bytes(""),
+                        prevOptionsData: bytes("")
+                    }),
                     lzReceiveGas: 500_000,
                     lzReceiveValue: 0
                 })
             );
             // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
-            (,,,, testData_.remoteMsgFee2, testData_.remoteLzSendParam2) = __prepareLzCall( // B->A data
+            (,,,, testData_.remoteMsgFee2, testData_.remoteLzSendParam2) = _prepareLzCall( // B->A data
                 testData_.erc20Mock2,
-                PrepareLzCall({
+                PrepareLzCallData({
                     dstEid: aEid,
                     recipient: OFTMsgCodec.addressToBytes32(address(this)),
                     amountToSendLD: testData_.tokenAmount2,
                     minAmountToCreditLD: testData_.tokenAmount2,
                     msgType: SEND,
-                    composeMsgData: ComposeMsgData({index: 0, gas: 0, value: 0, data: bytes(""), prevData: bytes("")}),
+                    composeMsgData: ComposeMsgData({
+                        index: 0,
+                        gas: 0,
+                        value: 0,
+                        data: bytes(""),
+                        prevData: bytes(""),
+                        prevOptionsData: bytes("")
+                    }),
                     lzReceiveGas: 500_000,
                     lzReceiveValue: 0
                 })
@@ -715,9 +740,9 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         MessagingFee memory msgFee_;
         LZSendParam memory lzSendParam_;
         {
-            (,, composeMsg_, oftMsgOptions_, msgFee_, lzSendParam_) = __prepareLzCall(
+            (,, composeMsg_, oftMsgOptions_, msgFee_, lzSendParam_) = _prepareLzCall(
                 aTapOFT,
-                PrepareLzCall({
+                PrepareLzCallData({
                     dstEid: bEid,
                     recipient: OFTMsgCodec.addressToBytes32(address(this)),
                     amountToSendLD: 0,
@@ -728,7 +753,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                         gas: 1_000_000,
                         value: uint128(testData_.remoteMsgFee1.nativeFee + testData_.remoteMsgFee2.nativeFee), // TODO Should we care about verifying cast boundaries?
                         data: claimTwTapRewardsMsg_,
-                        prevData: bytes("")
+                        prevData: bytes(""),
+                        prevOptionsData: bytes("")
                     }),
                     lzReceiveGas: 500_000,
                     lzReceiveValue: 0
@@ -800,6 +826,155 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     }
 
     /**
+     * @dev Integration test with both ERC20Permit and lockTwTapPosition
+     */
+    function test_multi_compose() public {
+        // Global vars
+        uint256 amountToSendLD = 1 ether;
+        uint96 lockDuration = 1 weeks;
+
+        // First packet vars
+        bytes memory permitComposeMsg_;
+        bytes memory permitOftMsgOptions_;
+
+        // Second packet vars
+        bytes memory lockTwTapComposeMsg_;
+        bytes memory lockTwTapOftMsgOptions_;
+
+        // SendPacket vars
+        LZSendParam memory lockTwTapLzSendParam_;
+        bytes memory lzSendPacketOptions_;
+
+        // First packet setup
+        {
+            ERC20PermitApprovalMsg memory permitApproval_;
+            bytes memory approvalsMsg_;
+
+            ERC20PermitStruct memory approvalUserB_ = ERC20PermitStruct({
+                owner: userA,
+                spender: address(bTapOFT),
+                value: amountToSendLD,
+                nonce: 0,
+                deadline: 1 days
+            });
+
+            permitApproval_ = __getERC20PermitData(
+                approvalUserB_, bTapOFT.getTypedDataHash(approvalUserB_), address(bTapOFT), userAPKey
+            );
+
+            ERC20PermitApprovalMsg[] memory approvals_ = new ERC20PermitApprovalMsg[](1);
+            approvals_[0] = permitApproval_;
+
+            approvalsMsg_ = tapOFTv2Helper.buildPermitApprovalMsg(approvals_);
+
+            (,, permitComposeMsg_, permitOftMsgOptions_,,) = _prepareLzCall(
+                aTapOFT,
+                PrepareLzCallData({
+                    dstEid: bEid,
+                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                    amountToSendLD: 0,
+                    minAmountToCreditLD: 0,
+                    msgType: PT_APPROVALS,
+                    composeMsgData: ComposeMsgData({
+                        index: 0,
+                        gas: 1_000_000,
+                        value: 0,
+                        data: approvalsMsg_,
+                        prevData: bytes(""),
+                        prevOptionsData: bytes("")
+                    }),
+                    lzReceiveGas: 1_000_000,
+                    lzReceiveValue: 0
+                })
+            );
+        }
+        // Second packet setup, we add first packet into the composed call
+        LockTwTapPositionMsg memory lockTwTapPositionMsg_ =
+            LockTwTapPositionMsg({user: address(this), duration: lockDuration, amount: amountToSendLD});
+        {
+            bytes memory lockPosition_ = TapOFTMsgCoder.buildLockTwTapPositionMsg(lockTwTapPositionMsg_);
+
+            (, lockTwTapOftMsgOptions_, lockTwTapComposeMsg_, lzSendPacketOptions_,, lockTwTapLzSendParam_) =
+            _prepareLzCall(
+                aTapOFT,
+                PrepareLzCallData({
+                    dstEid: bEid,
+                    recipient: OFTMsgCodec.addressToBytes32(address(this)),
+                    amountToSendLD: amountToSendLD,
+                    minAmountToCreditLD: amountToSendLD,
+                    msgType: PT_LOCK_TWTAP,
+                    composeMsgData: ComposeMsgData({
+                        index: 1,
+                        gas: 1_000_000,
+                        value: 0,
+                        data: lockPosition_,
+                        prevData: permitComposeMsg_,
+                        prevOptionsData: permitOftMsgOptions_
+                    }),
+                    lzReceiveGas: 1_000_000,
+                    lzReceiveValue: 0
+                })
+            );
+
+            // Mint necessary tokens
+            deal(address(aTapOFT), address(this), amountToSendLD);
+        }
+
+        // Send packets
+        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
+            aTapOFT.sendPacket{value: lockTwTapLzSendParam_.fee.nativeFee}(lockTwTapLzSendParam_, lzSendPacketOptions_);
+
+        console.log("lockTwTapComposeMsg_");
+        console.logBytes(lockTwTapComposeMsg_);
+        {
+            verifyPackets(uint32(bEid), address(bTapOFT));
+            // Verify first message (approval)
+            __callLzCompose(
+                LzOFTComposedData(
+                    PT_APPROVALS,
+                    msgReceipt_.guid,
+                    lockTwTapComposeMsg_,
+                    bEid,
+                    address(bTapOFT), // Compose creator (at lzReceive)
+                    address(bTapOFT), // Compose receiver (at lzCompose)
+                    address(this),
+                    lzSendPacketOptions_
+                )
+            );
+        }
+        // {
+        //     // Verify second msg (lock tw tap)
+        //     bytes memory secondMsg_;
+        //     {
+        //         (,,,, secondMsg_) = TapOFTMsgCoder.decodeTapComposeMsg(lockTwTapComposeMsg_);
+        //     }
+
+        //     vm.expectEmit(true, true, true, false);
+        //     emit ITapOFTv2.LockTwTapReceived(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.duration, amountToSendLD);
+
+        //     __callLzCompose(
+        //         LzOFTComposedData(
+        //             PT_LOCK_TWTAP,
+        //             msgReceipt_.guid,
+        //             secondMsg_,
+        //             bEid,
+        //             address(bTapOFT), // Compose creator (at lzReceive)
+        //             address(bTapOFT), // Compose receiver (at lzCompose)
+        //             address(this),
+        //             lockTwTapOftMsgOptions_
+        //         )
+        //     );
+        // }
+
+        {
+            Participation memory participation = twTap.getParticipation(1);
+            assertEq(twTap.ownerOf(1), address(this));
+            assertEq(participation.tapAmount, amountToSendLD);
+            assertEq(participation.expiry, block.timestamp + lockDuration);
+        }
+    }
+
+    /**
      * @dev Receiver for `TapOFTv2::PT_LOCK_TW_TAP` function.
      */
     function onERC721Received(
@@ -823,9 +998,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         uint128 value;
         bytes data;
         bytes prevData;
+        bytes prevOptionsData;
     }
 
-    struct PrepareLzCall {
+    struct PrepareLzCallData {
         uint32 dstEid;
         bytes32 recipient;
         uint256 amountToSendLD;
@@ -838,8 +1014,16 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
     /**
      * @dev Helper to prepare an LZ call.
+     *
+     * @return sendParam_ The send param to pass to `TapOFTv2.sendPacket()`. OFT Tx params.
+     * @return composeOptions_ The option of the composeMsg. Single option container.
+     * @return composeMsg_ The composed message.
+     * @return oftMsgOptions_ The options of the OFT msg. Aggregate previous options of `_prepareLzCallData.composeMsgData.prevOptionsData`.
+     * Also appends a `LzReceiveOption` if `lzReceiveGas` or `lzReceiveValue` is > 0.
+     * @return msgFee_ The fee of the OFT msg, this include the cost of the previous composed messages, with their options.
+     * @return lzSendParam_ The LZ send param to pass to `TapOFTv2.sendPacket()`. TapOFT/LZ Tx params.
      */
-    function __prepareLzCall(TapOFTV2Mock tapOFTToken, PrepareLzCall memory _prepareLzCall)
+    function _prepareLzCall(TapOFTV2Mock tapOFTToken, PrepareLzCallData memory _prepareLzCallData)
         internal
         view
         returns (
@@ -853,35 +1037,61 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     {
         // Prepare args call
         sendParam_ = SendParam({
-            dstEid: _prepareLzCall.dstEid,
-            to: _prepareLzCall.recipient,
-            amountToSendLD: _prepareLzCall.amountToSendLD,
-            minAmountToCreditLD: _prepareLzCall.minAmountToCreditLD
+            dstEid: _prepareLzCallData.dstEid,
+            to: _prepareLzCallData.recipient,
+            amountToSendLD: _prepareLzCallData.amountToSendLD,
+            minAmountToCreditLD: _prepareLzCallData.minAmountToCreditLD
         });
 
-        if (_prepareLzCall.composeMsgData.data.length != 0) {
+        // If compose call found, we get its compose options and message.
+        if (_prepareLzCallData.composeMsgData.data.length > 0) {
             composeOptions_ = OptionsBuilder.newOptions().addExecutorLzComposeOption(
-                _prepareLzCall.composeMsgData.index,
-                _prepareLzCall.composeMsgData.gas,
-                _prepareLzCall.composeMsgData.value
+                _prepareLzCallData.composeMsgData.index,
+                _prepareLzCallData.composeMsgData.gas,
+                _prepareLzCallData.composeMsgData.value
             );
 
+            // Build the composed message.
             (composeMsg_,) = tapOFTv2Helper.buildTapComposeMsgAndOptions(
                 tapOFTToken,
-                _prepareLzCall.composeMsgData.data,
-                _prepareLzCall.msgType,
-                _prepareLzCall.composeMsgData.index,
+                _prepareLzCallData.composeMsgData.data,
+                _prepareLzCallData.msgType,
+                _prepareLzCallData.composeMsgData.index,
                 sendParam_.dstEid,
                 composeOptions_,
-                _prepareLzCall.composeMsgData.prevData // Previous tapComposeMsg
+                _prepareLzCallData.composeMsgData.prevData // Previous tapComposeMsg.
             );
         }
 
-        oftMsgOptions_ = OptionsBuilder.addExecutorLzReceiveOption(
-            composeOptions_.length > 0 ? composeOptions_ : OptionsBuilder.newOptions(),
-            _prepareLzCall.lzReceiveGas,
-            _prepareLzCall.lzReceiveValue
-        );
+        // Append previous option container if any.
+        if (_prepareLzCallData.composeMsgData.prevOptionsData.length > 0) {
+            require(
+                _prepareLzCallData.composeMsgData.prevOptionsData.length > 0, "_prepareLzCall: invalid prevOptionsData"
+            );
+            oftMsgOptions_ = _prepareLzCallData.composeMsgData.prevOptionsData;
+        } else {
+            // Else create a new one.
+            oftMsgOptions_ = OptionsBuilder.newOptions();
+        }
+
+        // Start by appending the lzReceiveOption if lzReceiveGas or lzReceiveValue is > 0.
+        if (_prepareLzCallData.lzReceiveValue > 0 || _prepareLzCallData.lzReceiveGas > 0) {
+            oftMsgOptions_ = OptionsBuilder.addExecutorLzReceiveOption(
+                oftMsgOptions_, _prepareLzCallData.lzReceiveGas, _prepareLzCallData.lzReceiveValue
+            );
+        }
+
+        // Finally, append the new compose options if any.
+        if (composeOptions_.length > 0) {
+            // And append the same value passed to the `composeOptions`.
+            oftMsgOptions_ = OptionsBuilder.addExecutorLzComposeOption(
+                oftMsgOptions_,
+                _prepareLzCallData.composeMsgData.index,
+                _prepareLzCallData.composeMsgData.gas,
+                _prepareLzCallData.composeMsgData.value
+            );
+        }
+
         msgFee_ = tapOFTToken.quoteSendPacket(sendParam_, oftMsgOptions_, false, composeMsg_, "");
 
         lzSendParam_ = LZSendParam({
@@ -950,13 +1160,13 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     type(TapOFTV2Mock).creationCode,
                     abi.encode(
                         _endpoint,
-                        _contributors,
-                        _earlySupporters,
-                        _supporters,
-                        _lbp,
-                        _dao,
-                        _airdrop,
-                        _governanceEid,
+                        __contributors,
+                        __earlySupporters,
+                        __supporters,
+                        __lbp,
+                        __dao,
+                        __airdrop,
+                        __governanceEid,
                         address(this),
                         address(new TapOFTSender(_endpoint, address(this))),
                         address(new TapOFTReceiver(_endpoint, address(this)))

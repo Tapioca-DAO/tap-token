@@ -3,6 +3,7 @@
 pragma solidity ^0.8.22;
 
 // LZ
+import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
 import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 
@@ -19,6 +20,42 @@ import {
 import "forge-std/console.sol";
 
 library TapOFTMsgCoder {
+    /**
+     * @dev Option Builder offsets
+     *
+     * @dev !!!! The options are prepend by the `OptionBuilder.newOptions()` IF it's the first option.
+     *
+     * ------------------------------------------------------------- *
+     * Name            | type     | start | end                      *
+     * ------------------------------------------------------------- *
+     * NEW_OPTION      | uint16   | 0     | 2                        *
+     * ------------------------------------------------------------- *
+     *
+     * Single option structure, see `OptionsBuilder.addExecutorLzComposeOption`
+     * ------------------------------------------------------------- *
+     * Name            | type     | start | end  | comment           *
+     * ------------------------------------------------------------- *
+     * WORKER_ID       | uint8    | 2     | 3    |                   *
+     * ------------------------------------------------------------- *
+     * OPTION_LENGTH   | uint16   | 3     | 5    |                   *
+     * ------------------------------------------------------------- *
+     * OPTION_TYPE     | uint8    | 5     | 6    |                   *
+     * ------------------------------------------------------------- *
+     * INDEX           | uint16   | 6     | 8    |                   *
+     * ------------------------------------------------------------- *
+     * GAS             | uint128  | 8     | 24   |                   *
+     * ------------------------------------------------------------- *
+     * VALUE           | uint128  | 24    | 40   | Can be not packed *
+     * ------------------------------------------------------------- *
+     */
+    uint16 internal constant OP_BLDR_EXECUTOR_WORKER_ID_ = 1; // ExecutorOptions.WORKER_ID
+    uint16 internal constant OP_BLDR_WORKER_ID_OFFSETS = 2;
+    uint16 internal constant OP_BLDR_OPTION_LENGTH_OFFSET = 3;
+    uint16 internal constant OP_BLDR_OPTIONS_TYPE_OFFSET = 5;
+    uint16 internal constant OP_BLDR_INDEX_OFFSET = 6;
+    uint16 internal constant OP_BLDR_GAS_OFFSET = 8;
+    uint16 internal constant OP_BLDR_VALUE_OFFSET = 24;
+
     // LZ message offsets
     uint8 internal constant LZ_COMPOSE_SENDER = 32;
 
@@ -39,7 +76,7 @@ library TapOFTMsgCoder {
         pure
         returns (bytes memory)
     {
-        return abi.encodePacked(_msgType, uint16(_msg.length), _msgIndex, _msg, _tapComposedMsg);
+        return abi.encodePacked(_tapComposedMsg, _msgType, uint16(_msg.length), _msgIndex, _msg);
     }
 
     /**
@@ -95,6 +132,149 @@ library TapOFTMsgCoder {
      */
     function decodeIndexOfTapComposeMsg(bytes memory _msg) internal pure returns (uint16 msgIndex_) {
         return BytesLib.toUint16(BytesLib.slice(_msg, MSG_LENGTH_OFFSET, 2), 0);
+    }
+
+    /**
+     * @notice Decodes the next message of a TapOFTv2 composed message, if any.
+     * @param _msg The composed message for the send() operation.
+     * @return nextMsg_ The next composed message. If the message is not composed, it'll be empty.
+     */
+    function decodeNextMsgOfTapCompose(bytes memory _msg) internal pure returns (bytes memory nextMsg_) {
+        uint16 msgLength_ = BytesLib.toUint16(BytesLib.slice(_msg, MSG_TYPE_OFFSET, 2), 0);
+
+        uint256 tapComposeOffset_ = MSG_INDEX_OFFSET + msgLength_;
+        nextMsg_ = BytesLib.slice(_msg, tapComposeOffset_, _msg.length - (tapComposeOffset_));
+    }
+
+    /**
+     * @dev Decode LzCompose extra options message built by `OptionBuilder.addExecutorLzComposeOption()`.
+     * @dev !!! IMPORTANT !!! It only works for options built only by `OptionBuilder.addExecutorLzComposeOption()`.
+     *
+     * @dev !!!! The options are prepend by the `OptionBuilder.newOptions()` IF it's the first option.
+     * ------------------------------------------------------------- *
+     * Name            | type     | start | end                      *
+     * ------------------------------------------------------------- *
+     * NEW_OPTION      | uint16   | 0     | 2                        *
+     * ------------------------------------------------------------- *
+     *
+     * Single option structure, see `OptionsBuilder.addExecutorLzComposeOption`
+     * ------------------------------------------------------------- *
+     * Name            | type     | start | end  | comment           *
+     * ------------------------------------------------------------- *
+     * WORKER_ID       | uint8    | 2     | 3    |                   *
+     * ------------------------------------------------------------- *
+     * OPTION_LENGTH   | uint16   | 3     | 5    |                   *
+     * ------------------------------------------------------------- *
+     * OPTION_TYPE     | uint8    | 5     | 6    |                   *
+     * ------------------------------------------------------------- *
+     * INDEX           | uint16   | 6     | 8    |                   *
+     * ------------------------------------------------------------- *
+     * GAS             | uint128  | 8     | 24   |                   *
+     * ------------------------------------------------------------- *
+     * VALUE           | uint128  | 24    | 40   | Can be not packed *
+     * ------------------------------------------------------------- *
+     *
+     * @param _options The extra options to be sanitized.
+     */
+    function decodeExtraOptions(bytes memory _options)
+        internal
+        view
+        returns (
+            uint16 workerId_,
+            uint16 optionLength_,
+            uint16 optionType_,
+            uint16 index_,
+            uint128 gas_,
+            uint128 value_,
+            bytes memory nextMsg_
+        )
+    {
+        workerId_ = BytesLib.toUint8(BytesLib.slice(_options, OP_BLDR_WORKER_ID_OFFSETS, 1), 0);
+        console.log("workerId_", workerId_);
+        // If the workerId is not decoded correctly, it means option index != 0.
+        if (workerId_ != OP_BLDR_EXECUTOR_WORKER_ID_) {
+            // add the new options prefix
+            _options = abi.encodePacked(OptionsBuilder.newOptions(), _options);
+            workerId_ = OP_BLDR_EXECUTOR_WORKER_ID_;
+        }
+
+        /// @dev Option length is not the size of the actual `_options`, but the size of the option
+        /// starting from `OPTION_TYPE`.
+        optionLength_ = BytesLib.toUint16(BytesLib.slice(_options, OP_BLDR_OPTION_LENGTH_OFFSET, 2), 0);
+        console.log("optionLength_", optionLength_);
+        optionType_ = BytesLib.toUint8(BytesLib.slice(_options, OP_BLDR_OPTIONS_TYPE_OFFSET, 1), 0);
+        console.log("optionType_", optionType_);
+        index_ = BytesLib.toUint16(BytesLib.slice(_options, OP_BLDR_INDEX_OFFSET, 2), 0);
+        console.log("index_", index_);
+        gas_ = BytesLib.toUint128(BytesLib.slice(_options, OP_BLDR_GAS_OFFSET, 16), 0);
+        console.log("gas_", gas_);
+
+        /// @dev `value_` is not encoded if it's 0, check LZ `OptionBuilder.addExecutorLzComposeOption()`
+        /// and `ExecutorOptions.encodeLzComposeOption()` for more info.
+        /// 19 = OptionType (1) + Index (8) + Gas (16)
+        if (optionLength_ == 19) {
+            uint16 nextMsgOffset = OP_BLDR_VALUE_OFFSET; // 24
+            if (_options.length > nextMsgOffset) {
+                nextMsg_ = BytesLib.slice(_options, nextMsgOffset, _options.length - nextMsgOffset);
+            }
+        }
+        /// 35 = OptionType (1) + Index (8) + Gas (16) + Value (16)
+        if (optionLength_ == 35) {
+            value_ = BytesLib.toUint128(BytesLib.slice(_options, OP_BLDR_VALUE_OFFSET, 16), 0);
+
+            uint16 nextMsgOffset = OP_BLDR_VALUE_OFFSET + 16; // 24 + 16 = 40
+            if (_options.length > nextMsgOffset) {
+                nextMsg_ = BytesLib.slice(_options, nextMsgOffset, _options.length - nextMsgOffset);
+            }
+        }
+    }
+
+    /**
+     * @notice Decodes the length of extra options.
+     *  @dev Option length is not the size of the actual `_options`, but the size of the option
+     *  starting from `OPTION_TYPE`.
+     */
+    function decodeLengthOfExtraOptions(bytes memory _options) internal pure returns (uint16 length_) {
+        uint16 OP_BLDR_OPTION_LENGTH_OFFSET = 3;
+        length_ = BytesLib.toUint16(BytesLib.slice(_options, OP_BLDR_OPTION_LENGTH_OFFSET, 2), 0);
+    }
+
+    /**
+     * @notice Decodes the index of extra options.
+     */
+
+    function decodeIndexOfExtraOptions(bytes memory _options) internal pure returns (uint16 index_) {
+        uint16 INDEX_OFFSET = 6;
+        index_ = BytesLib.toUint16(BytesLib.slice(_options, INDEX_OFFSET, 2), 0);
+    }
+
+    /**
+     * @notice Decodes the next message of extra options, if any.
+     */
+    function decodeNextMsgOfExtraOptions(bytes memory _options) internal view returns (bytes memory nextMsg_) {
+        uint16 OP_BLDR_GAS_OFFSET = 8;
+        uint16 OP_BLDR_VALUE_OFFSET = 24;
+
+        uint16 optionLength_ = decodeLengthOfExtraOptions(_options);
+        console.log("optionLength_", optionLength_);
+
+        /// @dev Value can be omitted if it's 0.
+        /// check LZ `OptionBuilder.addExecutorLzComposeOption()` and `ExecutorOptions.encodeLzComposeOption()`
+        /// 19 = OptionType (1) + Index (8) + Gas (16)
+        if (optionLength_ == 19) {
+            uint16 nextMsgOffset = OP_BLDR_GAS_OFFSET + 16; // 8 + 16 = 24
+            console.log(nextMsgOffset);
+            if (_options.length > nextMsgOffset) {
+                nextMsg_ = BytesLib.slice(_options, nextMsgOffset, _options.length - nextMsgOffset);
+            }
+        }
+        /// 35 = OptionType (1) + Index (8) + Gas (16) + Value (16)
+        if (optionLength_ == 35) {
+            uint16 nextMsgOffset = OP_BLDR_VALUE_OFFSET + 16; // 24 + 16 = 40
+            if (_options.length > nextMsgOffset) {
+                nextMsg_ = BytesLib.slice(_options, nextMsgOffset, _options.length - nextMsgOffset);
+            }
+        }
     }
 
     /**

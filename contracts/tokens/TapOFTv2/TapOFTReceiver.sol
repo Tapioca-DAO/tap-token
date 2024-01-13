@@ -98,6 +98,8 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         uint256 amountReceivedLD = _credit(toAddress, amountToCreditLD, _origin.srcEid);
 
         if (_message.isComposed()) {
+            console.log("receive");
+            console.logBytes(_message.composeMsg());
             // @dev Stores the lzCompose payload that will be executed in a separate tx.
             // Standardizes functionality for executing arbitrary contract invocation on some non-evm chains.
             // @dev The off-chain executor will listen and process the msg based on the src-chain-callers compose options passed.

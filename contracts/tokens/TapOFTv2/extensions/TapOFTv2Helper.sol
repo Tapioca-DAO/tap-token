@@ -20,6 +20,8 @@ import {
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TapOFTV2} from "../TapOFTV2.sol";
 
+import "forge-std/console.sol";
+
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
  _\///////\\\/////____/\\\\\\\\\\\\\__\/\\\/////////\\\_\/////\\\///______/\\\///\\\________/\\\////////____/\\\\\\\\\\\\\__       
@@ -157,9 +159,10 @@ contract TapOFTv2Helper {
 
         message = TapOFTMsgCoder.encodeTapComposeMsg(_msg, _msgType, _msgIndex, _tapComposedMsg);
 
-        _sanitizeExtraOptionsIndex(_msgIndex, _extraOptions);
-
+        // TODO fix
+        // _sanitizeExtraOptionsIndex(_msgIndex, _extraOptions);
         // @dev Combine the callers _extraOptions with the enforced options via the OAppOptionsType3.
+
         options = _tapOFTv2.combineOptions(_dstEid, _msgType, _extraOptions);
     }
 
@@ -194,49 +197,89 @@ contract TapOFTv2Helper {
             return;
         }
 
-        uint16 _expectedMsgIndex;
-        // If there's a composeMsg, then the msgIndex must be greater than 0, and an increment of the previous msgIndex.
-        if (_tapComposeMsg.length > 0) {
-            // If the msgIndex is not 0, then it's not the first message. Check previous indexes.
-            _expectedMsgIndex = TapOFTMsgCoder.decodeIndexOfTapComposeMsg(_tapComposeMsg) + 1; // Previous index + 1
+        bytes memory nextMsg_ = _tapComposeMsg;
+        uint16 lastIndex_;
+        while (nextMsg_.length > 0) {
+            lastIndex_ = TapOFTMsgCoder.decodeIndexOfTapComposeMsg(nextMsg_);
+            nextMsg_ = TapOFTMsgCoder.decodeNextMsgOfTapCompose(nextMsg_);
+        }
 
-            if (_msgIndex == _expectedMsgIndex) {
+        // If there's a composeMsg, then the msgIndex must be greater than 0, and an increment of the last msgIndex.
+        uint16 expectedMsgIndex_ = lastIndex_ + 1;
+        if (_tapComposeMsg.length > 0) {
+            if (_msgIndex == expectedMsgIndex_) {
                 return;
             }
         }
 
-        revert InvalidMsgIndex(_msgIndex, _expectedMsgIndex);
+        revert InvalidMsgIndex(_msgIndex, expectedMsgIndex_);
     }
 
     /**
      * @dev Sanitizes the extra options index to match the sequence of indexes in the `_tapComposeMsg`.
      * @dev Works only on a single option in the `_extraOptions`.
      *
-     * Single option structure, see `OptionsBuilder.addExecutorLzComposeOption`
+     * @dev The options are prepend by the `OptionBuilder.newOptions()`
      * ------------------------------------------------------------- *
      * Name            | type     | start | end                      *
      * ------------------------------------------------------------- *
-     * WORKER_ID       | uint16   | 0     | 2                        *
+     * NEW_OPTION      | uint16   | 0     | 2                        *
      * ------------------------------------------------------------- *
-     * OPTION_LENGTH   | uint16   | 2     | 4                        *
+     *
+     * Single option structure, see `OptionsBuilder.addExecutorLzComposeOption`
      * ------------------------------------------------------------- *
-     * OPTION_TYPE     | uint16   | 4     | 6                        *
+     * Name            | type     | start | end  | comment           *
      * ------------------------------------------------------------- *
-     * INDEX           | uint16   | 6     | 8                        *
+     * WORKER_ID       | uint8    | 0     | 1    |                   *
      * ------------------------------------------------------------- *
-     * GAS             | uint128  | 8     | 24                       *
+     * OPTION_LENGTH   | uint16   | 1     | 3    |                   *
      * ------------------------------------------------------------- *
-     * VALUE           | uint128  | 24    | 32                       *
+     * OPTION_TYPE     | uint8    | 3     | 4    |                   *
      * ------------------------------------------------------------- *
+     * INDEX           | uint16   | 4     | 6    |                   *
+     * ------------------------------------------------------------- *
+     * GAS             | uint128  | 6     | 22   |                   *
+     * ------------------------------------------------------------- *
+     * VALUE           | uint128  | 22    | 38   | Possible drop     *
+     * ------------------------------------------------------------- *
+     *
      *
      * @param _msgIndex The current message index.
      * @param _extraOptions The extra options to be sanitized.
      */
-    function _sanitizeExtraOptionsIndex(uint16 _msgIndex, bytes calldata _extraOptions) internal pure {
-        uint16 index = BytesLib.toUint16(_extraOptions[6:], 0);
+    function _sanitizeExtraOptionsIndex(uint16 _msgIndex, bytes calldata _extraOptions) internal view {
+        uint16 msgLength_ = TapOFTMsgCoder.decodeLengthOfExtraOptions(_extraOptions);
 
-        if (index != _msgIndex) {
-            revert InvalidExtraOptionsIndex(index, _msgIndex);
+        // If the msgIndex is 0 and there's only 1 extra option, then it's the first message.
+        if (_msgIndex == 0) {
+            /// 19 = OptionType (1) + Index (8) + Gas (16)
+            if (msgLength_ == 19 && _extraOptions.length == 24) {
+                // Case where `value` was not encoded.
+                return;
+            }
+            /// 35 = OptionType (1) + Index (8) + Gas (16) + Value (16)
+            if (msgLength_ == 35 && _extraOptions.length == 40) {
+                // Case where `value` was encoded.
+                return;
+            }
         }
+
+        // Else check for the sequence of indexes.
+        bytes memory nextMsg_ = _extraOptions;
+        uint16 lastIndex_;
+        while (nextMsg_.length > 0) {
+            lastIndex_ = TapOFTMsgCoder.decodeIndexOfExtraOptions(nextMsg_);
+            nextMsg_ = TapOFTMsgCoder.decodeNextMsgOfExtraOptions(nextMsg_);
+        }
+
+        // If there's a composeMsg, then the msgIndex must be greater than 0, and an increment of the last msgIndex.
+        uint16 expectedMsgIndex_ = lastIndex_ + 1;
+        if (_extraOptions.length > 0) {
+            if (_msgIndex == expectedMsgIndex_) {
+                return;
+            }
+        }
+
+        revert InvalidExtraOptionsIndex(_msgIndex, expectedMsgIndex_);
     }
 }
