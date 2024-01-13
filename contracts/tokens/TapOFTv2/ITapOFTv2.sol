@@ -22,6 +22,8 @@ interface ITapOFTv2 {
         TapOFTSender,
         TapOFTReceiver
     }
+
+    function getTypedDataHash(ERC20PermitStruct calldata _permitData) external view returns (bytes32);
 }
 
 /// =======================
