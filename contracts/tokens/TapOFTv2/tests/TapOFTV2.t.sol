@@ -922,10 +922,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
         // Send packets
         (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
-            aTapOFT.sendPacket{value: lockTwTapLzSendParam_.fee.nativeFee}(lockTwTapLzSendParam_, lzSendPacketOptions_);
+            aTapOFT.sendPacket{value: lockTwTapLzSendParam_.fee.nativeFee}(lockTwTapLzSendParam_, lockTwTapComposeMsg_);
 
-        console.log("lockTwTapComposeMsg_");
-        console.logBytes(lockTwTapComposeMsg_);
         {
             verifyPackets(uint32(bEid), address(bTapOFT));
             // Verify first message (approval)
@@ -933,38 +931,38 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                 LzOFTComposedData(
                     PT_APPROVALS,
                     msgReceipt_.guid,
-                    lockTwTapComposeMsg_,
+                    lockTwTapComposeMsg_, // All of the composed messages.
                     bEid,
-                    address(bTapOFT), // Compose creator (at lzReceive)
-                    address(bTapOFT), // Compose receiver (at lzCompose)
+                    address(bTapOFT), // Compose creator (at lzReceive).
+                    address(bTapOFT), // Compose receiver (at lzCompose).
                     address(this),
-                    lzSendPacketOptions_
+                    lzSendPacketOptions_ // All of the options aggregated options.
                 )
             );
         }
-        // {
-        //     // Verify second msg (lock tw tap)
-        //     bytes memory secondMsg_;
-        //     {
-        //         (,,,, secondMsg_) = TapOFTMsgCoder.decodeTapComposeMsg(lockTwTapComposeMsg_);
-        //     }
+        {
+            // Verify second msg (lock tw tap)
+            bytes memory secondMsg_;
+            {
+                (,,,, secondMsg_) = TapOFTMsgCoder.decodeTapComposeMsg(lockTwTapComposeMsg_);
+            }
 
-        //     vm.expectEmit(true, true, true, false);
-        //     emit ITapOFTv2.LockTwTapReceived(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.duration, amountToSendLD);
+            vm.expectEmit(true, true, true, false);
+            emit ITapOFTv2.LockTwTapReceived(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.duration, amountToSendLD);
 
-        //     __callLzCompose(
-        //         LzOFTComposedData(
-        //             PT_LOCK_TWTAP,
-        //             msgReceipt_.guid,
-        //             secondMsg_,
-        //             bEid,
-        //             address(bTapOFT), // Compose creator (at lzReceive)
-        //             address(bTapOFT), // Compose receiver (at lzCompose)
-        //             address(this),
-        //             lockTwTapOftMsgOptions_
-        //         )
-        //     );
-        // }
+            __callLzCompose(
+                LzOFTComposedData(
+                    PT_LOCK_TWTAP,
+                    msgReceipt_.guid,
+                    secondMsg_, // All of the composed messages, except the previous ones.
+                    bEid,
+                    address(bTapOFT), // Compose creator (at lzReceive).
+                    address(bTapOFT), // Compose receiver (at lzCompose).
+                    address(this),
+                    lockTwTapOftMsgOptions_ // All of the options, except the previous ones.
+                )
+            );
+        }
 
         {
             Participation memory participation = twTap.getParticipation(1);
