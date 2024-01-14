@@ -89,7 +89,6 @@ struct LockTwTapPositionMsg {
 }
 
 /**
- * @dev Used in TapOFTv2Helper.
  * @param user The user address to unlock the tokens.
  * @param tokenId The tokenId of the TwTap position to unlock.
  */
@@ -99,13 +98,21 @@ struct UnlockTwTapPositionMsg {
 }
 
 /**
- * @dev Used in TapOFTv2Helper.
  * @param tokenId The tokenId of the TwTap position to claim rewards from.
  * @param sendParam The parameter for the send operation.
  */
 struct ClaimTwTapRewardsMsg {
     uint256 tokenId;
     LZSendParam[] sendParam;
+}
+
+/**
+ * @dev Used in TapOFTv2Helper.
+ */
+struct RemoteTransferMsg {
+    address owner;
+    LZSendParam lzSendParam;
+    bytes composeMsg;
 }
 
 /**

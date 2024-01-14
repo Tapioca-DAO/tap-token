@@ -2,6 +2,10 @@
 pragma solidity 0.8.22;
 
 // LZ
+import {
+    MessagingReceipt, OFTReceipt, SendParam
+} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import {IOAppMsgInspector} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppMsgInspector.sol";
 import {IOAppComposer} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppComposer.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
@@ -16,7 +20,8 @@ import {
     ERC20PermitApprovalMsg,
     UnlockTwTapPositionMsg,
     LZSendParam,
-    ClaimTwTapRewardsMsg
+    ClaimTwTapRewardsMsg,
+    RemoteTransferMsg
 } from "./ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
@@ -51,7 +56,6 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
      */
     error InvalidComposer(address composer);
     error InvalidCaller(address caller); // Should be the endpoint address
-    error InsufficientAllowance(address owner, uint256 amount); // See `this.__internalTransferWithAllowance()`
     // See `this._claimTwpTapRewardsReceiver()`. Triggered if the length of the claimed rewards are not equal to the length of the lzSendParam array.
     error InvalidSendParamLength(uint256 expectedLength, uint256 actualLength);
 
@@ -62,7 +66,7 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
     event LockTwTapReceived(address indexed user, uint96 duration, uint256 amount);
     /// @dev twTAP unlock operation received.
     event UnlockTwTapReceived(address indexed user, uint256 tokenId, uint256 amount);
-    event RemoteTransferReceived(uint256 indexed dstEid, address indexed to, uint256 amount);
+    event RemoteTransferReceived(address indexed owner, uint256 indexed dstEid, address indexed to, uint256 amount);
     event ClaimRewardReceived(address indexed token, address indexed to, uint256 amount);
 
     /**
@@ -146,7 +150,7 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         }
 
         // Decode LZ compose message.
-        (address composeSender_, bytes memory oftComposeMsg_) = TapOFTMsgCoder.decodeLzComposeMsg(_message);
+        (address srcChainSender_, bytes memory oftComposeMsg_) = TapOFTMsgCoder.decodeLzComposeMsg(_message);
 
         // Decode OFT compose message.
         (uint16 msgType_,, uint16 msgIndex_, bytes memory tapComposeMsg_, bytes memory nextMsg_) =
@@ -157,13 +161,13 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         } else if (msgType_ == PT_NFT_APPROVALS) {
             _erc721PermitApprovalReceiver(tapComposeMsg_);
         } else if (msgType_ == PT_LOCK_TWTAP) {
-            _lockTwTapPositionReceiver(tapComposeMsg_);
+            _lockTwTapPositionReceiver(srcChainSender_, tapComposeMsg_);
         } else if (msgType_ == PT_UNLOCK_TWTAP) {
             _unlockTwTapPositionReceiver(tapComposeMsg_);
         } else if (msgType_ == PT_CLAIM_REWARDS) {
             _claimTwpTapRewardsReceiver(tapComposeMsg_);
         } else if (msgType_ == PT_REMOTE_TRANSFER) {
-            _remoteTransferReceiver(tapComposeMsg_);
+            _remoteTransferReceiver(srcChainSender_, tapComposeMsg_);
         } else {
             revert InvalidMsgType(msgType_);
         }
@@ -175,7 +179,7 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
                 address(this),
                 _guid,
                 msgIndex_ + 1, // Increment the index
-                abi.encodePacked(OFTMsgCodec.addressToBytes32(composeSender_), nextMsg_) // Re encode the compose msg with the composeSender
+                abi.encodePacked(OFTMsgCodec.addressToBytes32(srcChainSender_), nextMsg_) // Re encode the compose msg with the composeSender
             );
         }
     }
@@ -188,6 +192,7 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
      * @dev Locks TAP for the user in the twTAP contract.
      * @dev The user needs to have approved the TapOFTv2 contract to spend the TAP.
      *
+     * @param _srcChainSender The address of the sender on the source chain.
      * @param _data The call data containing info about the lock.
      *          - user::address: Address of the user to lock the TAP for.
      *          - duration::uint96: Amount of time to lock for.
@@ -195,11 +200,11 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
      */
 
     // TODO sanitize the user to use approve on behalf of him
-    function _lockTwTapPositionReceiver(bytes memory _data) internal virtual {
+    function _lockTwTapPositionReceiver(address _srcChainSender, bytes memory _data) internal virtual {
         LockTwTapPositionMsg memory lockTwTapPositionMsg_ = TapOFTMsgCoder.decodeLockTwpTapDstMsg(_data);
 
-        /// @dev xChain user needs to have approved dst TapOFTv2 in a previous composedMsg.
-        _internalTransferWithAllowance(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.amount);
+        /// @dev xChain owner needs to have approved dst srcChain `sendPacket()` msg.sender in a previous composedMsg. Or be the same address.
+        _internalTransferWithAllowance(lockTwTapPositionMsg_.user, _srcChainSender, lockTwTapPositionMsg_.amount);
 
         _approve(address(this), address(twTap), lockTwTapPositionMsg_.amount);
         twTap.participate(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.amount, lockTwTapPositionMsg_.duration);
@@ -209,7 +214,7 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
 
     /**
      * @dev Unlocks TAP for the user in the twTAP contract.
-     * @dev !!! The user needs to have given TwTAP allowance to this contract  !!!
+     * @dev !!! The user needs to have given TwTAP allowance to this contract in order to exit  !!!
      *
      * @param _data The call data containing info about the lock.
      *          - unlockTwTapPositionMsg_::UnlockTwTapPositionMsg: Unlocking data.
@@ -217,29 +222,81 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
     function _unlockTwTapPositionReceiver(bytes memory _data) internal virtual {
         UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_ = TapOFTMsgCoder.decodeUnlockTwTapPositionMsg(_data);
 
-        // Exit position. Will send TAP to this address
+        // Send TAP to the user address.
         uint256 tapAmount_ = twTap.exitPosition(unlockTwTapPositionMsg_.tokenId, unlockTwTapPositionMsg_.user);
 
         emit UnlockTwTapReceived(unlockTwTapPositionMsg_.user, unlockTwTapPositionMsg_.tokenId, tapAmount_);
     }
 
     /**
-     * @dev Transfers tokens from this contract to the recipient on the chain A. Flow of calls is: A->B->A.
+     * // TODO Check if it's safe to send composed messages too.
+     * // TODO Write test for composed messages call. A->B->A-B/C?
+     * @dev Transfers tokens AND composed messages from this contract to the recipient on the chain A. Flow of calls is: A->B->A.
      * @dev The user needs to have approved the TapOFTv2 contract to spend the TAP.
      *
+     * @param _srcChainSender The address of the sender on the source chain.
      * @param _data The call data containing info about the transfer (LZSendParam).
      */
-    function _remoteTransferReceiver(bytes memory _data) internal virtual {
-        LZSendParam memory lzSendParam_ = TapOFTMsgCoder.decodeRemoteTransferMsg(_data);
+    function _remoteTransferReceiver(address _srcChainSender, bytes memory _data) internal virtual {
+        RemoteTransferMsg memory remoteTransferMsg_ = TapOFTMsgCoder.decodeRemoteTransferMsg(_data);
 
-        address sendTo_ = OFTMsgCodec.bytes32ToAddress(lzSendParam_.sendParam.to);
-        /// @dev xChain user needs to have approved dst TapOFTv2 in a previous composedMsg.
-        _internalTransferWithAllowance(sendTo_, lzSendParam_.sendParam.amountToSendLD);
+        /// @dev xChain owner needs to have approved dst srcChain `sendPacket()` msg.sender in a previous composedMsg. Or be the same address.
+        _internalTransferWithAllowance(
+            remoteTransferMsg_.owner, _srcChainSender, remoteTransferMsg_.lzSendParam.sendParam.amountToSendLD
+        );
 
-        // Send back packet
-        TapOFTSender(address(this)).sendPacket{value: msg.value}(lzSendParam_, bytes(""));
+        // Make the internal transfer, burn the tokens from this contract and send them to the recipient on the other chain.
+        _internalRemoteTransferSendPacket(
+            remoteTransferMsg_.owner, remoteTransferMsg_.lzSendParam, remoteTransferMsg_.composeMsg
+        );
 
-        emit RemoteTransferReceived(lzSendParam_.sendParam.dstEid, sendTo_, lzSendParam_.sendParam.amountToSendLD);
+        emit RemoteTransferReceived(
+            remoteTransferMsg_.owner,
+            remoteTransferMsg_.lzSendParam.sendParam.dstEid,
+            OFTMsgCodec.bytes32ToAddress(remoteTransferMsg_.lzSendParam.sendParam.to),
+            remoteTransferMsg_.lzSendParam.sendParam.amountToSendLD
+        );
+    }
+
+    /**
+     * // TODO review this function.
+     *
+     * @dev Slightly modified version of the OFT _sendPacket() operation. To accommodate the `srcChainSender` parameter and potential dust.
+     * @dev !!! IMPORTANT !!! made ONLY for the `_remoteTransferReceiver()` operation.
+     */
+    function _internalRemoteTransferSendPacket(
+        address _srcChainSender,
+        LZSendParam memory _lzSendParam,
+        bytes memory _composeMsg
+    ) internal returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) {
+        // Burn tokens from this contract
+        (uint256 amountDebitedLD_, uint256 amountToCreditLD_) =
+            _debitThis(_lzSendParam.sendParam.minAmountToCreditLD, _lzSendParam.sendParam.dstEid);
+
+        _lzSendParam.sendParam.amountToSendLD = amountToCreditLD_;
+        _lzSendParam.sendParam.minAmountToCreditLD = amountToCreditLD_;
+
+        // If the srcChain amount request is bigger than the debited one, overwrite the amount to credit with the amount debited and send the difference back to the user.
+        if (_lzSendParam.sendParam.amountToSendLD > amountDebitedLD_) {
+            // Overwrite the amount to credit with the amount debited
+            _lzSendParam.sendParam.amountToSendLD = amountDebitedLD_;
+            _lzSendParam.sendParam.minAmountToCreditLD = amountDebitedLD_;
+            // Send the difference back to the user
+            _transfer(address(this), _srcChainSender, _lzSendParam.sendParam.amountToSendLD - amountDebitedLD_);
+        }
+
+        // Builds the options and OFT message to quote in the endpoint.
+        (bytes memory message, bytes memory options) = _buildOFTMsgAndOptionsMemory(
+            _lzSendParam.sendParam, _lzSendParam.extraOptions, _composeMsg, amountToCreditLD_, _srcChainSender
+        ); // msgSender is the sender of the composed message. We keep context by passing `_srcChainSender`.
+
+        // Sends the message to the LayerZero endpoint and returns the LayerZero msg receipt.
+        msgReceipt =
+            _lzSend(_lzSendParam.sendParam.dstEid, message, options, _lzSendParam.fee, _lzSendParam.refundAddress);
+        // Formulate the OFT receipt.
+        oftReceipt = OFTReceipt(amountDebitedLD_, amountToCreditLD_);
+
+        emit OFTSent(msgReceipt.guid, _srcChainSender, amountDebitedLD_, amountToCreditLD_, _composeMsg);
     }
 
     /**
@@ -302,17 +359,19 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
     }
 
     /**
-     * @dev Performs a transfer with an allowance check and consumption. Can only transfer to this address.
-     * Use with caution. Check next operations to see where the tokens are sent.
-     * @param _from The account to transfer from.
+     * @dev Performs a transfer with an allowance check and consumption against the xChain msg sender.
+     * @dev Can only transfer to this address.
+     *
+     * @param _owner The account to transfer from.
+     * @param srcChainSender The address of the sender on the source chain.
      * @param _amount The amount to transfer
      */
-    function _internalTransferWithAllowance(address _from, uint256 _amount) internal {
-        if (allowance(_from, address(this)) < _amount) {
-            revert InsufficientAllowance(_from, _amount);
+    function _internalTransferWithAllowance(address _owner, address srcChainSender, uint256 _amount) internal {
+        if (_owner != srcChainSender) {
+            _spendAllowance(_owner, srcChainSender, _amount);
         }
-        _spendAllowance(_from, address(this), _amount);
-        _transfer(_from, address(this), _amount);
+
+        _transfer(_owner, address(this), _amount);
     }
 
     /**
@@ -348,5 +407,32 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         ERC20PermitApprovalMsg[] memory approvals = TapOFTMsgCoder.decodeArrayOfERC20PermitApprovalMsg(_data);
 
         tapOFTExtExec.erc20PermitApproval(approvals);
+    }
+
+    /**
+     * @dev For details about this function, check `BaseTapOFTv2._buildOFTMsgAndOptions()`.
+     * @dev !!!! IMPORTANT !!!! The differences are:
+     *      - memory instead of calldata for parameters.
+     *      - `_msgSender` is used instead of using context `msg.sender`, to preserve context of the OFT call and use `msg.sender` of the source chain.
+     *      - Does NOT combine options, make sure to pass valid options to cover gas costs/value transfers.
+     */
+    function _buildOFTMsgAndOptionsMemory(
+        SendParam memory _sendParam,
+        bytes memory _extraOptions,
+        bytes memory _composeMsg,
+        uint256 _amountToCreditLD,
+        address _msgSender
+    ) internal view returns (bytes memory message, bytes memory options) {
+        bool hasCompose;
+        hasCompose = _composeMsg.length > 0;
+        bytes memory _msg = hasCompose
+            ? abi.encodePacked(
+                _sendParam.to, _toSD(_amountToCreditLD), OFTMsgCodec.addressToBytes32(_msgSender), _composeMsg
+            )
+            : abi.encodePacked(_sendParam.to, _toSD(_amountToCreditLD));
+        uint16 _msgType = hasCompose ? SEND_AND_CALL : SEND;
+        if (msgInspector != address(0)) {
+            IOAppMsgInspector(msgInspector).inspect(message, options);
+        }
     }
 }

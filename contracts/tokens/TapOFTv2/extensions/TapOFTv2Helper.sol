@@ -28,7 +28,8 @@ import {
     ERC721PermitStruct,
     ERC20PermitApprovalMsg,
     ERC721PermitApprovalMsg,
-    ClaimTwTapRewardsMsg
+    ClaimTwTapRewardsMsg,
+    RemoteTransferMsg
 } from "../ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TapOFTV2} from "../TapOFTV2.sol";
@@ -113,6 +114,9 @@ contract TapOFTv2Helper {
 
     /**
      * @dev Helper to prepare an LZ call.
+     * @dev `amountToSendLD` and `minAmountToCreditLD` are used for an OFT send operation. If set in composed calls, only the last message LZ data will be used.
+     * @dev !!! IMPORTANT !!! If you want to send a message without sending amounts, set both `amountToSendLD` and `minAmountToCreditLD` to 0.
+     *
      * @return prepareLzCallReturn_ The result of the `prepareLzCall()` function. See `PrepareLzCallReturn`.
      */
     function prepareLzCall(ITapOFTv2 tapOftToken, PrepareLzCallData memory _prepareLzCallData)
@@ -270,10 +274,10 @@ contract TapOFTv2Helper {
 
     /**
      * @notice Encodes the message for the `remoteTransfer` operation.
-     * @param _lzSendParam The LZ send param to pass on the remote chain. (B->A)
+     * @param _remoteTransferMsg The owner + LZ send param to pass on the remote chain. (B->A)
      */
-    function buildRemoteTransferMsg(LZSendParam memory _lzSendParam) public pure returns (bytes memory) {
-        return TapOFTMsgCoder.buildRemoteTransferMsg(_lzSendParam);
+    function buildRemoteTransferMsg(RemoteTransferMsg memory _remoteTransferMsg) public pure returns (bytes memory) {
+        return TapOFTMsgCoder.buildRemoteTransferMsg(_remoteTransferMsg);
     }
 
     /**

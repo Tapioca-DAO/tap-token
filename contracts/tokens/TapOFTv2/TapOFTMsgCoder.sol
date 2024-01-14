@@ -15,7 +15,8 @@ import {
     ERC20PermitApprovalMsg,
     ERC721PermitApprovalMsg,
     LZSendParam,
-    ClaimTwTapRewardsMsg
+    ClaimTwTapRewardsMsg,
+    RemoteTransferMsg
 } from "./ITapOFTv2.sol";
 
 import "forge-std/console.sol";
@@ -386,18 +387,22 @@ library TapOFTMsgCoder {
 
     /**
      * @notice Encodes the message for the `remoteTransfer` operation.
-     * @param _lzSendParam The LZ send param to pass on the remote chain. (B->A)
+     * @param _remoteTransferMsg The owner + LZ send param to pass on the remote chain. (B->A)
      */
-    function buildRemoteTransferMsg(LZSendParam memory _lzSendParam) internal pure returns (bytes memory) {
-        return abi.encode(_lzSendParam);
+    function buildRemoteTransferMsg(RemoteTransferMsg memory _remoteTransferMsg) internal pure returns (bytes memory) {
+        return abi.encode(_remoteTransferMsg);
     }
 
     /**
      * @notice Decode the message for the `remoteTransfer` operation.
-     * @param _msg The LZ send param to pass on the remote chain. (B->A)
+     * @param _msg The owner + LZ send param to pass on the remote chain. (B->A)
      */
-    function decodeRemoteTransferMsg(bytes memory _msg) internal pure returns (LZSendParam memory lzSendParam_) {
-        return abi.decode(_msg, (LZSendParam));
+    function decodeRemoteTransferMsg(bytes memory _msg)
+        internal
+        pure
+        returns (RemoteTransferMsg memory remoteTransferMsg_)
+    {
+        return abi.decode(_msg, (RemoteTransferMsg));
     }
 
     /**

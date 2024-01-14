@@ -30,7 +30,8 @@ import {
     ERC721PermitStruct,
     ERC20PermitApprovalMsg,
     ERC721PermitApprovalMsg,
-    ClaimTwTapRewardsMsg
+    ClaimTwTapRewardsMsg,
+    RemoteTransferMsg
 } from "../ITapOFTv2.sol";
 import {
     TapOFTv2Helper, PrepareLzCallData, PrepareLzCallReturn, ComposeMsgData
@@ -648,8 +649,9 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         /**
          * Actions
          */
-
-        bytes memory remoteTransferMsg_ = tapOFTv2Helper.buildRemoteTransferMsg(remoteLzSendParam_);
+        RemoteTransferMsg memory remoteTransferData =
+            RemoteTransferMsg({composeMsg: new bytes(0), owner: address(this), lzSendParam: remoteLzSendParam_});
+        bytes memory remoteTransferMsg_ = tapOFTv2Helper.buildRemoteTransferMsg(remoteTransferData);
 
         PrepareLzCallReturn memory prepareLzCallReturn2_ = tapOFTv2Helper.prepareLzCall(
             ITapOFTv2(address(aTapOFT)),

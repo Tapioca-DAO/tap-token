@@ -27,11 +27,14 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 contract TapOFTSender is BaseTapOFTv2 {
     constructor(address _endpoint, address _owner) BaseTapOFTv2(_endpoint, _owner) {}
 
-    // TODO make it public or only internal? Making it public would require more sanitization/security checks
     /**
+     * @notice Sends TapOFTv2 messages.
+     *
      * @dev Slightly modified version of the OFT send() operation. Includes a `_msgType` parameter.
      * The `_buildMsgAndOptionsByType()` appends the packet type to the message.
-     * @dev Executes the send operation.
+     * @dev !!! IMPORTANT !!! Use it externally only. Do not use it on a compose receive operation as the `msg.sender` will be the LZ executor.
+     * @dev !!! IMPORTANT !!! If you want to send a message without sending amounts, set both `amountToSendLD` and `minAmountToCreditLD` to 0.
+     *
      * @param _lzSendParam The parameters for the send operation.
      *      - _sendParam: The parameters for the send operation.
      *          - dstEid::uint32: Destination endpoint ID.
@@ -57,7 +60,7 @@ contract TapOFTSender is BaseTapOFTv2 {
      */
     // TODO parse and enforce composed options here.
     function sendPacket(LZSendParam calldata _lzSendParam, bytes calldata _composeMsg)
-        public
+        external
         payable
         returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
     {
