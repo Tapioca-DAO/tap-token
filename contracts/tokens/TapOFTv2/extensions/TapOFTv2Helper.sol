@@ -66,7 +66,7 @@ struct ComposeMsgData {
  */
 struct PrepareLzCallData {
     uint32 dstEid; // The destination endpoint ID.
-    bytes32 recipient; // The recipient address. Receiver of the OFT send if any, and refund address for the LZ send.
+    bytes32 recipient; // The recipient address. Receiver of the OFT send if any.
     uint256 amountToSendLD; // The amount to send in the OFT send. If any.
     uint256 minAmountToCreditLD; // The min amount to credit in the OFT send. If any.
     uint16 msgType; // The message type, TAP custom ones, with `PT_` as a prefix.
@@ -97,6 +97,8 @@ contract TapOFTv2Helper {
     uint16 public constant SEND = 1;
     // Tapioca
     uint16 public constant PT_APPROVALS = 500;
+    uint16 public constant PT_NFT_APPROVALS = 501;
+
     uint16 public constant PT_LOCK_TWTAP = 870;
     uint16 public constant PT_UNLOCK_TWTAP = 871;
     uint16 public constant PT_CLAIM_REWARDS = 872;
@@ -114,6 +116,7 @@ contract TapOFTv2Helper {
 
     /**
      * @dev Helper to prepare an LZ call.
+     * @dev Refunds address is the caller. // TODO add refundAddress field.
      * @dev `amountToSendLD` and `minAmountToCreditLD` are used for an OFT send operation. If set in composed calls, only the last message LZ data will be used.
      * @dev !!! IMPORTANT !!! If you want to send a message without sending amounts, set both `amountToSendLD` and `minAmountToCreditLD` to 0.
      *
@@ -195,7 +198,7 @@ contract TapOFTv2Helper {
             sendParam: sendParam_,
             fee: msgFee_,
             extraOptions: oftMsgOptions_,
-            refundAddress: address(this)
+            refundAddress: address(msg.sender)
         });
 
         prepareLzCallReturn_ = PrepareLzCallReturn({
@@ -347,8 +350,8 @@ contract TapOFTv2Helper {
             // LZ
             _msgType == SEND
             // Tapioca msg types
-            || _msgType == PT_APPROVALS || _msgType == PT_LOCK_TWTAP || _msgType == PT_UNLOCK_TWTAP
-                || _msgType == PT_CLAIM_REWARDS || _msgType == PT_REMOTE_TRANSFER
+            || _msgType == PT_APPROVALS || _msgType == PT_NFT_APPROVALS || _msgType == PT_LOCK_TWTAP
+                || _msgType == PT_UNLOCK_TWTAP || _msgType == PT_CLAIM_REWARDS || _msgType == PT_REMOTE_TRANSFER
         ) {
             return;
         }
@@ -362,7 +365,7 @@ contract TapOFTv2Helper {
      * @param _msgIndex The current message index.
      * @param _tapComposeMsg The previous TAP compose messages. Empty if this is the first message.
      */
-    function _sanitizeMsgIndex(uint16 _msgIndex, bytes memory _tapComposeMsg) internal pure {
+    function _sanitizeMsgIndex(uint16 _msgIndex, bytes memory _tapComposeMsg) internal view {
         // If the msgIndex is 0 and there's no composeMsg, then it's the first message.
         if (_tapComposeMsg.length == 0 && _msgIndex == 0) {
             return;
