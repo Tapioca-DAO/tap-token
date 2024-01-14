@@ -249,34 +249,34 @@ library TapOFTMsgCoder {
         index_ = BytesLib.toUint16(BytesLib.slice(_options, INDEX_OFFSET, 2), 0);
     }
 
-    /**
-     * @notice Decodes the next message of extra options, if any.
-     */
-    function decodeNextMsgOfExtraOptions(bytes memory _options) internal view returns (bytes memory nextMsg_) {
-        uint16 OP_BLDR_GAS_OFFSET = 8;
-        uint16 OP_BLDR_VALUE_OFFSET = 24;
+    // /**
+    //  * @notice Decodes the next message of extra options, if any.
+    //  */
+    // function decodeNextMsgOfExtraOptions(bytes memory _options) internal view returns (bytes memory nextMsg_) {
+    //     uint16 OP_BLDR_GAS_OFFSET = 8;
+    //     uint16 OP_BLDR_VALUE_OFFSET = 24;
 
-        uint16 optionLength_ = decodeLengthOfExtraOptions(_options);
-        console.log("optionLength_", optionLength_);
+    //     uint16 optionLength_ = decodeLengthOfExtraOptions(_options);
+    //     console.log("optionLength_", optionLength_);
 
-        /// @dev Value can be omitted if it's 0.
-        /// check LZ `OptionBuilder.addExecutorLzComposeOption()` and `ExecutorOptions.encodeLzComposeOption()`
-        /// 19 = OptionType (1) + Index (8) + Gas (16)
-        if (optionLength_ == 19) {
-            uint16 nextMsgOffset = OP_BLDR_GAS_OFFSET + 16; // 8 + 16 = 24
-            console.log(nextMsgOffset);
-            if (_options.length > nextMsgOffset) {
-                nextMsg_ = BytesLib.slice(_options, nextMsgOffset, _options.length - nextMsgOffset);
-            }
-        }
-        /// 35 = OptionType (1) + Index (8) + Gas (16) + Value (16)
-        if (optionLength_ == 35) {
-            uint16 nextMsgOffset = OP_BLDR_VALUE_OFFSET + 16; // 24 + 16 = 40
-            if (_options.length > nextMsgOffset) {
-                nextMsg_ = BytesLib.slice(_options, nextMsgOffset, _options.length - nextMsgOffset);
-            }
-        }
-    }
+    //     /// @dev Value can be omitted if it's 0.
+    //     /// check LZ `OptionBuilder.addExecutorLzComposeOption()` and `ExecutorOptions.encodeLzComposeOption()`
+    //     /// 19 = OptionType (1) + Index (8) + Gas (16)
+    //     if (optionLength_ == 19) {
+    //         uint16 nextMsgOffset = OP_BLDR_GAS_OFFSET + 16; // 8 + 16 = 24
+    //         console.log(nextMsgOffset);
+    //         if (_options.length > nextMsgOffset) {
+    //             nextMsg_ = BytesLib.slice(_options, nextMsgOffset, _options.length - nextMsgOffset);
+    //         }
+    //     }
+    //     /// 35 = OptionType (1) + Index (8) + Gas (16) + Value (16)
+    //     if (optionLength_ == 35) {
+    //         uint16 nextMsgOffset = OP_BLDR_VALUE_OFFSET + 16; // 24 + 16 = 40
+    //         if (_options.length > nextMsgOffset) {
+    //             nextMsg_ = BytesLib.slice(_options, nextMsgOffset, _options.length - nextMsgOffset);
+    //         }
+    //     }
+    // }
 
     /**
      * @notice Decode an OFT `_lzReceive()` message.

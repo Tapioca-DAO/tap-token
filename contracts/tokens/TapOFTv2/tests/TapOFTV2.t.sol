@@ -32,7 +32,9 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg
 } from "../ITapOFTv2.sol";
-import {TapOFTv2Helper} from "../extensions/TapOFTv2Helper.sol";
+import {
+    TapOFTv2Helper, PrepareLzCallData, PrepareLzCallReturn, ComposeMsgData
+} from "../extensions/TapOFTv2Helper.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
 import {TwTAP, Participation} from "../../../governance/TwTAP.sol";
 import {TapOFTReceiver} from "../TapOFTReceiver.sol";
@@ -302,15 +304,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             approvalsMsg_ = tapOFTv2Helper.buildPermitApprovalMsg(approvals_);
         }
 
-        (
-            SendParam memory sendParam_,
-            ,
-            bytes memory composeMsg_,
-            bytes memory oftMsgOptions_,
-            MessagingFee memory msgFee_,
-            LZSendParam memory lzSendParam_
-        ) = _prepareLzCall(
-            aTapOFT,
+        PrepareLzCallReturn memory prepareLzCallReturn_ = tapOFTv2Helper.prepareLzCall(
+            ITapOFTv2(address(aTapOFT)),
             PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -329,6 +324,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                 lzReceiveValue: 0
             })
         );
+        bytes memory composeMsg_ = prepareLzCallReturn_.composeMsg;
+        bytes memory oftMsgOptions_ = prepareLzCallReturn_.oftMsgOptions;
+        MessagingFee memory msgFee_ = prepareLzCallReturn_.msgFee;
+        LZSendParam memory lzSendParam_ = prepareLzCallReturn_.lzSendParam;
 
         (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
             aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
@@ -401,15 +400,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             approvalsMsg_ = tapOFTv2Helper.buildNftPermitApprovalMsg(approvals_);
         }
 
-        (
-            SendParam memory sendParam_,
-            ,
-            bytes memory composeMsg_,
-            bytes memory oftMsgOptions_,
-            MessagingFee memory msgFee_,
-            LZSendParam memory lzSendParam_
-        ) = _prepareLzCall(
-            aTapOFT,
+        PrepareLzCallReturn memory prepareLzCallReturn_ = tapOFTv2Helper.prepareLzCall(
+            ITapOFTv2(address(aTapOFT)),
             PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -428,6 +420,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                 lzReceiveValue: 0
             })
         );
+        bytes memory composeMsg_ = prepareLzCallReturn_.composeMsg;
+        bytes memory oftMsgOptions_ = prepareLzCallReturn_.oftMsgOptions;
+        MessagingFee memory msgFee_ = prepareLzCallReturn_.msgFee;
+        LZSendParam memory lzSendParam_ = prepareLzCallReturn_.lzSendParam;
 
         (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
             aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
@@ -473,15 +469,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
         bytes memory lockPosition_ = TapOFTMsgCoder.buildLockTwTapPositionMsg(lockTwTapPositionMsg);
 
-        (
-            SendParam memory sendParam_,
-            bytes memory composeOptions_,
-            bytes memory composeMsg_,
-            bytes memory oftMsgOptions_,
-            MessagingFee memory msgFee_,
-            LZSendParam memory lzSendParam_
-        ) = _prepareLzCall(
-            aTapOFT,
+        PrepareLzCallReturn memory prepareLzCallReturn_ = tapOFTv2Helper.prepareLzCall(
+            ITapOFTv2(address(aTapOFT)),
             PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -500,6 +489,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                 lzReceiveValue: 0
             })
         );
+        bytes memory composeMsg_ = prepareLzCallReturn_.composeMsg;
+        bytes memory oftMsgOptions_ = prepareLzCallReturn_.oftMsgOptions;
+        MessagingFee memory msgFee_ = prepareLzCallReturn_.msgFee;
+        LZSendParam memory lzSendParam_ = prepareLzCallReturn_.lzSendParam;
 
         // Mint necessary tokens
         deal(address(aTapOFT), address(this), amountToSendLD);
@@ -562,15 +555,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             UnlockTwTapPositionMsg({user: address(this), tokenId: tokenId_});
         bytes memory unlockTwTapPositionMsg_ = tapOFTv2Helper.buildUnlockTwpTapPositionMsg(unlockTwTapPosition_);
 
-        (
-            ,
-            ,
-            bytes memory composeMsg_,
-            bytes memory oftMsgOptions_,
-            MessagingFee memory msgFee_,
-            LZSendParam memory lzSendParam_
-        ) = _prepareLzCall(
-            aTapOFT,
+        PrepareLzCallReturn memory prepareLzCallReturn_ = tapOFTv2Helper.prepareLzCall(
+            ITapOFTv2(address(aTapOFT)),
             PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -589,6 +575,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                 lzReceiveValue: 0
             })
         );
+        bytes memory composeMsg_ = prepareLzCallReturn_.composeMsg;
+        bytes memory oftMsgOptions_ = prepareLzCallReturn_.oftMsgOptions;
+        MessagingFee memory msgFee_ = prepareLzCallReturn_.msgFee;
+        LZSendParam memory lzSendParam_ = prepareLzCallReturn_.lzSendParam;
 
         (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
             aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
@@ -631,8 +621,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             deal(address(bTapOFT), address(this), tokenAmount_);
 
             // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
-            (,,,, remoteMsgFee_, remoteLzSendParam_) = _prepareLzCall( // B->A data
-                bTapOFT,
+            PrepareLzCallReturn memory prepareLzCallReturn1_ = tapOFTv2Helper.prepareLzCall( // B->A data
+                ITapOFTv2(address(bTapOFT)),
                 PrepareLzCallData({
                     dstEid: aEid,
                     recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -651,6 +641,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     lzReceiveValue: 0
                 })
             );
+            remoteLzSendParam_ = prepareLzCallReturn1_.lzSendParam;
+            remoteMsgFee_ = prepareLzCallReturn1_.msgFee;
         }
 
         /**
@@ -659,15 +651,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
         bytes memory remoteTransferMsg_ = tapOFTv2Helper.buildRemoteTransferMsg(remoteLzSendParam_);
 
-        (
-            ,
-            ,
-            bytes memory composeMsg_,
-            bytes memory oftMsgOptions_,
-            MessagingFee memory msgFee_,
-            LZSendParam memory lzSendParam_
-        ) = _prepareLzCall(
-            aTapOFT,
+        PrepareLzCallReturn memory prepareLzCallReturn2_ = tapOFTv2Helper.prepareLzCall(
+            ITapOFTv2(address(aTapOFT)),
             PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -686,6 +671,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                 lzReceiveValue: 0
             })
         );
+        bytes memory composeMsg_ = prepareLzCallReturn2_.composeMsg;
+        bytes memory oftMsgOptions_ = prepareLzCallReturn2_.oftMsgOptions;
+        MessagingFee memory msgFee_ = prepareLzCallReturn2_.msgFee;
+        LZSendParam memory lzSendParam_ = prepareLzCallReturn2_.lzSendParam;
 
         (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
             aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
@@ -807,8 +796,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
         {
             // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
-            (,,,, testData_.remoteMsgFee1, testData_.remoteLzSendParam1) = _prepareLzCall( // B->A data
-                testData_.erc20Mock1,
+            PrepareLzCallReturn memory prepareLzCallReturn1_ = tapOFTv2Helper.prepareLzCall( // B->A data
+                ITapOFTv2(address(testData_.erc20Mock1)),
                 PrepareLzCallData({
                     dstEid: aEid,
                     recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -827,9 +816,12 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     lzReceiveValue: 0
                 })
             );
+            testData_.remoteMsgFee1 = prepareLzCallReturn1_.msgFee;
+            testData_.remoteLzSendParam1 = prepareLzCallReturn1_.lzSendParam;
+
             // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
-            (,,,, testData_.remoteMsgFee2, testData_.remoteLzSendParam2) = _prepareLzCall( // B->A data
-                testData_.erc20Mock2,
+            PrepareLzCallReturn memory prepareLzCallReturn2_ = tapOFTv2Helper.prepareLzCall( // B->A data
+                ITapOFTv2(address(testData_.erc20Mock2)),
                 PrepareLzCallData({
                     dstEid: aEid,
                     recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -848,6 +840,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     lzReceiveValue: 0
                 })
             );
+            testData_.remoteMsgFee2 = prepareLzCallReturn2_.msgFee;
+            testData_.remoteLzSendParam2 = prepareLzCallReturn2_.lzSendParam;
 
             claimTwTapRewardsParam_[0] = testData_.remoteLzSendParam1;
             claimTwTapRewardsParam_[1] = testData_.remoteLzSendParam2;
@@ -868,8 +862,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         MessagingFee memory msgFee_;
         LZSendParam memory lzSendParam_;
         {
-            (,, composeMsg_, oftMsgOptions_, msgFee_, lzSendParam_) = _prepareLzCall(
-                aTapOFT,
+            PrepareLzCallReturn memory prepareLzCallReturn_ = tapOFTv2Helper.prepareLzCall(
+                ITapOFTv2(address(aTapOFT)),
                 PrepareLzCallData({
                     dstEid: bEid,
                     recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -888,6 +882,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                     lzReceiveValue: 0
                 })
             );
+            composeMsg_ = prepareLzCallReturn_.composeMsg;
+            oftMsgOptions_ = prepareLzCallReturn_.oftMsgOptions;
+            msgFee_ = prepareLzCallReturn_.msgFee;
+            lzSendParam_ = prepareLzCallReturn_.lzSendParam;
         }
 
         (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
@@ -970,116 +968,6 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
      *      HELPERS
      * =================
      */
-
-    struct ComposeMsgData {
-        uint8 index;
-        uint128 gas;
-        uint128 value;
-        bytes data;
-        bytes prevData;
-        bytes prevOptionsData;
-    }
-
-    struct PrepareLzCallData {
-        uint32 dstEid;
-        bytes32 recipient;
-        uint256 amountToSendLD;
-        uint256 minAmountToCreditLD;
-        uint16 msgType;
-        ComposeMsgData composeMsgData;
-        uint128 lzReceiveGas;
-        uint128 lzReceiveValue;
-    }
-
-    /**
-     * @dev Helper to prepare an LZ call.
-     *
-     * @return sendParam_ The send param to pass to `TapOFTv2.sendPacket()`. OFT Tx params.
-     * @return composeOptions_ The option of the composeMsg. Single option container.
-     * @return composeMsg_ The composed message.
-     * @return oftMsgOptions_ The options of the OFT msg. Aggregate previous options of `_prepareLzCallData.composeMsgData.prevOptionsData`.
-     * Also appends a `LzReceiveOption` if `lzReceiveGas` or `lzReceiveValue` is > 0.
-     * @return msgFee_ The fee of the OFT msg, this include the cost of the previous composed messages, with their options.
-     * @return lzSendParam_ The LZ send param to pass to `TapOFTv2.sendPacket()`. TapOFT/LZ Tx params.
-     */
-    function _prepareLzCall(TapOFTV2Mock tapOFTToken, PrepareLzCallData memory _prepareLzCallData)
-        internal
-        view
-        returns (
-            SendParam memory sendParam_,
-            bytes memory composeOptions_,
-            bytes memory composeMsg_,
-            bytes memory oftMsgOptions_,
-            MessagingFee memory msgFee_,
-            LZSendParam memory lzSendParam_
-        )
-    {
-        // Prepare args call
-        sendParam_ = SendParam({
-            dstEid: _prepareLzCallData.dstEid,
-            to: _prepareLzCallData.recipient,
-            amountToSendLD: _prepareLzCallData.amountToSendLD,
-            minAmountToCreditLD: _prepareLzCallData.minAmountToCreditLD
-        });
-
-        // If compose call found, we get its compose options and message.
-        if (_prepareLzCallData.composeMsgData.data.length > 0) {
-            composeOptions_ = OptionsBuilder.newOptions().addExecutorLzComposeOption(
-                _prepareLzCallData.composeMsgData.index,
-                _prepareLzCallData.composeMsgData.gas,
-                _prepareLzCallData.composeMsgData.value
-            );
-
-            // Build the composed message.
-            (composeMsg_,) = tapOFTv2Helper.buildTapComposeMsgAndOptions(
-                tapOFTToken,
-                _prepareLzCallData.composeMsgData.data,
-                _prepareLzCallData.msgType,
-                _prepareLzCallData.composeMsgData.index,
-                sendParam_.dstEid,
-                composeOptions_,
-                _prepareLzCallData.composeMsgData.prevData // Previous tapComposeMsg.
-            );
-        }
-
-        // Append previous option container if any.
-        if (_prepareLzCallData.composeMsgData.prevOptionsData.length > 0) {
-            require(
-                _prepareLzCallData.composeMsgData.prevOptionsData.length > 0, "_prepareLzCall: invalid prevOptionsData"
-            );
-            oftMsgOptions_ = _prepareLzCallData.composeMsgData.prevOptionsData;
-        } else {
-            // Else create a new one.
-            oftMsgOptions_ = OptionsBuilder.newOptions();
-        }
-
-        // Start by appending the lzReceiveOption if lzReceiveGas or lzReceiveValue is > 0.
-        if (_prepareLzCallData.lzReceiveValue > 0 || _prepareLzCallData.lzReceiveGas > 0) {
-            oftMsgOptions_ = OptionsBuilder.addExecutorLzReceiveOption(
-                oftMsgOptions_, _prepareLzCallData.lzReceiveGas, _prepareLzCallData.lzReceiveValue
-            );
-        }
-
-        // Finally, append the new compose options if any.
-        if (composeOptions_.length > 0) {
-            // And append the same value passed to the `composeOptions`.
-            oftMsgOptions_ = OptionsBuilder.addExecutorLzComposeOption(
-                oftMsgOptions_,
-                _prepareLzCallData.composeMsgData.index,
-                _prepareLzCallData.composeMsgData.gas,
-                _prepareLzCallData.composeMsgData.value
-            );
-        }
-
-        msgFee_ = tapOFTToken.quoteSendPacket(sendParam_, oftMsgOptions_, false, composeMsg_, "");
-
-        lzSendParam_ = LZSendParam({
-            sendParam: sendParam_,
-            fee: msgFee_,
-            extraOptions: oftMsgOptions_,
-            refundAddress: address(this)
-        });
-    }
 
     /**
      * @dev Used to bypass stack too deep

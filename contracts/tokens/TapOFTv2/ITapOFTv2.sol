@@ -23,7 +23,31 @@ interface ITapOFTv2 {
         TapOFTReceiver
     }
 
+    /**
+     * =======================
+     * LZ functions
+     * =======================
+     */
+    function combineOptions(uint32 _eid, uint16 _msgType, bytes calldata _extraOptions)
+        external
+        view
+        returns (bytes memory);
+
+    /**
+     * =======================
+     * Tapioca added functions
+     * =======================
+     */
+
     function getTypedDataHash(ERC20PermitStruct calldata _permitData) external view returns (bytes32);
+
+    function quoteSendPacket(
+        SendParam calldata _sendParam,
+        bytes calldata _extraOptions,
+        bool _payInLzToken,
+        bytes calldata _composeMsg,
+        bytes calldata /*_oftCmd*/ // @dev unused in the default implementation.
+    ) external view returns (MessagingFee memory msgFee);
 }
 
 /// =======================

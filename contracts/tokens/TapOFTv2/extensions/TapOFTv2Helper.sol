@@ -2,8 +2,16 @@
 pragma solidity 0.8.22;
 
 // LZ
-import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
+import {
+    SendParam,
+    MessagingFee,
+    MessagingReceipt,
+    OFTReceipt
+} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 
+import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
+import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
+import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 // External
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 
@@ -16,6 +24,10 @@ import {
     ERC721PermitApprovalMsg,
     UnlockTwTapPositionMsg,
     LZSendParam,
+    ERC20PermitStruct,
+    ERC721PermitStruct,
+    ERC20PermitApprovalMsg,
+    ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg
 } from "../ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
@@ -37,11 +49,48 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 */
 
 /**
+ * @notice Used to build the TAP compose messages.
+ */
+struct ComposeMsgData {
+    uint8 index; // The index of the message.
+    uint128 gas; // The gasLimit used on the compose() function in the OApp for this message.
+    uint128 value; // The msg.value passed to the compose() function in the OApp for this message.
+    bytes data; // The data of the message.
+    bytes prevData; // The previous compose msg data, if any. Used to aggregate the compose msg data.
+    bytes prevOptionsData; // The previous compose msg options data, if any. Used to aggregate  the compose msg options.
+}
+
+/**
+ * @notice Used to prepare an LZ call. See `TapOFTv2Helper.prepareLzCall()`.
+ */
+struct PrepareLzCallData {
+    uint32 dstEid; // The destination endpoint ID.
+    bytes32 recipient; // The recipient address. Receiver of the OFT send if any, and refund address for the LZ send.
+    uint256 amountToSendLD; // The amount to send in the OFT send. If any.
+    uint256 minAmountToCreditLD; // The min amount to credit in the OFT send. If any.
+    uint16 msgType; // The message type, TAP custom ones, with `PT_` as a prefix.
+    ComposeMsgData composeMsgData; // The compose msg data.
+    uint128 lzReceiveGas; // The gasLimit used on the lzReceive() function in the OApp.
+    uint128 lzReceiveValue; // The msg.value passed to the lzReceive() function in the OApp.
+}
+
+/**
+ * @notice Used to return the result of the `TapOFTv2Helper.prepareLzCall()` function.
+ */
+struct PrepareLzCallReturn {
+    bytes composeMsg; // The composed message. Can include previous composeMsg if any.
+    bytes composeOptions; // The options of the composeMsg. Single option container, not aggregated with previous composeMsgOptions.
+    SendParam sendParam; // OFT basic Tx params.
+    MessagingFee msgFee; // OFT msg fee, include aggregation of previous composeMsgOptions.
+    LZSendParam lzSendParam; // LZ Tx params. contains multiple information for the Tapioca `sendPacket()` call.
+    bytes oftMsgOptions; // OFT msg options, include aggregation of previous composeMsgOptions.
+}
+
+/**
  * @title TapOFTv2Helper
  * @author TapiocaDAO
  * @notice Used as a helper contract to build calls to the TapOFTv2 contract and view functions.
  */
-// TODO build a helper for the LZSendParam and message fee
 contract TapOFTv2Helper {
     // LZ
     uint16 public constant SEND = 1;
@@ -55,6 +104,105 @@ contract TapOFTv2Helper {
     error InvalidMsgType(uint16 msgType); // Triggered if the msgType is invalid on an `_lzCompose`.
     error InvalidMsgIndex(uint16 msgIndex, uint16 expectedIndex); // The msgIndex does not follow the sequence of indexes in the `_tapComposeMsg`
     error InvalidExtraOptionsIndex(uint16 msgIndex, uint16 expectedIndex); // The option index does not follow the sequence of indexes in the `_tapComposeMsg`
+
+    /**
+     * ==========================
+     * ERC20 APPROVAL MSG BUILDER
+     * ==========================
+     */
+
+    /**
+     * @dev Helper to prepare an LZ call.
+     * @return prepareLzCallReturn_ The result of the `prepareLzCall()` function. See `PrepareLzCallReturn`.
+     */
+    function prepareLzCall(ITapOFTv2 tapOftToken, PrepareLzCallData memory _prepareLzCallData)
+        public
+        view
+        returns (PrepareLzCallReturn memory prepareLzCallReturn_)
+    {
+        SendParam memory sendParam_;
+        bytes memory composeOptions_;
+        bytes memory composeMsg_;
+        MessagingFee memory msgFee_;
+        LZSendParam memory lzSendParam_;
+        bytes memory oftMsgOptions_;
+
+        // Prepare args call
+        sendParam_ = SendParam({
+            dstEid: _prepareLzCallData.dstEid,
+            to: _prepareLzCallData.recipient,
+            amountToSendLD: _prepareLzCallData.amountToSendLD,
+            minAmountToCreditLD: _prepareLzCallData.minAmountToCreditLD
+        });
+
+        // If compose call found, we get its compose options and message.
+        if (_prepareLzCallData.composeMsgData.data.length > 0) {
+            composeOptions_ = OptionsBuilder.addExecutorLzComposeOption(
+                OptionsBuilder.newOptions(),
+                _prepareLzCallData.composeMsgData.index,
+                _prepareLzCallData.composeMsgData.gas,
+                _prepareLzCallData.composeMsgData.value
+            );
+
+            // Build the composed message. Overwrite `composeOptions_` to be with the enforced options.
+            (composeMsg_, composeOptions_) = buildTapComposeMsgAndOptions(
+                tapOftToken,
+                _prepareLzCallData.composeMsgData.data,
+                _prepareLzCallData.msgType,
+                _prepareLzCallData.composeMsgData.index,
+                sendParam_.dstEid,
+                composeOptions_,
+                _prepareLzCallData.composeMsgData.prevData // Previous tapComposeMsg.
+            );
+        }
+
+        // Append previous option container if any.
+        if (_prepareLzCallData.composeMsgData.prevOptionsData.length > 0) {
+            require(
+                _prepareLzCallData.composeMsgData.prevOptionsData.length > 0, "_prepareLzCall: invalid prevOptionsData"
+            );
+            oftMsgOptions_ = _prepareLzCallData.composeMsgData.prevOptionsData;
+        } else {
+            // Else create a new one.
+            oftMsgOptions_ = OptionsBuilder.newOptions();
+        }
+
+        // Start by appending the lzReceiveOption if lzReceiveGas or lzReceiveValue is > 0.
+        if (_prepareLzCallData.lzReceiveValue > 0 || _prepareLzCallData.lzReceiveGas > 0) {
+            oftMsgOptions_ = OptionsBuilder.addExecutorLzReceiveOption(
+                oftMsgOptions_, _prepareLzCallData.lzReceiveGas, _prepareLzCallData.lzReceiveValue
+            );
+        }
+
+        // Finally, append the new compose options if any.
+        if (composeOptions_.length > 0) {
+            // And append the same value passed to the `composeOptions`.
+            oftMsgOptions_ = OptionsBuilder.addExecutorLzComposeOption(
+                oftMsgOptions_,
+                _prepareLzCallData.composeMsgData.index,
+                _prepareLzCallData.composeMsgData.gas,
+                _prepareLzCallData.composeMsgData.value
+            );
+        }
+
+        msgFee_ = tapOftToken.quoteSendPacket(sendParam_, oftMsgOptions_, false, composeMsg_, "");
+
+        lzSendParam_ = LZSendParam({
+            sendParam: sendParam_,
+            fee: msgFee_,
+            extraOptions: oftMsgOptions_,
+            refundAddress: address(this)
+        });
+
+        prepareLzCallReturn_ = PrepareLzCallReturn({
+            composeMsg: composeMsg_,
+            composeOptions: composeOptions_,
+            sendParam: sendParam_,
+            msgFee: msgFee_,
+            lzSendParam: lzSendParam_,
+            oftMsgOptions: oftMsgOptions_
+        });
+    }
 
     /// =======================
     /// Builder functions
@@ -76,7 +224,7 @@ contract TapOFTv2Helper {
      * @notice Encode the message for the _erc20PermitApprovalReceiver() operation.
      * @param _erc20PermitApprovalMsg The ERC20 permit approval messages.
      */
-    function buildPermitApprovalMsg(ERC20PermitApprovalMsg[] calldata _erc20PermitApprovalMsg)
+    function buildPermitApprovalMsg(ERC20PermitApprovalMsg[] memory _erc20PermitApprovalMsg)
         public
         pure
         returns (bytes memory msg_)
@@ -94,7 +242,7 @@ contract TapOFTv2Helper {
      * @notice Encode the message for the _erc721PermitApprovalReceiver() operation.
      * @param _erc721PermitApprovalMsg The ERC721 permit approval messages.
      */
-    function buildNftPermitApprovalMsg(ERC721PermitApprovalMsg[] calldata _erc721PermitApprovalMsg)
+    function buildNftPermitApprovalMsg(ERC721PermitApprovalMsg[] memory _erc721PermitApprovalMsg)
         public
         pure
         returns (bytes memory msg_)
@@ -112,7 +260,7 @@ contract TapOFTv2Helper {
      * @notice Encodes the message for the unlockTwTapPosition() operation.
      *
      */
-    function buildUnlockTwpTapPositionMsg(UnlockTwTapPositionMsg calldata _unlockTwTapPositionMsg)
+    function buildUnlockTwpTapPositionMsg(UnlockTwTapPositionMsg memory _unlockTwTapPositionMsg)
         public
         pure
         returns (bytes memory)
@@ -165,13 +313,13 @@ contract TapOFTv2Helper {
      * @return options The encoded options.
      */
     function buildTapComposeMsgAndOptions(
-        TapOFTV2 _tapOFTv2,
-        bytes calldata _msg,
+        ITapOFTv2 _tapOFTv2,
+        bytes memory _msg,
         uint16 _msgType,
         uint16 _msgIndex,
         uint32 _dstEid,
-        bytes calldata _extraOptions,
-        bytes calldata _tapComposedMsg
+        bytes memory _extraOptions,
+        bytes memory _tapComposedMsg
     ) public view returns (bytes memory message, bytes memory options) {
         _sanitizeMsgType(_msgType);
         _sanitizeMsgIndex(_msgIndex, _tapComposedMsg);
@@ -210,7 +358,7 @@ contract TapOFTv2Helper {
      * @param _msgIndex The current message index.
      * @param _tapComposeMsg The previous TAP compose messages. Empty if this is the first message.
      */
-    function _sanitizeMsgIndex(uint16 _msgIndex, bytes calldata _tapComposeMsg) internal pure {
+    function _sanitizeMsgIndex(uint16 _msgIndex, bytes memory _tapComposeMsg) internal pure {
         // If the msgIndex is 0 and there's no composeMsg, then it's the first message.
         if (_tapComposeMsg.length == 0 && _msgIndex == 0) {
             return;
@@ -266,39 +414,39 @@ contract TapOFTv2Helper {
      * @param _msgIndex The current message index.
      * @param _extraOptions The extra options to be sanitized.
      */
-    function _sanitizeExtraOptionsIndex(uint16 _msgIndex, bytes calldata _extraOptions) internal view {
-        uint16 msgLength_ = TapOFTMsgCoder.decodeLengthOfExtraOptions(_extraOptions);
+    // function _sanitizeExtraOptionsIndex(uint16 _msgIndex, bytes memory _extraOptions) internal view {
+    //     uint16 msgLength_ = TapOFTMsgCoder.decodeLengthOfExtraOptions(_extraOptions);
 
-        // If the msgIndex is 0 and there's only 1 extra option, then it's the first message.
-        if (_msgIndex == 0) {
-            /// 19 = OptionType (1) + Index (8) + Gas (16)
-            if (msgLength_ == 19 && _extraOptions.length == 24) {
-                // Case where `value` was not encoded.
-                return;
-            }
-            /// 35 = OptionType (1) + Index (8) + Gas (16) + Value (16)
-            if (msgLength_ == 35 && _extraOptions.length == 40) {
-                // Case where `value` was encoded.
-                return;
-            }
-        }
+    //     // If the msgIndex is 0 and there's only 1 extra option, then it's the first message.
+    //     if (_msgIndex == 0) {
+    //         /// 19 = OptionType (1) + Index (8) + Gas (16)
+    //         if (msgLength_ == 19 && _extraOptions.length == 24) {
+    //             // Case where `value` was not encoded.
+    //             return;
+    //         }
+    //         /// 35 = OptionType (1) + Index (8) + Gas (16) + Value (16)
+    //         if (msgLength_ == 35 && _extraOptions.length == 40) {
+    //             // Case where `value` was encoded.
+    //             return;
+    //         }
+    //     }
 
-        // Else check for the sequence of indexes.
-        bytes memory nextMsg_ = _extraOptions;
-        uint16 lastIndex_;
-        while (nextMsg_.length > 0) {
-            lastIndex_ = TapOFTMsgCoder.decodeIndexOfExtraOptions(nextMsg_);
-            nextMsg_ = TapOFTMsgCoder.decodeNextMsgOfExtraOptions(nextMsg_);
-        }
+    //     // Else check for the sequence of indexes.
+    //     bytes memory nextMsg_ = _extraOptions;
+    //     uint16 lastIndex_;
+    //     while (nextMsg_.length > 0) {
+    //         lastIndex_ = TapOFTMsgCoder.decodeIndexOfExtraOptions(nextMsg_);
+    //         nextMsg_ = TapOFTMsgCoder.decodeNextMsgOfExtraOptions(nextMsg_);
+    //     }
 
-        // If there's a composeMsg, then the msgIndex must be greater than 0, and an increment of the last msgIndex.
-        uint16 expectedMsgIndex_ = lastIndex_ + 1;
-        if (_extraOptions.length > 0) {
-            if (_msgIndex == expectedMsgIndex_) {
-                return;
-            }
-        }
+    //     // If there's a composeMsg, then the msgIndex must be greater than 0, and an increment of the last msgIndex.
+    //     uint16 expectedMsgIndex_ = lastIndex_ + 1;
+    //     if (_extraOptions.length > 0) {
+    //         if (_msgIndex == expectedMsgIndex_) {
+    //             return;
+    //         }
+    //     }
 
-        revert InvalidExtraOptionsIndex(_msgIndex, expectedMsgIndex_);
-    }
+    //     revert InvalidExtraOptionsIndex(_msgIndex, expectedMsgIndex_);
+    // }
 }
