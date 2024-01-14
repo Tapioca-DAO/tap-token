@@ -976,12 +976,14 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
      *
      * @param msgType The message type of the lz Compose.
      * @param guid The message GUID.
-     * @param composeMsg The source raw OApp compose message.
+     * @param composeMsg The source raw OApp compose message. If compose msg is composed with other msgs,
+     * the msg should contain only the compose msg at its index and forward. I.E composeMsg[currentIndex:]
      * @param dstEid The destination EID.
      * @param from The address initiating the composition, typically the OApp where the lzReceive was called.
      * @param to The address of the lzCompose receiver.
      * @param srcMsgSender The address of src EID OFT `msg.sender` call initiator .
-     * @param extraOptions The options passed in the source OFT call.
+     * @param extraOptions The options passed in the source OFT call. Only restriction is to have it contain the actual compose option for the index,
+     * whether there are other composed calls or not.
      */
     struct LzOFTComposedData {
         uint16 msgType;

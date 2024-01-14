@@ -30,7 +30,8 @@ import {
     ERC721PermitStruct,
     ERC20PermitApprovalMsg,
     ERC721PermitApprovalMsg,
-    ClaimTwTapRewardsMsg
+    ClaimTwTapRewardsMsg,
+    RemoteTransferMsg
 } from "../ITapOFTv2.sol";
 import {
     TapOFTv2Helper, PrepareLzCallData, PrepareLzCallReturn, ComposeMsgData
@@ -88,7 +89,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
             spender: address(bTapOFT),
             value: amountToSendLD,
             nonce: 0,
-            deadline: 1 days
+            deadline: block.timestamp + 1 days
         });
 
         SetupERC20ApprovalMsgReturn memory erc20ApprovalsReturn_ = _setupERC20ApprovalMsg(erc20ApprovalsData_);
@@ -170,7 +171,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
                     address(bTapOFT), // Compose creator (at lzReceive).
                     address(bTapOFT), // Compose receiver (at lzCompose).
                     userA,
-                    lockTwTapPositionMsgReturn_.prepareLzCallReturn.composeOptions // All of the options, except the previous ones.
+                    lockTwTapPositionMsgReturn_.prepareLzCallReturn.composeOptions // Only restriction is to have it contain the actual compose option for the index, whether there are other composed calls or not.
                 )
             );
         }
@@ -184,6 +185,246 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
     }
 
     /**
+     * @dev Integration test with both ERC721Permit, unlockTwTapPosition, ERC20Permit and sendRemoteTransfer
+     */
+    function test_multi_compose_exit_and_transfer() public {
+        vm.startPrank(userA);
+
+        // Global vars
+        uint256 amountToSendLD_ = 1 ether;
+        uint256 tokenId_ = 1;
+        uint256 lockDuration_ = 1 weeks;
+        // Participate, get token and skip 1 week
+        {
+            deal(address(bTapOFT), userA, amountToSendLD_);
+            bTapOFT.approve(address(twTap), amountToSendLD_);
+            twTap.participate(userA, amountToSendLD_, lockDuration_);
+            skip(lockDuration_);
+        }
+
+        // First packet vars
+        SetupERC721ApprovalMsgData memory erc721ApprovalsData_ = SetupERC721ApprovalMsgData({
+            token: ITapOFTv2(address(aTapOFT)),
+            prepareLzCallData: PrepareLzCallData({
+                dstEid: bEid,
+                recipient: OFTMsgCodec.addressToBytes32(userA),
+                amountToSendLD: 0,
+                minAmountToCreditLD: 0,
+                msgType: PT_NFT_APPROVALS,
+                composeMsgData: ComposeMsgData({
+                    index: 0,
+                    gas: 1_000_000,
+                    value: 0,
+                    data: new bytes(0), // Will be written in the _setupERC20ApprovalMsg function.
+                    prevData: new bytes(0),
+                    prevOptionsData: new bytes(0)
+                }),
+                lzReceiveGas: 1_000_000,
+                lzReceiveValue: 0
+            }),
+            approvalOn: address(twTap),
+            userPrivateKey: userAPKey,
+            permitData: new ERC721PermitStruct[](1)
+        });
+        erc721ApprovalsData_.permitData[0] = ERC721PermitStruct({
+            tokenId: tokenId_,
+            spender: address(bTapOFT),
+            nonce: 0,
+            deadline: block.timestamp + 1 days
+        });
+
+        SetupERC721ApprovalMsgReturn memory erc721ApprovalsReturn_ = _setupERC721ApprovalMsg(erc721ApprovalsData_);
+
+        // Second packet vars + lzSend params + options
+        SetupUnlockTwTapPositionMsgReturn memory unlockTwTapPositionMsgReturn_ = _setupUnlockTwTapPositionMsg(
+            SetupUnlockTwTapPositionMsgData({
+                token: ITapOFTv2(address(aTapOFT)),
+                prepareLzCallData: PrepareLzCallData({
+                    dstEid: bEid,
+                    recipient: OFTMsgCodec.addressToBytes32(userA),
+                    amountToSendLD: 0,
+                    minAmountToCreditLD: 0,
+                    msgType: PT_UNLOCK_TWTAP,
+                    composeMsgData: ComposeMsgData({
+                        index: 1,
+                        gas: 1_000_000,
+                        value: 0,
+                        data: new bytes(0), // Will be written in the _setupUnlockTwTapPositionMsg function.
+                        prevData: erc721ApprovalsReturn_.prepareLzCallReturn.composeMsg,
+                        prevOptionsData: erc721ApprovalsReturn_.prepareLzCallReturn.composeOptions
+                    }),
+                    lzReceiveGas: 1_000_000,
+                    lzReceiveValue: 0
+                }),
+                user: userA,
+                tokenId: tokenId_
+            })
+        );
+
+        // Third packet vars
+        SetupERC20ApprovalMsgData memory erc20ApprovalsData_ = SetupERC20ApprovalMsgData({
+            token: ITapOFTv2(address(aTapOFT)),
+            prepareLzCallData: PrepareLzCallData({
+                dstEid: bEid,
+                recipient: OFTMsgCodec.addressToBytes32(userA),
+                amountToSendLD: 0,
+                minAmountToCreditLD: 0,
+                msgType: PT_APPROVALS,
+                composeMsgData: ComposeMsgData({
+                    index: 2,
+                    gas: 1_000_000,
+                    value: 0,
+                    data: new bytes(0), // Will be written in the _setupERC20ApprovalMsg function.
+                    prevData: unlockTwTapPositionMsgReturn_.prepareLzCallReturn.composeMsg,
+                    prevOptionsData: unlockTwTapPositionMsgReturn_.prepareLzCallReturn.composeOptions
+                }),
+                lzReceiveGas: 1_000_000,
+                lzReceiveValue: 0
+            }),
+            approvalOn: ITapOFTv2(address(bTapOFT)),
+            userPrivateKey: userAPKey,
+            permitData: new ERC20PermitStruct[](1)
+        });
+        erc20ApprovalsData_.permitData[0] = ERC20PermitStruct({
+            owner: userA,
+            spender: address(address(this)),
+            value: amountToSendLD_,
+            nonce: 0,
+            deadline: block.timestamp + 1 days
+        });
+
+        SetupERC20ApprovalMsgReturn memory erc20ApprovalsReturn_ = _setupERC20ApprovalMsg(erc20ApprovalsData_);
+
+        // Fourth packet vars
+        SetupRemoteTransferMsgReturn memory remoteTransferReturn_ = _setupRemoteTransferMsg(
+            SetupRemoteTransferMsgData({
+                token: ITapOFTv2(address(aTapOFT)),
+                prepareLzCallData: PrepareLzCallData({
+                    dstEid: bEid,
+                    recipient: OFTMsgCodec.addressToBytes32(userA),
+                    amountToSendLD: 0,
+                    minAmountToCreditLD: 0,
+                    msgType: PT_REMOTE_TRANSFER,
+                    composeMsgData: ComposeMsgData({
+                        index: 3,
+                        gas: 1_000_000,
+                        value: 0,
+                        data: new bytes(0), // Will be written in the _setupRemoteTransferMsg function.
+                        prevData: erc20ApprovalsReturn_.prepareLzCallReturn.composeMsg,
+                        prevOptionsData: erc20ApprovalsReturn_.prepareLzCallReturn.composeOptions
+                    }),
+                    lzReceiveGas: 1_000_000,
+                    lzReceiveValue: 0
+                }),
+                dstToken: ITapOFTv2(address(bTapOFT)),
+                targetEid: aEid,
+                owner: userA,
+                amount: amountToSendLD_
+            })
+        );
+
+        // Send packets
+        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) = aTapOFT.sendPacket{
+            value: remoteTransferReturn_.prepareLzCallReturn.lzSendParam.fee.nativeFee
+        }(remoteTransferReturn_.prepareLzCallReturn.lzSendParam, remoteTransferReturn_.prepareLzCallReturn.composeMsg);
+
+        {
+            verifyPackets(uint32(bEid), address(bTapOFT));
+            // Verify first message (approval)
+            __callLzCompose(
+                LzOFTComposedData(
+                    PT_NFT_APPROVALS,
+                    msgReceipt_.guid,
+                    remoteTransferReturn_.prepareLzCallReturn.composeMsg, // All of the composed messages.
+                    bEid,
+                    address(bTapOFT), // Compose creator (at lzReceive).
+                    address(bTapOFT), // Compose receiver (at lzCompose).
+                    userA,
+                    erc721ApprovalsReturn_.prepareLzCallReturn.composeOptions // All of the options aggregated options.
+                )
+            );
+        }
+
+        bytes memory secondMsg_;
+        {
+            // Verify second msg (unlock twTap)
+            {
+                (,,,, secondMsg_) =
+                    TapOFTMsgCoder.decodeTapComposeMsg(remoteTransferReturn_.prepareLzCallReturn.composeMsg);
+            }
+
+            vm.expectEmit(true, true, true, false);
+            emit ITapOFTv2.UnlockTwTapReceived(
+                unlockTwTapPositionMsgReturn_.unlockTwTapPositionMsg.user, uint96(lockDuration_), amountToSendLD_
+            );
+
+            __callLzCompose(
+                LzOFTComposedData(
+                    PT_UNLOCK_TWTAP,
+                    msgReceipt_.guid,
+                    secondMsg_, // All of the composed messages, except the previous ones.
+                    bEid,
+                    address(bTapOFT), // Compose creator (at lzReceive).
+                    address(bTapOFT), // Compose receiver (at lzCompose).
+                    userA,
+                    // Only restriction is to have it contain the actual compose option for the index, whether there are other composed calls or not.
+                    unlockTwTapPositionMsgReturn_.prepareLzCallReturn.composeOptions
+                )
+            );
+        }
+
+        bytes memory thirdMsg_;
+        {
+            // Verify third msg (approval)
+            {
+                (,,,, thirdMsg_) = TapOFTMsgCoder.decodeTapComposeMsg(secondMsg_);
+            }
+
+            __callLzCompose(
+                LzOFTComposedData(
+                    PT_APPROVALS,
+                    msgReceipt_.guid,
+                    thirdMsg_, // All of the composed messages, except the previous ones.
+                    bEid,
+                    address(bTapOFT), // Compose creator (at lzReceive).
+                    address(bTapOFT), // Compose receiver (at lzCompose).
+                    userA,
+                    // Only restriction is to have it contain the actual compose option for the index, whether there are other composed calls or not.
+                    erc20ApprovalsReturn_.prepareLzCallReturn.composeOptions
+                )
+            );
+        }
+
+        {
+            // Verify third msg (approval)
+            bytes memory forthMsg_;
+            {
+                (,,,, forthMsg_) = TapOFTMsgCoder.decodeTapComposeMsg(thirdMsg_);
+            }
+
+            __callLzCompose(
+                LzOFTComposedData(
+                    PT_REMOTE_TRANSFER,
+                    msgReceipt_.guid,
+                    forthMsg_, // All of the composed messages, except the previous ones.
+                    bEid,
+                    address(bTapOFT), // Compose creator (at lzReceive).
+                    address(bTapOFT), // Compose receiver (at lzCompose).
+                    userA,
+                    // Only restriction is to have it contain the actual compose option for the index, whether there are other composed calls or not.
+                    remoteTransferReturn_.prepareLzCallReturn.composeOptions
+                )
+            );
+        }
+
+        {
+            assertEq(aTapOFT.balanceOf(address(userA)), 0);
+            verifyPackets(uint32(aEid), address(aTapOFT)); // Verify B->A transfer
+            assertEq(aTapOFT.balanceOf(address(userA)), amountToSendLD_);
+        }
+    }
+
+    /**
      * ==========================
      * ERC20 APPROVAL MSG BUILDER
      * ==========================
@@ -191,9 +432,9 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
     struct SetupERC20ApprovalMsgData {
         PrepareLzCallData prepareLzCallData;
         ITapOFTv2 token;
+        ITapOFTv2 approvalOn;
         uint256 userPrivateKey;
         ERC20PermitStruct[] permitData;
-        ITapOFTv2 approvalOn;
     }
 
     struct SetupERC20ApprovalMsgReturn {
@@ -222,7 +463,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
             ERC20PermitApprovalMsg memory permitApproval_ = __getERC20PermitData(
                 oftPermitStruct_,
                 _data.approvalOn.getTypedDataHash(oftPermitStruct_),
-                cacheData_.spender,
+                address(_data.approvalOn),
                 _data.userPrivateKey
             );
 
@@ -284,10 +525,119 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
             lockTwTapPositionMsg: lockTwTapPositionMsg_
         });
     }
+    /**
+     * ==========================
+     * UNLOCK TWTAP  MSG BUILDER
+     * ==========================
+     */
+
+    struct SetupUnlockTwTapPositionMsgData {
+        PrepareLzCallData prepareLzCallData;
+        ITapOFTv2 token;
+        address user;
+        uint256 tokenId;
+    }
+
+    struct SetupUnlockTwTapPositionMsgReturn {
+        PrepareLzCallReturn prepareLzCallReturn;
+        UnlockTwTapPositionMsg unlockTwTapPositionMsg;
+    }
+
+    function _setupUnlockTwTapPositionMsg(SetupUnlockTwTapPositionMsgData memory _data)
+        internal
+        returns (SetupUnlockTwTapPositionMsgReturn memory unlockTwTapPositionMsgReturn_)
+    {
+        UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_ =
+            UnlockTwTapPositionMsg({user: _data.user, tokenId: _data.tokenId});
+
+        bytes memory unlockPosition_ = TapOFTMsgCoder.buildUnlockTwTapPositionMsg(unlockTwTapPositionMsg_);
+
+        _data.prepareLzCallData.composeMsgData.data = unlockPosition_; // Overwrite data
+        PrepareLzCallReturn memory prepareLzCallReturn_ =
+            tapOFTv2Helper.prepareLzCall(_data.token, _data.prepareLzCallData);
+
+        unlockTwTapPositionMsgReturn_ = SetupUnlockTwTapPositionMsgReturn({
+            prepareLzCallReturn: prepareLzCallReturn_,
+            unlockTwTapPositionMsg: unlockTwTapPositionMsg_
+        });
+    }
 
     /**
      * ==========================
-     * LOCK TWTAP  MSG BUILDER
+     * UNLOCK TWTAP  MSG BUILDER
+     * ==========================
+     */
+    /**
+     * ==========================
+     * REMOTE TRANSFER  MSG BUILDER
+     * ==========================
+     */
+
+    struct SetupRemoteTransferMsgData {
+        PrepareLzCallData prepareLzCallData;
+        ITapOFTv2 token;
+        ITapOFTv2 dstToken;
+        uint32 targetEid;
+        address owner;
+        uint256 amount;
+    }
+
+    struct SetupRemoteTransferMsgReturn {
+        PrepareLzCallReturn prepareLzCallReturn;
+        RemoteTransferMsg remoteTransferMsg;
+    }
+
+    function _setupRemoteTransferMsg(SetupRemoteTransferMsgData memory _data)
+        internal
+        returns (SetupRemoteTransferMsgReturn memory RemoteTransferMsgReturn_)
+    {
+        // Prepare the remote call
+        RemoteTransferMsg memory remoteTransferMsg_;
+        {
+            PrepareLzCallReturn memory prepareLzCallReturn_ = tapOFTv2Helper.prepareLzCall(
+                _data.dstToken,
+                PrepareLzCallData({
+                    dstEid: _data.targetEid, // is the source, A : A->B->A
+                    recipient: OFTMsgCodec.addressToBytes32(_data.owner),
+                    amountToSendLD: _data.amount,
+                    minAmountToCreditLD: _data.amount,
+                    msgType: SEND,
+                    composeMsgData: ComposeMsgData({
+                        index: 0,
+                        gas: 0,
+                        value: 0,
+                        data: new bytes(0),
+                        prevData: new bytes(0),
+                        prevOptionsData: new bytes(0)
+                    }),
+                    lzReceiveGas: 1_000_000,
+                    lzReceiveValue: 0
+                })
+            );
+            remoteTransferMsg_ = RemoteTransferMsg({
+                owner: _data.owner,
+                lzSendParam: prepareLzCallReturn_.lzSendParam,
+                composeMsg: new bytes(0)
+            });
+
+            _data.prepareLzCallData.composeMsgData.value = uint128(prepareLzCallReturn_.msgFee.nativeFee); // Overwrite fees after computing it
+        }
+
+        bytes memory remoteTransfer_ = TapOFTMsgCoder.buildRemoteTransferMsg(remoteTransferMsg_);
+
+        _data.prepareLzCallData.composeMsgData.data = remoteTransfer_; // Overwrite data
+        PrepareLzCallReturn memory prepareLzCallReturn_ =
+            tapOFTv2Helper.prepareLzCall(_data.token, _data.prepareLzCallData);
+
+        RemoteTransferMsgReturn_ = SetupRemoteTransferMsgReturn({
+            prepareLzCallReturn: prepareLzCallReturn_,
+            remoteTransferMsg: remoteTransferMsg_
+        });
+    }
+
+    /**
+     * ==========================
+     * REMOTE TRANSFER  MSG BUILDER
      * ==========================
      */
 
@@ -300,6 +650,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
     struct SetupERC721ApprovalMsgData {
         PrepareLzCallData prepareLzCallData;
         ITapOFTv2 token;
+        address approvalOn;
         uint256 userPrivateKey;
         ERC721PermitStruct[] permitData;
     }
@@ -329,7 +680,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
 
             permitApproval_ = __getERC721PermitData(
                 tapOftApprovals_,
-                TwTAP(address(_data.token)).getTypedDataHash(tapOftApprovals_),
+                TwTAP(_data.approvalOn).getTypedDataHash(tapOftApprovals_),
                 cacheData_.spender,
                 _data.userPrivateKey
             );
@@ -342,6 +693,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
         }
 
         bytes memory approvalsMsg_ = tapOFTv2Helper.buildNftPermitApprovalMsg(approvals_);
+        _data.prepareLzCallData.composeMsgData.data = approvalsMsg_; // Overwrite data
 
         PrepareLzCallReturn memory prepareLzCallReturn_ =
             tapOFTv2Helper.prepareLzCall(_data.token, _data.prepareLzCallData);
