@@ -423,14 +423,16 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         uint256 _amountToCreditLD,
         address _msgSender
     ) internal view returns (bytes memory message, bytes memory options) {
-        bool hasCompose;
-        hasCompose = _composeMsg.length > 0;
-        bytes memory _msg = hasCompose
+        bool hasCompose = _composeMsg.length > 0;
+        uint16 _msgType = hasCompose ? SEND_AND_CALL : SEND;
+
+        message = hasCompose
             ? abi.encodePacked(
                 _sendParam.to, _toSD(_amountToCreditLD), OFTMsgCodec.addressToBytes32(_msgSender), _composeMsg
             )
             : abi.encodePacked(_sendParam.to, _toSD(_amountToCreditLD));
-        uint16 _msgType = hasCompose ? SEND_AND_CALL : SEND;
+        options = _extraOptions;
+
         if (msgInspector != address(0)) {
             IOAppMsgInspector(msgInspector).inspect(message, options);
         }
