@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ERC20, ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {BoringOwnable} from "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 
 /*
 
@@ -35,10 +35,7 @@ contract LTap is BoringOwnable, ERC20Permit {
     /// @dev LTAP tokens are minted by depositing TAP
     /// @param _tapToken Address of the TAP token
     /// @param _maxLockedUntil Latest possible end of locking period
-    constructor(
-        IERC20 _tapToken,
-        uint256 _maxLockedUntil
-    ) ERC20("LTAP", "LTAP") ERC20Permit("LTAP") {
+    constructor(IERC20 _tapToken, uint256 _maxLockedUntil) ERC20("LTAP", "LTAP") ERC20Permit("LTAP") {
         tapToken = _tapToken;
         lockedUntil = _maxLockedUntil;
         maxLockedUntil = _maxLockedUntil;

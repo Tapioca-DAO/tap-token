@@ -1,41 +1,27 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
+// External
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// ********************************************************************************
-// *******************************,                 ,******************************
-// *************************                               ************************
-// *********************                                       ********************
-// *****************,                     @@@                     ,****************
-// ***************                        @@@                        **************
-// *************                    (@@@@@@@@@@@@@(                    ************
-// ***********                   @@@@@@@@#@@@#@@@@@@@@                   **********
-// **********                 .@@@@@      @@@      @@@@@.                 *********
-// *********                 @@@@@        @@@        @@@@@                 ********
-// ********                 @@@@@&        @@@         /@@@@                 *******
-// *******                 &@@@@@@        @@@          #@@@&                 ******
-// ******,                 @@@@@@@@,      @@@           @@@@                 ,*****
-// ******                 #@@@&@@@@@@@@#  @@@           &@@@(                 *****
-// ******                 %@@@%   @@@@@@@@@@@@@@@(      (@@@%                 *****
-// ******                 %@@@%          %@@@@@@@@@@@@. %@@@#                 *****
-// ******.                /@@@@           @@@    *@@@@@@@@@@*                .*****
-// *******                 @@@@           @@@       &@@@@@@@                 ******
-// *******                 /@@@@          @@@        @@@@@@/                .******
-// ********                 %&&&&         @@@        &&&&&#                 *******
-// *********                 *&&&&#       @@@       &&&&&,                 ********
-// **********.                 %&&&&&,    &&&    ,&&&&&%                 .*********
-// ************                   &&&&&&&&&&&&&&&&&&&                   ***********
-// **************                     .#&&&&&&&%.                     *************
-// ****************                       %%%                       ***************
-// *******************                    %%%                    ******************
-// **********************                                    .*********************
-// ***************************                           **************************
-// ************************************..     ..***********************************
+// Tapioca
+import {ERC721Permit} from "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 
+/*
+__/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
+ _\///////\\\/////____/\\\\\\\\\\\\\__\/\\\/////////\\\_\/////\\\///______/\\\///\\\________/\\\////////____/\\\\\\\\\\\\\__       
+  _______\/\\\________/\\\/////////\\\_\/\\\_______\/\\\_____\/\\\_______/\\\/__\///\\\____/\\\/____________/\\\/////////\\\_      
+   _______\/\\\_______\/\\\_______\/\\\_\/\\\\\\\\\\\\\/______\/\\\______/\\\______\//\\\__/\\\_____________\/\\\_______\/\\\_     
+    _______\/\\\_______\/\\\\\\\\\\\\\\\_\/\\\/////////________\/\\\_____\/\\\_______\/\\\_\/\\\_____________\/\\\\\\\\\\\\\\\_    
+     _______\/\\\_______\/\\\/////////\\\_\/\\\_________________\/\\\_____\//\\\______/\\\__\//\\\____________\/\\\/////////\\\_   
+      _______\/\\\_______\/\\\_______\/\\\_\/\\\_________________\/\\\______\///\\\__/\\\_____\///\\\__________\/\\\_______\/\\\_  
+       _______\/\\\_______\/\\\_______\/\\\_\/\\\______________/\\\\\\\\\\\____\///\\\\\/________\////\\\\\\\\\_\/\\\_______\/\\\_ 
+        _______\///________\///________\///__\///______________\///////////_______\/////_____________\/////////__\///________\///__
+*/
+
+// TODO naming
 struct TapOption {
     uint128 expiry; // timestamp, as once one wise man said, the sun will go dark before this overflows
     uint128 discount; // discount in basis points
@@ -54,16 +40,8 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     // ==========
     //   EVENTS
     // ==========
-    event Mint(
-        address indexed to,
-        uint256 indexed tokenId,
-        TapOption indexed option
-    );
-    event Burn(
-        address indexed from,
-        uint256 indexed tokenId,
-        TapOption indexed option
-    );
+    event Mint(address indexed to, uint256 indexed tokenId, TapOption indexed option);
+    event Burn(address indexed from, uint256 indexed tokenId, TapOption indexed option);
 
     error NotAuthorized();
     error OnlyBroker();
@@ -73,23 +51,16 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     //    READ
     // =========
 
-    function tokenURI(
-        uint256 _tokenId
-    ) public view override returns (string memory) {
+    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
         return tokenURIs[_tokenId];
     }
 
-    function isApprovedOrOwner(
-        address _spender,
-        uint256 _tokenId
-    ) external view returns (bool) {
+    function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool) {
         return _isApprovedOrOwner(_spender, _tokenId);
     }
 
     /// @notice Return the owner of the tokenId and the attributes of the option.
-    function attributes(
-        uint256 _tokenId
-    ) external view returns (address, TapOption memory) {
+    function attributes(uint256 _tokenId) external view returns (address, TapOption memory) {
         return (ownerOf(_tokenId), options[_tokenId]);
     }
 
@@ -103,10 +74,7 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     // ==========
 
     function setTokenURI(uint256 _tokenId, string calldata _tokenURI) external {
-        require(
-            _isApprovedOrOwner(msg.sender, _tokenId),
-            "OTAP: only approved or owner"
-        );
+        require(_isApprovedOrOwner(msg.sender, _tokenId), "OTAP: only approved or owner");
         tokenURIs[_tokenId] = _tokenURI;
     }
 
@@ -115,12 +83,7 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     /// @param _expiry timestamp
     /// @param _discount TAP discount in basis points
     /// @param _tOLP tOLP token ID
-    function mint(
-        address _to,
-        uint128 _expiry,
-        uint128 _discount,
-        uint256 _tOLP
-    ) external returns (uint256 tokenId) {
+    function mint(address _to, uint128 _expiry, uint128 _discount, uint256 _tOLP) external returns (uint256 tokenId) {
         require(msg.sender == broker, "OTAP: only onlyBroker");
         tokenId = ++mintedOTAP;
         _safeMint(_to, tokenId);

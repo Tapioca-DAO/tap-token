@@ -21,6 +21,18 @@ import {
 
 import "forge-std/console.sol";
 
+/*
+__/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
+ _\///////\\\/////____/\\\\\\\\\\\\\__\/\\\/////////\\\_\/////\\\///______/\\\///\\\________/\\\////////____/\\\\\\\\\\\\\__       
+  _______\/\\\________/\\\/////////\\\_\/\\\_______\/\\\_____\/\\\_______/\\\/__\///\\\____/\\\/____________/\\\/////////\\\_      
+   _______\/\\\_______\/\\\_______\/\\\_\/\\\\\\\\\\\\\/______\/\\\______/\\\______\//\\\__/\\\_____________\/\\\_______\/\\\_     
+    _______\/\\\_______\/\\\\\\\\\\\\\\\_\/\\\/////////________\/\\\_____\/\\\_______\/\\\_\/\\\_____________\/\\\\\\\\\\\\\\\_    
+     _______\/\\\_______\/\\\/////////\\\_\/\\\_________________\/\\\_____\//\\\______/\\\__\//\\\____________\/\\\/////////\\\_   
+      _______\/\\\_______\/\\\_______\/\\\_\/\\\_________________\/\\\______\///\\\__/\\\_____\///\\\__________\/\\\_______\/\\\_  
+       _______\/\\\_______\/\\\_______\/\\\_\/\\\______________/\\\\\\\\\\\____\///\\\\\/________\////\\\\\\\\\_\/\\\_______\/\\\_ 
+        _______\///________\///________\///__\///______________\///////////_______\/////_____________\/////////__\///________\///__
+*/
+
 library TapOFTMsgCoder {
     /**
      * @dev Option Builder offsets
@@ -229,25 +241,6 @@ library TapOFTMsgCoder {
                 nextMsg_ = BytesLib.slice(_options, nextMsgOffset, _options.length - nextMsgOffset);
             }
         }
-    }
-
-    /**
-     * @notice Decodes the length of extra options.
-     *  @dev Option length is not the size of the actual `_options`, but the size of the option
-     *  starting from `OPTION_TYPE`.
-     */
-    function decodeLengthOfExtraOptions(bytes memory _options) internal pure returns (uint16 length_) {
-        uint16 OP_BLDR_OPTION_LENGTH_OFFSET = 3;
-        length_ = BytesLib.toUint16(BytesLib.slice(_options, OP_BLDR_OPTION_LENGTH_OFFSET, 2), 0);
-    }
-
-    /**
-     * @notice Decodes the index of extra options.
-     */
-
-    function decodeIndexOfExtraOptions(bytes memory _options) internal pure returns (uint16 index_) {
-        uint16 INDEX_OFFSET = 6;
-        index_ = BytesLib.toUint16(BytesLib.slice(_options, INDEX_OFFSET, 2), 0);
     }
 
     // /**

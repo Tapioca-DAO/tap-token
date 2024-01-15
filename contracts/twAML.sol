@@ -1,13 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
+/*
+__/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
+ _\///////\\\/////____/\\\\\\\\\\\\\__\/\\\/////////\\\_\/////\\\///______/\\\///\\\________/\\\////////____/\\\\\\\\\\\\\__       
+  _______\/\\\________/\\\/////////\\\_\/\\\_______\/\\\_____\/\\\_______/\\\/__\///\\\____/\\\/____________/\\\/////////\\\_      
+   _______\/\\\_______\/\\\_______\/\\\_\/\\\\\\\\\\\\\/______\/\\\______/\\\______\//\\\__/\\\_____________\/\\\_______\/\\\_     
+    _______\/\\\_______\/\\\\\\\\\\\\\\\_\/\\\/////////________\/\\\_____\/\\\_______\/\\\_\/\\\_____________\/\\\\\\\\\\\\\\\_    
+     _______\/\\\_______\/\\\/////////\\\_\/\\\_________________\/\\\_____\//\\\______/\\\__\//\\\____________\/\\\/////////\\\_   
+      _______\/\\\_______\/\\\_______\/\\\_\/\\\_________________\/\\\______\///\\\__/\\\_____\///\\\__________\/\\\_______\/\\\_  
+       _______\/\\\_______\/\\\_______\/\\\_\/\\\______________/\\\\\\\\\\\____\///\\\\\/________\////\\\\\\\\\_\/\\\_______\/\\\_ 
+        _______\///________\///________\///__\///______________\///////////_______\/////_____________\/////////__\///________\///__
+*/
+
 abstract contract FullMath {
     // https://xn--2-umb.com/21/muldiv/
-    function muldiv(
-        uint256 a,
-        uint256 b,
-        uint256 denominator
-    ) internal pure returns (uint256 result) {
+    function muldiv(uint256 a, uint256 b, uint256 denominator) internal pure returns (uint256 result) {
         unchecked {
             // Handle division by zero
             require(denominator > 0);
@@ -112,29 +120,20 @@ abstract contract TWAML is FullMath {
     /// @notice Compute the minimum weight to participate in the twAML voting mechanism
     /// @param _totalWeight The total weight of the twAML system
     /// @param _minWeightFactor The minimum weight factor in BPS
-    function computeMinWeight(
-        uint256 _totalWeight,
-        uint256 _minWeightFactor
-    ) internal pure returns (uint256) {
+    function computeMinWeight(uint256 _totalWeight, uint256 _minWeightFactor) internal pure returns (uint256) {
         uint256 mul = (_totalWeight * _minWeightFactor);
         return mul >= 1e4 ? mul / 1e4 : _totalWeight;
     }
 
-    function computeMagnitude(
-        uint256 _timeWeight,
-        uint256 _cumulative
-    ) internal pure returns (uint256) {
-        return
-            sqrt(_timeWeight * _timeWeight + _cumulative * _cumulative) -
-            _cumulative;
+    function computeMagnitude(uint256 _timeWeight, uint256 _cumulative) internal pure returns (uint256) {
+        return sqrt(_timeWeight * _timeWeight + _cumulative * _cumulative) - _cumulative;
     }
 
-    function computeTarget(
-        uint256 _dMin,
-        uint256 _dMax,
-        uint256 _magnitude,
-        uint256 _cumulative
-    ) internal pure returns (uint256) {
+    function computeTarget(uint256 _dMin, uint256 _dMax, uint256 _magnitude, uint256 _cumulative)
+        internal
+        pure
+        returns (uint256)
+    {
         if (_cumulative == 0) {
             return _dMax;
         }

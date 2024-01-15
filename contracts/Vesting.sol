@@ -1,9 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {BoringOwnable} from "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+/*
+__/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
+ _\///////\\\/////____/\\\\\\\\\\\\\__\/\\\/////////\\\_\/////\\\///______/\\\///\\\________/\\\////////____/\\\\\\\\\\\\\__       
+  _______\/\\\________/\\\/////////\\\_\/\\\_______\/\\\_____\/\\\_______/\\\/__\///\\\____/\\\/____________/\\\/////////\\\_      
+   _______\/\\\_______\/\\\_______\/\\\_\/\\\\\\\\\\\\\/______\/\\\______/\\\______\//\\\__/\\\_____________\/\\\_______\/\\\_     
+    _______\/\\\_______\/\\\\\\\\\\\\\\\_\/\\\/////////________\/\\\_____\/\\\_______\/\\\_\/\\\_____________\/\\\\\\\\\\\\\\\_    
+     _______\/\\\_______\/\\\/////////\\\_\/\\\_________________\/\\\_____\//\\\______/\\\__\//\\\____________\/\\\/////////\\\_   
+      _______\/\\\_______\/\\\_______\/\\\_\/\\\_________________\/\\\______\///\\\__/\\\_____\///\\\__________\/\\\_______\/\\\_  
+       _______\/\\\_______\/\\\_______\/\\\_\/\\\______________/\\\\\\\\\\\____\///\\\\\/________\////\\\\\\\\\_\/\\\_______\/\\\_ 
+        _______\///________\///________\///__\///______________\///////////_______\/////_____________\/////////__\///________\///__
+*/
 
 contract Vesting is BoringOwnable, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -36,6 +48,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
         uint256 latestClaimTimestamp;
         bool revoked;
     }
+
     mapping(address => UserData) public users;
 
     uint256 private __totalAmount;
@@ -110,12 +123,11 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     /// @param _totalAmount The total amount to be vested
     /// @param _amount The amount to be unlocked
     /// @param _duration The vesting duration
-    function computeTimeFromAmount(
-        uint256 _start,
-        uint256 _totalAmount,
-        uint256 _amount,
-        uint256 _duration
-    ) external pure returns (uint256) {
+    function computeTimeFromAmount(uint256 _start, uint256 _totalAmount, uint256 _amount, uint256 _duration)
+        external
+        pure
+        returns (uint256)
+    {
         return _computeTimeFromAmount(_start, _totalAmount, _amount, _duration);
     }
 
@@ -163,10 +175,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     /// @dev should be called before init
     /// @param _users the user addresses
     /// @param _amounts user weights
-    function registerUsers(
-        address[] calldata _users,
-        uint256[] calldata _amounts
-    ) external onlyOwner {
+    function registerUsers(address[] calldata _users, uint256[] calldata _amounts) external onlyOwner {
         if (start > 0) revert Initialized();
         if (_users.length != _amounts.length) revert("Lengths not equal");
 
@@ -177,7 +186,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
         UserData memory data;
         unchecked {
             uint256 len = _users.length;
-            for (uint256 i; i < len; ) {
+            for (uint256 i; i < len;) {
                 // Checks
                 if (_users[i] == address(0)) revert AddressNotValid();
                 if (_amounts[i] == 0) revert AmountNotValid();
@@ -203,11 +212,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     /// and subtract it from the start time, so the user can claim it immediately.
     /// @param _seededAmount total vested amount, cannot be 0.
     /// @param _initialUnlock initial unlock percentage, in BPS.
-    function init(
-        IERC20 _token,
-        uint256 _seededAmount,
-        uint256 _initialUnlock
-    ) external onlyOwner {
+    function init(IERC20 _token, uint256 _seededAmount, uint256 _initialUnlock) external onlyOwner {
         if (start > 0) revert Initialized();
         if (_seededAmount == 0) revert NoTokens();
         if (__totalAmount > _seededAmount) revert NotEnough();
@@ -220,15 +225,10 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
         start = block.timestamp;
 
         if (_initialUnlock > 0) {
-            uint256 initialUnlockAmount = (_seededAmount * _initialUnlock) /
-                10_000;
+            uint256 initialUnlockAmount = (_seededAmount * _initialUnlock) / 10_000;
 
-            __initialUnlockTimeOffset = _computeTimeFromAmount(
-                block.timestamp,
-                _seededAmount,
-                initialUnlockAmount,
-                duration
-            );
+            __initialUnlockTimeOffset =
+                _computeTimeFromAmount(block.timestamp, _seededAmount, initialUnlockAmount, duration);
         }
     }
 
@@ -237,12 +237,11 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     /// @param _totalAmount The total amount to be vested
     /// @param _amount The amount to be unlocked
     /// @param _duration The vesting duration
-    function _computeTimeFromAmount(
-        uint256 _start,
-        uint256 _totalAmount,
-        uint256 _amount,
-        uint256 _duration
-    ) internal pure returns (uint256) {
+    function _computeTimeFromAmount(uint256 _start, uint256 _totalAmount, uint256 _amount, uint256 _duration)
+        internal
+        pure
+        returns (uint256)
+    {
         return _start - (_start - ((_amount * _duration) / _totalAmount));
     }
 

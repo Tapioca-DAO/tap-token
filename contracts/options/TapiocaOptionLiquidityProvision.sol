@@ -1,36 +1,27 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
+// External
+import {IYieldBox} from "tapioca-sdk/dist/contracts/YieldBox/contracts/interfaces/IYieldBox.sol";
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
-import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "tapioca-sdk/dist/contracts/util/ERC4494.sol";
-import "tapioca-sdk/dist/contracts/YieldBox/contracts/interfaces/IYieldBox.sol";
+import {BoringOwnable} from "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ERC721Permit} from "tapioca-sdk/dist/contracts/util/ERC4494.sol";
+import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-//
-//                 .(%%%%%%%%%%%%*       *
-//             #%%%%%%%%%%%%%%%%%%%%*  ####*
-//          #%%%%%%%%%%%%%%%%%%%%%#  /####
-//       ,%%%%%%%%%%%%%%%%%%%%%%%   ####.  %
-//                                #####
-//                              #####
-//   #####%#####              *####*  ####%#####*
-//  (#########(              #####     ##########.
-//  ##########             #####.      .##########
-//                       ,####/
-//                      #####
-//  %%%%%%%%%%        (####.           *%%%%%%%%%#
-//  .%%%%%%%%%%     *####(            .%%%%%%%%%%
-//   *%%%%%%%%%%   #####             #%%%%%%%%%%
-//               (####.
-//      ,((((  ,####(          /(((((((((((((
-//        *,  #####  ,(((((((((((((((((((((
-//          (####   ((((((((((((((((((((/
-//         ####*  (((((((((((((((((((
-//                     ,**//*,.
+/*
+__/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
+ _\///////\\\/////____/\\\\\\\\\\\\\__\/\\\/////////\\\_\/////\\\///______/\\\///\\\________/\\\////////____/\\\\\\\\\\\\\__       
+  _______\/\\\________/\\\/////////\\\_\/\\\_______\/\\\_____\/\\\_______/\\\/__\///\\\____/\\\/____________/\\\/////////\\\_      
+   _______\/\\\_______\/\\\_______\/\\\_\/\\\\\\\\\\\\\/______\/\\\______/\\\______\//\\\__/\\\_____________\/\\\_______\/\\\_     
+    _______\/\\\_______\/\\\\\\\\\\\\\\\_\/\\\/////////________\/\\\_____\/\\\_______\/\\\_\/\\\_____________\/\\\\\\\\\\\\\\\_    
+     _______\/\\\_______\/\\\/////////\\\_\/\\\_________________\/\\\_____\//\\\______/\\\__\//\\\____________\/\\\/////////\\\_   
+      _______\/\\\_______\/\\\_______\/\\\_\/\\\_________________\/\\\______\///\\\__/\\\_____\///\\\__________\/\\\_______\/\\\_  
+       _______\/\\\_______\/\\\_______\/\\\_\/\\\______________/\\\\\\\\\\\____\///\\\\\/________\////\\\\\\\\\_\/\\\_______\/\\\_ 
+        _______\///________\///________\///__\///______________\///////////_______\/////_____________\/////////__\///________\///__
+*/
 
 struct LockPosition {
     uint128 sglAssetID; // Singularity market YieldBox asset ID
