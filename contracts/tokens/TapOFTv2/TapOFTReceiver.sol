@@ -16,12 +16,13 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Tapioca
 import {
-    LockTwTapPositionMsg,
-    ERC20PermitApprovalMsg,
+    ERC721PermitApprovalMsg,
     UnlockTwTapPositionMsg,
-    LZSendParam,
+    ERC20PermitApprovalMsg,
+    LockTwTapPositionMsg,
     ClaimTwTapRewardsMsg,
-    RemoteTransferMsg
+    RemoteTransferMsg,
+    LZSendParam
 } from "./ITapOFTv2.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
@@ -404,9 +405,10 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
      *      - s::bytes32: s value of the signature.
      */
     function _erc721PermitApprovalReceiver(bytes memory _data) internal virtual {
-        ERC20PermitApprovalMsg[] memory approvals = TapOFTMsgCoder.decodeArrayOfERC20PermitApprovalMsg(_data);
+        // TODO: encode and decode packed data to save gas
+        ERC721PermitApprovalMsg[] memory approvals = TapOFTMsgCoder.decodeArrayOfERC721PermitApprovalMsg(_data);
 
-        tapOFTExtExec.erc20PermitApproval(approvals);
+        tapOFTExtExec.erc721PermitApproval(approvals);
     }
 
     /**

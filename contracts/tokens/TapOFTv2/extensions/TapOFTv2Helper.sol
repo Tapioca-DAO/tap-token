@@ -254,13 +254,7 @@ contract TapOFTv2Helper {
         pure
         returns (bytes memory msg_)
     {
-        uint256 approvalsLength = _erc721PermitApprovalMsg.length;
-        for (uint256 i; i < approvalsLength;) {
-            msg_ = abi.encodePacked(msg_, TapOFTMsgCoder.buildERC721PermitApprovalMsg(_erc721PermitApprovalMsg[i]));
-            unchecked {
-                ++i;
-            }
-        }
+        return abi.encode(_erc721PermitApprovalMsg);
     }
 
     /**

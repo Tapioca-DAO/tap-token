@@ -466,6 +466,17 @@ library TapOFTMsgCoder {
     }
 
     /**
+     * @notice Decodes an encoded message for the `TapOFTReceiver.erc721PermitApprovalReceiver()` operation.
+     */
+    function decodeArrayOfERC721PermitApprovalMsg(bytes memory _msg)
+        internal
+        pure
+        returns (ERC721PermitApprovalMsg[] memory)
+    {
+        return abi.decode(_msg, (ERC721PermitApprovalMsg[]));
+    }
+
+    /**
      * @notice Decodes an encoded message for the `TapOFTReceiver.erc20PermitApprovalReceiver()` operation.
      *
      *                    *   message packet   *

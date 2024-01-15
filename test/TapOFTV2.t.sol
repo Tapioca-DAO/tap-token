@@ -66,9 +66,9 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     TapOFTv2Helper tapOFTv2Helper;
 
     uint256 internal userAPKey = 0x1;
-    uint256 internal userABKey = 0x2;
+    uint256 internal userBPKey = 0x2;
     address public userA = vm.addr(userAPKey);
-    address public userB = vm.addr(userABKey);
+    address public userB = vm.addr(userBPKey);
     uint256 public initialBalance = 100 ether;
 
     /**
@@ -257,7 +257,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     function test_erc721_permit() public {
         ERC721Mock erc721Mock = new ERC721Mock("Mock","Mock");
         vm.label(address(erc721Mock), "erc721Mock");
-        erc721Mock.mint(address(this), 1);
+        erc721Mock.mint(address(userA), 1);
 
         ERC721PermitStruct memory permit_ = ERC721PermitStruct({spender: userB, tokenId: 1, nonce: 0, deadline: 1 days});
 
@@ -369,15 +369,16 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         address userC_ = vm.addr(0x3);
         // Mint tokenId
         {
-            deal(address(userA), address(this), 1e18);
-            deal(address(userB), address(this), 1e18);
+            deal(address(bTapOFT), address(userA), 1e18);
+            deal(address(bTapOFT), address(userB), 1e18);
+
             vm.startPrank(userA);
             bTapOFT.approve(address(twTap), 1e18);
-            twTap.participate(address(this), 1e18, 1 weeks);
+            twTap.participate(address(userA), 1e18, 1 weeks);
 
             vm.startPrank(userB);
             bTapOFT.approve(address(twTap), 1e18);
-            twTap.participate(address(this), 1e18, 1 weeks);
+            twTap.participate(address(userB), 1e18, 1 weeks);
             vm.stopPrank();
         }
 
@@ -395,7 +396,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                 __getERC721PermitData(approvalUserB_, twTap.getTypedDataHash(approvalUserB_), address(twTap), userAPKey);
 
             permitApprovalC_ =
-                __getERC721PermitData(approvalUserC_, twTap.getTypedDataHash(approvalUserC_), address(twTap), userAPKey);
+                __getERC721PermitData(approvalUserC_, twTap.getTypedDataHash(approvalUserC_), address(twTap), userBPKey);
 
             ERC721PermitApprovalMsg[] memory approvals_ = new ERC721PermitApprovalMsg[](2);
             approvals_[0] = permitApprovalB_;
