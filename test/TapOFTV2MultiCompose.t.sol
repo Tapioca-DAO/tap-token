@@ -40,7 +40,7 @@ import {
     ComposeMsgData
 } from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
 import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTv2/TapOFTMsgCoder.sol";
-import {TwTAP, Participation} from "@contracts/governance/TwTAP.sol";
+import {TwTAP, Participation} from "@contracts/governance/twTAP.sol";
 import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
 import {TapOFTSender} from "@contracts/tokens/TapOFTv2/TapOFTSender.sol";
 import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";

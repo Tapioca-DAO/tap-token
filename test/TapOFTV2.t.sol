@@ -524,6 +524,13 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                 oftMsgOptions_
             )
         );
+
+        {
+            Participation memory participation = twTap.getParticipation(1);
+            assertEq(twTap.ownerOf(1), address(this));
+            assertEq(participation.tapAmount, amountToSendLD);
+            assertEq(participation.expiry, block.timestamp + lockDuration);
+        }
     }
 
     /**
