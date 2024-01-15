@@ -365,7 +365,7 @@ contract TapOFTv2Helper {
      * @param _msgIndex The current message index.
      * @param _tapComposeMsg The previous TAP compose messages. Empty if this is the first message.
      */
-    function _sanitizeMsgIndex(uint16 _msgIndex, bytes memory _tapComposeMsg) internal view {
+    function _sanitizeMsgIndex(uint16 _msgIndex, bytes memory _tapComposeMsg) internal pure {
         // If the msgIndex is 0 and there's no composeMsg, then it's the first message.
         if (_tapComposeMsg.length == 0 && _msgIndex == 0) {
             return;

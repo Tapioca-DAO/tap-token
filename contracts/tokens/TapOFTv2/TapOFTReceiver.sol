@@ -424,7 +424,6 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
         address _msgSender
     ) internal view returns (bytes memory message, bytes memory options) {
         bool hasCompose = _composeMsg.length > 0;
-        uint16 _msgType = hasCompose ? SEND_AND_CALL : SEND;
 
         message = hasCompose
             ? abi.encodePacked(

@@ -176,8 +176,10 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         // Load data
         (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
         LockPosition memory tOLPLockPosition = tOLP.getLock(oTAPPosition.tOLP);
-        bool isPositionActive = _isPositionActive(tOLPLockPosition);
-        if (!isPositionActive) revert OptionExpired();
+
+        {
+            if (!_isPositionActive(tOLPLockPosition)) revert OptionExpired();
+        }
 
         uint256 cachedEpoch = epoch;
 
@@ -192,13 +194,15 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         } // Can only exercise after 1 epoch duration
 
         // Get eligible OTC amount
-        uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];
+        {
+            uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];
+            uint256 netAmount = uint256(netDepositedForEpoch[cachedEpoch][tOLPLockPosition.sglAssetID]);
+            if (netAmount == 0) revert NoLiquidity();
 
-        uint256 netAmount = uint256(netDepositedForEpoch[cachedEpoch][tOLPLockPosition.sglAssetID]);
-        if (netAmount == 0) revert NoLiquidity();
-        eligibleTapAmount = muldiv(tOLPLockPosition.ybShares, gaugeTotalForEpoch, netAmount);
-        eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
-        if (eligibleTapAmount < _tapAmount) revert TooHigh();
+            eligibleTapAmount = muldiv(tOLPLockPosition.ybShares, gaugeTotalForEpoch, netAmount);
+            eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
+            if (eligibleTapAmount < _tapAmount) revert TooHigh();
+        }
 
         tapAmount = _tapAmount == 0 ? eligibleTapAmount : _tapAmount;
         if (tapAmount < 1e18) revert TooLow();
