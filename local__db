@@ -28,6 +28,24 @@
         ],
         "421614": [
             {
+                "name": "ttp-oracle",
+                "address": "0xAf353d8b0F662bE4F990468CCCfD12925990463d",
+                "meta": {
+                    "args": [
+                        "ttp",
+                        "ttp",
+                        "1000000000000000000"
+                    ]
+                }
+            },
+            {
+                "name": "tob-test-payment",
+                "address": "0xa0c44B795cD8DDD3CDb3A02481D461ed88f7378B",
+                "meta": {
+                    "isERC20Mock": true
+                }
+            },
+            {
                 "name": "VestingContributors",
                 "address": "0x3750850359534f2202A1aE5F0C822938e97B2CBC",
                 "meta": {
