@@ -28,10 +28,10 @@ import {Origin} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILa
 import {OApp} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 
-import {OptionsHelper} from "./OptionsHelper.sol";
-import {SendUln302Mock as SendUln302} from "./SendUln302Mock.sol";
-import {SimpleMessageLibMock} from "./SimpleMessageLibMock.sol";
-import "./ExecutorFeeLibMock.sol";
+import {OptionsHelper} from "./mocks/OptionsHelper.sol";
+import {SendUln302Mock as SendUln302} from "./mocks/SendUln302Mock.sol";
+import {SimpleMessageLibMock} from "./mocks/SimpleMessageLibMock.sol";
+import "./mocks/ExecutorFeeLibMock.sol";
 
 // solhint-disable-next-line
 import "forge-std/console.sol";

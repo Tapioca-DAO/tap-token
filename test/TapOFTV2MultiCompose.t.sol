@@ -32,14 +32,17 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "../ITapOFTv2.sol";
+} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
 import {
-    TapOFTv2Helper, PrepareLzCallData, PrepareLzCallReturn, ComposeMsgData
-} from "../extensions/TapOFTv2Helper.sol";
-import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
-import {TwTAP, Participation} from "../../../governance/TwTAP.sol";
-import {TapOFTReceiver} from "../TapOFTReceiver.sol";
-import {TapOFTSender} from "../TapOFTSender.sol";
+    TapOFTv2Helper,
+    PrepareLzCallData,
+    PrepareLzCallReturn,
+    ComposeMsgData
+} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
+import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTv2/TapOFTMsgCoder.sol";
+import {TwTAP, Participation} from "@contracts/governance/TwTAP.sol";
+import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
+import {TapOFTSender} from "@contracts/tokens/TapOFTv2/TapOFTSender.sol";
 import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
 
 // Tapioca
@@ -594,7 +597,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
         // Prepare the remote call
         RemoteTransferMsg memory remoteTransferMsg_;
         {
-            PrepareLzCallReturn memory prepareLzCallReturn_ = tapOFTv2Helper.prepareLzCall(
+            PrepareLzCallReturn memory prepareLzCallReturnRemoteTransfer_ = tapOFTv2Helper.prepareLzCall(
                 _data.dstToken,
                 PrepareLzCallData({
                     dstEid: _data.targetEid, // is the source, A : A->B->A
@@ -616,11 +619,11 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
             );
             remoteTransferMsg_ = RemoteTransferMsg({
                 owner: _data.owner,
-                lzSendParam: prepareLzCallReturn_.lzSendParam,
+                lzSendParam: prepareLzCallReturnRemoteTransfer_.lzSendParam,
                 composeMsg: new bytes(0)
             });
 
-            _data.prepareLzCallData.composeMsgData.value = uint128(prepareLzCallReturn_.msgFee.nativeFee); // Overwrite fees after computing it
+            _data.prepareLzCallData.composeMsgData.value = uint128(prepareLzCallReturnRemoteTransfer_.msgFee.nativeFee); // Overwrite fees after computing it
         }
 
         bytes memory remoteTransfer_ = TapOFTMsgCoder.buildRemoteTransferMsg(remoteTransferMsg_);

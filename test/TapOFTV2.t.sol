@@ -32,19 +32,22 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "../ITapOFTv2.sol";
+} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
 import {
-    TapOFTv2Helper, PrepareLzCallData, PrepareLzCallReturn, ComposeMsgData
-} from "../extensions/TapOFTv2Helper.sol";
-import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
-import {TwTAP, Participation} from "../../../governance/TwTAP.sol";
-import {TapOFTReceiver} from "../TapOFTReceiver.sol";
-import {TapOFTSender} from "../TapOFTSender.sol";
-import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
+    TapOFTv2Helper,
+    PrepareLzCallData,
+    PrepareLzCallReturn,
+    ComposeMsgData
+} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
+import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTv2/TapOFTMsgCoder.sol";
+import {TwTAP, Participation} from "@contracts/governance/twTAP.sol";
+import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
+import {TapOFTSender} from "@contracts/tokens/TapOFTv2/TapOFTSender.sol";
 
-// Tapioca
+// Tapioca Tests
 import {TapTestHelper} from "./TapTestHelper.t.sol";
 import {ERC721Mock} from "./ERC721Mock.sol";
+import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
 
 import "forge-std/Test.sol";
 

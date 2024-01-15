@@ -99,7 +99,7 @@ contract TapOFTv2Helper {
     uint16 public constant PT_APPROVALS = 500;
     uint16 public constant PT_NFT_APPROVALS = 501;
 
-    uint16 public constant PT_LOCK_TWTAP = 870;
+    uint16 public constant PT_LOCK_TWTAP = 870; // TODO Make the the msg type different for each contract
     uint16 public constant PT_UNLOCK_TWTAP = 871;
     uint16 public constant PT_CLAIM_REWARDS = 872;
     uint16 public constant PT_REMOTE_TRANSFER = 700;

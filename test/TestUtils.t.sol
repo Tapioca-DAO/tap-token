@@ -4,8 +4,11 @@ pragma solidity 0.8.22;
 
 // Tapioca
 import {
-    ERC20PermitApprovalMsg, ERC20PermitStruct, ERC721PermitApprovalMsg, ERC721PermitStruct
-} from "../ITapOFTv2.sol";
+    ERC20PermitApprovalMsg,
+    ERC20PermitStruct,
+    ERC721PermitApprovalMsg,
+    ERC721PermitStruct
+} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
 
 import "forge-std/Test.sol";
 
