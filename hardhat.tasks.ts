@@ -80,7 +80,7 @@ task(
     deployOracleMock__task,
 )
     .addParam('deploymentName', 'The name of the deployment')
-    .addParam('erc20Name', 'Initial amount of tokens')
+    .addParam('erc20Name', 'Name of the ERC20 token')
     .addParam('rate', 'Exchange rate, 1e18 dec');
 
 task(

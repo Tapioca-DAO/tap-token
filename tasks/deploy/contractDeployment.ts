@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { registerContract } from '../../scripts/deployment.utils';
 import { OracleMock__factory } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
 import { loadVM } from '../utils';
+import { buildERC20Mock } from '../deployBuilds/buildMockERC20';
 
 export const deployVesting__task = async (
     taskArgs: {
@@ -23,19 +24,25 @@ export const deployERC20Mock__task = async (
     taskArgs: {
         deploymentName: string;
         name: string;
-        symbol: string;
         initialAmount: string;
         decimals: string;
     },
     hre: HardhatRuntimeEnvironment,
 ) => {
-    const args = [
+    const signer = (await hre.ethers.getSigners())[0];
+    const oracleMock = await buildERC20Mock(hre, taskArgs.deploymentName, [
         taskArgs.name,
-        taskArgs.symbol,
+        taskArgs.name,
         taskArgs.initialAmount,
         taskArgs.decimals,
-    ];
-    await registerContract(hre, 'ERC20Mock', taskArgs.deploymentName, args);
+        signer.address,
+    ]);
+
+    const VM = await loadVM(hre, 'default');
+    VM.add(oracleMock);
+    // Add and execute
+    VM.save();
+    await VM.verify();
 };
 
 export const deployOracleMock__task = async (
@@ -49,11 +56,11 @@ export const deployOracleMock__task = async (
     console.log(`[+] Tx: ${oracleMock.deployTransaction.hash}}`);
     await oracleMock.deployed();
 
-    const VM = await loadVM(hre, 'default', false);
+    const VM = await loadVM(hre, 'default');
     VM.load([
         {
-            address: oracleMock.address,
             name: taskArgs.deploymentName,
+            address: oracleMock.address,
             meta: {
                 args: [taskArgs.erc20Name, taskArgs.erc20Name, taskArgs.rate],
             },
@@ -62,4 +69,5 @@ export const deployOracleMock__task = async (
 
     // Add and execute
     VM.save();
+    await VM.verify();
 };
