@@ -1,6 +1,7 @@
 {
-    "extends": "solhint:recommended",
+    "extends": "solhint:default",
     "rules": {
-      "compiler-version": ["off"]
+      "compiler-version": ["off"],
+      "no-console":["off"]
     }
   }
