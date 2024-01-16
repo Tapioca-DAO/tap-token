@@ -32,17 +32,17 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
+} from "@contracts/tokens/ITapOFTv2.sol";
 import {
     TapOFTv2Helper,
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
-import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTv2/TapOFTMsgCoder.sol";
+} from "@contracts/tokens/extensions/TapOFTv2Helper.sol";
+import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTMsgCoder.sol";
 import {TwTAP, Participation} from "@contracts/governance/twTAP.sol";
-import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
-import {TapOFTSender} from "@contracts/tokens/TapOFTv2/TapOFTSender.sol";
+import {TapOFTReceiver} from "@contracts/tokens/TapOFTReceiver.sol";
+import {TapOFTSender} from "@contracts/tokens/TapOFTSender.sol";
 
 // Tapioca Tests
 import {TapTestHelper} from "./TapTestHelper.t.sol";

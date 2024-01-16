@@ -13,9 +13,10 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
 
 // Tapioca
+import {TwTAP} from "@contracts/governance/twTAP.sol";
+
 import {TapOFTExtExec} from "./extensions/TapOFTExtExec.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
-import {TwTAP} from "../../governance/twTAP.sol";
 
 import "forge-std/console.sol";
 

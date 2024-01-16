@@ -13,9 +13,10 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // Tapioca
-import {TapOFTV2} from "../tokens/TapOFTv2/TapOFTV2.sol";
+import {TWAML, FullMath} from "@contracts/options/twAML.sol"; // TODO Naming
+import {TapOFTV2} from "@contracts/tokens/TapOFTV2.sol";
+
 import {AOTAP, AirdropTapOption} from "./aoTAP.sol";
-import {TWAML, FullMath} from "../twAML.sol"; // TODO Naming
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        

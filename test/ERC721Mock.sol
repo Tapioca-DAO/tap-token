@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-import {ERC721PermitStruct} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
+import {ERC721PermitStruct} from "@contracts/tokens/ITapOFTv2.sol";
 import {ERC721Permit} from "tapioca-sdk/dist/contracts/util/ERC4494.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
