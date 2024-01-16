@@ -12,3 +12,9 @@ optimizer_runs = 9999
 remappings = [
     "@contracts/=contracts/",
 ]
+
+# forge-dpeloy
+fs_permissions = [
+	{ access = "read", path = "./deployments"},
+	{ access = "read", path = "./out"}
+]
