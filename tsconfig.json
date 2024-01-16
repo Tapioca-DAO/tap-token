@@ -11,7 +11,7 @@
   "include": [
     "./hardhat.config.ts",
     "./scripts",
-    "./test",
+    "hardhat_test",
     "./typechain",
     "./tasks",
     "./deploy"
