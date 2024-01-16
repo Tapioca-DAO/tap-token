@@ -14,4 +14,9 @@ artifacts
 out
 cache_forge
 
+# forge-deploy
+/generated
+/deployments/localhost
+/deployments/31337
+
 .DS_Store
