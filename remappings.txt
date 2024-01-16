@@ -1,4 +1,5 @@
 @contracts/=contracts/
+forge-deploy/=node_modules/forge-deploy/contracts/
 @boringcrypto/=node_modules/@boringcrypto/
 @layerzerolabs/=node_modules/@layerzerolabs/
 @openzeppelin/=node_modules/@openzeppelin/

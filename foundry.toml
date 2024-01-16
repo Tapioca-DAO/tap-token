@@ -11,10 +11,11 @@ optimizer_runs = 9999
 
 remappings = [
     "@contracts/=contracts/",
+	'forge-deploy/=node_modules/forge-deploy/contracts',
 ]
 
 # forge-dpeloy
 fs_permissions = [
-	{ access = "read", path = "./deployments"},
+	{ access = "read-write", path = "./deployments"},
 	{ access = "read", path = "./out"}
 ]
