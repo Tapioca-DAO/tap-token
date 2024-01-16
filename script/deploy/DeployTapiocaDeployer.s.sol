@@ -5,17 +5,13 @@ pragma solidity 0.8.22;
 import {TapiocaDeployer} from "@contracts/utils/TapiocaDeployer.sol";
 
 // solhint-disable-next-line
-import "forge-std/Script.sol";
+import "generated/deployer/DeployerFunctions.g.sol";
+import "forge-deploy/DeployScript.sol";
 
-contract DeployTapiocaDeployer is Script {
-    function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        vm.startBroadcast(deployerPrivateKey);
+contract DeployTapiocaDeployer is DeployScript {
+    using DeployerFunctions for Deployer;
 
-        TapiocaDeployer tapiocaDeployer_ = new TapiocaDeployer();
-
-        console.log(address(tapiocaDeployer_));
-
-        vm.stopBroadcast();
+    function deploy() external returns (TapiocaDeployer) {
+        return deployer.deploy_TapiocaDeployer("TapiocaDeployer");
     }
 }
