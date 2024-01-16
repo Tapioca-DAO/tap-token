@@ -333,8 +333,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         MessagingFee memory msgFee_ = prepareLzCallReturn_.msgFee;
         LZSendParam memory lzSendParam_ = prepareLzCallReturn_.lzSendParam;
 
-        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
-            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         verifyPackets(uint32(bEid), address(bTapOFT));
 
@@ -430,8 +429,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         MessagingFee memory msgFee_ = prepareLzCallReturn_.msgFee;
         LZSendParam memory lzSendParam_ = prepareLzCallReturn_.lzSendParam;
 
-        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
-            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         verifyPackets(uint32(bEid), address(bTapOFT));
 
@@ -502,8 +500,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         // Mint necessary tokens
         deal(address(aTapOFT), address(this), amountToSendLD);
 
-        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
-            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         verifyPackets(uint32(bEid), address(bTapOFT));
 
@@ -592,8 +589,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         MessagingFee memory msgFee_ = prepareLzCallReturn_.msgFee;
         LZSendParam memory lzSendParam_ = prepareLzCallReturn_.lzSendParam;
 
-        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
-            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         verifyPackets(uint32(bEid), address(bTapOFT));
 
@@ -689,8 +685,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         MessagingFee memory msgFee_ = prepareLzCallReturn2_.msgFee;
         LZSendParam memory lzSendParam_ = prepareLzCallReturn2_.lzSendParam;
 
-        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
-            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         {
             verifyPackets(uint32(bEid), address(bTapOFT));
@@ -901,8 +896,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             lzSendParam_ = prepareLzCallReturn_.lzSendParam;
         }
 
-        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) =
-            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         {
             // A->B

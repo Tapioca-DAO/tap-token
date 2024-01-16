@@ -127,7 +127,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
         deal(address(aTapOFT), userA, amountToSendLD); // Mint free tokens
 
         // Send packets
-        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) = aTapOFT.sendPacket{
+        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{
             value: lockTwTapPositionMsgReturn_.prepareLzCallReturn.lzSendParam.fee.nativeFee
         }(
             lockTwTapPositionMsgReturn_.prepareLzCallReturn.lzSendParam,
@@ -327,7 +327,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
         );
 
         // Send packets
-        (MessagingReceipt memory msgReceipt_, OFTReceipt memory oftReceipt_) = aTapOFT.sendPacket{
+        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{
             value: remoteTransferReturn_.prepareLzCallReturn.lzSendParam.fee.nativeFee
         }(remoteTransferReturn_.prepareLzCallReturn.lzSendParam, remoteTransferReturn_.prepareLzCallReturn.composeMsg);
 
@@ -447,6 +447,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
 
     function _setupERC20ApprovalMsg(SetupERC20ApprovalMsgData memory _data)
         internal
+        view
         returns (SetupERC20ApprovalMsgReturn memory erc20ApprovalsReturn_)
     {
         ERC20PermitApprovalMsg[] memory approvals_ = new ERC20PermitApprovalMsg[](_data.permitData.length);
@@ -512,6 +513,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
 
     function _setupLockTwTapPositionMsg(SetupLockTwTapPositionMsgData memory _data)
         internal
+        view
         returns (SetupLockTwTapPositionMsgReturn memory lockTwTapPositionMsgReturn_)
     {
         LockTwTapPositionMsg memory lockTwTapPositionMsg_ =
@@ -548,6 +550,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
 
     function _setupUnlockTwTapPositionMsg(SetupUnlockTwTapPositionMsgData memory _data)
         internal
+        view
         returns (SetupUnlockTwTapPositionMsgReturn memory unlockTwTapPositionMsgReturn_)
     {
         UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_ =
@@ -592,6 +595,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
 
     function _setupRemoteTransferMsg(SetupRemoteTransferMsgData memory _data)
         internal
+        view
         returns (SetupRemoteTransferMsgReturn memory RemoteTransferMsgReturn_)
     {
         // Prepare the remote call
@@ -665,6 +669,7 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
 
     function _setupERC721ApprovalMsg(SetupERC721ApprovalMsgData memory _data)
         internal
+        view
         returns (SetupERC721ApprovalMsgReturn memory erc721ApprovalsReturn_)
     {
         ERC721PermitApprovalMsg memory permitApproval_;
