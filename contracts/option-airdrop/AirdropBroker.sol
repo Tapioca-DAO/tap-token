@@ -77,8 +77,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
 
     // [OG Pearls, Tapiocans, Oysters, Cassava]
     bytes32[4] public phase2MerkleRoots; // merkle root of phase 2 airdrop
-    uint8[4] public PHASE_2_AMOUNT_PER_USER = [200, 190, 200, 190];
-    uint8[4] public PHASE_2_DISCOUNT_PER_USER = [50, 40, 40, 33];
+    uint8[4] public PHASE_2_AMOUNT_PER_USER = [200, 200, 190, 190];
+    uint8[4] public PHASE_2_DISCOUNT_PER_USER = [50, 40, 33, 25];
 
     /// =====-------======
     ///      Phase 3
