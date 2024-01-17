@@ -115,7 +115,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     error NotValid();
     error Registered();
     error TokenLimitReached();
-    error NotApproved(uint256 tokenId, address owner, address spender);
+    error NotApproved(uint256 tokenId, address spender);
     error Duplicate();
     error LockNotExpired();
     error LockNotAWeek();
@@ -485,14 +485,11 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     //   INTERNAL
     // ============
 
-    // Mirrors the implementation of _isApprovedOrOwner, with the modification
-    // that it is allowed if `_to` is the owner:
+    /**
+     * @dev Use `_isApprovedOrOwner()` internally.
+     */
     function _requireClaimPermission(address _to, uint256 _tokenId) internal view {
-        address tokenOwner = ownerOf(_tokenId);
-        if (
-            msg.sender != tokenOwner && _to != tokenOwner && !isApprovedForAll(tokenOwner, msg.sender)
-                && getApproved(_tokenId) != msg.sender
-        ) revert NotApproved(_tokenId, tokenOwner, msg.sender);
+        if (!_isApprovedOrOwner(_to, _tokenId)) revert NotApproved(_tokenId, msg.sender);
     }
 
     /**
