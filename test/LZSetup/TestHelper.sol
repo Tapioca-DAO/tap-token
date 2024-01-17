@@ -102,12 +102,7 @@ contract TestHelper is Test, OptionsHelper {
                 SendUln302 sendUln;
                 ReceiveUln302 receiveUln;
                 {
-                    sendUln = new SendUln302(
-                        payable(this),
-                        endpointAddr,
-                        TREASURY_GAS_CAP,
-                        TREASURY_GAS_FOR_FEE_CAP
-                    );
+                    sendUln = new SendUln302(payable(this), endpointAddr, TREASURY_GAS_CAP, TREASURY_GAS_FOR_FEE_CAP);
                     receiveUln = new ReceiveUln302(endpointAddr);
                     endpointList[i].registerLibrary(address(sendUln));
                     endpointList[i].registerLibrary(address(receiveUln));
@@ -131,23 +126,14 @@ contract TestHelper is Test, OptionsHelper {
                     ExecutorFeeLib executorLib = new ExecutorFeeLibMock();
                     executor.setWorkerFeeLib(address(executorLib));
 
-                    dvn = new DVN(
-                        i + 1,
-                        messageLibs,
-                        address(priceFeed),
-                        signers,
-                        1,
-                        admins
-                    );
+                    dvn = new DVN(i + 1, messageLibs, address(priceFeed), signers, 1, admins);
                     DVNFeeLib dvnLib = new DVNFeeLib(1e18);
                     dvn.setWorkerFeeLib(address(dvnLib));
                 }
 
                 //todo: setDstGas
                 uint32 endpointNum = _endpointNum;
-                IExecutor.DstConfigParam[] memory dstConfigParams = new IExecutor.DstConfigParam[](
-                        endpointNum
-                    );
+                IExecutor.DstConfigParam[] memory dstConfigParams = new IExecutor.DstConfigParam[](endpointNum);
                 for (uint8 j = 0; j < endpointNum; j++) {
                     if (i == j) continue;
                     uint32 dstEid = j + 1;
@@ -166,9 +152,7 @@ contract TestHelper is Test, OptionsHelper {
                     }
 
                     {
-                        SetDefaultExecutorConfigParam[] memory params = new SetDefaultExecutorConfigParam[](
-                                1
-                            );
+                        SetDefaultExecutorConfigParam[] memory params = new SetDefaultExecutorConfigParam[](1);
                         ExecutorConfig memory executorConfig = ExecutorConfig(10000, address(executor));
                         params[0] = SetDefaultExecutorConfigParam(dstEid, executorConfig);
                         sendUln.setDefaultExecutorConfigs(params);
@@ -193,19 +177,14 @@ contract TestHelper is Test, OptionsHelper {
                     });
 
                     uint128 denominator = priceFeed.getPriceRatioDenominator();
-                    ILayerZeroPriceFeed.UpdatePrice[] memory prices = new ILayerZeroPriceFeed.UpdatePrice[](
-                            1
-                        );
+                    ILayerZeroPriceFeed.UpdatePrice[] memory prices = new ILayerZeroPriceFeed.UpdatePrice[](1);
                     prices[0] =
                         ILayerZeroPriceFeed.UpdatePrice(dstEid, ILayerZeroPriceFeed.Price(1 * denominator, 1, 1));
                     priceFeed.setPrice(prices);
                 }
                 executor.setDstConfig(dstConfigParams);
             } else if (_libraryType == LibraryType.SimpleMessageLib) {
-                SimpleMessageLibMock messageLib = new SimpleMessageLibMock(
-                    payable(this),
-                    address(endpointList[i])
-                );
+                SimpleMessageLibMock messageLib = new SimpleMessageLibMock(payable(this), address(endpointList[i]));
                 endpointList[i].registerLibrary(address(messageLib));
                 sendLibs[i] = address(messageLib);
                 receiveLibs[i] = address(messageLib);

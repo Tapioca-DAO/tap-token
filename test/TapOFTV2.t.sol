@@ -87,7 +87,6 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     /**
      * DEPLOY setup addresses
      */
-
     uint16 internal constant SEND = 1; // Send LZ message type
     uint16 internal constant PT_APPROVALS = 500;
     uint16 internal constant PT_NFT_APPROVALS = 501;
@@ -127,18 +126,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(
-                            new TapOFTSender(
-                                address(endpoints[aEid]),
-                                address(this)
-                            )
-                        ),
-                        address(
-                            new TapOFTReceiver(
-                                address(endpoints[aEid]),
-                                address(this)
-                            )
-                        )
+                        address(new TapOFTSender(address(endpoints[aEid]), address(this))),
+                        address(new TapOFTReceiver(address(endpoints[aEid]), address(this)))
                     )
                 )
             )
@@ -158,18 +147,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(
-                            new TapOFTSender(
-                                address(endpoints[bEid]),
-                                address(this)
-                            )
-                        ),
-                        address(
-                            new TapOFTReceiver(
-                                address(endpoints[bEid]),
-                                address(this)
-                            )
-                        )
+                        address(new TapOFTSender(address(endpoints[bEid]), address(this))),
+                        address(new TapOFTReceiver(address(endpoints[bEid]), address(this)))
                     )
                 )
             )
@@ -255,7 +234,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     }
 
     function test_erc721_permit() public {
-        ERC721Mock erc721Mock = new ERC721Mock("Mock","Mock");
+        ERC721Mock erc721Mock = new ERC721Mock("Mock", "Mock");
         vm.label(address(erc721Mock), "erc721Mock");
         erc721Mock.mint(address(userA), 1);
 
@@ -559,7 +538,6 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         /**
          * Actions
          */
-
         UnlockTwTapPositionMsg memory unlockTwTapPosition_ =
             UnlockTwTapPositionMsg({user: address(this), tokenId: tokenId_});
         bytes memory unlockTwTapPositionMsg_ = tapOFTv2Helper.buildUnlockTwpTapPositionMsg(unlockTwTapPosition_);

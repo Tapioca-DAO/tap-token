@@ -565,9 +565,7 @@ library TapOFTMsgCoder {
         /// @dev see `this.decodeERC20PermitApprovalMsg()`, token + owner + spender + value + deadline + v + r + s length = 189.
         uint256 msgCount_ = _msg.length / 189;
 
-        ERC20PermitApprovalMsg[] memory erc20PermitApprovalMsgs_ = new ERC20PermitApprovalMsg[](
-                msgCount_
-            );
+        ERC20PermitApprovalMsg[] memory erc20PermitApprovalMsgs_ = new ERC20PermitApprovalMsg[](msgCount_);
 
         uint256 msgIndex_;
         for (uint256 i; i < msgCount_;) {
