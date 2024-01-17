@@ -143,32 +143,29 @@ contract AirdropBrokerTest is TapTestHelper {
 
         erc721Mock = new ERC721Mock("MockERC721", "Mock"); //deploy ERC721Mock
         vm.label(address(erc721Mock), "erc721Mock"); //label address for test traces
-        
-         airdropBroker = new AirdropBroker(
+        tapOFTv2Helper = new TapOFTv2Helper();
+        tapOracleMock = new TapOracleMock();
+        aotap = new AOTAP(address(this)); //deploy AOTAP and set address to owner
+
+    
+        airdropBroker = new AirdropBroker(
             address(aotap),
             payable(address(aTapOFT)),
             address(erc721Mock),
             tokenBeneficiary,
             address(owner)
         );
-
         
-        aotap = new AOTAP(address(this)); //deploy AOTAP and set address to owner
-
-
-        tapOFTv2Helper = new TapOFTv2Helper();
-        tapOracleMock = new TapOracleMock();
-
         vm.startPrank(owner);
         mockToken = new MockToken("MockERC20", "Mock"); //deploy MockToken
         vm.label(address(mockToken), "erc20Mock"); //label address for test traces
         mockToken.transfer(address(this), 1_000_001 * 10**18); //transfer some tokens to address(this)
         mockToken.transfer(address(airdropBroker), 333333 * 10**18);
         bytes memory _data = abi.encode(uint256(1));
-        airdropBroker.setTapOracle(tapOracleMock,_data);
+       
         erc721Mock.mint(address(owner), 1); //mint NFT id 1 to owner
         erc721Mock.mint(address(tokenBeneficiary), 2); //mint NFT id 2 to beneficiary
-
+        airdropBroker.setTapOracle(tapOracleMock,_data);
         vm.stopPrank();
 
         
@@ -249,8 +246,7 @@ function test_participate_phase_1_not_elegible() public {
     _tokenID[1] = uint256(2);
     bytes memory _data = abi.encode(_tokenID);
 
-    uint256 timestamp = block.timestamp;
-    vm.warp(timestamp + 172810); //2 days in seconds + 10 seconds 172810 to increase the epoch
+    vm.warp(block.timestamp + 172810); //2 days in seconds + 10 seconds 172810 to increase the epoch
     airdropBroker.newEpoch();
 
     vm.expectRevert(NotEligible.selector);
@@ -281,14 +277,33 @@ function test_participate_phase_2_not_elegible() public { //fail,encode better
 
     bytes memory _data = abi.encode(_tokenID);
     
-    vm.warp(block.timestamp + 172810);  //2 days in seconds + 10 seconds 172810 to increase the epoch
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 345620);
-    airdropBroker.newEpoch(); //TODO: add expect emits to track the epochs better
+    //2 days in seconds + 10 seconds 172810 to increase the epoch
+      for (uint256 i = 1; i < 3; i++) { 
+        vm.warp(block.timestamp + 172810 * i); 
+        airdropBroker.newEpoch();
+    } 
+    //TODO: add expect emits to track the epochs better
 
     vm.expectRevert(NotEligible.selector);
     airdropBroker.participate(_data); //TODO: fix that it does not work due to a merkle proof and an incorrect bytes decoding on `_participatePhase2`
 
+}
+
+function test_participate_phase_2_only_broker() public { //fail for encoding
+    vm.startPrank(owner);
+    uint256[] memory _tokenID = new uint256[](1);
+    _tokenID[0] = uint256(1); 
+
+    bytes memory _data = abi.encode(_tokenID);
+    
+     for (uint256 i = 1; i < 3; i++) { 
+        vm.warp(block.timestamp + 172810 * i); 
+        airdropBroker.newEpoch();
+    }
+
+    vm.expectRevert(OnlyBroker.selector);
+    airdropBroker.participate(_data); 
+    vm.stopPrank();
 }
 
 function test_new_epoch_too_soon() public {
@@ -338,12 +353,10 @@ function test_participate_phase_3_not_elegible() public { //ok
 
     bytes memory _data = abi.encode(_tokenID);
     
-    vm.warp(block.timestamp + 172810); 
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 345620);
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 518430);
-    airdropBroker.newEpoch();
+    for (uint256 i = 1; i < 4; i++) { 
+        vm.warp(block.timestamp + 172810 * i); 
+        airdropBroker.newEpoch();
+    }
 
     vm.expectRevert(NotEligible.selector);
     airdropBroker.participate(_data);
@@ -357,16 +370,47 @@ function test_participate_phase_3_not_existent_nft() public { //ok
 
     bytes memory _data = abi.encode(_tokenID);
     
-    vm.warp(block.timestamp + 172810); 
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 345620);
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 518430);
-    airdropBroker.newEpoch();
+     for (uint256 i = 1; i < 4; i++) { 
+        vm.warp(block.timestamp + 172810 * i); 
+        airdropBroker.newEpoch();
+    }
 
     vm.expectRevert(bytes("ERC721: invalid token ID"));
     airdropBroker.participate(_data); 
 
+}
+function test_participate_phase_3_only_broker() public { //ok
+    vm.startPrank(owner);
+    uint256[] memory _tokenID = new uint256[](1);
+    _tokenID[0] = uint256(1); 
+
+    bytes memory _data = abi.encode(_tokenID);
+    
+     for (uint256 i = 1; i < 4; i++) { 
+        vm.warp(block.timestamp + 172810 * i); 
+        airdropBroker.newEpoch();
+    }
+
+    vm.expectRevert(OnlyBroker.selector);
+    airdropBroker.participate(_data); 
+    vm.stopPrank();
+}
+
+function test_dao_aoTAP_broker_claim() public {
+
+    vm.startPrank(owner);
+    airdropBroker.aoTAPBrokerClaim();
+    vm.stopPrank();
+    
+}
+
+function test_dao_aoTAP_broker_claim_only_once() public {
+
+    vm.startPrank(owner);
+    vm.expectRevert(OnlyOnce.selector); 
+    airdropBroker.aoTAPBrokerClaim();
+    vm.stopPrank();
+    
 }
 
 function test_participate_phase_3_already_participated() public { //fail
@@ -376,12 +420,10 @@ function test_participate_phase_3_already_participated() public { //fail
 
     bytes memory _data = abi.encode(_tokenID);
     
-    vm.warp(block.timestamp + 172810); 
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 345620);
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 518430);
-    airdropBroker.newEpoch();
+      for (uint256 i = 1; i < 4; i++) { 
+        vm.warp(block.timestamp + 172810 * i); 
+        airdropBroker.newEpoch();
+    }
 
     airdropBroker.participate(_data); 
     // assertEq();
@@ -466,10 +508,11 @@ function test_dao_recover_tap_before_end_epoch() public {
     vm.startPrank(owner);
     
     //advance 2 epochs
-    vm.warp(block.timestamp + 172810); 
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 345620);
-    airdropBroker.newEpoch();
+     for (uint256 i = 1; i < 3; i++) { 
+        vm.warp(block.timestamp + 172810 * i); 
+        airdropBroker.newEpoch();
+    }
+    
 
     vm.expectRevert(bytes("adb: too soon"));
     airdropBroker.daoRecoverTAP();
@@ -494,25 +537,10 @@ function test_dao_recover_tap_transfer() public { //ok
     //deal balance to airdropBroker of tapOFT
     uint256 balance = aTapOFT.balanceOf(address(airdropBroker));
 
-    //move 9 epochs to the future
-    vm.warp(block.timestamp + 172810); 
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 345620);
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 518430); 
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 691240);
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 864050); 
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 1036860);
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 1209670); 
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 1382480);
-    airdropBroker.newEpoch();
-    vm.warp(block.timestamp + 1555290); 
-    airdropBroker.newEpoch();
+    for (uint256 i = 1; i < 11; i++) { //move 9 epochs in the future
+        vm.warp(block.timestamp + 172810 * i); 
+        airdropBroker.newEpoch();
+    }
     
     uint256 balanceBeforeAirdrop = aTapOFT.balanceOf(address(airdropBroker));
     uint256 balanceBeforeOwner = aTapOFT.balanceOf(address(owner));
@@ -527,18 +555,11 @@ function test_dao_recover_tap_transfer() public { //ok
     
 }
 
-
-function test_dao_aoTAP_broker_claim() public {
-
-    vm.startPrank(owner);
-    
-    // vm.expectRevert(bytes("Ownable: caller is not the owner"));
-
-    vm.expectRevert(OnlyOnce.selector); //TODO: reverts with no error message
-    airdropBroker.aoTAPBrokerClaim();
-    vm.stopPrank();
+function increase_epochs()internal{
     
 }
+
+
 
 
 function test_set_tap_oracle_not_owner() public { //ok
