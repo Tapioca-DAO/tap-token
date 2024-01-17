@@ -46,6 +46,13 @@ export const deployMockADB__task = async (
                 ]),
             )
             .add(
+                await buildOracleMock(hre, 'TapOracleMock', [
+                    'TapOracleMock',
+                    'TAPM',
+                    hre.ethers.BigNumber.from(10).pow(17).mul(33),
+                ]),
+            ) // 3.3
+            .add(
                 await buildADB(
                     hre,
                     'AirdropBroker',
@@ -53,8 +60,9 @@ export const deployMockADB__task = async (
                         hre.ethers.constants.AddressZero, // aoTAP
                         hre.ethers.constants.AddressZero, // TapOFT
                         hre.ethers.constants.AddressZero, // PCNFT
-                        signer.address,
-                        signer.address,
+                        signer.address, // Payment token beneficiary
+                        hre.ethers.constants.AddressZero, // TapOracle
+                        signer.address, // Owner
                     ],
                     [
                         {
@@ -63,15 +71,9 @@ export const deployMockADB__task = async (
                         },
                         { argPosition: 1, deploymentName: 'TapOFTMock' },
                         { argPosition: 2, deploymentName: 'PCNFTMock' },
+                        { argPosition: 4, deploymentName: 'TapOracleMock' },
                     ],
                 ),
-            )
-            .add(
-                await buildOracleMock(hre, 'TapOracleMock', [
-                    'TapOracleMock',
-                    'TAPM',
-                    hre.ethers.BigNumber.from(10).pow(17).mul(33), // 3.3
-                ]),
             )
             .add(
                 await buildOracleMock(hre, 'DAIOracleMock', [
