@@ -2,7 +2,6 @@
   "name": "tap-token",
   "license": "MIT",
   "scripts": {
-    "postinstall": "forge-deploy gen-deployer -s contracts/",
     "test": "npx hardhat test",
     "coverage": "NODE_ENV=coverage npx hardhat coverage",
     "compile": "NODE_ENV=compile hardhat compile --quiet && npm run lint:sol",

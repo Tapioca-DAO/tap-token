@@ -18,15 +18,25 @@ import 'typechain';
 import SDK from 'tapioca-sdk';
 import { HttpNetworkConfig } from 'hardhat/types';
 import { TAPIOCA_PROJECTS_NAME } from './gitsub_tapioca-sdk/src/api/config';
-
-dotenv.config();
 declare global {
     // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace NodeJS {
         interface ProcessEnv {
             ALCHEMY_API_KEY: string;
+            ENV: string;
         }
     }
+}
+
+if (process.env.ENV === undefined) {
+    throw new Error(
+        '[-] ENV env var not set, please choose between localhost or chain name, such as "arbitrum_sepolia"\n',
+    );
+}
+dotenv.config({ path: `.env/${process.env.ENV}.env` });
+
+if (process.env.ALCHEMY_API_KEY === undefined) {
+    throw new Error('[-] ALCHEMY_API_KEY env var not set\n');
 }
 
 type TNetwork = ReturnType<
