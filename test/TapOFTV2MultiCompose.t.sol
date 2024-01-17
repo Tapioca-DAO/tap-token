@@ -497,7 +497,6 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
      * LOCK TWTAP  MSG BUILDER
      * ==========================
      */
-
     struct SetupLockTwTapPositionMsgData {
         PrepareLzCallData prepareLzCallData;
         ITapOFTv2 token;
@@ -578,7 +577,6 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
      * REMOTE TRANSFER  MSG BUILDER
      * ==========================
      */
-
     struct SetupRemoteTransferMsgData {
         PrepareLzCallData prepareLzCallData;
         ITapOFTv2 token;
@@ -653,7 +651,6 @@ contract TapOFTV2MultiComposeTest is TapOFTV2Test {
      * ERC721 APPROVALS  MSG BUILDER
      * ==========================
      */
-
     struct SetupERC721ApprovalMsgData {
         PrepareLzCallData prepareLzCallData;
         ITapOFTv2 token;

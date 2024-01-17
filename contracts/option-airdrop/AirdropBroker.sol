@@ -45,9 +45,9 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     bytes public tapOracleData;
+    IOracle public tapOracle;
     TapOFTV2 public immutable tapOFT;
     AOTAP public immutable aoTAP;
-    IOracle public tapOracle;
     IERC721 public immutable PCNFT;
 
     uint128 public epochTAPValuation; // TAP price for the current epoch
@@ -122,12 +122,14 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         address payable _tapOFT,
         address _pcnft,
         address _paymentTokenBeneficiary,
+        address _tapOracle,
         address _owner
     ) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         tapOFT = TapOFTV2(_tapOFT);
         aoTAP = AOTAP(_aoTAP);
         PCNFT = IERC721(_pcnft);
+        tapOracle = IOracle(_tapOracle);
         owner = _owner;
     }
 
@@ -294,10 +296,17 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     }
 
     function setPhase2MerkleRoots(bytes32[4] calldata _merkleRoots) external onlyOwner {
+        if (epoch >= 2) revert NotValid();
         phase2MerkleRoots = _merkleRoots;
         emit Phase2MerkleRootsUpdated();
     }
 
+    /**
+     * @notice Register users for a phase 1 or 4 with their eligible amount.
+     * @param _phase The phase to register the users for
+     * @param _users The users to register
+     * @param _amounts The eligible amount of TAP for each user
+     */
     function registerUsersForPhase(uint256 _phase, address[] calldata _users, uint256[] calldata _amounts)
         external
         onlyOwner
@@ -305,10 +314,13 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         if (_users.length != _amounts.length) revert NotValid();
 
         if (_phase == 1) {
+            if (epoch >= 1) revert NotValid();
             for (uint256 i; i < _users.length; i++) {
                 phase1Users[_users[i]] = _amounts[i];
             }
-        } else if (_phase == 4) {
+        }
+        /// @dev We want to be able to set phase 4 users in the future on subsequent epochs
+        else if (_phase == 4) {
             for (uint256 i; i < _users.length; i++) {
                 phase4Users[_users[i]] = _amounts[i];
             }

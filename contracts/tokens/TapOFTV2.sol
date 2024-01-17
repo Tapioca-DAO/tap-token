@@ -127,7 +127,6 @@ contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
      * @param _governanceEid Governance chain endpoint ID. Should be EID of the twTAP chain.
      * @param _owner Address of the conservator/owner.
      */
-
     constructor(
         address _endpoint,
         address _contributors,

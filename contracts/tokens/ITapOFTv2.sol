@@ -38,7 +38,6 @@ interface ITapOFTv2 {
      * Tapioca added functions
      * =======================
      */
-
     function getTypedDataHash(ERC20PermitStruct calldata _permitData) external view returns (bytes32);
 
     function quoteSendPacket(
