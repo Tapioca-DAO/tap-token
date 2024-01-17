@@ -11,7 +11,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // Tapioca
-import {TapOFTV2} from "@contracts/tokens/TapOFTV2.sol";
+import {TapOFTV2} from "contracts/tokens/TapOFTV2.sol";
 
 import {TapiocaOptionLiquidityProvision, LockPosition, SingularityPool} from "./TapiocaOptionLiquidityProvision.sol";
 import {OTAP, TapOption} from "./oTAP.sol";

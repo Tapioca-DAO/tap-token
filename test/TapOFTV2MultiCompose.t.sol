@@ -12,7 +12,7 @@ import {
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
-import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
+import {BytesLib} from "solidity-bytes-utils/contracts/BytesLib.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 
 // External
@@ -32,17 +32,17 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "@contracts/tokens/ITapOFTv2.sol";
+} from "contracts/tokens/ITapOFTv2.sol";
 import {
     TapOFTv2Helper,
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "@contracts/tokens/extensions/TapOFTv2Helper.sol";
-import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTMsgCoder.sol";
-import {TwTAP, Participation} from "@contracts/governance/twTAP.sol";
-import {TapOFTReceiver} from "@contracts/tokens/TapOFTReceiver.sol";
-import {TapOFTSender} from "@contracts/tokens/TapOFTSender.sol";
+} from "contracts/tokens/extensions/TapOFTv2Helper.sol";
+import {TapOFTMsgCoder} from "contracts/tokens/TapOFTMsgCoder.sol";
+import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
+import {TapOFTReceiver} from "contracts/tokens/TapOFTReceiver.sol";
+import {TapOFTSender} from "contracts/tokens/TapOFTSender.sol";
 import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
 
 // Tapioca

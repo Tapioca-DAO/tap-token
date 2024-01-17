@@ -10,10 +10,10 @@ import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
 // External
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {BytesLib} from "@layerzerolabs/solidity-bytes-utils/contracts/BytesLib.sol";
+import {BytesLib} from "solidity-bytes-utils/contracts/BytesLib.sol";
 
 // Tapioca
-import {TwTAP} from "@contracts/governance/twTAP.sol";
+import {TwTAP} from "contracts/governance/twTAP.sol";
 
 import {TapOFTExtExec} from "./extensions/TapOFTExtExec.sol";
 import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";

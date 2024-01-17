@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 // Tapioca
-import {TapiocaDeployer} from "@contracts/utils/TapiocaDeployer.sol";
+import {TapiocaDeployer} from "contracts/utils/TapiocaDeployer.sol";
 
 // solhint-disable-next-line
 import "generated/deployer/DeployerFunctions.g.sol";
