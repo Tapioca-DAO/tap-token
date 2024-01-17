@@ -68,14 +68,11 @@ const config: HardhatUserConfig & { dodoc: any } = {
                     evmVersion: 'paris', // Latest before Shanghai
                     optimizer: {
                         enabled: true,
-                        runs: 500,
+                        runs: 9999,
                     },
                 },
             },
         ],
-    },
-    paths: {
-        sources: './contracts/tokens/TapOFTv2', // TODO remove. For test LZv2 WIP only
     },
     namedAccounts: {
         deployer: 0,

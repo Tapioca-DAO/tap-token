@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
 import { TContract } from 'tapioca-sdk/dist/shared';

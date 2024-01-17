@@ -10,7 +10,7 @@
   },
   "include": [
     "./hardhat.config.ts",
-    "./scripts",
+    "./hardhat_scripts",
     "hardhat_test",
     "./typechain",
     "./tasks",

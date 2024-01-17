@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { registerContract } from '../../scripts/deployment.utils';
+import { registerContract } from '../../hardhat_scripts/deployment.utils';
 import { OracleMock__factory } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
 import { loadVM } from '../utils';
 
@@ -49,7 +49,7 @@ export const deployOracleMock__task = async (
     console.log(`[+] Tx: ${oracleMock.deployTransaction.hash}}`);
     await oracleMock.deployed();
 
-    const VM = await loadVM(hre, 'default', false);
+    const VM = await loadVM(hre, 'default');
     VM.load([
         {
             address: oracleMock.address,
