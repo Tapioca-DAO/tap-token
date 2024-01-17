@@ -19,3 +19,6 @@ fs_permissions = [
 	{ access = "read-write", path = "./deployments"},
 	{ access = "read", path = "./out"}
 ]
+
+[etherscan]
+arbitrum-sepolia = { key = "${ARBITRUM_SEPOLIA_API_KEY}", url = "https://api-sepolia.arbiscan.io/api"}
