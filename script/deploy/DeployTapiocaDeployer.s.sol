@@ -8,10 +8,13 @@ import {TapiocaDeployer} from "@contracts/utils/TapiocaDeployer.sol";
 import "generated/deployer/DeployerFunctions.g.sol";
 import "forge-deploy/DeployScript.sol";
 
-contract DeployTapiocaDeployer is DeployScript {
-    using DeployerFunctions for Deployer;
+contract DeployTapiocaDeployer is Script {
+    function run() external {
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        vm.startBroadcast(deployerPrivateKey);
 
-    function deploy() external returns (TapiocaDeployer) {
-        return deployer.deploy_TapiocaDeployer("TapiocaDeployer");
+        TapiocaDeployer tapiocaDeployer = new TapiocaDeployer();
+
+        vm.stopBroadcast();
     }
 }
