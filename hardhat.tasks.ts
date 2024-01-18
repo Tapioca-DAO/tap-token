@@ -12,21 +12,15 @@ import {
 } from './tasks/exec/setterTasks';
 
 import { glob } from 'typechain';
-import { configurePacketTypes__task } from './tasks/exec/configurePacketTypes';
 import { deployStack__task } from './tasks/deploy/deployStack';
-import { deployTapOFT__task } from './tasks/deploy/deployTapOFT';
-import { setRegisterSGLOnTOLP__task } from './tasks/exec/19-tolp-setRegisterSGL';
-import { setPaymentTokenOnTOB__task } from './tasks/exec/16-tob-setPaymentToken';
-import { testParticipateCrossChain__task } from './tasks/exec/tests/test-participateCrossChain';
-import { testExitCrossChain__task } from './tasks/exec/tests/test-exitCrossChain';
-import { setTwTapRewardToken__task } from './tasks/exec/04-twTap-setTwTapRewardToken';
-import { testClaimRewards__task } from './tasks/exec/tests/test-claimRewards';
-import { setDistributeTwTapRewards__task } from './tasks/exec/05-twTap-setDistributeTwTapRewards';
-import { setAdvanceWeek__task } from './tasks/exec/06-twTap-setAdvanceWeek';
+import { deployTapOFTv2__task } from './tasks/deploy/deployTapOFTv2';
 import { deployMockADB__task } from './tasks/deployMock/deployMockADB';
 import { registerUserForVesting__task } from './tasks/exec/01-vesting-registerUser';
 import { initVesting__task } from './tasks/exec/02-vesting-init';
 import { setMaxRewardTokensLength__task } from './tasks/exec/03-twTap-setMaxRewardTokensLength';
+import { setTwTapRewardToken__task } from './tasks/exec/04-twTap-setTwTapRewardToken';
+import { setDistributeTwTapRewards__task } from './tasks/exec/05-twTap-setDistributeTwTapRewards';
+import { setAdvanceWeek__task } from './tasks/exec/06-twTap-setAdvanceWeek';
 import { setTapOracle__task } from './tasks/exec/07-ab-setTapOracle';
 import { setPhase2MerkleRoots__task } from './tasks/exec/08-ab-setPhase2MerkleRoots';
 import { registerUserForPhase__task } from './tasks/exec/09-ab-registerUserForPhase';
@@ -36,8 +30,10 @@ import { collectPaymentTokensOnAB__task } from './tasks/exec/12-ab-collectPaymen
 import { daoRecoverTAPFromAB__task } from './tasks/exec/13-ab-daoRecoverTAP';
 import { setMinWeightFactorOnTOB__task } from './tasks/exec/14-tob-setMinWeightFactor';
 import { setTapOracleOnTOB__task } from './tasks/exec/15-tob-setTapOracle';
+import { setPaymentTokenOnTOB__task } from './tasks/exec/16-tob-setPaymentToken';
 import { setPaymentTokenBeneficiaryOnTOB__task } from './tasks/exec/17-tob-setPaymentTokenBeneficiary';
 import { collectPaymentTokensOnTOB__task } from './tasks/exec/18-tob-collectPaymentTokens';
+import { setRegisterSGLOnTOLP__task } from './tasks/exec/19-tolp-setRegisterSGL';
 import { setSglPoolWeightOnTOLP__task } from './tasks/exec/20-tolp-setSglPoolWeight';
 import { activateSglPoolRescueOnTOLP__task } from './tasks/exec/21-tolp-activateSglPoolRescue';
 import { unregisterSingularityOnTOLP__task } from './tasks/exec/22-tolp-unregisterSingularity';
@@ -47,6 +43,12 @@ import { setTwTapOnTap__task } from './tasks/exec/25-tap-setTwTap';
 import { setGovernanceChainIdentifierOnTap__task } from './tasks/exec/26-tap-setGovernanceChainIdentifier';
 import { updatePauseOnTap__task } from './tasks/exec/27-tap-updatePause';
 import { setMinterOnTap__task } from './tasks/exec/28-tap-setMinter';
+import { configurePacketTypes__task } from './tasks/exec/configurePacketTypes';
+import { setOFTPeers__task } from './tasks/exec/setOFTPeers';
+import { testClaimRewards__task } from './tasks/exec/tests/test-claimRewards';
+import { testExitCrossChain__task } from './tasks/exec/tests/test-exitCrossChain';
+import { testParticipateCrossChain__task } from './tasks/exec/tests/test-participateCrossChain';
+import { sendTokens__task } from './tasks/exec/sendTokens';
 
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
@@ -128,7 +130,11 @@ task(
     deployStack__task,
 ).addFlag('load', 'Load the contracts from the local database.');
 
-task('deployTapOFT', 'Deploys just the TapOFT contract', deployTapOFT__task);
+task(
+    'deployTapOFTv2',
+    'Deploys just the TapOFT contract',
+    deployTapOFTv2__task,
+);
 
 // ---- twTAP
 task(
@@ -291,3 +297,15 @@ task(
     testClaimRewards__task,
 );
 task('deployMockADB', 'Deploy a mock ADB environment', deployMockADB__task);
+
+task('setOFTPeers', 'Set OFT peers', setOFTPeers__task).addParam(
+    'target',
+    'Name of the target contract, as deployed in local__db.',
+);
+
+task('sendTokens', 'Set OFT tokens', sendTokens__task)
+    .addParam(
+        'target',
+        'Name of the target contract, as deployed in local__db.',
+    )
+    .addParam('dst', 'Name of the destination chain. As in hardhat.config.ts');
