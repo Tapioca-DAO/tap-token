@@ -39,12 +39,13 @@ import {AOTAP} from "../../contracts/option-airdrop/AOTAP.sol";
 
 // Import contract to test
 import {AirdropBroker} from "../../contracts/option-airdrop/AirdropBroker.sol";
+import {Errors} from "../helpers/errors.sol";
 
 // import "forge-std/Test.sol";
 import {stdStorage, StdStorage} from "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-contract AirdropBrokerTest is TapTestHelper {
+contract AirdropBrokerTest is TapTestHelper, Errors {
     using stdStorage for StdStorage;
 
     using OptionsBuilder for bytes;
@@ -80,26 +81,6 @@ contract AirdropBrokerTest is TapTestHelper {
     address public __airdrop = address(0x35);
     uint256 public __governanceEid = 0; //aEid, initially bEid
     address public __owner = address(this);
-
-    //TODO: Modularize all the errors in one file and import
-    error PaymentTokenNotValid();
-    error OptionExpired();
-    error TooHigh();
-    error TooLow();
-    error NotStarted();
-    error Ended();
-    error NotAuthorized();
-    error TooSoon();
-    error Failed();
-    error NotValid();
-    error TokenBeneficiaryNotSet();
-    error NotEligible();
-    error AlreadyParticipated();
-    error PaymentAmountNotValid();
-    error TapAmountNotValid();
-    error PaymentTokenValuationNotValid();
-    error OnlyBroker();
-    error OnlyOnce();
 
     function setUp() public override {
         vm.deal(owner, 1000 ether); //give owner some ether

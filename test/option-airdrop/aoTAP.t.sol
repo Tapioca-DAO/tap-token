@@ -40,27 +40,19 @@ import {AOTAP} from "../../contracts/option-airdrop/AOTAP.sol";
 // Import contract to test
 import {AirdropBroker} from "../../contracts/option-airdrop/AirdropBroker.sol";
 
+import {Errors} from "../helpers/errors.sol";
+
 // import "forge-std/Test.sol";
 import {stdStorage, StdStorage} from "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-contract aoTapTest is TapTestHelper {
+contract aoTapTest is TapTestHelper, Errors {
     using stdStorage for StdStorage;
 
     using OptionsBuilder for bytes;
     using OFTMsgCodec for bytes32;
     using OFTMsgCodec for bytes;
 
-    uint32 aEid = 1;
-    uint32 bEid = 2;
-
-    TapOFTv2Helper public tapOFTv2Helper; //instance of TapOFTv2Helper
-    TapOFTV2Mock public aTapOFT; //instance of TapOFTV2Mock
-    TapOFTV2Mock public bTapOFT; //instance of TapOFTV2Mock NOTE unused to the moment
-    AirdropBroker public airdropBroker; //instance of AirdropBroker
-    TapOracleMock public tapOracleMock; //instance of TapOracleMock
-    MockToken public mockToken; //instance of MockToken (erc20)
-    ERC721Mock public erc721Mock; //instance of ERC721Mock
     AOTAP public aotap; //instance of AOTAP
 
     uint256 internal userAPKey = 0x1;
@@ -68,38 +60,6 @@ contract aoTapTest is TapTestHelper {
     address public owner = vm.addr(userAPKey);
     address public tokenBeneficiary = vm.addr(userBPKey);
 
-    /**
-     * DEPLOY setup addresses
-     */
-    address public __endpoint;
-    address public __contributors = address(0x30);
-    address public __earlySupporters = address(0x31);
-    address public __supporters = address(0x32);
-    address public __lbp = address(0x33);
-    address public __dao = address(0x34);
-    address public __airdrop = address(0x35);
-    uint256 public __governanceEid = 0; //aEid, initially bEid
-    address public __owner = address(this);
-
-    //TODO: Modularize all the errors in one file and import
-    error PaymentTokenNotValid();
-    error OptionExpired();
-    error TooHigh();
-    error TooLow();
-    error NotStarted();
-    error Ended();
-    error NotAuthorized();
-    error TooSoon();
-    error Failed();
-    error NotValid();
-    error TokenBeneficiaryNotSet();
-    error NotEligible();
-    error AlreadyParticipated();
-    error PaymentAmountNotValid();
-    error TapAmountNotValid();
-    error PaymentTokenValuationNotValid();
-    error OnlyBroker();
-    error OnlyOnce();
 
     function setUp() public override {
         vm.deal(owner, 1000 ether); //give owner some ether
@@ -108,11 +68,6 @@ contract aoTapTest is TapTestHelper {
         vm.label(tokenBeneficiary, "tokenBeneficiary"); //label address for test traces
 
         aotap = new AOTAP(address(owner)); //deploy AOTAP and set address to owner
-
-        // config and wire the ofts
-        address[] memory ofts = new address[](1);
-        ofts[0] = address(aTapOFT);
-        this.wireOApps(ofts);
 
         super.setUp();
     }
@@ -212,7 +167,7 @@ contract aoTapTest is TapTestHelper {
 
     // Testing of events
 
-    function testTransferEvent() public {
+    function testTransferEvent() public { //NOTE the 3 events are erroing
         vm.startPrank(owner);
         aotap.brokerClaim();
         aotap.mint(owner, 1, 1, 1);
