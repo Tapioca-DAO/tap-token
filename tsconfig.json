@@ -6,7 +6,10 @@
     "esModuleInterop": true,
     "outDir": "dist",
     "declaration": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "@tapioca-sdk/*": ["./lib/tapioca-sdk/src/*"]
+    }
   },
   "include": [
     "./hardhat.config.ts",
@@ -14,6 +17,7 @@
     "hardhat_test",
     "./typechain",
     "./tasks",
-    "./deploy"
+    "./deploy",
+    "./lib/tapioca-sdk/src"
   ]
 }
