@@ -15,12 +15,11 @@ import 'tapioca-sdk';
 import 'typechain';
 import fs from 'fs';
 
-import 'tsconfig-paths/register';
-
 // Utils
 import SDK from 'tapioca-sdk';
 import { HttpNetworkConfig } from 'hardhat/types';
-import { TAPIOCA_PROJECTS_NAME } from './gitsub_tapioca-sdk/src/api/config';
+import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
+
 declare global {
     // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace NodeJS {
