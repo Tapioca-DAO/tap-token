@@ -15,6 +15,8 @@ import 'tapioca-sdk';
 import 'typechain';
 import fs from 'fs';
 
+import 'tsconfig-paths/register';
+
 // Utils
 import SDK from 'tapioca-sdk';
 import { HttpNetworkConfig } from 'hardhat/types';
@@ -91,6 +93,10 @@ const config: HardhatUserConfig & { dodoc: any } = {
             },
         ],
     },
+    paths: {
+        artifacts: './gen/artifacts',
+        cache: './gen/cache',
+    },
     namedAccounts: {
         deployer: 0,
     },
@@ -122,6 +128,7 @@ const config: HardhatUserConfig & { dodoc: any } = {
     dodoc: {
         runOnCompile: false,
         freshOutput: false,
+        outputDir: 'gen/docs',
     },
     typechain: {
         outDir: 'typechain',
