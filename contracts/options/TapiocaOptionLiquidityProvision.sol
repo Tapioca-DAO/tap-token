@@ -85,8 +85,8 @@ contract TapiocaOptionLiquidityProvision is
     // ==========
     //   EVENTS
     // ==========
-    event Mint(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition);
-    event Burn(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition);
+    event Mint(address indexed to, uint128 indexed sglAssetID, uint256 tokenId);
+    event Burn(address indexed to, uint128 indexed sglAssetID, uint256 tokenId);
     event UpdateTotalSingularityPoolWeights(uint256 totalSingularityPoolWeights);
     event SetSGLPoolWeight(address indexed sgl, uint256 poolWeight);
     event ActivateSGLPoolRescue(address sgl);
@@ -191,7 +191,7 @@ contract TapiocaOptionLiquidityProvision is
         lockPosition.lockDuration = _lockDuration;
         lockPosition.ybShares = _ybShares;
 
-        emit Mint(_to, uint128(sglAssetID), lockPosition);
+        emit Mint(_to, uint128(sglAssetID), tokenId);
     }
 
     /// @notice Unlocks tOLP tokens
@@ -222,7 +222,7 @@ contract TapiocaOptionLiquidityProvision is
         yieldBox.transfer(address(this), _to, lockPosition.sglAssetID, lockPosition.ybShares);
         activeSingularities[_singularity].totalDeposited -= lockPosition.ybShares;
 
-        emit Burn(_to, lockPosition.sglAssetID, lockPosition);
+        emit Burn(_to, lockPosition.sglAssetID, _tokenId);
     }
 
     // =========

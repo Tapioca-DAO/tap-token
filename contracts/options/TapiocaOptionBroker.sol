@@ -126,21 +126,15 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     //   EVENTS
     // ==========
     event Participate(
-        uint256 indexed epoch,
-        uint256 indexed sglAssetID,
-        uint256 indexed totalDeposited,
-        LockPosition lock,
-        uint256 discount
+        uint256 indexed epoch, uint256 indexed sglAssetID, uint256 totalDeposited, uint256 tokenId, uint256 discount
     );
-    event AMLDivergence(
-        uint256 indexed epoch, uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 totalParticipants
-    );
+    event AMLDivergence(uint256 indexed epoch, uint256 cumulative, uint256 averageMagnitude, uint256 totalParticipants);
     event ExerciseOption(
         uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 oTapTokenID, uint256 amount
     );
-    event NewEpoch(uint256 indexed epoch, uint256 indexed extractedTAP, uint256 indexed epochTAPValuation);
-    event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 indexed amount);
-    event SetPaymentToken(ERC20 indexed paymentToken, IOracle indexed oracle, bytes indexed oracleData);
+    event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValuation);
+    event ExitPosition(uint256 indexed epoch, uint256 tolpTokenId, uint256 amount);
+    event SetPaymentToken(ERC20 indexed paymentToken, IOracle oracle, bytes oracleData);
     event SetTapOracle(IOracle indexed oracle, bytes indexed oracleData);
 
     // ==========
@@ -288,7 +282,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
 
         // Mint oTAP position
         oTAPTokenID = oTAP.mint(msg.sender, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
-        emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, lock, target);
+        emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, oTAPTokenID, target);
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
