@@ -87,6 +87,7 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
      * _executor The address of the executor.
      * _extraData Additional data.
      */
+    // TODO check if OApp sender is sanitized?
     function _lzReceive(
         Origin calldata _origin,
         bytes32 _guid,

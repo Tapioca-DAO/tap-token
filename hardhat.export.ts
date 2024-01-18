@@ -13,6 +13,7 @@ import 'hardhat-tracer';
 import 'hardhat-deploy';
 import 'tapioca-sdk';
 import 'typechain';
+import fs from 'fs';
 
 // Utils
 import SDK from 'tapioca-sdk';
@@ -28,15 +29,21 @@ declare global {
     }
 }
 
-if (process.env.ENV === undefined) {
+const networkName =
+    process.argv[process.argv.findIndex((c) => c === '--network') + 1]; // Get the network name from the command line
+
+if (networkName === undefined) {
     throw new Error(
-        '[-] ENV env var not set, please choose between localhost or chain name, such as "arbitrum_sepolia"\n',
+        '[-] env vars not loaded, please specify a network with --network <network> and create its file in .env/<network>.env',
     );
 }
-dotenv.config({ path: `.env/${process.env.ENV}.env` });
-
-if (process.env.ALCHEMY_API_KEY === undefined) {
-    throw new Error('[-] ALCHEMY_API_KEY env var not set\n');
+const path = `.env/${networkName}.env`;
+if (fs.existsSync(path)) {
+    dotenv.config({ path });
+} else {
+    throw new Error(
+        '[-] env vars not loaded, please specify a network with --network <network> and create its file in .env/<network>.env',
+    );
 }
 
 type TNetwork = ReturnType<

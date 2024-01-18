@@ -5672,10 +5672,10 @@ table@^6.0.9, table@^6.8.0, table@^6.8.1:
     string-width "^4.2.3"
     strip-ansi "^6.0.1"
 
-tapioca-sdk@^1.5.17:
-  version "1.5.17"
-  resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.5.17.tgz#391d5bb2dc861328980d6c20d5580c16880762fd"
-  integrity sha512-pvuvXgdxd/4XIjTYcKhbOjjJI0zcJPxX12fqkUbGdj9i2nUv3Mv4+wlemwRYqvEnGBpsOEz50KY3c4xRFZS7jg==
+tapioca-sdk@^1.5.19:
+  version "1.5.19"
+  resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.5.19.tgz#eb81ea501b4a6ab486f01d291b03eaed4d5fcf62"
+  integrity sha512-wkWdtx6INeMXaGd6TWv9ayA3xICnxqan/f+zU9CmyNPS8AcNA6DpAtsx12C3ClBk1++mGCHx2yUtWXpFohezcA==
   dependencies:
     ethers "^5.4.7"
     fs-extra "^11.1.1"
