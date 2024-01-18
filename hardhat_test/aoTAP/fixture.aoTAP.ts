@@ -4,7 +4,7 @@ import {
     ERC721Mock__factory,
     LZEndpointMock__factory,
     OracleMock__factory,
-} from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
+} from '@tapioca-sdk/typechain/tapioca-mocks';
 
 import { BigNumberish, Wallet } from 'ethers';
 import { ERC721Mock } from 'tapioca-sdk/dist/typechain/tapioca-mocks';

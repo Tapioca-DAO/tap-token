@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import inquirer from 'inquirer';
-import { TAPIOCA_PROJECTS_NAME } from '../../gitsub_tapioca-sdk/src/api/config';
-import { Singularity__factory } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-bar/factories/markets/singularity';
+import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
+import { Singularity__factory } from '@tapioca-sdk/typechain/tapioca-bar/factories/markets/singularity';
 import { TContract } from 'tapioca-sdk/dist/shared';
 
 export const setPaymentTokenOnTOB__task = async (

@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
-import { OracleMock__factory } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
+import { OracleMock__factory } from '@tapioca-sdk/typechain/tapioca-mocks';
 
 export const buildOracleMock = async (
     hre: HardhatRuntimeEnvironment,

@@ -1,6 +1,6 @@
+import { OracleMock__factory } from '@tapioca-sdk/typechain/tapioca-mocks';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { registerContract } from '../../hardhat_scripts/deployment.utils';
-import { OracleMock__factory } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
 import { loadVM } from '../utils';
 
 export const deployVesting__task = async (

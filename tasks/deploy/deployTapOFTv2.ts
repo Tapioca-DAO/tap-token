@@ -1,8 +1,8 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { buildTapOFTv2 } from '../deployBuilds/01-buildTapOFTv2';
 import { loadVM } from '../utils';
-import { TAP_DISTRIBUTION } from '../../gitsub_tapioca-sdk/src/api/constants';
-import { EChainID, ELZChainID } from '../../gitsub_tapioca-sdk/src/api/config';
+import { TAP_DISTRIBUTION } from '@tapioca-sdk/api/constants';
+import { EChainID, ELZChainID } from '@tapioca-sdk/api/config';
 import inquirer from 'inquirer';
 import { buildTapOFTSenderModule } from '../deployBuilds/TapOFTv2/buildTapOFTSenderModule';
 import { buildTapOFTReceiverModule } from '../deployBuilds/TapOFTv2/buildTapOFTReceiverModule';

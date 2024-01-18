@@ -3,8 +3,8 @@ import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
 import {
     EChainID,
     TAPIOCA_PROJECTS_NAME,
-} from '../../gitsub_tapioca-sdk/src/api/config';
-import { TAP_DISTRIBUTION } from '../../gitsub_tapioca-sdk/src/api/constants';
+} from '@tapioca-sdk/api/config';
+import { TAP_DISTRIBUTION } from '@tapioca-sdk/api/constants';
 import { buildTapOFTv2 } from '../deployBuilds/01-buildTapOFTv2';
 import { buildTOLP } from '../deployBuilds/02-buildTOLP';
 import { buildOTAP } from '../deployBuilds/03-buildOTAP';

@@ -4,14 +4,14 @@ import {
     ERC20Mock__factory,
     LZEndpointMock__factory,
     OracleMock__factory,
-} from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
+} from '@tapioca-sdk/typechain/tapioca-mocks';
 import {
     ERC20WithoutStrategy__factory,
     ERC20StrategyMock__factory,
     YieldBoxURIBuilder__factory,
     YieldBox__factory,
     YieldBox,
-} from '../../gitsub_tapioca-sdk/src/typechain/YieldBox';
+} from '@tapioca-sdk/typechain/YieldBox';
 
 import { BN } from '../test.utils';
 

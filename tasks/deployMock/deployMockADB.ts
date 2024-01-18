@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import MerkleTree from 'merkletreejs';
 import { TDeploymentVMContract } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
-import { ERC721Mock__factory } from '../../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
+import { ERC721Mock__factory } from '@tapioca-sdk/typechain/tapioca-mocks';
 import { buildADB } from '../deployBuilds/buildADB';
 import { buildAOTAP } from '../deployBuilds/buildAOTAP';
 import { buildERC721Mock } from '../deployBuilds/buildERC721Mock';
