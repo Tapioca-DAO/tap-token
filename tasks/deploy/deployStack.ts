@@ -5,7 +5,7 @@ import {
     TAPIOCA_PROJECTS_NAME,
 } from '../../gitsub_tapioca-sdk/src/api/config';
 import { TAP_DISTRIBUTION } from '../../gitsub_tapioca-sdk/src/api/constants';
-import { buildTapOFT } from '../deployBuilds/01-buildTapOFT';
+import { buildTapOFTv2 } from '../deployBuilds/01-buildTapOFTv2';
 import { buildTOLP } from '../deployBuilds/02-buildTOLP';
 import { buildOTAP } from '../deployBuilds/03-buildOTAP';
 import { buildTOB } from '../deployBuilds/04-buildTOB';
@@ -14,6 +14,8 @@ import { buildAfterDepSetup } from '../deployBuilds/05-buildAfterDepSetup';
 import { loadVM } from '../utils';
 import { buildVesting } from '../deployBuilds/buildVesting';
 import inquirer from 'inquirer';
+import { buildTapOFTSenderModule } from '../deployBuilds/TapOFTv2/buildTapOFTSenderModule';
+import { buildTapOFTReceiverModule } from '../deployBuilds/TapOFTv2/buildTapOFTReceiverModule';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
@@ -162,19 +164,33 @@ export const deployStack__task = async (
                 ]),
             )
             .add(
-                await buildTapOFT(
+                await buildTapOFTSenderModule(hre, 'TapOFTSenderModule', [
+                    '0x464570adA09869d8741132183721B4f0769a0287', // Endpoint address
+                    signer.address, // Owner
+                ]),
+            )
+            .add(
+                await buildTapOFTReceiverModule(hre, 'TapOFTReceiverModule', [
+                    '0x464570adA09869d8741132183721B4f0769a0287', // Endpoint address
+                    signer.address, // Owner
+                ]),
+            )
+            .add(
+                await buildTapOFTv2(
                     hre,
                     'TapOFT',
                     [
-                        lzEndpoint,
+                        '0x464570adA09869d8741132183721B4f0769a0287', // Static endpoint address, // TODO put it in config file
                         hre.ethers.constants.AddressZero, //contributors address
                         hre.ethers.constants.AddressZero, // early supporters address
                         hre.ethers.constants.AddressZero, // supporters address
                         chainInfoAddresses.lbpAddress,
                         chainInfoAddresses.daoAddress,
                         chainInfoAddresses.airdropAddress,
-                        EChainID.ARBITRUM_GOERLI, //governance chain
+                        EChainID.ARBITRUM_SEPOLIA, // Governance LZ ChainID
                         signer.address,
+                        hre.ethers.constants.AddressZero, // TapOFTSenderModule
+                        hre.ethers.constants.AddressZero, // TapOFTReceiverModule
                     ],
                     [
                         {
@@ -188,6 +204,14 @@ export const deployStack__task = async (
                         {
                             argPosition: 3,
                             deploymentName: 'VestingSupporters',
+                        },
+                        {
+                            argPosition: 9,
+                            deploymentName: 'TapOFTSenderModule',
+                        },
+                        {
+                            argPosition: 10,
+                            deploymentName: 'TapOFTReceiverModule',
                         },
                     ],
                 ),
