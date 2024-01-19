@@ -10,8 +10,7 @@ import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Tapioca
-import {ICommonOFT} from "tapioca-sdk/dist/contracts/token/oft/v2/ICommonOFT.sol";
-import {ERC721Permit} from "tapioca-sdk/dist/contracts/util/ERC4494.sol"; // TODO audit
+import {ERC721Permit} from "contracts/utils/ERC721Permit.sol"; // TODO audit
 import {ERC721PermitStruct} from "contracts/tokens/ITapOFTv2.sol";
 import {TapOFTV2} from "contracts/tokens/TapOFTV2.sol";
 import {TWAML} from "contracts/options/twAML.sol";

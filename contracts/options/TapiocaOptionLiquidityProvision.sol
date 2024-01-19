@@ -2,11 +2,11 @@
 pragma solidity 0.8.22;
 
 // External
-import {IYieldBox} from "tapioca-sdk/dist/contracts/YieldBox/contracts/interfaces/IYieldBox.sol";
+import {IYieldBox} from "contracts/interfaces/IYieldBox.sol"; // TODO refactor to other repo
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import {BoringOwnable} from "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {ERC721Permit} from "tapioca-sdk/dist/contracts/util/ERC4494.sol";
+import {ERC721Permit} from "contracts/utils/ERC721Permit.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

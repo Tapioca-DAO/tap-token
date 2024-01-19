@@ -7,7 +7,7 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Tapioca
-import {ERC721Permit} from "tapioca-sdk/dist/contracts/util/ERC4494.sol";
+import {ERC721Permit} from "contracts/utils/ERC721Permit.sol"; // TODO audit
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
