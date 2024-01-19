@@ -1,4 +1,6 @@
 // Import by order as seen in "scopes" folder
+import 'tasks/scopes/deployScope'; // Exception to the rule
+
 import 'tasks/scopes/adbScope';
 import 'tasks/scopes/vestingScope';
 import 'tasks/scopes/lTapScope';
