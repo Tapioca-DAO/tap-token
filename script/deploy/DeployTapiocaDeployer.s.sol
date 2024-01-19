@@ -5,7 +5,6 @@ pragma solidity 0.8.22;
 import {TapiocaDeployer} from "contracts/utils/TapiocaDeployer.sol";
 
 // solhint-disable-next-line
-import "generated/deployer/DeployerFunctions.g.sol";
 import "forge-deploy/DeployScript.sol";
 
 contract DeployTapiocaDeployer is Script {

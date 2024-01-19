@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
-import { TwTAP__factory } from '../../typechain';
+import { TwTAP__factory } from "@typechain";
 import { IDependentOn } from '@tapioca-sdk/ethers/hardhat/DeployerVM';
 
 export const buildTwTap = async (

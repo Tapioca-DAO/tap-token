@@ -10,16 +10,17 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@tapioca-sdk/*": ["lib/tapioca-sdk/src/*"]
+      "@tapioca-sdk/*": ["lib/tapioca-sdk/src/*"],
+      "@typechain/*": ["gen/typechain/*"],
     }
   },
   "include": [
     "./hardhat.config.ts",
     "./hardhat_scripts",
     "hardhat_test",
-    "./typechain",
+    "./gen/typechain",
     "./tasks",
     "./deploy",
-    "./lib/tapioca-sdk/src/*"
+    "./lib/tapioca-sdk/src"
   ]
 }

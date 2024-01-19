@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
-import { TapOFTV2__factory } from '../../typechain';
+import { TapOFTV2__factory } from '@typechain/index';
 import { IDependentOn } from '@tapioca-sdk/ethers/hardhat/DeployerVM';
 
 export const buildTapOFTv2 = async (

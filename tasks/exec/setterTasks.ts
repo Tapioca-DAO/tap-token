@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
-import { TapiocaOptionBroker } from '../../typechain';
+import { TapiocaOptionBroker } from '@typechain/index';
 import { ERC20WithoutStrategy__factory } from '@tapioca-sdk/typechain/YieldBox';
 import { YieldBox__factory } from '@tapioca-sdk/typechain/YieldBox';
 

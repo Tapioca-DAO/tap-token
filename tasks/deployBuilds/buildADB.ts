@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { IDependentOn } from '@tapioca-sdk/ethers/hardhat/DeployerVM';
-import { AirdropBroker__factory } from '../../typechain';
+import { AirdropBroker__factory } from "@typechain";
 
 export const buildADB = async (
     hre: HardhatRuntimeEnvironment,

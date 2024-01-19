@@ -22,7 +22,7 @@ export const deployTapOFTv2__task = async (
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const chainInfo = hre.SDK.utils.getChainBy(
         'chainId',
-        await hre.getChainId(),
+        Number(hre.network.config.chainId),
     )!;
     const chainInfoAddresses =
         TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]!;

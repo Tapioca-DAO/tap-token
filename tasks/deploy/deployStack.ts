@@ -20,12 +20,12 @@ export const deployStack__task = async (
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
-    const tag = taskArgs.tag ? 'default' : 'deploy';
+    const tag = taskArgs.tag ?? 'default';
     const signer = (await hre.ethers.getSigners())[0];
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const chainInfo = hre.SDK.utils.getChainBy(
         'chainId',
-        await hre.getChainId(),
+        Number(hre.network.config.chainId),
     )!;
     const isTestnet = chainInfo.tags[0] == 'testnet';
 
@@ -39,13 +39,12 @@ export const deployStack__task = async (
         );
         VM.load(data);
     } else {
-        const yieldBox = hre.SDK.db
-            .loadGlobalDeployment(
-                tag,
-                TAPIOCA_PROJECTS_NAME.TapiocaBar,
-                chainInfo!.chainId,
-            )
-            .find((e) => e.name === 'YieldBox');
+        const yieldBox = hre.SDK.db.findGlobalDeployment(
+            TAPIOCA_PROJECTS_NAME.YieldBox,
+            chainInfo!.chainId,
+            'YieldBox',
+            tag,
+        );
 
         if (!yieldBox) {
             throw '[-] YieldBox not found';

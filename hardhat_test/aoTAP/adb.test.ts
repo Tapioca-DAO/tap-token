@@ -6,7 +6,7 @@ import {
 import { expect } from 'chai';
 import { BigNumberish, BytesLike, Wallet } from 'ethers';
 import hre from 'hardhat';
-import { AOTAP, AirdropBroker, TapOFT } from '../../typechain';
+import { AOTAP, AirdropBroker, TapOFT } from '@typechain/index';
 import { BN, time_travel } from '../test.utils';
 import { setupADBPhase2Fixtures, setupFixture } from './fixture.aoTAP';
 import MerkleTree from 'merkletreejs';

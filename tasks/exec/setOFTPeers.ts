@@ -3,8 +3,8 @@ import inquirer from 'inquirer';
 import { TContract, TLocalDeployment } from 'tapioca-sdk/dist/shared';
 import { EChainID } from '@tapioca-sdk/api/config';
 import { loadVM } from '../utils';
-import { IMulticall3, TapOFTV2__factory } from '../../typechain';
 import { Multicall3 } from '@tapioca-sdk/typechain/tapioca-periphery';
+import { TapOFTV2__factory } from '@typechain/index';
 
 // hh deployTapOFT -network goerli
 export const setOFTPeers__task = async (
@@ -23,7 +23,7 @@ export const setOFTPeers__task = async (
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const chainInfo = hre.SDK.utils.getChainBy(
         'chainId',
-        await hre.getChainId(),
+        Number(hre.network.config.chainId),
     )!;
 
     // Load target contract locally

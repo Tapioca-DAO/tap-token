@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
-import { Vesting__factory } from '../../typechain';
+import { Vesting__factory } from '@typechain/index';
 
 export const buildVesting = async (
     hre: HardhatRuntimeEnvironment,
@@ -9,7 +9,7 @@ export const buildVesting = async (
 ): Promise<IDeployerVMAdd<Vesting__factory>> => {
     return {
         contract: (await hre.ethers.getContractFactory(
-            deploymentName,
+            'Vesting',
         )) as Vesting__factory,
         deploymentName,
         args,

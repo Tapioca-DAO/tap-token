@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
-import { AOTAP__factory } from '../../typechain';
+import { AOTAP__factory } from "@typechain";
 
 export const buildAOTAP = async (
     hre: HardhatRuntimeEnvironment,

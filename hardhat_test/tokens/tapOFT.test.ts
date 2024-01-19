@@ -8,8 +8,8 @@ import {
     takeSnapshot,
 } from '@nomicfoundation/hardhat-network-helpers';
 import { BigNumber, BigNumberish } from 'ethers';
-import { TapOFT } from '../../typechain';
-import { LZEndpointMock } from '@tapioca-sdk/typechain/tapioca-mocks';
+import { TapOFT } from '@typechain/index';
+import { LZEndpointMock } from 'tapioca-sdk/typechain/tapioca-mocks';
 import { setBalance } from '@nomicfoundation/hardhat-network-helpers';
 
 import {
@@ -21,7 +21,7 @@ import {
     time_travel,
 } from '../test.utils';
 import { TapiocaOFT } from 'tapioca-sdk/dist/typechain/tapiocaz';
-import { token } from '../../typechain/@openzeppelin/contracts';
+import { token } from '@typechain/@openzeppelin/contracts';
 
 describe('tapOFT', () => {
     let signer: SignerWithAddress;

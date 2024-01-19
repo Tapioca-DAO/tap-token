@@ -3,7 +3,7 @@ import inquirer from 'inquirer';
 import { TContract, TLocalDeployment } from 'tapioca-sdk/dist/shared';
 import { EChainID } from '@tapioca-sdk/api/config';
 import { loadVM } from '../utils';
-import { IMulticall3, TapOFTV2__factory } from '../../typechain';
+import { IMulticall3, TapOFTV2__factory } from "@typechain";
 import { Multicall3 } from '@tapioca-sdk/typechain/tapioca-periphery';
 import { ethers } from 'hardhat';
 

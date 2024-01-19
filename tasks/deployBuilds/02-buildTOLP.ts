@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
-import { TapiocaOptionLiquidityProvision__factory } from '../../typechain';
+import { TapiocaOptionLiquidityProvision__factory } from "@typechain";
 
 export const buildTOLP = async (
     hre: HardhatRuntimeEnvironment,
