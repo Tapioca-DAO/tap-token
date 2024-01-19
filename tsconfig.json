@@ -20,7 +20,6 @@
     "hardhat_test",
     "./gen/typechain",
     "./tasks",
-    "./deploy",
-    "./lib/tapioca-sdk/src"
+    "./deploy"
   ]
 }

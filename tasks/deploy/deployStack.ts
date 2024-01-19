@@ -183,7 +183,7 @@ export const deployStack__task = async (
 
         // Add and execute
         await VM.execute(3);
-        VM.save();
+        await VM.save();
         await VM.verify();
     }
 

@@ -5,7 +5,6 @@ import { HardhatUserConfig, extendEnvironment } from 'hardhat/config';
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-foundry';
-import '@nomicfoundation/hardhat-verify';
 import '@primitivefi/hardhat-dodoc';
 import 'hardhat-contract-sizer';
 import '@typechain/hardhat';
@@ -37,7 +36,9 @@ if (networkArg !== -1) {
     console.log('[!] No network specified, using localhost as default.');
 }
 
+// dotenv loading can not load `export` env vars for some reasons
 const path = `.env/${networkName}.env`;
+
 if (fs.existsSync(path)) {
     dotenv.config({ path });
 } else {
@@ -108,14 +109,32 @@ const config: HardhatUserConfig & { dodoc: any } = {
     SDK: { project: TAPIOCA_PROJECTS_NAME.TapToken },
     etherscan: {
         apiKey: {
-            goerli: process.env.BLOCKSCAN_KEY ?? '',
-            arbitrumGoerli: process.env.ARBITRUM_GOERLI_KEY ?? '',
-            avalancheFujiTestnet: process.env.AVALANCHE_FUJI_KEY ?? '',
-            bscTestnet: process.env.BSC_KEY ?? '',
-            polygonMumbai: process.env.POLYGON_MUMBAI ?? '',
-            ftmTestnet: process.env.FTM_TESTNET ?? '',
+            sepolia: process.env.SCAN_API_KEY ?? '',
+            arbitrumSepolia: process.env.SCAN_API_KEY ?? '',
+            optimismSepolia: process.env.SCAN_API_KEY ?? '',
+            avalancheFujiTestnet: process.env.SCAN_API_KEY ?? '',
+            bscTestnet: process.env.SCAN_API_KEY ?? '',
+            polygonMumbai: process.env.SCAN_API_KEY ?? '',
+            ftmTestnet: process.env.SCAN_API_KEY ?? '',
         },
-        customChains: [],
+        customChains: [
+            {
+                network: 'arbitrumSepolia',
+                chainId: 421614,
+                urls: {
+                    apiURL: 'https://api-sepolia.arbiscan.io/api',
+                    browserURL: 'https://sepolia.arbiscan.io/',
+                },
+            },
+            {
+                network: 'optimismSepolia',
+                chainId: 11155420,
+                urls: {
+                    apiURL: 'https://api-sepolia-optimistic.etherscan.io/',
+                    browserURL: 'https://sepolia-optimism.etherscan.io/',
+                },
+            },
+        ],
     },
     mocha: {
         timeout: 4000000,
