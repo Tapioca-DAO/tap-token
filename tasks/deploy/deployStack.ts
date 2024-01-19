@@ -1,29 +1,26 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
-import {
-    EChainID,
-    TAPIOCA_PROJECTS_NAME,
-} from '@tapioca-sdk/api/config';
 import { TAP_DISTRIBUTION } from '@tapioca-sdk/api/constants';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import inquirer from 'inquirer';
+import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
 import { buildTapOFTv2 } from '../deployBuilds/01-buildTapOFTv2';
 import { buildTOLP } from '../deployBuilds/02-buildTOLP';
 import { buildOTAP } from '../deployBuilds/03-buildOTAP';
 import { buildTOB } from '../deployBuilds/04-buildTOB';
 import { buildTwTap } from '../deployBuilds/04-deployTwTap';
 import { buildAfterDepSetup } from '../deployBuilds/05-buildAfterDepSetup';
-import { loadVM } from '../utils';
-import { buildVesting } from '../deployBuilds/buildVesting';
-import inquirer from 'inquirer';
-import { buildTapOFTSenderModule } from '../deployBuilds/TapOFTv2/buildTapOFTSenderModule';
 import { buildTapOFTReceiverModule } from '../deployBuilds/TapOFTv2/buildTapOFTReceiverModule';
+import { buildTapOFTSenderModule } from '../deployBuilds/TapOFTv2/buildTapOFTSenderModule';
+import { buildVesting } from '../deployBuilds/buildVesting';
+import { loadVM } from '../utils';
+import { EChainID, TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
-    taskArgs: { load?: boolean },
+    taskArgs: { tag?: string; load?: boolean },
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
-    const tag = await hre.SDK.hardhatUtils.askForTag(hre, 'local');
+    const tag = taskArgs.tag ? 'default' : 'deploy';
     const signer = (await hre.ethers.getSigners())[0];
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const chainInfo = hre.SDK.utils.getChainBy(
@@ -34,6 +31,7 @@ export const deployStack__task = async (
 
     const VM = await loadVM(hre, tag);
 
+    // Load previous deployment in the VM to execute after deployment setup
     if (taskArgs.load) {
         const data = hre.SDK.db.loadLocalDeployment(
             'default',
@@ -54,93 +52,20 @@ export const deployStack__task = async (
         }
 
         // Build contracts
-        const lzEndpoint = chainInfo.address;
+        const lzEndpoint = '0x464570adA09869d8741132183721B4f0769a0287'; // TODO replace by: chainInfo.address
         const chainInfoAddresses =
             TAP_DISTRIBUTION[chainInfo?.chainId as EChainID]!;
 
-        let vestingContributorsCliff = 31104000, // 12 months cliff
+        const vestingContributorsCliff = 31104000, // 12 months cliff
             vestingContributorsPeriod = 93312000; // 36 months vesting
-        let vestingEarlySupportersCliff = 0,
+        const vestingEarlySupportersCliff = 0,
             vestingEarlySupportersPeriod = 62208000; // 24 months vesting
-        let vestingSupportersCliff = 0,
+        const vestingSupportersCliff = 0,
             vestingSupportersPeriod = 46656000; // 18 months vesting
-        let tapiocaOptionBrokerEpochDuration = 604800; //7 days
-        if (!isTestnet) {
-            const addresses = `( teamAddress: ${chainInfoAddresses.teamAddress}; earlySupportersAddress: ${chainInfoAddresses.earlySupportersAddress}; supportersAddress: ${chainInfoAddresses.supportersAddress}; lbpAddress: ${chainInfoAddresses.lbpAddress}; daoAddress: ${chainInfoAddresses.daoAddress}; airdropAddress: ${chainInfoAddresses.airdropAddress})`;
+        const tapiocaOptionBrokerEpochDuration = 604800; //7 days
 
-            const { isOk } = await inquirer.prompt({
-                type: 'confirm',
-                message: `Are you sure TAP distribution is updated ? ${addresses}`,
-                name: 'isOk',
-            });
-
-            if (!isOk) {
-                throw new Error('[-] Aborted');
-            }
-
-            tapiocaOptionBrokerEpochDuration = (
-                await inquirer.prompt({
-                    type: 'input',
-                    name: 'tapiocaOptionBrokerEpochDuration',
-                    message: 'Tapioca Option Broker epoch duration',
-                    default: tapiocaOptionBrokerEpochDuration,
-                })
-            ).tapiocaOptionBrokerEpochDuration;
-
-            vestingContributorsCliff = (
-                await inquirer.prompt({
-                    type: 'input',
-                    name: 'vestingContributorsCliff',
-                    message: 'Vesting contributors cliff',
-                    default: vestingContributorsCliff,
-                })
-            ).vestingContributorsCliff;
-
-            vestingContributorsPeriod = (
-                await inquirer.prompt({
-                    type: 'input',
-                    name: 'vestingContributorsPeriod',
-                    message: 'Vesting contributors period',
-                    default: vestingContributorsPeriod,
-                })
-            ).vestingContributorsPeriod;
-
-            vestingEarlySupportersCliff = (
-                await inquirer.prompt({
-                    type: 'input',
-                    name: 'vestingEarlySupportersCliff',
-                    message: 'Vesting early supporters cliff',
-                    default: vestingEarlySupportersCliff,
-                })
-            ).vestingEarlySupportersCliff;
-
-            vestingEarlySupportersPeriod = (
-                await inquirer.prompt({
-                    type: 'input',
-                    name: 'vestingEarlySupportersPeriod',
-                    message: 'Vesting early supporters period',
-                    default: vestingEarlySupportersPeriod,
-                })
-            ).vestingEarlySupportersPeriod;
-
-            vestingSupportersCliff = (
-                await inquirer.prompt({
-                    type: 'input',
-                    name: 'vestingSupportersCliff',
-                    message: 'Vesting supporters cliff',
-                    default: vestingSupportersCliff,
-                })
-            ).vestingSupportersCliff;
-
-            vestingSupportersPeriod = (
-                await inquirer.prompt({
-                    type: 'input',
-                    name: 'vestingSupportersPeriod',
-                    message: 'Vesting supporters period',
-                    default: vestingSupportersPeriod,
-                })
-            ).vestingSupportersPeriod;
-        }
+        const addresses = `( teamAddress: ${chainInfoAddresses.teamAddress}; earlySupportersAddress: ${chainInfoAddresses.earlySupportersAddress}; supportersAddress: ${chainInfoAddresses.supportersAddress}; lbpAddress: ${chainInfoAddresses.lbpAddress}; daoAddress: ${chainInfoAddresses.daoAddress}; airdropAddress: ${chainInfoAddresses.airdropAddress})`;
+        console.log(addresses);
 
         VM.add(
             await buildVesting(hre, 'VestingContributors', [
@@ -165,13 +90,13 @@ export const deployStack__task = async (
             )
             .add(
                 await buildTapOFTSenderModule(hre, 'TapOFTSenderModule', [
-                    '0x464570adA09869d8741132183721B4f0769a0287', // Endpoint address
+                    lzEndpoint, // Endpoint address
                     signer.address, // Owner
                 ]),
             )
             .add(
                 await buildTapOFTReceiverModule(hre, 'TapOFTReceiverModule', [
-                    '0x464570adA09869d8741132183721B4f0769a0287', // Endpoint address
+                    lzEndpoint, // Endpoint address
                     signer.address, // Owner
                 ]),
             )
@@ -180,7 +105,7 @@ export const deployStack__task = async (
                     hre,
                     'TapOFT',
                     [
-                        '0x464570adA09869d8741132183721B4f0769a0287', // Static endpoint address, // TODO put it in config file
+                        lzEndpoint, // Static endpoint address, // TODO put it in config file
                         hre.ethers.constants.AddressZero, //contributors address
                         hre.ethers.constants.AddressZero, // early supporters address
                         hre.ethers.constants.AddressZero, // supporters address
