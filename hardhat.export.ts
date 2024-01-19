@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 
 // Plugins
-import { HardhatUserConfig } from 'hardhat/config';
+import { HardhatUserConfig, extendEnvironment } from 'hardhat/config';
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-foundry';
@@ -136,3 +136,23 @@ const config: HardhatUserConfig & { dodoc: any } = {
 };
 
 export default config;
+
+extendEnvironment((hre) => {
+    // remove hardhat core tasks
+    delete hre.tasks['compile:solidity:emit-artifacts'];
+    delete hre.tasks['gas-reporter:merge'];
+    delete hre.tasks['export-artifacts'];
+    delete hre.tasks['size-contracts'];
+    delete hre.tasks['init-foundry'];
+    delete hre.tasks.coverage;
+    delete hre.tasks.sourcify;
+    delete hre.tasks.accounts;
+    delete hre.tasks.flatten;
+    delete hre.tasks.deploy;
+    delete hre.tasks.export;
+    delete hre.tasks.export;
+    delete hre.tasks.check;
+    delete hre.tasks.test;
+    delete hre.tasks.node;
+    delete hre.tasks.run;
+});
