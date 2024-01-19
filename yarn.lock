@@ -552,6 +552,11 @@
   resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-protocol-v2/-/lz-evm-protocol-v2-2.0.11.tgz#4f341e7716f24653bff68c5451ddb3b369df265b"
   integrity sha512-hkcNheUjTOYNxoAnBTSatLLzLe71Y7kcmw1+56aazezyUb6SCu330V4sJg+jsp8Ag6Sb7y1tLLYn1Sa5EWgCxg==
 
+"@layerzerolabs/lz-evm-v1-0.7@^2.0.11":
+  version "2.0.11"
+  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-v1-0.7/-/lz-evm-v1-0.7-2.0.11.tgz#a0dd2b70aade211a6e6aadba17e75e7239dd6cc0"
+  integrity sha512-sF2CusTwSauaduNqcbrkuWQSexSKOGZcUdVvKPZkAof/KK5thgG3Fovmzj0hXvn+C2Fnf0IszTdvPQ/NXlq+wQ==
+
 "@layerzerolabs/solidity-bytes-utils@^0.8.0":
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/@layerzerolabs/solidity-bytes-utils/-/solidity-bytes-utils-0.8.0.tgz#9173a8597ece5f8d0e8e5e5b970e3f2159c883a5"
@@ -1154,9 +1159,9 @@
   integrity sha512-F0KIgDJfy2nA3zMLmWGKxcH2ZVEtCZXHHdOQs2gSaQ27+lNeEfGxzkIw90aXswATX7AZ33tahPbzy6KAfUreVw==
 
 "@types/node@^16.11.11":
-  version "16.18.71"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.18.71.tgz#305a955ab99353d4b8a9e9b6b6682ed6cbc186cc"
-  integrity sha512-ARO+458bNJQeNEFuPyT6W+q9ULotmsQzhV3XABsFSxEvRMUYENcBsNAHWYPlahU+UHa5gCVwyKT1Z3f1Wwr26Q==
+  version "16.18.73"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.18.73.tgz#cbbbff4c3e85020e042e65a2a836e1d1d5bfad06"
+  integrity sha512-GaTgwUNzESSlX9uhTX2RQcwj2KBf/Wda+52TTtuMpgzR2Rvw7NNypQ8BJdc5Wk6osxZHcUZAKip5PtqWsUl31Q==
 
 "@types/node@^8.0.0":
   version "8.10.66"
@@ -2408,9 +2413,9 @@ dotenv@^10.0.0:
   integrity sha512-rlBi9d8jpv9Sf1klPjNfFAuWDjKLwTIJJ/VxtoTwIR6hnZxcEOQCZg2oIL3MWBYw5GpUDKOEnND7LXTbIpQ03Q==
 
 dotenv@^16.0.3:
-  version "16.3.1"
-  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.3.1.tgz#369034de7d7e5b120972693352a3bf112172cc3e"
-  integrity sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==
+  version "16.3.2"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.3.2.tgz#3cb611ce5a63002dbabf7c281bc331f69d28f03f"
+  integrity sha512-HTlk5nmhkm8F6JcdXvHIzaorzCoziNQT9mGxLPVXW8wJF1TiGSL60ZGB4gHWabHOaMmWmhvk2/lPHfnBiT78AQ==
 
 eastasianwidth@^0.2.0:
   version "0.2.0"
@@ -3526,7 +3531,7 @@ hardhat-tracer@^2.5.0:
     debug "^4.3.4"
     ethers "^5.6.1"
 
-hardhat@^2.13.0:
+hardhat@2.19.4:
   version "2.19.4"
   resolved "https://registry.yarnpkg.com/hardhat/-/hardhat-2.19.4.tgz#5112c30295d8be2e18e55d847373c50483ed1902"
   integrity sha512-fTQJpqSt3Xo9Mn/WrdblNGAfcANM6XC3tAEi6YogB4s02DmTf93A8QsGb8uR0KR8TFcpcS8lgiW4ugAIYpnbrQ==
@@ -5771,10 +5776,10 @@ table@^6.0.9, table@^6.8.0, table@^6.8.1:
     string-width "^4.2.3"
     strip-ansi "^6.0.1"
 
-tapioca-sdk@^1.5.19:
-  version "1.5.19"
-  resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.5.19.tgz#eb81ea501b4a6ab486f01d291b03eaed4d5fcf62"
-  integrity sha512-wkWdtx6INeMXaGd6TWv9ayA3xICnxqan/f+zU9CmyNPS8AcNA6DpAtsx12C3ClBk1++mGCHx2yUtWXpFohezcA==
+tapioca-sdk@^1.5.20-nightly-8:
+  version "1.5.20-nightly-8"
+  resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.5.20-nightly-8.tgz#adc5044f7cc9b6c4943cc43c8f14f7e2ee237445"
+  integrity sha512-tmV/wlD0nir3qtyEQENo0wqR9wiG7zbRO5cG7p29IiVIOPa4MwBX50s6QK9Buf770u5Xe/38ZBszHFaxWWiDGw==
   dependencies:
     ethers "^5.4.7"
     fs-extra "^11.1.1"
