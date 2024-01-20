@@ -74,7 +74,7 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     // ==========
 
     function setTokenURI(uint256 _tokenId, string calldata _tokenURI) external {
-        require(_isApprovedOrOwner(msg.sender, _tokenId), "OTAP: only approved or owner");
+        if (!_isApprovedOrOwner(msg.sender, _tokenId)) revert NotAuthorized();
         tokenURIs[_tokenId] = _tokenURI;
     }
 
@@ -84,7 +84,8 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     /// @param _discount TAP discount in basis points
     /// @param _tOLP tOLP token ID
     function mint(address _to, uint128 _expiry, uint128 _discount, uint256 _tOLP) external returns (uint256 tokenId) {
-        require(msg.sender == broker, "OTAP: only onlyBroker");
+        if (msg.sender != broker) revert OnlyBroker();
+
         tokenId = ++mintedOTAP;
         _safeMint(_to, tokenId);
 
