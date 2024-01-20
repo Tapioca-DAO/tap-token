@@ -1,7 +1,10 @@
+import {
+    EChainID,
+    ELZChainID,
+    TAPIOCA_PROJECTS_NAME,
+} from '@tapioca-sdk/api/config';
 import { TAP_DISTRIBUTION } from '@tapioca-sdk/api/constants';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import inquirer from 'inquirer';
-import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
 import { buildTapOFTv2 } from '../deployBuilds/01-buildTapOFTv2';
 import { buildTOLP } from '../deployBuilds/02-buildTOLP';
 import { buildOTAP } from '../deployBuilds/03-buildOTAP';
@@ -12,7 +15,6 @@ import { buildTapOFTReceiverModule } from '../deployBuilds/TapOFTv2/buildTapOFTR
 import { buildTapOFTSenderModule } from '../deployBuilds/TapOFTv2/buildTapOFTSenderModule';
 import { buildVesting } from '../deployBuilds/buildVesting';
 import { loadVM } from '../utils';
-import { EChainID, TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
@@ -37,7 +39,8 @@ export const deployStack__task = async (
             'default',
             String(hre.network.config.chainId),
         );
-        VM.load(data);
+        if (!data) throw new Error('[-] No data found');
+        VM.load(data.contracts);
     } else {
         const yieldBox = hre.SDK.db.findGlobalDeployment(
             TAPIOCA_PROJECTS_NAME.YieldBox,
@@ -102,7 +105,7 @@ export const deployStack__task = async (
             .add(
                 await buildTapOFTv2(
                     hre,
-                    'TapOFT',
+                    'TapOFTv2',
                     [
                         lzEndpoint, // Static endpoint address, // TODO put it in config file
                         hre.ethers.constants.AddressZero, //contributors address
@@ -111,7 +114,7 @@ export const deployStack__task = async (
                         chainInfoAddresses.lbpAddress,
                         chainInfoAddresses.daoAddress,
                         chainInfoAddresses.airdropAddress,
-                        EChainID.ARBITRUM_SEPOLIA, // Governance LZ ChainID
+                        ELZChainID.ARBITRUM_SEPOLIA, // Governance LZ ChainID
                         signer.address,
                         hre.ethers.constants.AddressZero, // TapOFTSenderModule
                         hre.ethers.constants.AddressZero, // TapOFTReceiverModule
@@ -166,7 +169,7 @@ export const deployStack__task = async (
                             deploymentName: 'TapiocaOptionLiquidityProvision',
                         },
                         { argPosition: 1, deploymentName: 'OTAP' },
-                        { argPosition: 2, deploymentName: 'TapOFT' },
+                        { argPosition: 2, deploymentName: 'TapOFTv2' },
                     ],
                 ),
             )
@@ -177,36 +180,45 @@ export const deployStack__task = async (
                         hre.ethers.constants.AddressZero, // TapOFT
                         signer.address,
                     ],
-                    [{ argPosition: 0, deploymentName: 'TapOFT' }],
+                    [{ argPosition: 0, deploymentName: 'TapOFTv2' }],
                 ),
             );
 
         // Add and execute
         await VM.execute(3);
         await VM.save();
-        await VM.verify();
+        // await VM.verify();
     }
 
     const vmList = VM.list();
     // After deployment setup
 
-    const calls: Multicall3.CallStruct[] = [
-        // Build testnet related calls
-        ...(await buildAfterDepSetup(hre, vmList)),
-    ];
+    console.log('[+] After deployment setup');
+    const calls = await buildAfterDepSetup(hre, vmList);
 
     // Execute
-    console.log('[+] After deployment setup calls number: ', calls.length);
+    console.log('[+] Number of calls:', calls.length);
+    const multicall = await VM.getMulticall();
     try {
-        const multicall = await VM.getMulticall();
         const tx = await (await multicall.multicall(calls)).wait(1);
         console.log(
             '[+] After deployment setup multicall Tx: ',
             tx.transactionHash,
         );
     } catch (e) {
-        // If one fail, try them one by one
+        console.log('[-] After deployment setup multicall failed');
+        console.log(
+            '[+] Trying to execute calls one by one with owner account',
+        );
+        // If one fail, try them one by one with owner's account
         for (const call of calls) {
+            // Static call simulation
+            await signer.call({
+                from: signer.address,
+                data: call.callData,
+                to: call.target,
+            });
+
             await (
                 await signer.sendTransaction({
                     data: call.callData,

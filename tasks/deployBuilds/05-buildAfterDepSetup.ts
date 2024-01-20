@@ -11,13 +11,14 @@ export const buildAfterDepSetup = async (
     /**
      * Load addresses
      */
-    const tapAddr = deps.find((e) => e.name === 'TapOFT')?.address;
+    const tapAddr = deps.find((e) => e.name === 'TapOFTv2')?.address;
     const twTapAddr = deps.find((e) => e.name === 'TwTAP')?.address;
     const tOBAddr = deps.find(
         (e) =>
             e.name === 'TapiocaOptionBroker' ||
             e.name === 'TapiocaOptionBrokerMock',
     )?.address;
+    const oTapAddr = deps.find((e) => e.name === 'OTAP')?.address;
 
     if (!tapAddr) {
         throw new Error('[-] TAP not found');
@@ -30,40 +31,56 @@ export const buildAfterDepSetup = async (
     if (!twTapAddr) {
         throw new Error('[-] twTap not found');
     }
+    if (!oTapAddr) {
+        throw new Error('[-] oTap not found');
+    }
 
     /**
      * Load contracts
      */
-    const tap = await hre.ethers.getContractAt('TapOFT', tapAddr);
+    const tap = await hre.ethers.getContractAt('TapOFTV2', tapAddr);
     const tob = await hre.ethers.getContractAt('TapiocaOptionBroker', tOBAddr);
+    const oTap = await hre.ethers.getContractAt('OTAP', oTapAddr);
 
     /**
      * Set tOB as minter for TapOFT
      */
 
-    if ((await tap.minter()) !== tOBAddr) {
-        console.log('[+] Setting tOB as minter for TapOFT');
+    if (
+        (await tap.minter()).toLocaleLowerCase() !== tOBAddr.toLocaleLowerCase()
+    ) {
+        console.log('[+] Setting tOB as minter for TapOFTv2');
         await (await tap.setMinter(tOBAddr)).wait(1);
     }
 
     /**
      * Set tOB Broker role for tOB on oTAP
      */
-    console.log('[+] +Call queue: oTAP broker claim');
-    calls.push({
-        target: tOBAddr,
-        allowFailure: false,
-        callData: tob.interface.encodeFunctionData('oTAPBrokerClaim'),
-    });
+    if (
+        (await oTap.broker()).toLocaleLowerCase() !==
+        tOBAddr.toLocaleLowerCase()
+    ) {
+        console.log('[+] +Call queue: oTAP broker claim');
+        calls.push({
+            target: tOBAddr,
+            allowFailure: false,
+            callData: tob.interface.encodeFunctionData('oTAPBrokerClaim'),
+        });
+    }
 
     /**
      * Set twTAP in TapOFT
      */
-    console.log('[+] +Call queue: set twTAP in TapOFT');
-    calls.push({
-        target: tapAddr,
-        allowFailure: false,
-        callData: tap.interface.encodeFunctionData('setTwTap', [twTapAddr]),
-    });
+    if (
+        (await tap.twTap()).toLocaleLowerCase() !==
+        twTapAddr.toLocaleLowerCase()
+    ) {
+        console.log('[+] +Call queue: set twTAP in TapOFTv2');
+        calls.push({
+            target: tapAddr,
+            allowFailure: false,
+            callData: tap.interface.encodeFunctionData('setTwTAP', [twTapAddr]),
+        });
+    }
     return calls;
 };
