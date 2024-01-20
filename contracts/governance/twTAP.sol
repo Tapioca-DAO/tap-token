@@ -130,7 +130,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
 
         rewardTokens.push(IERC20(address(0x0))); // 0 index is reserved
 
-        maxRewardTokens = 1000;
+        maxRewardTokens = 30;
 
         // Seed the cumulative with 1 week of magnitude
         twAML.cumulative = EPOCH_DURATION;
