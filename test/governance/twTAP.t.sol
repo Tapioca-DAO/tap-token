@@ -358,7 +358,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     function test_distribute_rewards_on_different_weeks() public {
-        //not
+        //ok
         vm.startPrank(owner);
 
         twTAP.addRewardToken(IERC20(mockToken));
@@ -374,9 +374,71 @@ contract twTAPTest is TapTestHelper, Errors {
         vm.warp(block.timestamp + 1 weeks + 1 seconds);
 
         IERC20(mockToken).approve(address(twTAP), type(uint256).max);
+
+        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(
+            address(owner)
+        );
+        // vm.expectRevert(bytes("0x12"));ß
         vm.expectRevert(AdvanceWeekFirst.selector);
-        // vm.expectRevert(bytes("0x12"));
         twTAP.distributeReward(1, 1);
+        uint256 balanceOwnerAfter = IERC20(mockToken).balanceOf(address(owner));
+        assertEq(balanceOwnerAfter, balanceOwnerBefore);
+
+        vm.stopPrank();
+    }
+
+    function test_distribute_rewards_no_amount() public {
+  //ok
+        vm.startPrank(owner);
+
+        //add rewards tokens
+        twTAP.addRewardToken(IERC20(mockToken));
+        IERC20[] memory tokens = twTAP.getRewardTokens();
+        uint256 length = tokens.length;
+        //length has to be 2 because we push on the constructor:  rewardTokens.push(IERC20(address(0x0)));
+        assertEq(length, 2);
+
+        bytes memory data = abi.encode(tokens[1]);
+        bytes memory data2 = abi.encode(mockToken);
+        assertEq(data, data2);
+
+        //participate
+        vm.startPrank(__earlySupporters);
+        //transfer tokens to the owner contract
+        uint256 balance = aTapOFT.balanceOf(address(__earlySupporters));
+        assertEq(balance, 3_686_595 ether);
+
+        aTapOFT.transfer(address(owner), balance);
+        vm.stopPrank();
+
+        vm.startPrank(owner);
+
+        aTapOFT.approve(address(twTAP), type(uint256).max);
+
+        twTAP.participate(address(owner), 100 ether, ((86400 + 1) * 7));
+
+        uint256 balanceTwTAP = aTapOFT.balanceOf(address(twTAP));
+        assertEq(balanceTwTAP, 100 ether);
+
+        address _owner = twTAP.ownerOf(1);
+        assertEq(_owner, address(owner));
+
+        //advance a week
+        vm.warp(block.timestamp + 1 weeks + 1 seconds);
+        twTAP.advanceWeek(100);
+        assertEq(twTAP.lastProcessedWeek(), 1);
+
+        //distribute rewards
+        IERC20(mockToken).approve(address(twTAP), type(uint256).max);
+
+        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(
+            address(owner)
+        );
+        vm.expectRevert(NotValid.selector);
+        twTAP.distributeReward(1, 0);
+        uint256 balanceOwnerAfter = IERC20(mockToken).balanceOf(address(owner));
+        assertEq(balanceOwnerAfter, balanceOwnerBefore);
+
         vm.stopPrank();
     }
 
@@ -428,7 +490,14 @@ contract twTAPTest is TapTestHelper, Errors {
 
         //NOTE so cool thing is that netActiveVotes is incremented in the new week when you participate therefore if you participate and try and claim before a week has passed, you will get a panic revert
         //weekTotals[w0 + 1].netActiveVotes += int256(votes);
+
+        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(
+            address(owner)
+        );
         twTAP.distributeReward(1, 1);
+        uint256 balanceOwnerAfter = IERC20(mockToken).balanceOf(address(owner));
+        assertEq(balanceOwnerAfter, balanceOwnerBefore - 1);
+
         vm.stopPrank();
     }
 

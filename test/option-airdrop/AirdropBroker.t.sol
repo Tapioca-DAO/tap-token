@@ -79,7 +79,7 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
     address public __lbp = address(0x33);
     address public __dao = address(0x34);
     address public __airdrop = address(0x35);
-    uint256 public __governanceEid = 0; //aEid, initially bEid
+    uint256 public __governanceEid = aEid; //aEid, initially bEid
     address public __owner = address(this);
 
     function setUp() public override {
@@ -466,7 +466,7 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
 
     function test_dao_recover_tap_before_end_epoch() public {
         vm.startPrank(owner);
-
+        
         //advance 2 epochs
         for (uint256 i = 1; i < 3; i++) {
             vm.warp(block.timestamp + 172810 * i);
@@ -478,14 +478,13 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    function test_dao_recover_tap_transfer() public {
-        //ok
+    function test_dao_recover_tap_transfer() public {//ok
 
         vm.startPrank(__earlySupporters);
 
         //transfer tokens to the airdropBroker contract
 
-        uint256 _balance = aTapOFT.balanceOf(address(__earlySupporters)); //TODO: as of now there is no balance
+        uint256 _balance = aTapOFT.balanceOf(address(__earlySupporters)); 
 
         aTapOFT.transfer(address(airdropBroker), _balance);
 
