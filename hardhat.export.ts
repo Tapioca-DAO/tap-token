@@ -1,21 +1,18 @@
-import * as dotenv from 'dotenv';
-
 // Plugins
-import { HardhatUserConfig, extendEnvironment } from 'hardhat/config';
 import '@nomicfoundation/hardhat-chai-matchers';
-import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-foundry';
+import '@nomicfoundation/hardhat-toolbox';
 import '@primitivefi/hardhat-dodoc';
-import 'hardhat-contract-sizer';
 import '@typechain/hardhat';
+import 'hardhat-contract-sizer';
 import 'hardhat-tracer';
-import fs from 'fs';
+import { HardhatUserConfig } from 'hardhat/config';
+import { HttpNetworkConfig, HttpNetworkUserConfig } from 'hardhat/types';
 
 // Utils
-import 'tapioca-sdk'; // Use directly the un-compiled code, no need to wait for the tarball to be published.
-import { SDK, loadEnv } from 'tapioca-sdk';
-import { HttpNetworkConfig, HttpNetworkUserConfig } from 'hardhat/types';
 import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
+import { SDK, loadEnv } from 'tapioca-sdk';
+import 'tapioca-sdk'; // Use directly the un-compiled code, no need to wait for the tarball to be published.
 
 declare global {
     // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -30,6 +27,7 @@ declare global {
 // Load the env vars from the .env/<network>.env file. the <network> file name is the same as the network in hh `--network arbitrum_sepolia`
 loadEnv();
 
+// TODO refactor all of that in the SDK?
 type TNetwork = ReturnType<
     typeof SDK.API.utils.getSupportedChains
 >[number]['name'];
@@ -52,17 +50,9 @@ const supportedChains = SDK.API.utils.getSupportedChains().reduce(
 );
 
 const config: HardhatUserConfig & { dodoc: any } = {
+    SDK: { project: TAPIOCA_PROJECTS_NAME.TapToken },
     solidity: {
         compilers: [
-            {
-                version: '0.4.24',
-                settings: {
-                    optimizer: {
-                        enabled: true,
-                        runs: 100,
-                    },
-                },
-            },
             {
                 version: '0.8.22',
                 settings: {
@@ -79,6 +69,15 @@ const config: HardhatUserConfig & { dodoc: any } = {
         artifacts: './gen/artifacts',
         cache: './gen/cache',
     },
+    dodoc: {
+        runOnCompile: false,
+        freshOutput: false,
+        outputDir: 'gen/docs',
+    },
+    typechain: {
+        outDir: 'gen/typechain',
+        target: 'ethers-v5',
+    },
     defaultNetwork: 'hardhat',
     networks: {
         hardhat: {
@@ -89,7 +88,6 @@ const config: HardhatUserConfig & { dodoc: any } = {
         },
         ...supportedChains,
     },
-    SDK: { project: TAPIOCA_PROJECTS_NAME.TapToken },
     etherscan: {
         apiKey: {
             sepolia: process.env.SCAN_API_KEY ?? '',
@@ -118,18 +116,6 @@ const config: HardhatUserConfig & { dodoc: any } = {
                 },
             },
         ],
-    },
-    mocha: {
-        timeout: 4000000,
-    },
-    dodoc: {
-        runOnCompile: false,
-        freshOutput: false,
-        outputDir: 'gen/docs',
-    },
-    typechain: {
-        outDir: 'gen/typechain',
-        target: 'ethers-v5',
     },
 };
 
