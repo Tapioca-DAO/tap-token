@@ -31,6 +31,7 @@ import {ERC721Mock} from "../ERC721Mock.sol";
 import {TapOFTV2Mock} from "../TapOFTV2Mock.sol";
 
 import {TapOracleMock} from "../Mocks/TapOracleMock.sol";
+import {IOracle} from "tapioca-periph/contracts/interfaces/IOracle.sol";
 
 import {MockToken} from "gitsub_tapioca-sdk/src/contracts/mocks/MockToken.sol";
 
@@ -380,7 +381,7 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         airdropBroker.aoTAPBrokerClaim();
         vm.stopPrank();
     }
-
+  
     function test_participate_phase_3_already_participated() public {
         //fail
         vm.startPrank(owner);
@@ -530,6 +531,18 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    function test_set_tap_oracle() public {
+        //ok
+        vm.startPrank(owner);
+        bytes memory _data = abi.encode(uint256(2));
+        airdropBroker.setTapOracle(tapOracleMock, _data);
+        IOracle _oracle = airdropBroker.tapOracle();
+        bytes memory data = airdropBroker.tapOracleData();
+        assertEq(address(_oracle), address(tapOracleMock));
+        assertEq(data, _data);
+        vm.stopPrank();
+    }
+
     function test_set_phase_2merkle_roots_not_owner() public {
         //ok
 
@@ -605,6 +618,29 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         airdropBroker.collectPaymentTokens(tokens);
         vm.stopPrank();
     }
+
+
+    function test_payment_token_not_owner() public {
+        //ok
+
+        vm.startPrank(tokenBeneficiary);
+        address user1 = address(0x01);
+        bytes memory _data = abi.encode(uint256(3));
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        airdropBroker.setPaymentToken((mockToken),IOracle(tapOracleMock),_data);
+        vm.stopPrank();
+    }
+
+    function test_payment_token() public {
+        //ok
+        vm.startPrank(owner);
+        bytes memory _data = abi.encode(uint256(3));
+        airdropBroker.setPaymentToken((mockToken),IOracle(tapOracleMock),_data);
+        IOracle _oracle = airdropBroker.tapOracle();
+        bytes memory data = airdropBroker.tapOracleData();
+        vm.stopPrank();
+    }
+
 
     function test_beneficiary_not_set() public {
         //ok
