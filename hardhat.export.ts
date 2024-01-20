@@ -68,6 +68,7 @@ const config: HardhatUserConfig & { dodoc: any } = {
     paths: {
         artifacts: './gen/artifacts',
         cache: './gen/cache',
+        tests: './hardhat_test',
     },
     dodoc: {
         runOnCompile: false,
