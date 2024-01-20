@@ -76,6 +76,6 @@
     "inquirer": "^8.2.5",
     "lodash": "^4.17.21",
     "merkletreejs": "^0.3.10",
-    "tapioca-sdk": "^1.5.20-nightly-8"
+    "tapioca-sdk": "^1.5.20-nightly-9"
   }
 }
