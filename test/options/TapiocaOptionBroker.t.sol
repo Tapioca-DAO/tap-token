@@ -50,7 +50,6 @@ import {TapiocaOptionLiquidityProvision} from "../../contracts/options/TapiocaOp
 import {WrappedNativeMock} from "../Mocks/WrappedNativeMock.sol";
 import {IWrappedNative} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/interfaces/IWrappedNative.sol";
 
-
 import {YieldBoxURIBuilder} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/YieldBoxURIBuilder.sol";
 import {Errors} from "../helpers/errors.sol";
 
@@ -74,13 +73,14 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
     AirdropBroker public airdropBroker; //instance of AirdropBroker
     TapOracleMock public tapOracleMock; //instance of TapOracleMock
     MockToken public mockToken; //instance of MockToken (erc20)
+    MockToken public singularity; //instance of singularity (erc20)
     ERC721Mock public erc721Mock; //instance of ERC721Mock
     AOTAP public aotap; //instance of AOTAP
     OTAP public otap;
     TapiocaOptionBroker public tapiocaOptionBroker; //instance of TapiocaOptionBroker
     TapiocaOptionLiquidityProvision public tapiocaOptionLiquidityProvision; //instance of TapiocaOptionLiquidityProvision
     YieldBox public yieldBox; //instance of YieldBox
-    YieldBoxURIBuilder public  yieldBoxURIBuilder;
+    YieldBoxURIBuilder public yieldBoxURIBuilder;
     WrappedNativeMock public wrappedNativeMock; //instance of wrappedNativeMock
 
     uint256 internal userAPKey = 0x1;
@@ -100,6 +100,13 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
     address public __airdrop = address(0x35);
     uint256 public __governanceEid = aEid; //aEid, initially bEid
     address public __owner = address(this);
+
+    struct SingularityPool {
+        uint256 sglAssetID; // Singularity market YieldBox asset ID
+        uint256 totalDeposited; // total amount of YieldBox shares deposited, used for pool share calculation
+        uint256 poolWeight; // Pool weight to calculate emission
+        bool rescue; // If true, the pool will be used to rescue funds in case of emergency
+    }
 
     function setUp() public override {
         vm.deal(owner, 1000 ether); //give owner some ether
@@ -146,13 +153,16 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         tapOFTv2Helper = new TapOFTv2Helper();
         tapOracleMock = new TapOracleMock();
 
-   yieldBoxURIBuilder = new YieldBoxURIBuilder();
+        yieldBoxURIBuilder = new YieldBoxURIBuilder();
         wrappedNativeMock = new WrappedNativeMock();
-        yieldBox = new YieldBox(IWrappedNative(wrappedNativeMock), yieldBoxURIBuilder);
-   otap = new OTAP(); 
+        yieldBox = new YieldBox(
+            IWrappedNative(wrappedNativeMock),
+            yieldBoxURIBuilder
+        );
+        otap = new OTAP();
         aotap = new AOTAP(address(this)); //deploy AOTAP and set address to owner
 
-    tapiocaOptionLiquidityProvision = new TapiocaOptionLiquidityProvision(
+        tapiocaOptionLiquidityProvision = new TapiocaOptionLiquidityProvision(
             address(yieldBox),
             7 days,
             address(owner)
@@ -181,6 +191,8 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         mockToken.transfer(address(airdropBroker), 333333 * 10 ** 18);
         bytes memory _data = abi.encode(uint256(1));
 
+        singularity = new MockToken("Singularity", "SGL"); //deploy singularity
+
         erc721Mock.mint(address(owner), 1); //mint NFT id 1 to owner
         erc721Mock.mint(address(tokenBeneficiary), 2); //mint NFT id 2 to beneficiary
         airdropBroker.setTapOracle(tapOracleMock, _data);
@@ -199,37 +211,46 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         // assertEq(_broker, address(owner));
     }
 
-
-
     function test_timestamp() public {
         uint256 return_value = tapiocaOptionBroker.timestampToWeek(0);
         assertEq(return_value, 0);
-        uint256 return_value2 = tapiocaOptionBroker.timestampToWeek(block.timestamp - 1 seconds);
+        uint256 return_value2 = tapiocaOptionBroker.timestampToWeek(
+            block.timestamp - 1 seconds
+        );
         assertEq(return_value2, 0);
-        uint256 return_value3 = tapiocaOptionBroker.timestampToWeek(block.timestamp + (7 days - 1 seconds));
+        uint256 return_value3 = tapiocaOptionBroker.timestampToWeek(
+            block.timestamp + (7 days - 1 seconds)
+        );
         assertEq(return_value3, 0);
-        uint256 return_value4 = tapiocaOptionBroker.timestampToWeek(block.timestamp + 8 days);
+        uint256 return_value4 = tapiocaOptionBroker.timestampToWeek(
+            block.timestamp + 8 days
+        );
         assertEq(return_value4, 1);
     }
 
- function test_set_payment_token_beneficiary_not_owner() public {
+    function test_set_payment_token_beneficiary_not_owner() public {
         vm.startPrank(__earlySupporters);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         tapiocaOptionBroker.setPaymentTokenBeneficiary(address(0x1));
-        assertEq(tapiocaOptionBroker.paymentTokenBeneficiary(), address(tokenBeneficiary));
+        assertEq(
+            tapiocaOptionBroker.paymentTokenBeneficiary(),
+            address(tokenBeneficiary)
+        );
         vm.stopPrank();
     }
 
     function test_set_payment_token_beneficiary() public {
         vm.startPrank(owner);
-        assertEq(tapiocaOptionBroker.paymentTokenBeneficiary(), address(tokenBeneficiary));
+        assertEq(
+            tapiocaOptionBroker.paymentTokenBeneficiary(),
+            address(tokenBeneficiary)
+        );
         tapiocaOptionBroker.setPaymentTokenBeneficiary(address(0x1));
         assertEq(tapiocaOptionBroker.paymentTokenBeneficiary(), address(0x1));
         vm.stopPrank();
     }
 
-
-    function test_set_min_weigth_factor_not_owner() public{
+    function test_set_min_weigth_factor_not_owner() public {
         vm.startPrank(__earlySupporters);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         tapiocaOptionBroker.setMinWeightFactor(2000);
@@ -237,7 +258,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    function test_set_min_weigth_factor() public{
+    function test_set_min_weigth_factor() public {
         vm.startPrank(owner);
         assertEq(tapiocaOptionBroker.MIN_WEIGHT_FACTOR(), 1000);
         tapiocaOptionBroker.setMinWeightFactor(2000);
@@ -245,8 +266,8 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-
-    function test_dao_aoTAP_broker_claim() public { //not good
+    function test_dao_aoTAP_broker_claim() public {
+        //not good
         vm.startPrank(owner);
         tapiocaOptionBroker.oTAPBrokerClaim();
         address _broker = otap.broker();
@@ -271,7 +292,11 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         address user1 = address(0x01);
         bytes memory _data = abi.encode(uint256(3));
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        tapiocaOptionBroker.setPaymentToken((mockToken),IOracle(tapOracleMock),_data);
+        tapiocaOptionBroker.setPaymentToken(
+            (mockToken),
+            IOracle(tapOracleMock),
+            _data
+        );
 
         vm.stopPrank();
     }
@@ -280,7 +305,11 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         //ok
         vm.startPrank(owner);
         bytes memory _data = abi.encode(uint256(3));
-        tapiocaOptionBroker.setPaymentToken((mockToken),IOracle(tapOracleMock),_data);
+        tapiocaOptionBroker.setPaymentToken(
+            (mockToken),
+            IOracle(tapOracleMock),
+            _data
+        );
         IOracle _oracle = tapiocaOptionBroker.tapOracle();
         bytes memory data = tapiocaOptionBroker.tapOracleData();
 
@@ -344,7 +373,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-     function test_collect_payments() public {
+    function test_collect_payments() public {
         //ok
 
         vm.startPrank(owner);
@@ -370,32 +399,134 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-
- function test_new_epoch_too_soon() public {
-        uint256 timestamp = block.timestamp;
-        vm.warp(timestamp + 172810); //2 days in seconds + 10 seconds 172810 to increase the epoch
-        tapiocaOptionBroker.newEpoch();
-
-        vm.warp(timestamp + 172811); //only 1 second more to trigger revert
+    function test_new_epoch_too_soon() public {
+        vm.warp(block.timestamp + 6 days);
         vm.expectRevert(TooSoon.selector);
         tapiocaOptionBroker.newEpoch();
     }
-
 
     function test_new_epoch_no_singularities() public {
-        uint256 timestamp = block.timestamp;
-        vm.warp(timestamp + 172810); //2 days in seconds + 10 seconds 172810 to increase the epoch
+        vm.warp(block.timestamp + 7 days + 1 seconds);
+        vm.expectRevert(NoActiveSingularities.selector);
         tapiocaOptionBroker.newEpoch();
-//NOTE does not work because epoch is not really true, check dfferences between brokers
-        vm.warp(timestamp + 172811); //only 1 second more to trigger revert
-        vm.expectRevert(TooSoon.selector);
-        tapiocaOptionBroker.newEpoch();
+        //NOTE does not work because epoch is not really true, check dfferences between brokers
+    }
+
+    function test_new_epoch_with_singularities() public {
+        vm.startPrank(owner);
+        vm.warp(block.timestamp + 7 days + 1 seconds);
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision
+            .getSingularities();
+        assertEq(singularites.length, 0);
+        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
+            .getSingularities();
+        assertEq(singularitesAfter.length, 1);
+        assertEq(singularitesAfter[0], 1);
+        vm.stopPrank();
+        // (SingularityPool[] memory pool) = tapiocaOptionLiquidityProvision.getSingularityPools();
+        // assertEq(pool.length, 0);
+        // tapiocaOptionBroker.newEpoch();
+        // uint256 epoch = tapiocaOptionBroker.epoch();
+        // assertEq(epoch, 1);
+    }
+
+    function test_register_singularity_not_owner() public {
+        vm.startPrank(tokenBeneficiary);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision
+            .getSingularities();
+        assertEq(singularites.length, 0);
+        vm.stopPrank();
+    }
+
+    function test_register_singularity_id_not_valid() public {
+        vm.startPrank(owner);
+        vm.expectRevert(AssetIdNotValid.selector);
+        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 0, 1);
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision
+            .getSingularities();
+        assertEq(singularites.length, 0);
+        vm.stopPrank();
+    }
+
+    function test_register_singularity_duplicated() public {
+        vm.startPrank(owner);
+        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision
+            .getSingularities();
+        assertEq(singularites.length, 1);
+        vm.expectRevert(DuplicateAssetId.selector);
+        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
+            .getSingularities();
+        assertEq(singularitesAfter.length, 1);
+        assertEq(singularitesAfter[0], 1);
+        vm.stopPrank();
     }
 
 
+    function test_register_singularity_different_id() public {
+        vm.startPrank(owner);
+        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision
+            .getSingularities();
+        assertEq(singularites.length, 1);
+        vm.expectRevert(AlreadyRegistered.selector);
+        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 2, 1);
+        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
+            .getSingularities();
+        assertEq(singularitesAfter.length, 1);
+        assertEq(singularitesAfter[0], 1);
+        vm.stopPrank();
+    }
 
+    function test_register_singularity() public {
+        vm.startPrank(owner);
+        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision
+            .getSingularities();
+        assertEq(singularites.length, 1);
+        assertEq(singularites[0], 1);
+        vm.stopPrank();
+    }
 
-   
+    function test_unregister_singularity_not_owner() public {
+        vm.startPrank(tokenBeneficiary);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision
+            .getSingularities();
+        assertEq(singularites.length, 0);
+        vm.stopPrank();
+    }
 
-    
+     function test_unregister_singularity_not_registered() public {
+        vm.startPrank(owner);
+         vm.expectRevert(NotRegistered.selector);
+        tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision
+            .getSingularities();
+        assertEq(singularites.length, 0);
+        vm.stopPrank();
+    }
+
+     function test_unregister_singularity_not_rescue() public {
+        vm.startPrank(owner);
+        //register
+           tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision
+            .getSingularities();
+        assertEq(singularites.length, 1);
+        assertEq(singularites[0], 1);
+        //unregister
+         vm.expectRevert(NotInRescueMode.selector);
+        tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
+        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
+            .getSingularities();
+         assertEq(singularitesAfter.length, 1);
+        assertEq(singularitesAfter[0], 1);
+        vm.stopPrank();
+    }
 }
