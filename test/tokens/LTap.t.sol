@@ -39,7 +39,7 @@ contract LTapTest is TapTestHelper, Errors {
         ltap = new LTap(mockToken, block.timestamp + 7 days); //deploy LTap and set address to owner
         vm.label(address(mockToken), "erc20Mock"); //label address for test traces
         mockToken.transfer(address(this), 1_000_001); //transfer some tokens to address(this)
-    
+
         super.setUp();
     }
 
@@ -66,7 +66,7 @@ contract LTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
- function test_deposit() public {
+    function test_deposit() public {
         vm.startPrank(owner);
         uint256 balBefore = mockToken.balanceOf(address(this));
         mockToken.approve(address(ltap), 1000 ether);
@@ -93,6 +93,43 @@ contract LTapTest is TapTestHelper, Errors {
         assertEq(balAfter, balBefore + 1000 ether);
         uint256 balLtap = ltap.balanceOf(address(owner));
         assertEq(balLtap, 0);
+        vm.stopPrank();
+    }
+
+    function test_set_locked_until_not_owner() public {
+        vm.startPrank(owner);
+        uint256 lockedUntilBefore = ltap.lockedUntil();
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        ltap.setLockedUntil(block.timestamp + 8 days);
+        uint256 lockedUntilAfter = ltap.lockedUntil();
+
+        assertEq(lockedUntilBefore, lockedUntilAfter);
+        vm.stopPrank();
+    }
+
+    function test_set_locked_until_too_late() public {
+        vm.startPrank(owner);
+         uint256 lockedUntilBefore = ltap.lockedUntil();
+        assertEq(lockedUntilBefore, block.timestamp + 7 days);
+        vm.expectRevert(TooLate.selector);
+        ltap.setLockedUntil(block.timestamp + 10 days);
+         uint256 lockedUntilAfter = ltap.lockedUntil();
+
+        assertEq(lockedUntilBefore, lockedUntilAfter);
+        vm.stopPrank();
+    }
+
+     function test_set_locked_until() public {
+        vm.startPrank(owner);
+        //TODO owner is still address(this)
+        uint256 lockedUntilBefore = ltap.lockedUntil();
+        assertEq(lockedUntilBefore, block.timestamp + 7 days);
+        vm.expectRevert(TooLate.selector);
+        ltap.setLockedUntil(block.timestamp + 7 days);
+        //TODO we are setting it to literally the same day here as it is the limit, probably change that
+        uint256 lockedUntilAfter = ltap.lockedUntil();
+
+        assertEq(lockedUntilBefore, lockedUntilAfter);
         vm.stopPrank();
     }
 }

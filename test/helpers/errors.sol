@@ -53,4 +53,6 @@ contract Errors {
     error BalanceTooLow();
     error VestingDurationNotValid();
     error Overflow();
+      error StillLocked();
+    error TooLate();
 }
