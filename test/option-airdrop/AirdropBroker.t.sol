@@ -26,7 +26,8 @@ import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
 import {TapOFTSender} from "@contracts/tokens/TapOFTv2/TapOFTSender.sol";
 
 // Tapioca Tests
-import {TapTestHelper} from "../TapTestHelper.t.sol";
+
+import {TapTestHelper} from "../helpers/TapTestHelper.t.sol";
 import {ERC721Mock} from "../ERC721Mock.sol";
 import {TapOFTV2Mock} from "../TapOFTV2Mock.sol";
 

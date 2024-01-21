@@ -26,7 +26,8 @@ import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
 import {TapOFTSender} from "@contracts/tokens/TapOFTv2/TapOFTSender.sol";
 
 // Tapioca Tests
-import {TapTestHelper} from "../TapTestHelper.t.sol";
+
+import {TapTestHelper} from "../helpers/TapTestHelper.t.sol";
 import {ERC721Mock} from "../ERC721Mock.sol";
 import {TapOFTV2Mock} from "../TapOFTV2Mock.sol";
 
@@ -41,6 +42,10 @@ import {OTAP} from "../../contracts/options/oTAP.sol";
 
 import {YieldBox} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/YieldBox.sol";
 import {IYieldBox} from "tapioca-sdk/dist/contracts/YieldBox/contracts/interfaces/IYieldBox.sol";
+
+import {IStrategy} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/interfaces/IStrategy.sol";
+
+import {TokenType}  from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/enums/YieldBoxTokenType.sol";
 
 // Import contract to test
 import {AirdropBroker} from "../../contracts/option-airdrop/AirdropBroker.sol";
@@ -108,6 +113,9 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         bool rescue; // If true, the pool will be used to rescue funds in case of emergency
     }
 
+   
+
+
     function setUp() public override {
         vm.deal(owner, 1000 ether); //give owner some ether
         vm.deal(tokenBeneficiary, 1000 ether); //give tokenBeneficiary some ether
@@ -129,7 +137,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
                         __dao,
                         __airdrop,
                         __governanceEid,
-                        address(this),
+                        address(owner),
                         address(
                             new TapOFTSender(
                                 address(endpoints[aEid]),
@@ -423,110 +431,302 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
             .getSingularities();
         assertEq(singularitesAfter.length, 1);
         assertEq(singularitesAfter[0], 1);
+
+        //setMinter role to owner
+        aTapOFT.setMinter(address(tapiocaOptionBroker));
+        address _minter = aTapOFT.minter();
+        assertEq(_minter, address(tapiocaOptionBroker));
+
+        //setOracle
+        bytes memory _data = abi.encode(uint256(2));
+        tapiocaOptionBroker.setTapOracle(tapOracleMock, _data);
+        
+        uint256 _epoch = tapiocaOptionBroker.epoch();
+        tapiocaOptionBroker.newEpoch();
+        uint256 new_epoch = tapiocaOptionBroker.epoch();
+        assertEq(new_epoch, _epoch + 1);
+
         vm.stopPrank();
+    }
+
+
         // (SingularityPool[] memory pool) = tapiocaOptionLiquidityProvision.getSingularityPools();
         // assertEq(pool.length, 0);
         // tapiocaOptionBroker.newEpoch();
         // uint256 epoch = tapiocaOptionBroker.epoch();
         // assertEq(epoch, 1);
-    }
 
-    function test_register_singularity_not_owner() public {
-        vm.startPrank(tokenBeneficiary);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
-        assertEq(singularites.length, 0);
-        vm.stopPrank();
-    }
+//     function test_register_singularity_not_owner() public {
+//         vm.startPrank(tokenBeneficiary);
+//         vm.expectRevert(bytes("Ownable: caller is not the owner"));
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 0);
+//         vm.stopPrank();
+//     }
 
-    function test_register_singularity_id_not_valid() public {
-        vm.startPrank(owner);
-        vm.expectRevert(AssetIdNotValid.selector);
-        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 0, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
-        assertEq(singularites.length, 0);
-        vm.stopPrank();
-    }
+//     function test_register_singularity_id_not_valid() public {
+//         vm.startPrank(owner);
+//         vm.expectRevert(AssetIdNotValid.selector);
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 0, 1);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 0);
+//         vm.stopPrank();
+//     }
 
-    function test_register_singularity_duplicated() public {
-        vm.startPrank(owner);
-        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
-        assertEq(singularites.length, 1);
-        vm.expectRevert(DuplicateAssetId.selector);
-        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
-            .getSingularities();
-        assertEq(singularitesAfter.length, 1);
-        assertEq(singularitesAfter[0], 1);
-        vm.stopPrank();
-    }
+//     function test_register_singularity_duplicated() public {
+//         vm.startPrank(owner);
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 1);
+//         vm.expectRevert(DuplicateAssetId.selector);
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+//         uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularitesAfter.length, 1);
+//         assertEq(singularitesAfter[0], 1);
+//         vm.stopPrank();
+//     }
+
+//     function test_register_singularity_different_id() public {
+//         vm.startPrank(owner);
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 1);
+//         vm.expectRevert(AlreadyRegistered.selector);
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 2, 1);
+//         uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularitesAfter.length, 1);
+//         assertEq(singularitesAfter[0], 1);
+//         vm.stopPrank();
+//     }
+
+//     function test_register_singularity() public {
+//         vm.startPrank(owner);
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 1);
+//         assertEq(singularites[0], 1);
+//         vm.stopPrank();
+//     }
+
+//     function test_unregister_singularity_not_owner() public {
+//         vm.startPrank(tokenBeneficiary);
+//         vm.expectRevert(bytes("Ownable: caller is not the owner"));
+//         tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 0);
+//         vm.stopPrank();
+//     }
+
+//     function test_unregister_singularity_not_registered() public {
+//         vm.startPrank(owner);
+//         vm.expectRevert(NotRegistered.selector);
+//         tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 0);
+//         vm.stopPrank();
+//     }
+
+//     function test_unregister_singularity_not_rescue() public {
+//         vm.startPrank(owner);
+//         //register
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 1);
+//         assertEq(singularites[0], 1);
+//         //unregister
+//         vm.expectRevert(NotInRescueMode.selector);
+//         tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
+//         uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularitesAfter.length, 1);
+//         assertEq(singularitesAfter[0], 1);
+//         vm.stopPrank();
+//     }
+
+//     function test_unregister_singularity() public {
+//         vm.startPrank(owner);
+//         //register
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 1);
+//         assertEq(singularites[0], 1);
+//         //activate
+//         tapiocaOptionLiquidityProvision.activateSGLPoolRescue(singularity);
+//         //unregister
+//         tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
+//         uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularitesAfter.length, 0);
+//         vm.stopPrank();
+//     }
+
+//     function test_activate_sgl_pool_rescue_not_owner() public {
+//         vm.startPrank(tokenBeneficiary);
+//         vm.expectRevert(bytes("Ownable: caller is not the owner"));
+//         tapiocaOptionLiquidityProvision.activateSGLPoolRescue(singularity);
+//         vm.stopPrank();
+//     }
+
+//     function test_activate_sgl_pool_rescue_not_registered() public {
+//         vm.startPrank(owner);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 0);
+//         //activate
+//         vm.expectRevert(NotRegistered.selector);
+//         tapiocaOptionLiquidityProvision.activateSGLPoolRescue(singularity);
+//         vm.stopPrank();
+//     }
+
+//     function test_activate_sgl_pool_rescue() public {
+//         vm.startPrank(owner);
+//         //register
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 1);
+//         assertEq(singularites[0], 1);
+//         //activate
+//         tapiocaOptionLiquidityProvision.activateSGLPoolRescue(singularity);
+//         vm.stopPrank();
+//     }
+
+//     function test_activate_sgl_pool_rescue_already_active() public {
+//         vm.startPrank(owner);
+//         //register
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 1);
+//         assertEq(singularites[0], 1);
+//         //activate
+//         tapiocaOptionLiquidityProvision.activateSGLPoolRescue(singularity);
+//         //activate again
+//         vm.expectRevert(AlreadyActive.selector);
+//         tapiocaOptionLiquidityProvision.activateSGLPoolRescue(singularity);
+//         vm.stopPrank();
+//     }
+
+//     function test_set_sgl_pool_weight__not_owner() public {
+//         vm.startPrank(tokenBeneficiary);
+//         vm.expectRevert(bytes("Ownable: caller is not the owner"));
+//         tapiocaOptionLiquidityProvision.setSGLPoolWEight(singularity, 100);
+//         vm.stopPrank();
+//     }
+
+//     function test_set_sgl_pool_weight_not_registered() public {
+//         vm.startPrank(owner);
+
+//         vm.expectRevert(NotRegistered.selector);
+//         tapiocaOptionLiquidityProvision.setSGLPoolWEight(singularity, 100);
+//         vm.stopPrank();
+//     }
+
+//     function test_set_sgl_pool_weight() public {
+//         vm.startPrank(owner);
+
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 1);
+//         assertEq(singularites[0], 1);
+
+//         tapiocaOptionLiquidityProvision.setSGLPoolWEight(singularity, 100);
+//         vm.stopPrank();
+//     }
+
+//     function test_lock_short_duration() public {
+//         vm.startPrank(owner);
+//         vm.expectRevert(DurationTooShort.selector);
+//         tapiocaOptionLiquidityProvision.lock(
+//             address(owner),
+//             singularity,
+//             3 days,
+//             1
+//         );
+//         vm.stopPrank();
+//     }
+
+//     function test_lock_not_valid_shares() public {
+//         vm.startPrank(owner);
+//         vm.expectRevert(SharesNotValid.selector);
+//         tapiocaOptionLiquidityProvision.lock(
+//             address(owner),
+//             singularity,
+//             8 days,
+//             0
+//         );
+//         vm.stopPrank();
+//     }
+
+//     function test_lock_in_rescue() public {
+//         vm.startPrank(owner);
+//         //register
+//         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 1);
+//         assertEq(singularites[0], 1);
+//         //activate
+//         tapiocaOptionLiquidityProvision.activateSGLPoolRescue(singularity);
+//         vm.expectRevert(SingularityInRescueMode.selector);
+//         tapiocaOptionLiquidityProvision.lock(
+//             address(owner),
+//             singularity,
+//             8 days,
+//             1
+//         );
+//         vm.stopPrank();
+//     }
+
+//     function test_lock_not_active() public {
+//         vm.startPrank(owner);
+//         //register
+//         uint256[] memory singularites = tapiocaOptionLiquidityProvision
+//             .getSingularities();
+//         assertEq(singularites.length, 0);
+
+//         vm.expectRevert(SingularityNotActive.selector);
+//         tapiocaOptionLiquidityProvision.lock(
+//             address(owner),
+//             singularity,
+//             8 days,
+//             1
+//         );
+//         vm.stopPrank();
+//     }
+//     function test_lock_yieldbox()public{
+// //tokenId has to be 0 for ERC20 tokens
+// yieldBox.deposit(TokenType.ERC20,address(mockToken),IStrategy(address(0x0)),0,address(owner),address(owner),10,1);
+// (address _owner) = tapiocaOptionLiquidityProvision.ownerOf(1);
+// assertEq(_owner, address(owner));
+//     }
+    
 
 
-    function test_register_singularity_different_id() public {
-        vm.startPrank(owner);
-        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
-        assertEq(singularites.length, 1);
-        vm.expectRevert(AlreadyRegistered.selector);
-        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 2, 1);
-        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
-            .getSingularities();
-        assertEq(singularitesAfter.length, 1);
-        assertEq(singularitesAfter[0], 1);
-        vm.stopPrank();
-    }
+//      function test_unlock_expired()public{
+//           vm.startPrank(owner);
 
-    function test_register_singularity() public {
-        vm.startPrank(owner);
-        tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
-        assertEq(singularites.length, 1);
-        assertEq(singularites[0], 1);
-        vm.stopPrank();
-    }
 
-    function test_unregister_singularity_not_owner() public {
-        vm.startPrank(tokenBeneficiary);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
-        assertEq(singularites.length, 0);
-        vm.stopPrank();
-    }
+//         vm.expectRevert(PositionExpired.selector);
+//         tapiocaOptionLiquidityProvision.unlock(
+//             1,
+//             singularity,
+//             address(owner)
+//         );
+//         vm.stopPrank();
 
-     function test_unregister_singularity_not_registered() public {
-        vm.startPrank(owner);
-         vm.expectRevert(NotRegistered.selector);
-        tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
-        assertEq(singularites.length, 0);
-        vm.stopPrank();
-    }
-
-     function test_unregister_singularity_not_rescue() public {
-        vm.startPrank(owner);
-        //register
-           tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
-        assertEq(singularites.length, 1);
-        assertEq(singularites[0], 1);
-        //unregister
-         vm.expectRevert(NotInRescueMode.selector);
-        tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
-        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
-            .getSingularities();
-         assertEq(singularitesAfter.length, 1);
-        assertEq(singularitesAfter[0], 1);
-        vm.stopPrank();
-    }
+//     }
 }

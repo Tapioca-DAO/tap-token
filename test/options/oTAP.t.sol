@@ -12,7 +12,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockToken} from "gitsub_tapioca-sdk/src/contracts/mocks/MockToken.sol";
 
 // Tapioca Tests
-import {TapTestHelper} from "../TapTestHelper.t.sol";
+
+import {TapTestHelper} from "../helpers/TapTestHelper.t.sol";
 import {ERC721Mock} from "../ERC721Mock.sol";
 import {TapOFTV2Mock} from "../TapOFTV2Mock.sol";
 
