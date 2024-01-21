@@ -89,14 +89,14 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, BoringOwnable {
         returns (uint256 tokenId)
     {
         if (msg.sender != broker) revert OnlyBroker();
-        tokenId = ++mintedAOTAP;
-        _safeMint(_to, tokenId);
 
+        tokenId = ++mintedAOTAP;
         AirdropTapOption storage option = options[tokenId];
         option.expiry = _expiry;
         option.discount = _discount;
         option.amount = _amount;
 
+        _safeMint(_to, tokenId);
         emit Mint(_to, tokenId, option);
     }
 

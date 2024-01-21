@@ -87,13 +87,12 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
         if (msg.sender != broker) revert OnlyBroker();
 
         tokenId = ++mintedOTAP;
-        _safeMint(_to, tokenId);
-
         TapOption storage option = options[tokenId];
         option.expiry = _expiry;
         option.discount = _discount;
         option.tOLP = _tOLP;
 
+        _safeMint(_to, tokenId);
         emit Mint(_to, tokenId, option);
     }
 
