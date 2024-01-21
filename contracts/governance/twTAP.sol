@@ -321,10 +321,6 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
             emit AMLDivergence(pool.cumulative, pool.averageMagnitude, pool.totalParticipants);
         }
 
-        // Mint twTAP position
-        tokenId = ++mintedTWTap;
-        _safeMint(_participant, tokenId);
-
         uint256 expiry = block.timestamp + _duration;
         // Eligibility starts NEXT week, and lasts until the week that the lock
         // expires. This is guaranteed to be at least one week later by the
@@ -339,6 +335,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
 
         // Save twAML participation
         // Casts are safe: see struct definition
+        tokenId = ++mintedTWTap;
         uint256 votes = _amount * multiplier;
         participants[tokenId] = Participation({
             averageMagnitude: pool.averageMagnitude,
@@ -357,6 +354,9 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
         // Cast is safe: `votes` is the product of a uint88 and a uint24
         weekTotals[w0 + 1].netActiveVotes += int256(votes);
         weekTotals[w1 + 1].netActiveVotes -= int256(votes);
+
+        // Mint twTAP position
+        _safeMint(_participant, tokenId);
 
         emit Participate(_participant, _amount, multiplier);
         // TODO: Mint event?
