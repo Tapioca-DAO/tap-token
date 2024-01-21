@@ -280,11 +280,10 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
     }
 
     function test_new_epoch_too_soon() public {
-        uint256 timestamp = block.timestamp;
-        vm.warp(timestamp + 172810); //2 days in seconds + 10 seconds 172810 to increase the epoch
+        vm.warp(block.timestamp + 172810); //2 days in seconds + 10 seconds 172810 to increase the epoch
         airdropBroker.newEpoch();
 
-        vm.warp(timestamp + 172811); //only 1 second more to trigger revert
+        vm.warp(block.timestamp + 172811); //only 1 second more to trigger revert
         vm.expectRevert(TooSoon.selector);
         airdropBroker.newEpoch();
     }
