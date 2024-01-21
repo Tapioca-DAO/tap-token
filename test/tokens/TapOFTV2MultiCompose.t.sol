@@ -43,11 +43,11 @@ import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTv2/TapOFTMsgCoder.sol";
 import {TwTAP, Participation} from "@contracts/governance/twTAP.sol";
 import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
 import {TapOFTSender} from "@contracts/tokens/TapOFTv2/TapOFTSender.sol";
-import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
+import {TapOFTV2Mock} from "../Mocks/TapOFTV2Mock.sol";
 
 // Tapioca
 import {TapOFTV2Test} from "./TapOFTV2.t.sol";
-import {ERC721Mock} from "./ERC721Mock.sol";
+import {ERC721Mock} from "../Mocks/ERC721Mock.sol";
 
 import "forge-std/Test.sol";
 

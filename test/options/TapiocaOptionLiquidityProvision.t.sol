@@ -28,8 +28,8 @@ import {TapOFTSender} from "@contracts/tokens/TapOFTv2/TapOFTSender.sol";
 // Tapioca Tests
 
 import {TapTestHelper} from "../helpers/TapTestHelper.t.sol";
-import {ERC721Mock} from "../ERC721Mock.sol";
-import {TapOFTV2Mock} from "../TapOFTV2Mock.sol";
+import {ERC721Mock} from "../Mocks/ERC721Mock.sol";
+import {TapOFTV2Mock} from "../Mocks/TapOFTV2Mock.sol";
 
 import {TapOracleMock} from "../Mocks/TapOracleMock.sol";
 import {IOracle} from "tapioca-periph/contracts/interfaces/IOracle.sol";
