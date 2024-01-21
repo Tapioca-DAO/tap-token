@@ -180,16 +180,16 @@ contract TapiocaOptionLiquidityProvision is
         yieldBox.transfer(msg.sender, address(this), sglAssetID, _ybShares);
         activeSingularities[_singularity].totalDeposited += _ybShares;
 
-        // Mint the tOLP NFT position
-        tokenId = ++tokenCounter;
-        _safeMint(_to, tokenId);
-
         // Create the lock position
+        tokenId = ++tokenCounter;
         LockPosition storage lockPosition = lockPositions[tokenId];
         lockPosition.lockTime = uint128(block.timestamp);
         lockPosition.sglAssetID = uint128(sglAssetID);
         lockPosition.lockDuration = _lockDuration;
         lockPosition.ybShares = _ybShares;
+
+        // Mint the tOLP NFT position
+        _safeMint(_to, tokenId);
 
         emit Mint(_to, uint128(sglAssetID), tokenId);
     }
