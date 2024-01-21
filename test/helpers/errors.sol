@@ -29,9 +29,9 @@ contract Errors {
     error NotApproved(uint256 tokenId, address owner, address spender);
     error Duplicate();
     error LockNotAWeek();
-     error NoActiveSingularities();
+    error NoActiveSingularities();
     error NoLiquidity();
-      error NotRegistered();
+    error NotRegistered();
     error InvalidSingularity();
     error DurationTooShort();
     error SharesNotValid();
@@ -42,6 +42,15 @@ contract Errors {
     error AlreadyActive();
     error AssetIdNotValid();
     error DuplicateAssetId();
-    error AlreadyRegistered();
     error NotInRescueMode();
+    error NothingToClaim();
+    error Initialized();
+    error AddressNotValid();
+    error AmountNotValid();
+    error AlreadyRegistered();
+    error NoTokens();
+    error NotEnough();
+    error BalanceTooLow();
+    error VestingDurationNotValid();
+    error Overflow();
 }
