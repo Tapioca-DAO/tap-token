@@ -28,6 +28,20 @@ contract Errors {
     error TokenLimitReached();
     error NotApproved(uint256 tokenId, address owner, address spender);
     error Duplicate();
-    error LockNotExpired();
     error LockNotAWeek();
+     error NoActiveSingularities();
+    error NoLiquidity();
+      error NotRegistered();
+    error InvalidSingularity();
+    error DurationTooShort();
+    error SharesNotValid();
+    error SingularityInRescueMode();
+    error SingularityNotActive();
+    error PositionExpired();
+    error LockNotExpired();
+    error AlreadyActive();
+    error AssetIdNotValid();
+    error DuplicateAssetId();
+    error AlreadyRegistered();
+    error NotInRescueMode();
 }
