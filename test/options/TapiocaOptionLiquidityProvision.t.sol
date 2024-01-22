@@ -215,8 +215,13 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
     }
 
     function test_constructor() public {
-        // address _broker = airdropBroker.broker();
-        // assertEq(_broker, address(owner));
+        IYieldBox _yieldBox = tapiocaOptionLiquidityProvision.yieldBox();
+        assertEq(address(_yieldBox), address(yieldBox));
+        uint256 _duration = tapiocaOptionLiquidityProvision.EPOCH_DURATION();
+        assertEq(_duration, 7 days);
+        address _owner = tapiocaOptionLiquidityProvision.owner();
+        assertEq(_owner, address(owner));
+
     }
 
    
@@ -427,7 +432,8 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
             .getSingularities();
         assertEq(singularites.length, 1);
         assertEq(singularites[0], 1);
-
+vm.expectEmit(address(tapiocaOptionLiquidityProvision));
+emit TapiocaOptionLiquidityProvision.SetSGLPoolWeight(address(singularity),100);
         tapiocaOptionLiquidityProvision.setSGLPoolWEight(singularity, 100);
         vm.stopPrank();
     }
@@ -492,11 +498,21 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         );
         vm.stopPrank();
     }
+
+
     function test_lock_yieldbox()public{
 //tokenId has to be 0 for ERC20 tokens
 yieldBox.deposit(TokenType.ERC20,address(mockToken),IStrategy(address(0x0)),0,address(owner),address(owner),10,1);
 (address _owner) = tapiocaOptionLiquidityProvision.ownerOf(1);
 assertEq(_owner, address(owner));
+ tapiocaOptionLiquidityProvision.lock(
+            address(owner),
+            singularity,
+            8 days,
+            1
+        );
+
+// (tapiocaOptionLiquidityProvision.LockPosition) = getLock(1);
     }
     
 
