@@ -74,7 +74,6 @@ contract LTapTest is TapTestHelper, Errors { //100% DONE
         vm.startPrank(owner);
         uint256 balBefore = mockToken.balanceOf(address(ltap));
         mockToken.approve(address(ltap), 1000 ether);
-        //NOTE check who actually is the msg.sender here
         ltap.deposit(1000 ether);
         uint256 balAfter = mockToken.balanceOf(address(ltap));
         assertEq(balAfter - balBefore, 1000 ether);
@@ -135,13 +134,10 @@ contract LTapTest is TapTestHelper, Errors { //100% DONE
 
     function test_set_locked_until() public {
         vm.startPrank(owner);
-        //TODO owner is still address(this)
         uint256 lockedUntilBefore = ltap.lockedUntil();
         assertEq(lockedUntilBefore, block.timestamp + 7 days);
         ltap.setLockedUntil(block.timestamp + 7 days);
-        //TODO we are setting it to literally the same day here as it is the limit, probably change that
         uint256 lockedUntilAfter = ltap.lockedUntil();
-
         assertEq(lockedUntilBefore, lockedUntilAfter);
         vm.stopPrank();
     }
