@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.22;
 
-
 // External
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -33,7 +32,6 @@ import "forge-std/console.sol";
 contract aoTapTest is TapTestHelper, Errors {
     using stdStorage for StdStorage;
 
-
     AOTAP public aotap; //instance of AOTAP
 
     uint256 internal userAPKey = 0x1;
@@ -41,6 +39,16 @@ contract aoTapTest is TapTestHelper, Errors {
     address public owner = vm.addr(userAPKey);
     address public tokenBeneficiary = vm.addr(userBPKey);
 
+    event Transfer(
+        address indexed _from,
+        address indexed _to,
+        uint256 indexed _tokenId
+    );
+    event Approval(
+        address indexed _owner,
+        address indexed _approved,
+        uint256 indexed _tokenId
+    );
 
     function setUp() public override {
         vm.deal(owner, 1000 ether); //give owner some ether
@@ -56,6 +64,46 @@ contract aoTapTest is TapTestHelper, Errors {
     function test_cannot_mint_no_broker() public {
         vm.expectRevert(OnlyBroker.selector);
         aotap.mint(address(owner), 1, 1, 1);
+    }
+
+    function test_set_uri_not_approved() public {
+        vm.startPrank(owner);
+
+        aotap.brokerClaim();
+        uint256 tokenId = aotap.mint(address(owner), 1, 1, 1);
+        uint256 balance = aotap.balanceOf(address(owner));
+        assertEq(balance, 1);
+        aotap.transferFrom(owner, tokenBeneficiary, 1);
+        uint256 balanceBeneficiary = aotap.balanceOf(address(tokenBeneficiary));
+        assertEq(balanceBeneficiary, 1);
+        assertEq(aotap.balanceOf(address(owner)), 0);
+
+        vm.expectRevert(NotAuthorized.selector);
+        aotap.setTokenURI(1, "https://tapioca.games");
+        string memory tokenURI = aotap.tokenURI(1);
+        assertEq(tokenURI, "");
+        vm.stopPrank();
+    }
+
+    function test_set_uri_not_invalid_id() public {
+        vm.startPrank(owner);
+        vm.expectRevert(bytes("ERC721: invalid token ID"));
+        aotap.setTokenURI(1, "https://tapioca.games");
+        string memory tokenURI = aotap.tokenURI(1);
+        assertEq(tokenURI, "");
+        vm.stopPrank();
+    }
+
+    function test_set_uri() public {
+        vm.startPrank(owner);
+        aotap.brokerClaim();
+        uint256 tokenId = aotap.mint(address(owner), 1, 1, 1);
+        uint256 balance = aotap.balanceOf(address(owner));
+        assertEq(balance, 1);
+        aotap.setTokenURI(1, "https://tapioca.games");
+        string memory tokenURI = aotap.tokenURI(1);
+        assertEq(tokenURI, "https://tapioca.games");
+        vm.stopPrank();
     }
 
     function test_mint_aoTAP() public {
@@ -79,6 +127,17 @@ contract aoTapTest is TapTestHelper, Errors {
         uint256 _balance = aotap.balanceOf(address(owner));
         assertEq(_balance, i);
         vm.stopPrank();
+    }
+
+    function test_exists() public {
+        vm.startPrank(owner);
+        aotap.brokerClaim();
+        uint256 tokenId = aotap.mint(address(owner), 1, 1, 1);
+        uint256 balance = aotap.balanceOf(address(owner));
+        assertEq(balance, 1);
+        vm.stopPrank();
+        bool exists = aotap.exists(1);
+        assertEq(exists, true);
     }
 
     function test_transfer_from() public {
@@ -148,12 +207,12 @@ contract aoTapTest is TapTestHelper, Errors {
 
     // Testing of events
 
-    function testTransferEvent() public { //NOTE the 3 events are erroing
+    function testTransferEvent() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
         aotap.mint(owner, 1, 1, 1);
-        vm.expectEmit(true, true, true, false);
-        // emit Transfer(owner,tokenBeneficiary,1);
+        vm.expectEmit(address(aotap));
+        emit IERC721.Transfer(address(owner), address(tokenBeneficiary), 1);
         aotap.safeTransferFrom(owner, tokenBeneficiary, 1);
         vm.stopPrank();
     }
@@ -162,8 +221,8 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         aotap.brokerClaim();
         aotap.mint(owner, 1, 1, 1);
-        vm.expectEmit(true, true, true, false);
-        // emit Approval(owner,tokenBeneficiary,1);
+        vm.expectEmit(address(aotap));
+        emit IERC721.Approval(address(owner), address(tokenBeneficiary), 1);
         aotap.approve(tokenBeneficiary, 1);
         vm.stopPrank();
     }
@@ -172,8 +231,12 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         aotap.brokerClaim();
         aotap.mint(owner, 1, 1, 1);
-        vm.expectEmit(true, true, true, false);
-        // emit ApprovalForAll(owner,tokenBeneficiary,true);
+        vm.expectEmit(address(aotap));
+        emit IERC721.ApprovalForAll(
+            address(owner),
+            address(tokenBeneficiary),
+            true
+        );
         aotap.setApprovalForAll(tokenBeneficiary, true);
         vm.stopPrank();
     }

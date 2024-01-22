@@ -224,4 +224,40 @@ contract oTapTest is TapTestHelper, Errors {
         assertEq(_approved, true);
         vm.stopPrank();
     }
+
+     // Testing of events
+
+    function testTransferEvent() public {
+        vm.startPrank(owner);
+        otap.brokerClaim();
+        otap.mint(owner, 1, 1, 1);
+        vm.expectEmit(address(otap));
+        emit IERC721.Transfer(address(owner), address(tokenBeneficiary), 1);
+        otap.safeTransferFrom(owner, tokenBeneficiary, 1);
+        vm.stopPrank();
+    }
+
+    function testApprovalEvent() public {
+        vm.startPrank(owner);
+        otap.brokerClaim();
+        otap.mint(owner, 1, 1, 1);
+        vm.expectEmit(address(otap));
+        emit IERC721.Approval(address(owner), address(tokenBeneficiary), 1);
+        otap.approve(tokenBeneficiary, 1);
+        vm.stopPrank();
+    }
+
+    function testApprovalForAllEvent() public {
+        vm.startPrank(owner);
+        otap.brokerClaim();
+        otap.mint(owner, 1, 1, 1);
+        vm.expectEmit(address(otap));
+        emit IERC721.ApprovalForAll(
+            address(owner),
+            address(tokenBeneficiary),
+            true
+        );
+        otap.setApprovalForAll(tokenBeneficiary, true);
+        vm.stopPrank();
+    }
 }
