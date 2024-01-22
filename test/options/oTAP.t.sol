@@ -57,6 +57,49 @@ contract oTapTest is TapTestHelper, Errors {
         assertEq(_broker, address(0));
     }
 
+
+ function test_set_uri_not_approved() public {
+        vm.startPrank(owner);
+
+
+        otap.brokerClaim();
+        uint256 tokenId = otap.mint(address(owner), 1, 1, 1);
+        uint256 balance = otap.balanceOf(address(owner));
+        assertEq(balance, 1);
+        otap.transferFrom(owner, tokenBeneficiary, 1);
+        uint256 balanceBeneficiary = otap.balanceOf(address(tokenBeneficiary));
+        assertEq(balanceBeneficiary, 1);
+        assertEq(otap.balanceOf(address(owner)), 0);
+
+
+        vm.expectRevert(bytes("OTAP: only approved or owner"));
+        otap.setTokenURI(1,"https://tapioca.games");
+        string memory tokenURI = otap.tokenURI(1);
+        assertEq(tokenURI, "");
+        vm.stopPrank();
+    }
+
+
+ function test_set_uri_not_invalid_id() public {
+        vm.startPrank(owner);
+        vm.expectRevert(bytes("ERC721: invalid token ID"));
+        otap.setTokenURI(1,"https://tapioca.games");
+        string memory tokenURI = otap.tokenURI(1);
+        assertEq(tokenURI, "");
+        vm.stopPrank();
+    }
+    function test_set_uri() public {
+        vm.startPrank(owner);
+        otap.brokerClaim();
+        uint256 tokenId = otap.mint(address(owner), 1, 1, 1);
+        uint256 balance = otap.balanceOf(address(owner));
+        assertEq(balance, 1);
+        otap.setTokenURI(1,"https://tapioca.games");
+        string memory tokenURI = otap.tokenURI(1);
+        assertEq(tokenURI, "https://tapioca.games");
+        vm.stopPrank();
+    }
+
     function test_set_broker() public {
         vm.startPrank(owner);
         otap.brokerClaim();
@@ -89,6 +132,18 @@ contract oTapTest is TapTestHelper, Errors {
         uint256 balance = otap.balanceOf(address(owner));
         assertEq(balance, 1);
         vm.stopPrank();
+    }
+
+
+    function test_exists()public{
+         vm.startPrank(owner);
+        otap.brokerClaim();
+        uint256 tokenId = otap.mint(address(owner), 1, 1, 1);
+        uint256 balance = otap.balanceOf(address(owner));
+        assertEq(balance, 1);
+        vm.stopPrank();
+        (bool exists) = otap.exists(1);
+        assertEq(exists, true);
     }
 
     function test_mint_several_otap() public {
