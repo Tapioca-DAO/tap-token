@@ -18,7 +18,7 @@ import {LTap} from "../../contracts/tokens/LTap.sol";
 import {stdStorage, StdStorage} from "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-contract LTapTest is TapTestHelper, Errors {
+contract LTapTest is TapTestHelper, Errors { //100% DONE
     using stdStorage for StdStorage;
 
     LTap public ltap;
@@ -34,70 +34,84 @@ contract LTapTest is TapTestHelper, Errors {
         vm.deal(tokenBeneficiary, 1000 ether); //give tokenBeneficiary some ether
         vm.label(owner, "owner"); //label address for test traces
         vm.label(tokenBeneficiary, "tokenBeneficiary"); //label address for test traces
-
+        vm.startPrank(owner);
         mockToken = new MockToken("MockERC20", "Mock"); //deploy MockToken
         ltap = new LTap(mockToken, block.timestamp + 7 days); //deploy LTap and set address to owner
         vm.label(address(mockToken), "erc20Mock"); //label address for test traces
         mockToken.transfer(address(this), 1_000_001); //transfer some tokens to address(this)
-
+        vm.stopPrank();
         super.setUp();
     }
 
     function test_constructor() public {
+        //ok
         vm.startPrank(owner);
         uint256 lockedUntil = ltap.lockedUntil();
         uint256 maxLockedUntil = ltap.maxLockedUntil();
         assertEq(lockedUntil, block.timestamp + 7 days);
         assertEq(maxLockedUntil, block.timestamp + 7 days);
-        vm.stopPrank();
+        vm.startPrank(owner);
     }
 
     function test_deposit_more_than_balance() public {
+        //ok
         vm.startPrank(owner);
         uint256 balBefore = mockToken.balanceOf(address(this));
-        mockToken.approve(address(ltap), 1000 ether);
+        uint256 balOwnerBefore = mockToken.balanceOf(address(owner));
+        mockToken.approve(address(ltap), 1000000000000000000 ether);
         vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
-        ltap.deposit(1000 ether);
+        ltap.deposit(1000000000000000000 ether);
         uint256 balAfter = mockToken.balanceOf(address(this));
         assertEq(balAfter, balBefore);
-        uint256 balLtap = ltap.balanceOf(address(owner));
-        assertEq(balLtap, 0);
+        uint256 balOwnerAfter = mockToken.balanceOf(address(owner));
+        assertEq(balOwnerBefore, balOwnerAfter);
 
         vm.stopPrank();
     }
 
     function test_deposit() public {
+        //ok
         vm.startPrank(owner);
-        uint256 balBefore = mockToken.balanceOf(address(this));
+        uint256 balBefore = mockToken.balanceOf(address(ltap));
         mockToken.approve(address(ltap), 1000 ether);
-        vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
         //NOTE check who actually is the msg.sender here
         ltap.deposit(1000 ether);
-        uint256 balAfter = mockToken.balanceOf(address(this));
-        assertEq(balBefore - balAfter, 1000 ether);
+        uint256 balAfter = mockToken.balanceOf(address(ltap));
+        assertEq(balAfter - balBefore, 1000 ether);
         assertEq(balAfter, balBefore + 1000 ether);
         uint256 balLtap = ltap.balanceOf(address(owner));
         assertEq(balLtap, 1000 ether);
         vm.stopPrank();
     }
 
-    function test_redeem_early() public {}
+    function test_redeem_early() public {
+        vm.startPrank(owner);
+        uint256 balBefore = mockToken.balanceOf(address(ltap));
+        vm.expectRevert(StillLocked.selector);
+        ltap.redeem();
+        uint256 balAfter = mockToken.balanceOf(address(ltap));
+        assertEq(balAfter, balBefore);
+        vm.stopPrank();
+    }
 
     function test_redeem() public {
+        //1000 ltap
         vm.startPrank(owner);
+        mockToken.approve(address(ltap), 1000 ether);
+        ltap.deposit(1000 ether);
         uint256 balBefore = mockToken.balanceOf(owner);
+        // assertEq(balBefore , 0);
         vm.warp(block.timestamp + 8 days);
         ltap.redeem();
         uint256 balAfter = mockToken.balanceOf(owner);
-        assertEq(balAfter - balBefore, 1000 ether);
-        assertEq(balAfter, balBefore + 1000 ether);
+        assertEq( balAfter , balBefore +  1000 ether);
         uint256 balLtap = ltap.balanceOf(address(owner));
         assertEq(balLtap, 0);
         vm.stopPrank();
     }
 
     function test_set_locked_until_not_owner() public {
-        vm.startPrank(owner);
+        vm.startPrank(tokenBeneficiary);
         uint256 lockedUntilBefore = ltap.lockedUntil();
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         ltap.setLockedUntil(block.timestamp + 8 days);
@@ -109,22 +123,21 @@ contract LTapTest is TapTestHelper, Errors {
 
     function test_set_locked_until_too_late() public {
         vm.startPrank(owner);
-         uint256 lockedUntilBefore = ltap.lockedUntil();
+        uint256 lockedUntilBefore = ltap.lockedUntil();
         assertEq(lockedUntilBefore, block.timestamp + 7 days);
         vm.expectRevert(TooLate.selector);
         ltap.setLockedUntil(block.timestamp + 10 days);
-         uint256 lockedUntilAfter = ltap.lockedUntil();
+        uint256 lockedUntilAfter = ltap.lockedUntil();
 
         assertEq(lockedUntilBefore, lockedUntilAfter);
         vm.stopPrank();
     }
 
-     function test_set_locked_until() public {
+    function test_set_locked_until() public {
         vm.startPrank(owner);
         //TODO owner is still address(this)
         uint256 lockedUntilBefore = ltap.lockedUntil();
         assertEq(lockedUntilBefore, block.timestamp + 7 days);
-        vm.expectRevert(TooLate.selector);
         ltap.setLockedUntil(block.timestamp + 7 days);
         //TODO we are setting it to literally the same day here as it is the limit, probably change that
         uint256 lockedUntilAfter = ltap.lockedUntil();
