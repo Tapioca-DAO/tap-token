@@ -184,27 +184,28 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
         uint256 cachedTotalAmount = totalAmount;
 
         UserData memory data;
-        unchecked {
-            uint256 len = _users.length;
-            for (uint256 i; i < len;) {
-                // Checks
-                if (_users[i] == address(0)) revert AddressNotValid();
-                if (_amounts[i] == 0) revert AmountNotValid();
-                if (users[_users[i]].amount > 0) revert AlreadyRegistered();
 
-                // Effects
-                data.amount = _amounts[i];
-                users[_users[i]] = data;
+        uint256 len = _users.length;
+        for (uint256 i; i < len;) {
+            // Checks
+            if (_users[i] == address(0)) revert AddressNotValid();
+            if (_amounts[i] == 0) revert AmountNotValid();
+            if (users[_users[i]].amount > 0) revert AlreadyRegistered();
 
-                totalAmount += _amounts[i];
+            // Effects
+            data.amount = _amounts[i];
+            users[_users[i]] = data;
 
+            totalAmount += _amounts[i];
+
+            unchecked {
                 ++i;
             }
-
-            // Record new totals
-            if (cachedTotalAmount > totalAmount) revert Overflow();
-            __totalAmount = totalAmount;
         }
+
+        // Record new totals
+        if (cachedTotalAmount > totalAmount) revert Overflow();
+        __totalAmount = totalAmount;
     }
 
     /// @notice init the contract with total amount.
