@@ -76,8 +76,8 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
     uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
-    uint256 constant dMAX = 1_000_000; // 100 * 1e4; 10% - 100% voting power multiplier
-    uint256 constant dMIN = 100_000; // 10 * 1e4;
+    uint256 constant dMAX = 1_000_000; // 100 * 1e4; 0% - 100% voting power multiplier
+    uint256 constant dMIN = 0;
     uint256 public constant EPOCH_DURATION = 7 days;
 
     // If we assume 128 bit balances for the reward token -- which fit 1e40
