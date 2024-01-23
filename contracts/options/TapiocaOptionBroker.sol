@@ -71,8 +71,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
 
     uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, 10%
-    uint256 constant dMAX = 500_000; // 50 * 1e4; 5% - 50% discount
-    uint256 constant dMIN = 50_000; // 5 * 1e4;
+    uint256 constant dMAX = 500_000; // 50 * 1e4; 0% - 50% discount
+    uint256 constant dMIN = 0;
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
 
     /// @notice starts time for emissions
