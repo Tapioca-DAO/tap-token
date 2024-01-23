@@ -1,8 +1,8 @@
-import hre, { ethers } from 'hardhat';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
-import { BN, deployLZEndpointMock } from '../test.utils';
+import hre, { ethers } from 'hardhat';
 import ERC20MockArtifact from 'tapioca-sdk/dist/artifacts/tapioca-mocks/ERC20Mock.json';
 import { ERC20Mock__factory } from 'tapioca-sdk/dist/typechain/tapioca-mocks';
+import { BN } from '../test.utils';
 
 export const setupTwTAPFixture = async () => {
     const signer = (await hre.ethers.getSigners())[0];
@@ -12,8 +12,8 @@ export const setupTwTAPFixture = async () => {
     const one = BN(1e18);
     const hundredMil = one.mul(100_000_000);
     const tapOFT = await (
-        await ethers.getContractFactory('FakeTapOFT')
-    ).deploy();
+        await ethers.getContractFactory('ERC20Mock')
+    ).deploy('TapOFT', 'TapOFT');
 
     await tapOFT.mint(signer.address, hundredMil);
 

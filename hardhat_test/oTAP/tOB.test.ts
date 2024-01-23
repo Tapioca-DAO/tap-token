@@ -25,8 +25,8 @@ import {
     ERC20Mock,
     ERC20Mock__factory,
     OracleMock__factory,
-} from 'tapioca-sdk/typechain/tapioca-mocks';
-import { YieldBox } from 'tapioca-sdk/typechain/YieldBox';
+} from '@tapioca-sdk/typechain/tapioca-mocks';
+import { YieldBox } from '@tapioca-sdk/typechain/YieldBox';
 import { setupFixture } from './fixtures';
 
 const WEEK = 86400 * 7;

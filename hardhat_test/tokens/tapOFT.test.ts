@@ -9,7 +9,7 @@ import {
 } from '@nomicfoundation/hardhat-network-helpers';
 import { BigNumber, BigNumberish } from 'ethers';
 import { TapOFT } from '@typechain/index';
-import { LZEndpointMock } from 'tapioca-sdk/typechain/tapioca-mocks';
+import { LZEndpointMock } from '@tapioca-sdk/typechain/tapioca-mocks';
 import { setBalance } from '@nomicfoundation/hardhat-network-helpers';
 
 import {

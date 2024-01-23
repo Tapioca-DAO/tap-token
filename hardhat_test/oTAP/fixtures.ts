@@ -4,14 +4,14 @@ import {
     ERC20Mock__factory,
     LZEndpointMock__factory,
     OracleMock__factory,
-} from 'tapioca-sdk/typechain/tapioca-mocks';
+} from '@tapioca-sdk/typechain/tapioca-mocks';
 import {
     ERC20WithoutStrategy__factory,
     ERC20StrategyMock__factory,
     YieldBoxURIBuilder__factory,
     YieldBox__factory,
     YieldBox,
-} from 'tapioca-sdk/typechain/YieldBox';
+} from '@tapioca-sdk/typechain/YieldBox';
 
 import { BN } from '../test.utils';
 
@@ -33,7 +33,7 @@ export const setupFixture = async () => {
     // Tap OFT
     const _to = signer.address;
     const tapOFT = await (
-        await ethers.getContractFactory('TapOFT')
+        await ethers.getContractFactory('TapOFTV2')
     ).deploy(
         LZEndpointMockCurrentChain.address,
         _to,

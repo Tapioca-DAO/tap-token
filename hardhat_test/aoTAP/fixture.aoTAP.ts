@@ -4,13 +4,13 @@ import {
     ERC721Mock__factory,
     LZEndpointMock__factory,
     OracleMock__factory,
-} from 'tapioca-sdk/typechain/tapioca-mocks';
+} from '@tapioca-sdk/typechain/tapioca-mocks';
 
 import { BigNumberish, Wallet } from 'ethers';
 import { ERC721Mock } from 'tapioca-sdk/dist/typechain/tapioca-mocks';
 import { BN, randomSigners } from '../test.utils';
 import MerkleTree from 'merkletreejs';
-import PHASE2_ALLOW_LIST from '../../output.json';
+import PHASE2_ALLOW_LIST from './aoTapPhase2Fixtures.json';
 
 interface IPhase2AllowList {
     signers: {

@@ -10,7 +10,7 @@ import { ERC20Permit, ERC721Permit } from '../typechain';
 import {
     ERC20Mock__factory,
     LZEndpointMock__factory,
-} from '../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
+} from '@tapioca-sdk/typechain/tapioca-mocks';
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
 

@@ -9,7 +9,7 @@ import {
 } from './test.utils';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ERC20Mock } from '../gitsub_tapioca-sdk/src/typechain/tapioca-mocks';
+import { ERC20Mock } from '@tapioca-sdk/typechain/tapioca-mocks';
 
 describe('Vesting', () => {
     let usdc: ERC20Mock;
