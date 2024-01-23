@@ -88,6 +88,7 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
      * _extraData Additional data.
      */
     // TODO check if OApp sender is sanitized?
+    // TODO !!!!!!!!! Perform ld2sd conversion on the compose messages amounts.
     function _lzReceive(
         Origin calldata _origin,
         bytes32 _guid,

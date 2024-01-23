@@ -385,6 +385,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         emit ExerciseOption(cachedEpoch, msg.sender, _paymentToken, _oTAPTokenID, chosenAmount);
     }
 
+    // TODO Check at how many SGls this function breaks. Do we need to split calls into 2+ Txs?
     /// @notice Start a new epoch, extract TAP from the TapOFT contract,
     ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
