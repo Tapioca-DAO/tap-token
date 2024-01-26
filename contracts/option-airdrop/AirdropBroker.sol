@@ -260,6 +260,10 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         if (block.timestamp < lastEpochUpdate + EPOCH_DURATION) {
             revert TooSoon();
         }
+        // Get epoch TAP valuation
+        (bool success, uint256 _epochTAPValuation) = tapOracle.get(tapOracleData);
+        if (!success) revert Failed();
+        epochTAPValuation = uint128(_epochTAPValuation);
 
         // Update epoch info
         lastEpochUpdate = uint64(block.timestamp);
@@ -270,10 +274,6 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
             EPOCH_DURATION = 7 days;
         }
 
-        // Get epoch TAP valuation
-        (bool success, uint256 _epochTAPValuation) = tapOracle.get(tapOracleData);
-        if (!success) revert Failed();
-        epochTAPValuation = uint128(_epochTAPValuation);
         emit NewEpoch(epoch, epochTAPValuation);
     }
 
