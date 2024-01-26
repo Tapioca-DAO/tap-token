@@ -118,6 +118,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     error Duplicate();
     error LockNotExpired();
     error LockNotAWeek();
+    error DurationNotMultiple(); // Lock duration should be a multiple of 1 EPOCH
 
     /// =====-------======
     constructor(address payable _tapOFT, address _owner)
@@ -271,6 +272,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     // ===========
 
     /// @notice Participate in twAML voting and mint an twTap position
+    /// @notice Lock duration should be a multiple of 1 EPOCH, and have a minimum of 1 EPOCH.
     /// @param _participant The address of the participant
     /// @param _amount The amount of TAP to participate with
     /// @param _duration The duration of the lock
@@ -281,6 +283,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
         returns (uint256 tokenId)
     {
         if (_duration < EPOCH_DURATION) revert LockNotAWeek();
+        if (_duration % EPOCH_DURATION != 0) revert DurationNotMultiple();
 
         // Transfer TAP to this contract
         tapOFT.transferFrom(msg.sender, address(this), _amount);

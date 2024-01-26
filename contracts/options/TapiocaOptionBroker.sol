@@ -101,6 +101,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     error TransferFailed();
     error SingularityInRescueMode();
     error PaymentTokenValuationNotValid();
+    error DurationNotMultiple();
 
     constructor(
         address _tOLP,
@@ -216,7 +217,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     // ===========
 
     /// @notice Participate in twAMl voting and mint an oTAP position.
-    ///         Exercising the option is not possible on participation week.
+    /// @notice Exercising the option is not possible on participation week.
+    /// @notice Lock duration should be a multiple of 1 EPOCH, and have a minimum of 1 EPOCH.
     /// @param _tOLPTokenID The tokenId of the tOLP position
     function participate(uint256 _tOLPTokenID) external whenNotPaused nonReentrant returns (uint256 oTAPTokenID) {
         // Compute option parameters
@@ -225,6 +227,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         if (!isPositionActive) revert OptionExpired();
 
         if (lock.lockDuration < EPOCH_DURATION) revert DurationTooShort();
+        if (lock.lockDuration % EPOCH_DURATION != 0) revert DurationNotMultiple();
 
         TWAMLPool memory pool = twAML[lock.sglAssetID];
         if (pool.cumulative == 0) {
