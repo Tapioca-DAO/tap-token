@@ -393,6 +393,10 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
         if (_timestampToWeek(block.timestamp) <= epoch) revert TooSoon();
+        // Get epoch TAP valuation
+        bool success;
+        (success, epochTAPValuation) = tapOracle.get(tapOracleData);
+        if (!success) revert Failed();
 
         uint256[] memory singularities = tOLP.getSingularities();
         if (singularities.length == 0) revert NoActiveSingularities();
@@ -403,10 +407,6 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         uint256 epochTAP = tapOFT.emitForWeek();
         _emitToGauges(epochTAP);
 
-        // Get epoch TAP valuation
-        bool success;
-        (success, epochTAPValuation) = tapOracle.get(tapOracleData);
-        if (!success) revert Failed();
         emit NewEpoch(epoch, epochTAP, epochTAPValuation);
     }
 
