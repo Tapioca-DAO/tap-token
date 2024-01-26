@@ -119,16 +119,15 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     }
 
     /// @notice Compute the time needed to unlock an amount of tokens, given a total amount.
-    /// @param _start The start time
     /// @param _totalAmount The total amount to be vested
     /// @param _amount The amount to be unlocked
     /// @param _duration The vesting duration
-    function computeTimeFromAmount(uint256 _start, uint256 _totalAmount, uint256 _amount, uint256 _duration)
+    function computeUnlockTime(uint256 _totalAmount, uint256 _amount, uint256 _duration)
         external
         pure
         returns (uint256)
     {
-        return _computeTimeFromAmount(_start, _totalAmount, _amount, _duration);
+        return (_amount * _duration) / _totalAmount;
     }
 
     // ************************ //
