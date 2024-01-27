@@ -57,10 +57,12 @@ contract TapiocaOptionLiquidityProvision is
 
     uint256 public totalSingularityPoolWeights; // Total weight of all active singularity pools
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
+    uint256 public constant MAX_LOCK_DURATION = 100 * 365 days; // 100 years
 
     error NotRegistered();
     error InvalidSingularity();
     error DurationTooShort();
+    error DurationTooLong();
     error SharesNotValid();
     error SingularityInRescueMode();
     error SingularityNotActive();
@@ -168,6 +170,8 @@ contract TapiocaOptionLiquidityProvision is
         returns (uint256 tokenId)
     {
         if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
+        if (_lockDuration > MAX_LOCK_DURATION) revert DurationTooLong();
+
         if (_ybShares == 0) revert SharesNotValid();
 
         SingularityPool memory sgl = activeSingularities[_singularity];

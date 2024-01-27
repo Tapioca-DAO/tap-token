@@ -70,7 +70,10 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     /// ===== TWAML ======
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
 
-    uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, 10%
+    /// @dev Virtual total amount to add to the total when computing twAML participation right. Default 10_000 * 1e18.
+    uint256 private VIRTUAL_TOTAL_AMOUNT = 10_000 ether;
+
+    uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
     uint256 constant dMAX = 500_000; // 50 * 1e4; 0% - 50% discount
     uint256 constant dMIN = 0;
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
@@ -246,7 +249,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
 
         bool divergenceForce;
         // Participate in twAMl voting
-        bool hasVotingPower = lock.ybShares >= computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
+        bool hasVotingPower =
+            lock.ybShares >= computeMinWeight(pool.totalDeposited + VIRTUAL_TOTAL_AMOUNT, MIN_WEIGHT_FACTOR);
         if (hasVotingPower) {
             pool.totalParticipants++; // Save participation
             pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
@@ -416,8 +420,18 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     //   OWNER
     // =========
 
-    /// @notice Set the minimum weight factor
-    /// @param _minWeightFactor The new minimum weight factor
+    /**
+     * @notice Set the `VIRTUAL_TOTAL_AMOUNT` state variable.
+     * @param _virtualTotalAmount The new state variable value.
+     */
+    function setVirtualTotalAmount(uint256 _virtualTotalAmount) external onlyOwner {
+        VIRTUAL_TOTAL_AMOUNT = _virtualTotalAmount;
+    }
+
+    /**
+     * @notice Set the minimum weight factor.
+     * @param _minWeightFactor The new minimum weight factor.
+     */
     function setMinWeightFactor(uint256 _minWeightFactor) external onlyOwner {
         MIN_WEIGHT_FACTOR = _minWeightFactor;
     }

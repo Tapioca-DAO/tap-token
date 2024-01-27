@@ -75,10 +75,14 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
 
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
-    uint256 constant MIN_WEIGHT_FACTOR = 10; // In BPS, 0.1%
+    /// @dev Virtual total amount to add to the total when computing twAML participation right. Default 10_000 * 1e18.
+    uint256 private VIRTUAL_TOTAL_AMOUNT = 10_000 ether;
+
+    uint256 MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
     uint256 constant dMAX = 1_000_000; // 100 * 1e4; 0% - 100% voting power multiplier
     uint256 constant dMIN = 0;
     uint256 public constant EPOCH_DURATION = 7 days;
+    uint256 public constant MAX_LOCK_DURATION = 100 * 365 days; // 100 years
 
     // If we assume 128 bit balances for the reward token -- which fit 1e40
     // "tokens" at the most commonly used 1e18 precision -- then we can use the
@@ -118,6 +122,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     error Duplicate();
     error LockNotExpired();
     error LockNotAWeek();
+    error LockTooLong();
 
     /// =====-------======
     constructor(address payable _tapOFT, address _owner)
@@ -281,6 +286,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
         returns (uint256 tokenId)
     {
         if (_duration < EPOCH_DURATION) revert LockNotAWeek();
+        if (_duration > MAX_LOCK_DURATION) revert LockTooLong();
 
         // Transfer TAP to this contract
         tapOFT.transferFrom(msg.sender, address(this), _amount);
@@ -295,7 +301,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
 
         // Calculate twAML voting weight
         bool divergenceForce;
-        bool hasVotingPower = _amount >= computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
+        bool hasVotingPower = _amount >= computeMinWeight(pool.totalDeposited + VIRTUAL_TOTAL_AMOUNT, MIN_WEIGHT_FACTOR);
         if (hasVotingPower) {
             pool.totalParticipants++; // Save participation
             pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
@@ -457,6 +463,23 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     // =========
     //   OWNER
     // =========
+
+    /**
+     * @notice Set the `VIRTUAL_TOTAL_AMOUNT` state variable.
+     * @param _virtualTotalAmount The new state variable value.
+     */
+    function setVirtualTotalAmount(uint256 _virtualTotalAmount) external onlyOwner {
+        VIRTUAL_TOTAL_AMOUNT = _virtualTotalAmount;
+    }
+
+    /**
+     * @notice Set the minimum weight factor.
+     * @param _minWeightFactor The new minimum weight factor.
+     */
+    function setMinWeightFactor(uint256 _minWeightFactor) external onlyOwner {
+        MIN_WEIGHT_FACTOR = _minWeightFactor;
+    }
+
     function setMaxRewardTokensLength(uint256 _length) external onlyOwner {
         emit LogMaxRewardsLength(maxRewardTokens, _length, rewardTokens.length);
         maxRewardTokens = _length;
