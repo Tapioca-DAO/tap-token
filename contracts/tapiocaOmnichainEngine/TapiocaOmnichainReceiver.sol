@@ -39,13 +39,9 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 */
 
-contract TapiocaOmnichainReceiver is BaseTapiocaOmnichainEngine, IOAppComposer {
+abstract contract TapiocaOmnichainReceiver is BaseTapiocaOmnichainEngine, IOAppComposer {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
-
-    constructor(string memory _name, string memory _symbol, address _endpoint, address _owner)
-        BaseTapiocaOmnichainEngine(_name, _symbol, _endpoint, _owner)
-    {}
 
     /**
      *  @dev Triggered if the address of the composer doesn't match current contract in `lzCompose`.
@@ -157,7 +153,7 @@ contract TapiocaOmnichainReceiver is BaseTapiocaOmnichainEngine, IOAppComposer {
         } else if (msgType_ == PT_REMOTE_TRANSFER) {
             _remoteTransferReceiver(srcChainSender_, tapComposeMsg_);
         } else {
-            if (!_toeComposeReceiver(msgType_, tapComposeMsg_)) {
+            if (!_toeComposeReceiver(msgType_, srcChainSender_, tapComposeMsg_)) {
                 revert InvalidMsgType(msgType_);
             }
         }
@@ -183,10 +179,11 @@ contract TapiocaOmnichainReceiver is BaseTapiocaOmnichainEngine, IOAppComposer {
      *
      * @param _msgType is the msgType of the composed message. See `TapiocaOmnichainEngineCodec.decodeToeComposeMsg()`.
      * See `BaseTapiocaOmnichainEngine` to see the default TOE messages types.
-     * @param _tapComposeMsg is the composed message payload, of whatever the _msgType handler is expecting.
+     * @param _srcChainSender The address of the sender on the source chain.
+     * @param _toeComposeMsg is the composed message payload, of whatever the _msgType handler is expecting.
      * @return success is the success of the composed message handler. If no handler is found, it should return false to trigger `InvalidMsgType()`.
      */
-    function _toeComposeReceiver(uint16 _msgType, bytes memory _tapComposeMsg)
+    function _toeComposeReceiver(uint16 _msgType, address _srcChainSender, bytes memory _toeComposeMsg)
         internal
         virtual
         returns (bool success)
@@ -295,7 +292,7 @@ contract TapiocaOmnichainReceiver is BaseTapiocaOmnichainEngine, IOAppComposer {
         ERC20PermitApprovalMsg[] memory approvals =
             TapiocaOmnichainEngineCodec.decodeArrayOfERC20PermitApprovalMsg(_data);
 
-        tapiocaOmnichainExtExec.erc20PermitApproval(approvals);
+        toeExtExec.erc20PermitApproval(approvals);
     }
 
     /**
@@ -314,7 +311,7 @@ contract TapiocaOmnichainReceiver is BaseTapiocaOmnichainEngine, IOAppComposer {
         ERC721PermitApprovalMsg[] memory approvals =
             TapiocaOmnichainEngineCodec.decodeArrayOfERC721PermitApprovalMsg(_data);
 
-        tapiocaOmnichainExtExec.erc721PermitApproval(approvals);
+        toeExtExec.erc721PermitApproval(approvals);
     }
 
     /**

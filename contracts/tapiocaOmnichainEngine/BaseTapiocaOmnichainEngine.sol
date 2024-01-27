@@ -39,12 +39,12 @@ abstract contract BaseTapiocaOmnichainEngine is OFT, BaseToeMsgType {
     uint16 internal constant PT_REMOTE_TRANSFER = 700; // Use for transferring tokens from the contract from another chain
 
     /// @dev Used to execute certain extern calls from the TapToken contract, such as ERC20Permit approvals.
-    TapiocaOmnichainExtExec public tapiocaOmnichainExtExec;
+    TapiocaOmnichainExtExec public toeExtExec;
 
     constructor(string memory _name, string memory _symbol, address _endpoint, address _owner)
         OFT(_name, _symbol, _endpoint, _owner)
     {
-        tapiocaOmnichainExtExec = new TapiocaOmnichainExtExec();
+        toeExtExec = new TapiocaOmnichainExtExec();
     }
 
     /**

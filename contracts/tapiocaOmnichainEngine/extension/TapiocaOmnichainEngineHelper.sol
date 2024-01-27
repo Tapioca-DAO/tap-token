@@ -82,11 +82,11 @@ struct PrepareLzCallReturn {
 }
 
 /**
- * @title TapiocaOmnichainHelper
+ * @title TapiocaOmnichainEngineHelper
  * @author TapiocaDAO
  * @notice Used as a helper contract to build calls to a TOE contract and view functions.
  */
-contract TapiocaOmnichainHelper is BaseToeMsgType {
+contract TapiocaOmnichainEngineHelper is BaseToeMsgType {
     error InvalidMsgType(uint16 msgType); // Triggered if the msgType is invalid on an `_lzCompose`.
     error InvalidMsgIndex(uint16 msgIndex, uint16 expectedIndex); // The msgIndex does not follow the sequence of indexes in the `_toeComposeMsg`
     error InvalidExtraOptionsIndex(uint16 msgIndex, uint16 expectedIndex); // The option index does not follow the sequence of indexes in the `_toeComposeMsg`

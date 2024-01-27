@@ -24,11 +24,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 */
 
-contract TapiocaOmnichainSender is BaseTapiocaOmnichainEngine {
-    constructor(address _endpoint, string memory _name, string memory _symbol, address _owner)
-        BaseTapiocaOmnichainEngine(_name, _symbol, _endpoint, _owner)
-    {}
-
+abstract contract TapiocaOmnichainSender is BaseTapiocaOmnichainEngine {
     /**
      * @notice Sends TapToken messages.
      *

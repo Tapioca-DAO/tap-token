@@ -5,17 +5,6 @@ import {SendParam, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/o
 
 interface ITapiocaOmnichainEngine {
     /**
-     * ERRORS
-     */
-    error OnlyHostChain(); // Can execute an action only on host chain
-
-    enum Module {
-        NonModule, //0
-        TapTokenSender,
-        TapTokenReceiver
-    }
-
-    /**
      * =======================
      * LZ functions
      * =======================
@@ -60,12 +49,8 @@ struct LZSendParam {
     address refundAddress;
 }
 
-/// =============================
-/// ========= EXTERNAL ==========
-/// =============================
-
 /// ================================
-/// ========= BASE COMPOSE ==========
+/// ========= BASE COMPOSE =========
 /// ================================
 
 /**

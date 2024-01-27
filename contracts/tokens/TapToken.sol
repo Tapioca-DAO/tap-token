@@ -12,11 +12,11 @@ import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 
 // Tapioca
-import {TwTAP} from "contracts/governance/twTAP.sol";
-
+import {TapiocaOmnichainSender} from "contracts/tapiocaOmnichainEngine/TapiocaOmnichainSender.sol";
 import {ERC20PermitStruct, ITapToken, LZSendParam} from "contracts/tokens/ITapToken.sol";
 import {ModuleManager} from "./module/ModuleManager.sol";
 import {TapTokenReceiver} from "./TapTokenReceiver.sol";
+import {TwTAP} from "contracts/governance/twTAP.sol";
 import {TapTokenSender} from "./TapTokenSender.sol";
 import {BaseTapToken} from "./BaseTapToken.sol";
 
@@ -79,6 +79,8 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
 
     event BoostedTAP(uint256 _amount);
 
+    error OnlyHostChain();
+
     // ==========
     // *ERRORS*
     // ==========
@@ -139,7 +141,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         address _owner,
         address _TapTokenSenderModule,
         address _TapTokenReceiverModule
-    ) BaseTapToken(_endpoint, _owner) ERC20Permit("TapOFT") {
+    ) BaseTapToken("TapToken", "TAP", _endpoint, _owner) ERC20Permit("TAP") {
         if (_endpoint == address(0)) revert AddressWrong();
         governanceEid = _governanceEid;
 
@@ -264,7 +266,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         (msgReceipt, oftReceipt) = abi.decode(
             _executeModule(
                 uint8(ITapToken.Module.TapTokenSender),
-                abi.encodeCall(TapTokenSender.sendPacket, (_lzSendParam, _composeMsg)),
+                abi.encodeCall(TapiocaOmnichainSender.sendPacket, (_lzSendParam, _composeMsg)),
                 false
             ),
             (MessagingReceipt, OFTReceipt)

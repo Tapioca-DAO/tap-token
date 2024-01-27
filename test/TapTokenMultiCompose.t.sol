@@ -40,6 +40,7 @@ import {
     ComposeMsgData
 } from "contracts/tokens/extensions/TapTokenHelper.sol";
 import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
+import {TapiocaOmnichainEngineCodec as ToeCodec} from "contracts/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
 import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
 import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
 import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
@@ -155,7 +156,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
             bytes memory secondMsg_;
             {
                 (,,,, secondMsg_) =
-                    TapTokenCodec.decodeTapComposeMsg(lockTwTapPositionMsgReturn_.prepareLzCallReturn.composeMsg);
+                    ToeCodec.decodeToeComposeMsg(lockTwTapPositionMsgReturn_.prepareLzCallReturn.composeMsg);
             }
 
             vm.expectEmit(true, true, true, false);
@@ -352,8 +353,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         {
             // Verify second msg (unlock twTap)
             {
-                (,,,, secondMsg_) =
-                    TapTokenCodec.decodeTapComposeMsg(remoteTransferReturn_.prepareLzCallReturn.composeMsg);
+                (,,,, secondMsg_) = ToeCodec.decodeToeComposeMsg(remoteTransferReturn_.prepareLzCallReturn.composeMsg);
             }
 
             vm.expectEmit(true, true, true, false);
@@ -380,7 +380,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         {
             // Verify third msg (approval)
             {
-                (,,,, thirdMsg_) = TapTokenCodec.decodeTapComposeMsg(secondMsg_);
+                (,,,, thirdMsg_) = ToeCodec.decodeToeComposeMsg(secondMsg_);
             }
 
             __callLzCompose(
@@ -402,7 +402,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
             // Verify third msg (approval)
             bytes memory forthMsg_;
             {
-                (,,,, forthMsg_) = TapTokenCodec.decodeTapComposeMsg(thirdMsg_);
+                (,,,, forthMsg_) = ToeCodec.decodeToeComposeMsg(thirdMsg_);
             }
 
             __callLzCompose(
