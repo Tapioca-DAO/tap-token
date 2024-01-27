@@ -4,9 +4,9 @@
 [submodule "lib/forge-deploy"]
 	path = lib/forge-deploy
 	url = https://github.com/wighawag/forge-deploy
-[submodule "lib/tapioca-sdk"]
-	path = lib/tapioca-sdk
+[submodule "gitmodule/tapioca-sdk"]
+	path = gitmodule/tapioca-sdk
 	url = https://github.com/Tapioca-DAO/tapioca-sdk
-[submodule "lib/tapioca-periph"]
-	path = lib/tapioca-periph
-	url = https://github.com/Tapioca-DAO/tapioca-periph
+[submodule "gitmodule/tapioca-periph"]
+	path = gitmodule/tapioca-periph
+	url = https://github.com/Tapioca-DAO/tapioca-periph.git
