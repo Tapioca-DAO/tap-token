@@ -196,7 +196,7 @@ contract TapiocaOmnichainReceiver is BaseTapiocaOmnichainEngine, IOAppComposer {
      * // TODO Check if it's safe to send composed messages too.
      * // TODO Write test for composed messages call. A->B->A-B/C?
      * @dev Transfers tokens AND composed messages from this contract to the recipient on the chain A. Flow of calls is: A->B->A.
-     * @dev The user needs to have approved the TapOFTv2 contract to spend the TAP.
+     * @dev The user needs to have approved the TapToken contract to spend the TAP.
      *
      * @param _srcChainSender The address of the sender on the source chain.
      * @param _data The call data containing info about the transfer (LZSendParam).

@@ -23,10 +23,10 @@ import {
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg,
     LZSendParam
-} from "./ITapOFTv2.sol";
-import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
-import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
-import {TapOFTSender} from "./TapOFTSender.sol";
+} from "./ITapToken.sol";
+import {TapTokenCodec} from "./TapTokenCodec.sol";
+import {BaseTapToken} from "./BaseTapToken.sol";
+import {TapTokenSender} from "./TapTokenSender.sol";
 
 /*
 
@@ -42,11 +42,11 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 */
 
-contract TapTokenReceiver is BaseTapOFTv2, IOAppComposer {
+contract TapTokenReceiver is BaseTapToken, IOAppComposer {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
 
-    constructor(address _endpoint, address _owner) BaseTapOFTv2(_endpoint, _owner) {}
+    constructor(address _endpoint, address _owner) BaseTapToken(_endpoint, _owner) {}
 
     /**
      *  @dev Triggered if the address of the composer doesn't match current contract in `lzCompose`.
@@ -152,11 +152,11 @@ contract TapTokenReceiver is BaseTapOFTv2, IOAppComposer {
         }
 
         // Decode LZ compose message.
-        (address srcChainSender_, bytes memory oftComposeMsg_) = TapOFTMsgCoder.decodeLzComposeMsg(_message);
+        (address srcChainSender_, bytes memory oftComposeMsg_) = TapTokenCodec.decodeLzComposeMsg(_message);
 
         // Decode OFT compose message.
         (uint16 msgType_,, uint16 msgIndex_, bytes memory tapComposeMsg_, bytes memory nextMsg_) =
-            TapOFTMsgCoder.decodeTapComposeMsg(oftComposeMsg_);
+            TapTokenCodec.decodeTapComposeMsg(oftComposeMsg_);
 
         if (msgType_ == PT_APPROVALS) {
             _erc20PermitApprovalReceiver(tapComposeMsg_);
@@ -192,7 +192,7 @@ contract TapTokenReceiver is BaseTapOFTv2, IOAppComposer {
 
     /**
      * @dev Locks TAP for the user in the twTAP contract.
-     * @dev The user needs to have approved the TapOFTv2 contract to spend the TAP.
+     * @dev The user needs to have approved the TapToken contract to spend the TAP.
      *
      * @param _srcChainSender The address of the sender on the source chain.
      * @param _data The call data containing info about the lock.
@@ -203,7 +203,7 @@ contract TapTokenReceiver is BaseTapOFTv2, IOAppComposer {
 
     // TODO sanitize the user to use approve on behalf of him
     function _lockTwTapPositionReceiver(address _srcChainSender, bytes memory _data) internal virtual {
-        LockTwTapPositionMsg memory lockTwTapPositionMsg_ = TapOFTMsgCoder.decodeLockTwpTapDstMsg(_data);
+        LockTwTapPositionMsg memory lockTwTapPositionMsg_ = TapTokenCodec.decodeLockTwpTapDstMsg(_data);
 
         /// @dev xChain owner needs to have approved dst srcChain `sendPacket()` msg.sender in a previous composedMsg. Or be the same address.
         _internalTransferWithAllowance(lockTwTapPositionMsg_.user, _srcChainSender, lockTwTapPositionMsg_.amount);
@@ -222,7 +222,7 @@ contract TapTokenReceiver is BaseTapOFTv2, IOAppComposer {
      *          - unlockTwTapPositionMsg_::UnlockTwTapPositionMsg: Unlocking data.
      */
     function _unlockTwTapPositionReceiver(bytes memory _data) internal virtual {
-        UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_ = TapOFTMsgCoder.decodeUnlockTwTapPositionMsg(_data);
+        UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_ = TapTokenCodec.decodeUnlockTwTapPositionMsg(_data);
 
         // Send TAP to the user address.
         uint256 tapAmount_ = twTap.exitPosition(unlockTwTapPositionMsg_.tokenId, unlockTwTapPositionMsg_.user);
@@ -234,13 +234,13 @@ contract TapTokenReceiver is BaseTapOFTv2, IOAppComposer {
      * // TODO Check if it's safe to send composed messages too.
      * // TODO Write test for composed messages call. A->B->A-B/C?
      * @dev Transfers tokens AND composed messages from this contract to the recipient on the chain A. Flow of calls is: A->B->A.
-     * @dev The user needs to have approved the TapOFTv2 contract to spend the TAP.
+     * @dev The user needs to have approved the TapToken contract to spend the TAP.
      *
      * @param _srcChainSender The address of the sender on the source chain.
      * @param _data The call data containing info about the transfer (LZSendParam).
      */
     function _remoteTransferReceiver(address _srcChainSender, bytes memory _data) internal virtual {
-        RemoteTransferMsg memory remoteTransferMsg_ = TapOFTMsgCoder.decodeRemoteTransferMsg(_data);
+        RemoteTransferMsg memory remoteTransferMsg_ = TapTokenCodec.decodeRemoteTransferMsg(_data);
 
         /// @dev xChain owner needs to have approved dst srcChain `sendPacket()` msg.sender in a previous composedMsg. Or be the same address.
         _internalTransferWithAllowance(
@@ -308,7 +308,7 @@ contract TapTokenReceiver is BaseTapOFTv2, IOAppComposer {
      * @param _data The call data containing info about the transfer (LZSendParam).
      */
     function _claimTwpTapRewardsReceiver(bytes memory _data) internal virtual {
-        ClaimTwTapRewardsMsg memory claimTwTapRewardsMsg_ = TapOFTMsgCoder.decodeClaimTwTapRewardsMsg(_data);
+        ClaimTwTapRewardsMsg memory claimTwTapRewardsMsg_ = TapTokenCodec.decodeClaimTwTapRewardsMsg(_data);
 
         // Claim rewards, make sure to have approved this contract on TwTap.
         uint256[] memory claimedAmount_ = twTap.claimRewards(claimTwTapRewardsMsg_.tokenId, address(this));
@@ -349,9 +349,9 @@ contract TapTokenReceiver is BaseTapOFTv2, IOAppComposer {
             claimTwTapRewardsMsg_.sendParam[sendParamIndex].sendParam.minAmountToCreditLD = amountWithoutDust; // Set the amount to send to the claimed amount
 
             // Send back packet
-            TapOFTSender(rewardToken_).sendPacket{value: claimTwTapRewardsMsg_.sendParam[sendParamIndex].fee.nativeFee}(
-                claimTwTapRewardsMsg_.sendParam[sendParamIndex], bytes("")
-            );
+            TapTokenSender(rewardToken_).sendPacket{
+                value: claimTwTapRewardsMsg_.sendParam[sendParamIndex].fee.nativeFee
+            }(claimTwTapRewardsMsg_.sendParam[sendParamIndex], bytes(""));
 
             emit ClaimRewardReceived(rewardToken_, sendTo_, amountWithoutDust);
             unchecked {
@@ -389,7 +389,7 @@ contract TapTokenReceiver is BaseTapOFTv2, IOAppComposer {
      *      - s::bytes32: s value of the signature.
      */
     function _erc20PermitApprovalReceiver(bytes memory _data) internal virtual {
-        ERC20PermitApprovalMsg[] memory approvals = TapOFTMsgCoder.decodeArrayOfERC20PermitApprovalMsg(_data);
+        ERC20PermitApprovalMsg[] memory approvals = TapTokenCodec.decodeArrayOfERC20PermitApprovalMsg(_data);
 
         tapOFTExtExec.erc20PermitApproval(approvals);
     }
@@ -407,13 +407,13 @@ contract TapTokenReceiver is BaseTapOFTv2, IOAppComposer {
      */
     function _erc721PermitApprovalReceiver(bytes memory _data) internal virtual {
         // TODO: encode and decode packed data to save gas
-        ERC721PermitApprovalMsg[] memory approvals = TapOFTMsgCoder.decodeArrayOfERC721PermitApprovalMsg(_data);
+        ERC721PermitApprovalMsg[] memory approvals = TapTokenCodec.decodeArrayOfERC721PermitApprovalMsg(_data);
 
         tapOFTExtExec.erc721PermitApproval(approvals);
     }
 
     /**
-     * @dev For details about this function, check `BaseTapOFTv2._buildOFTMsgAndOptions()`.
+     * @dev For details about this function, check `BaseTapToken._buildOFTMsgAndOptions()`.
      * @dev !!!! IMPORTANT !!!! The differences are:
      *      - memory instead of calldata for parameters.
      *      - `_msgSender` is used instead of using context `msg.sender`, to preserve context of the OFT call and use `msg.sender` of the source chain.

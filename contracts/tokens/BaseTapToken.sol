@@ -43,10 +43,10 @@ contract BaseTapToken is OFT {
 
     uint16 internal constant PT_REMOTE_TRANSFER = 700; // Use for transferring tokens from the contract from another chain
 
-    /// @dev Can't be set as constructor params because TwTAP is deployed after TapOFTv2. TwTAP constructor needs TapOFT as param.
+    /// @dev Can't be set as constructor params because TwTAP is deployed after TapToken. TwTAP constructor needs TapOFT as param.
     TwTAP public twTap;
 
-    /// @dev Used to execute certain extern calls from the TapOFTv2 contract, such as ERC20Permit approvals.
+    /// @dev Used to execute certain extern calls from the TapToken contract, such as ERC20Permit approvals.
     TapOFTExtExec public tapOFTExtExec;
 
     error OnlyHostChain(); // Can execute an action only on host chain

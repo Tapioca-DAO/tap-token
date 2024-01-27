@@ -38,7 +38,7 @@ abstract contract BaseTapiocaOmnichainEngine is OFT, BaseToeMsgType {
     uint16 internal constant PT_NFT_APPROVALS = 501; // Use for ERC721Permit approvals
     uint16 internal constant PT_REMOTE_TRANSFER = 700; // Use for transferring tokens from the contract from another chain
 
-    /// @dev Used to execute certain extern calls from the TapOFTv2 contract, such as ERC20Permit approvals.
+    /// @dev Used to execute certain extern calls from the TapToken contract, such as ERC20Permit approvals.
     TapiocaOmnichainExtExec public tapiocaOmnichainExtExec;
 
     constructor(string memory _name, string memory _symbol, address _endpoint, address _owner)

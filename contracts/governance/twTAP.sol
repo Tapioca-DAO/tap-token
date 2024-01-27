@@ -11,8 +11,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Tapioca
 import {ERC721Permit} from "contracts/utils/ERC721Permit.sol"; // TODO audit
-import {ERC721PermitStruct} from "contracts/tokens/ITapOFTv2.sol";
-import {TapOFTV2} from "contracts/tokens/TapOFTV2.sol";
+import {ERC721PermitStruct} from "contracts/tokens/ITapToken.sol";
+import {TapToken} from "contracts/tokens/TapToken.sol";
 import {TWAML} from "contracts/options/twAML.sol";
 
 /*
@@ -68,7 +68,7 @@ struct WeekTotals {
 contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
-    TapOFTV2 public immutable tapOFT;
+    TapToken public immutable tapOFT;
 
     /// ===== TWAML ======
     TWAMLPool public twAML; // sglAssetId => twAMLPool
@@ -129,7 +129,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
         ERC721("Time Weighted TAP", "twTAP")
         ERC721Permit("Time Weighted TAP")
     {
-        tapOFT = TapOFTV2(_tapOFT);
+        tapOFT = TapToken(_tapOFT);
         owner = _owner;
         creation = block.timestamp;
 

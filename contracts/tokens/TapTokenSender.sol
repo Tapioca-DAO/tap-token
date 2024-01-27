@@ -7,8 +7,8 @@ import {
 } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 
 // Tapioca
-import {LZSendParam} from "./ITapOFTv2.sol";
-import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
+import {LZSendParam} from "./ITapToken.sol";
+import {BaseTapToken} from "./BaseTapToken.sol";
 
 /*
 
@@ -24,11 +24,11 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 */
 
-contract TapTokenSender is BaseTapOFTv2 {
-    constructor(address _endpoint, address _owner) BaseTapOFTv2(_endpoint, _owner) {}
+contract TapTokenSender is BaseTapToken {
+    constructor(address _endpoint, address _owner) BaseTapToken(_endpoint, _owner) {}
 
     /**
-     * @notice Sends TapOFTv2 messages.
+     * @notice Sends TapToken messages.
      *
      * @dev Slightly modified version of the OFT send() operation. Includes a `_msgType` parameter.
      * The `_buildMsgAndOptionsByType()` appends the packet type to the message.

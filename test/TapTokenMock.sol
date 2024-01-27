@@ -5,7 +5,7 @@ pragma solidity 0.8.22;
 import {SendParam} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 
 // Tapioca
-import {TapOFTV2} from "contracts/tokens/TapOFTV2.sol";
+import {TapToken} from "contracts/tokens/TapToken.sol";
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -20,7 +20,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 */
 
-contract TapOFTV2Mock is TapOFTV2 {
+contract TapTokenMock is TapToken {
     constructor(
         address _endpoint,
         address _contributors,
@@ -31,10 +31,10 @@ contract TapOFTV2Mock is TapOFTV2 {
         address _airdrop,
         uint256 _governanceEid,
         address _owner,
-        address _tapOftSenderModule,
-        address _tapOFTReceiverModule
+        address _TapTokenSenderModule,
+        address _TapTokenReceiverModule
     )
-        TapOFTV2(
+        TapToken(
             _endpoint,
             _contributors,
             _earlySupporters,
@@ -44,8 +44,8 @@ contract TapOFTV2Mock is TapOFTV2 {
             _airdrop,
             _governanceEid,
             _owner,
-            _tapOftSenderModule,
-            _tapOFTReceiverModule
+            _TapTokenSenderModule,
+            _TapTokenReceiverModule
         )
     {}
 }

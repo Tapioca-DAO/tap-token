@@ -11,8 +11,8 @@ interface ITapiocaOmnichainEngine {
 
     enum Module {
         NonModule, //0
-        TapOFTSender,
-        TapOFTReceiver
+        TapTokenSender,
+        TapTokenReceiver
     }
 
     /**
@@ -69,7 +69,7 @@ struct LZSendParam {
 /// ================================
 
 /**
- * @dev Used in TapOFTv2Helper.
+ * @dev Used in TapTokenHelper.
  */
 struct RemoteTransferMsg {
     address owner;

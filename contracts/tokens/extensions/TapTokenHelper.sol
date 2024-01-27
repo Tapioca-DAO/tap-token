@@ -18,7 +18,7 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 // Tapioca
 
 import {
-    ITapOFTv2,
+    ITapToken,
     LockTwTapPositionMsg,
     ERC20PermitApprovalMsg,
     ERC721PermitApprovalMsg,
@@ -30,9 +30,9 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "../ITapOFTv2.sol";
-import {TapOFTMsgCoder} from "../TapOFTMsgCoder.sol";
-import {TapOFTV2} from "../TapOFTV2.sol";
+} from "../ITapToken.sol";
+import {TapTokenCodec} from "../TapTokenCodec.sol";
+import {TapToken} from "../TapToken.sol";
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -60,7 +60,7 @@ struct ComposeMsgData {
 }
 
 /**
- * @notice Used to prepare an LZ call. See `TapOFTv2Helper.prepareLzCall()`.
+ * @notice Used to prepare an LZ call. See `tapTokenHelper.prepareLzCall()`.
  */
 struct PrepareLzCallData {
     uint32 dstEid; // The destination endpoint ID.
@@ -74,7 +74,7 @@ struct PrepareLzCallData {
 }
 
 /**
- * @notice Used to return the result of the `TapOFTv2Helper.prepareLzCall()` function.
+ * @notice Used to return the result of the `tapTokenHelper.prepareLzCall()` function.
  */
 struct PrepareLzCallReturn {
     bytes composeMsg; // The composed message. Can include previous composeMsg if any.
@@ -86,11 +86,11 @@ struct PrepareLzCallReturn {
 }
 
 /**
- * @title TapOFTv2Helper
+ * @title TapTokenHelper
  * @author TapiocaDAO
- * @notice Used as a helper contract to build calls to the TapOFTv2 contract and view functions.
+ * @notice Used as a helper contract to build calls to the TapToken contract and view functions.
  */
-contract TapOFTv2Helper {
+contract TapTokenHelper {
     // LZ
     uint16 public constant SEND = 1;
     // Tapioca
@@ -120,7 +120,7 @@ contract TapOFTv2Helper {
      *
      * @return prepareLzCallReturn_ The result of the `prepareLzCall()` function. See `PrepareLzCallReturn`.
      */
-    function prepareLzCall(ITapOFTv2 tapOftToken, PrepareLzCallData memory _prepareLzCallData)
+    function prepareLzCall(ITapToken tapOftToken, PrepareLzCallData memory _prepareLzCallData)
         public
         view
         returns (PrepareLzCallReturn memory prepareLzCallReturn_)
@@ -222,7 +222,7 @@ contract TapOFTv2Helper {
         pure
         returns (bytes memory)
     {
-        return TapOFTMsgCoder.buildLockTwTapPositionMsg(_lockTwTapPositionMsg);
+        return TapTokenCodec.buildLockTwTapPositionMsg(_lockTwTapPositionMsg);
     }
 
     /**
@@ -236,7 +236,7 @@ contract TapOFTv2Helper {
     {
         uint256 approvalsLength = _erc20PermitApprovalMsg.length;
         for (uint256 i; i < approvalsLength;) {
-            msg_ = abi.encodePacked(msg_, TapOFTMsgCoder.buildERC20PermitApprovalMsg(_erc20PermitApprovalMsg[i]));
+            msg_ = abi.encodePacked(msg_, TapTokenCodec.buildERC20PermitApprovalMsg(_erc20PermitApprovalMsg[i]));
             unchecked {
                 ++i;
             }
@@ -264,7 +264,7 @@ contract TapOFTv2Helper {
         pure
         returns (bytes memory)
     {
-        return TapOFTMsgCoder.buildUnlockTwTapPositionMsg(_unlockTwTapPositionMsg);
+        return TapTokenCodec.buildUnlockTwTapPositionMsg(_unlockTwTapPositionMsg);
     }
 
     /**
@@ -272,7 +272,7 @@ contract TapOFTv2Helper {
      * @param _remoteTransferMsg The owner + LZ send param to pass on the remote chain. (B->A)
      */
     function buildRemoteTransferMsg(RemoteTransferMsg memory _remoteTransferMsg) public pure returns (bytes memory) {
-        return TapOFTMsgCoder.buildRemoteTransferMsg(_remoteTransferMsg);
+        return TapTokenCodec.buildRemoteTransferMsg(_remoteTransferMsg);
     }
 
     /**
@@ -291,7 +291,7 @@ contract TapOFTv2Helper {
         pure
         returns (bytes memory)
     {
-        return TapOFTMsgCoder.buildClaimTwTapRewards(_claimTwTapRewardsMsg);
+        return TapTokenCodec.buildClaimTwTapRewards(_claimTwTapRewardsMsg);
     }
 
     /// =======================
@@ -312,7 +312,7 @@ contract TapOFTv2Helper {
      * @return options The encoded options.
      */
     function buildTapComposeMsgAndOptions(
-        ITapOFTv2 _tapOFTv2,
+        ITapToken _TapToken,
         bytes memory _msg,
         uint16 _msgType,
         uint16 _msgIndex,
@@ -323,13 +323,13 @@ contract TapOFTv2Helper {
         _sanitizeMsgType(_msgType);
         _sanitizeMsgIndex(_msgIndex, _tapComposedMsg);
 
-        message = TapOFTMsgCoder.encodeTapComposeMsg(_msg, _msgType, _msgIndex, _tapComposedMsg);
+        message = TapTokenCodec.encodeTapComposeMsg(_msg, _msgType, _msgIndex, _tapComposedMsg);
 
         // TODO fix
         // _sanitizeExtraOptionsIndex(_msgIndex, _extraOptions);
         // @dev Combine the callers _extraOptions with the enforced options via the OAppOptionsType3.
 
-        options = _tapOFTv2.combineOptions(_dstEid, _msgType, _extraOptions);
+        options = _TapToken.combineOptions(_dstEid, _msgType, _extraOptions);
     }
 
     // TODO remove sanitization? If `_sendPacket()` is internal, then the msgType is what we expect it to be.
@@ -366,8 +366,8 @@ contract TapOFTv2Helper {
         bytes memory nextMsg_ = _tapComposeMsg;
         uint16 lastIndex_;
         while (nextMsg_.length > 0) {
-            lastIndex_ = TapOFTMsgCoder.decodeIndexOfTapComposeMsg(nextMsg_);
-            nextMsg_ = TapOFTMsgCoder.decodeNextMsgOfTapCompose(nextMsg_);
+            lastIndex_ = TapTokenCodec.decodeIndexOfTapComposeMsg(nextMsg_);
+            nextMsg_ = TapTokenCodec.decodeNextMsgOfTapCompose(nextMsg_);
         }
 
         // If there's a composeMsg, then the msgIndex must be greater than 0, and an increment of the last msgIndex.
@@ -414,7 +414,7 @@ contract TapOFTv2Helper {
      * @param _extraOptions The extra options to be sanitized.
      */
     // function _sanitizeExtraOptionsIndex(uint16 _msgIndex, bytes memory _extraOptions) internal view {
-    //     uint16 msgLength_ = TapOFTMsgCoder.decodeLengthOfExtraOptions(_extraOptions);
+    //     uint16 msgLength_ = TapTokenCodec.decodeLengthOfExtraOptions(_extraOptions);
 
     //     // If the msgIndex is 0 and there's only 1 extra option, then it's the first message.
     //     if (_msgIndex == 0) {
@@ -434,8 +434,8 @@ contract TapOFTv2Helper {
     //     bytes memory nextMsg_ = _extraOptions;
     //     uint16 lastIndex_;
     //     while (nextMsg_.length > 0) {
-    //         lastIndex_ = TapOFTMsgCoder.decodeIndexOfExtraOptions(nextMsg_);
-    //         nextMsg_ = TapOFTMsgCoder.decodeNextMsgOfExtraOptions(nextMsg_);
+    //         lastIndex_ = TapTokenCodec.decodeIndexOfExtraOptions(nextMsg_);
+    //         nextMsg_ = TapTokenCodec.decodeNextMsgOfExtraOptions(nextMsg_);
     //     }
 
     //     // If there's a composeMsg, then the msgIndex must be greater than 0, and an increment of the last msgIndex.

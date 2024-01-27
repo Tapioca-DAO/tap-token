@@ -8,7 +8,7 @@ import {
     ERC20PermitStruct,
     ERC721PermitApprovalMsg,
     ERC721PermitStruct
-} from "contracts/tokens/ITapOFTv2.sol";
+} from "contracts/tokens/ITapToken.sol";
 
 import "forge-std/Test.sol";
 

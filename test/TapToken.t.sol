@@ -22,7 +22,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Tapioca
 import {
-    ITapOFTv2,
+    ITapToken,
     LockTwTapPositionMsg,
     UnlockTwTapPositionMsg,
     LZSendParam,
@@ -32,27 +32,27 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "contracts/tokens/ITapOFTv2.sol";
+} from "contracts/tokens/ITapToken.sol";
 import {
-    TapOFTv2Helper,
+    TapTokenHelper,
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "contracts/tokens/extensions/TapOFTv2Helper.sol";
-import {TapOFTMsgCoder} from "contracts/tokens/TapOFTMsgCoder.sol";
+} from "contracts/tokens/extensions/TapTokenHelper.sol";
+import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
 import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
-import {TapOFTReceiver} from "contracts/tokens/TapOFTReceiver.sol";
-import {TapOFTSender} from "contracts/tokens/TapOFTSender.sol";
+import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
+import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
 
 // Tapioca Tests
 import {TapTestHelper} from "./TapTestHelper.t.sol";
 import {ERC721Mock} from "./ERC721Mock.sol";
-import {TapOFTV2Mock} from "./TapOFTV2Mock.sol";
+import {TapTokenMock} from "./TapTokenMock.sol";
 
 import "forge-std/Test.sol";
 
 // TODO Split into multiple part?
-contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
+contract TapTokenTest is TapTestHelper, IERC721Receiver {
     using OptionsBuilder for bytes;
     using OFTMsgCodec for bytes32;
     using OFTMsgCodec for bytes;
@@ -60,10 +60,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     uint32 aEid = 1;
     uint32 bEid = 2;
 
-    TapOFTV2Mock aTapOFT;
-    TapOFTV2Mock bTapOFT;
+    TapTokenMock aTapOFT;
+    TapTokenMock bTapOFT;
 
-    TapOFTv2Helper tapOFTv2Helper;
+    TapTokenHelper tapTokenHelper;
 
     uint256 internal userAPKey = 0x1;
     uint256 internal userBPKey = 0x2;
@@ -96,7 +96,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     uint16 internal constant PT_REMOTE_TRANSFER = 700;
 
     /**
-     * @dev TapOFTv2 global event checks
+     * @dev TapToken global event checks
      */
     event OFTReceived(bytes32, address, uint256, uint256);
     event ComposeReceived(uint16 indexed msgType, bytes32 indexed guid, bytes composeMsg);
@@ -112,10 +112,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
-        aTapOFT = TapOFTV2Mock(
+        aTapOFT = TapTokenMock(
             payable(
                 _deployOApp(
-                    type(TapOFTV2Mock).creationCode,
+                    type(TapTokenMock).creationCode,
                     abi.encode(
                         address(endpoints[aEid]),
                         __contributors,
@@ -126,17 +126,17 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(new TapOFTSender(address(endpoints[aEid]), address(this))),
-                        address(new TapOFTReceiver(address(endpoints[aEid]), address(this)))
+                        address(new TapTokenSender(address(endpoints[aEid]), address(this))),
+                        address(new TapTokenReceiver(address(endpoints[aEid]), address(this)))
                     )
                 )
             )
         );
         vm.label(address(aTapOFT), "aTapOFT");
-        bTapOFT = TapOFTV2Mock(
+        bTapOFT = TapTokenMock(
             payable(
                 _deployOApp(
-                    type(TapOFTV2Mock).creationCode,
+                    type(TapTokenMock).creationCode,
                     abi.encode(
                         address(endpoints[bEid]),
                         __contributors,
@@ -147,8 +147,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(new TapOFTSender(address(endpoints[bEid]), address(this))),
-                        address(new TapOFTReceiver(address(endpoints[bEid]), address(this)))
+                        address(new TapTokenSender(address(endpoints[bEid]), address(this))),
+                        address(new TapTokenReceiver(address(endpoints[bEid]), address(this)))
                     )
                 )
             )
@@ -160,7 +160,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
         bTapOFT.setTwTAP(address(twTap));
 
-        tapOFTv2Helper = new TapOFTv2Helper();
+        tapTokenHelper = new TapTokenHelper();
         // config and wire the ofts
         address[] memory ofts = new address[](2);
         ofts[0] = address(aTapOFT);
@@ -204,11 +204,11 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
      */
     function test_set_tw_tap() public {
         // Can't set because not host chain
-        vm.expectRevert(ITapOFTv2.OnlyHostChain.selector);
+        vm.expectRevert(ITapToken.OnlyHostChain.selector);
         aTapOFT.setTwTAP(address(twTap));
 
         // Already set in `this.setUp()`
-        vm.expectRevert(ITapOFTv2.TwTapAlreadySet.selector);
+        vm.expectRevert(ITapToken.TwTapAlreadySet.selector);
         bTapOFT.setTwTAP(address(twTap));
     }
 
@@ -284,11 +284,11 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             approvals_[0] = permitApprovalB_;
             approvals_[1] = permitApprovalC_;
 
-            approvalsMsg_ = tapOFTv2Helper.buildPermitApprovalMsg(approvals_);
+            approvalsMsg_ = tapTokenHelper.buildPermitApprovalMsg(approvals_);
         }
 
-        PrepareLzCallReturn memory prepareLzCallReturn_ = tapOFTv2Helper.prepareLzCall(
-            ITapOFTv2(address(aTapOFT)),
+        PrepareLzCallReturn memory prepareLzCallReturn_ = tapTokenHelper.prepareLzCall(
+            ITapToken(address(aTapOFT)),
             PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -380,11 +380,11 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             approvals_[0] = permitApprovalB_;
             approvals_[1] = permitApprovalC_;
 
-            approvalsMsg_ = tapOFTv2Helper.buildNftPermitApprovalMsg(approvals_);
+            approvalsMsg_ = tapTokenHelper.buildNftPermitApprovalMsg(approvals_);
         }
 
-        PrepareLzCallReturn memory prepareLzCallReturn_ = tapOFTv2Helper.prepareLzCall(
-            ITapOFTv2(address(aTapOFT)),
+        PrepareLzCallReturn memory prepareLzCallReturn_ = tapTokenHelper.prepareLzCall(
+            ITapToken(address(aTapOFT)),
             PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -438,7 +438,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     }
 
     /**
-     * @dev Test the OApp functionality of `TapOFTv2.lockTwTapPosition()` function.
+     * @dev Test the OApp functionality of `TapToken.lockTwTapPosition()` function.
      */
     function test_lock_twTap_position() public {
         // TODO use userA in msg.sender context?
@@ -449,10 +449,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         LockTwTapPositionMsg memory lockTwTapPositionMsg =
             LockTwTapPositionMsg({user: address(this), duration: lockDuration, amount: amountToSendLD});
 
-        bytes memory lockPosition_ = TapOFTMsgCoder.buildLockTwTapPositionMsg(lockTwTapPositionMsg);
+        bytes memory lockPosition_ = TapTokenCodec.buildLockTwTapPositionMsg(lockTwTapPositionMsg);
 
-        PrepareLzCallReturn memory prepareLzCallReturn_ = tapOFTv2Helper.prepareLzCall(
-            ITapOFTv2(address(aTapOFT)),
+        PrepareLzCallReturn memory prepareLzCallReturn_ = tapTokenHelper.prepareLzCall(
+            ITapToken(address(aTapOFT)),
             PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -487,7 +487,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         bTapOFT.approve(address(bTapOFT), amountToSendLD);
 
         vm.expectEmit(true, true, true, false);
-        emit ITapOFTv2.LockTwTapReceived(lockTwTapPositionMsg.user, lockTwTapPositionMsg.duration, amountToSendLD);
+        emit ITapToken.LockTwTapReceived(lockTwTapPositionMsg.user, lockTwTapPositionMsg.duration, amountToSendLD);
 
         __callLzCompose(
             LzOFTComposedData(
@@ -511,7 +511,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     }
 
     /**
-     * @dev Test the OApp functionality of `TapOFTv2.unlockTwTapPosition()` function.
+     * @dev Test the OApp functionality of `TapToken.unlockTwTapPosition()` function.
      */
     function test_unlock_twTap_position() public {
         /**
@@ -540,10 +540,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
          */
         UnlockTwTapPositionMsg memory unlockTwTapPosition_ =
             UnlockTwTapPositionMsg({user: address(this), tokenId: tokenId_});
-        bytes memory unlockTwTapPositionMsg_ = tapOFTv2Helper.buildUnlockTwpTapPositionMsg(unlockTwTapPosition_);
+        bytes memory unlockTwTapPositionMsg_ = tapTokenHelper.buildUnlockTwpTapPositionMsg(unlockTwTapPosition_);
 
-        PrepareLzCallReturn memory prepareLzCallReturn_ = tapOFTv2Helper.prepareLzCall(
-            ITapOFTv2(address(aTapOFT)),
+        PrepareLzCallReturn memory prepareLzCallReturn_ = tapTokenHelper.prepareLzCall(
+            ITapToken(address(aTapOFT)),
             PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -575,7 +575,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         bTapOFT.approve(address(bTapOFT), lockAmount_);
 
         vm.expectEmit(true, true, true, false);
-        emit ITapOFTv2.UnlockTwTapReceived(unlockTwTapPosition_.user, unlockTwTapPosition_.tokenId, lockAmount_);
+        emit ITapToken.UnlockTwTapReceived(unlockTwTapPosition_.user, unlockTwTapPosition_.tokenId, lockAmount_);
 
         __callLzCompose(
             LzOFTComposedData(
@@ -592,7 +592,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     }
 
     /**
-     * @dev Test the OApp functionality of `TapOFTv2.unlockTwTapPosition()` function.
+     * @dev Test the OApp functionality of `TapToken.unlockTwTapPosition()` function.
      */
     function test_remote_transfer() public {
         // vars
@@ -607,8 +607,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             deal(address(bTapOFT), address(this), tokenAmount_);
 
             // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
-            PrepareLzCallReturn memory prepareLzCallReturn1_ = tapOFTv2Helper.prepareLzCall( // B->A data
-                ITapOFTv2(address(bTapOFT)),
+            PrepareLzCallReturn memory prepareLzCallReturn1_ = tapTokenHelper.prepareLzCall( // B->A data
+                ITapToken(address(bTapOFT)),
                 PrepareLzCallData({
                     dstEid: aEid,
                     recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -636,10 +636,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
          */
         RemoteTransferMsg memory remoteTransferData =
             RemoteTransferMsg({composeMsg: new bytes(0), owner: address(this), lzSendParam: remoteLzSendParam_});
-        bytes memory remoteTransferMsg_ = tapOFTv2Helper.buildRemoteTransferMsg(remoteTransferData);
+        bytes memory remoteTransferMsg_ = tapTokenHelper.buildRemoteTransferMsg(remoteTransferData);
 
-        PrepareLzCallReturn memory prepareLzCallReturn2_ = tapOFTv2Helper.prepareLzCall(
-            ITapOFTv2(address(aTapOFT)),
+        PrepareLzCallReturn memory prepareLzCallReturn2_ = tapTokenHelper.prepareLzCall(
+            ITapToken(address(aTapOFT)),
             PrepareLzCallData({
                 dstEid: bEid,
                 recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -695,10 +695,10 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
     // Stack to deep
     struct TestClaimRewardsData {
-        TapOFTV2Mock erc20Mock1;
-        TapOFTV2Mock erc20Mock1Dst;
-        TapOFTV2Mock erc20Mock2;
-        TapOFTV2Mock erc20Mock2Dst;
+        TapTokenMock erc20Mock1;
+        TapTokenMock erc20Mock1Dst;
+        TapTokenMock erc20Mock2;
+        TapTokenMock erc20Mock2Dst;
         uint256 tokenAmount1;
         uint256 tokenAmount2;
         uint256 tokenId;
@@ -711,7 +711,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     }
 
     /**
-     * @dev Test the OApp functionality of `TapOFTv2.unlockTwTapPosition()` function.
+     * @dev Test the OApp functionality of `TapToken.unlockTwTapPosition()` function.
      */
     function test_claim_rewards() public {
         // Init vars
@@ -782,8 +782,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
         {
             // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
-            PrepareLzCallReturn memory prepareLzCallReturn1_ = tapOFTv2Helper.prepareLzCall( // B->A data
-                ITapOFTv2(address(testData_.erc20Mock1)),
+            PrepareLzCallReturn memory prepareLzCallReturn1_ = tapTokenHelper.prepareLzCall( // B->A data
+                ITapToken(address(testData_.erc20Mock1)),
                 PrepareLzCallData({
                     dstEid: aEid,
                     recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -806,8 +806,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
             testData_.remoteLzSendParam1 = prepareLzCallReturn1_.lzSendParam;
 
             // @dev `remoteMsgFee_` is to be airdropped on dst to pay for the `remoteTransfer` operation (B->A).
-            PrepareLzCallReturn memory prepareLzCallReturn2_ = tapOFTv2Helper.prepareLzCall( // B->A data
-                ITapOFTv2(address(testData_.erc20Mock2)),
+            PrepareLzCallReturn memory prepareLzCallReturn2_ = tapTokenHelper.prepareLzCall( // B->A data
+                ITapToken(address(testData_.erc20Mock2)),
                 PrepareLzCallData({
                     dstEid: aEid,
                     recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -840,7 +840,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         {
             ClaimTwTapRewardsMsg memory claimTwTapRewards_ =
                 ClaimTwTapRewardsMsg({tokenId: testData_.tokenId, sendParam: claimTwTapRewardsParam_});
-            claimTwTapRewardsMsg_ = tapOFTv2Helper.buildClaimRewardsMsg(claimTwTapRewards_);
+            claimTwTapRewardsMsg_ = tapTokenHelper.buildClaimRewardsMsg(claimTwTapRewards_);
         }
 
         bytes memory composeMsg_;
@@ -848,8 +848,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
         MessagingFee memory msgFee_;
         LZSendParam memory lzSendParam_;
         {
-            PrepareLzCallReturn memory prepareLzCallReturn_ = tapOFTv2Helper.prepareLzCall(
-                ITapOFTv2(address(aTapOFT)),
+            PrepareLzCallReturn memory prepareLzCallReturn_ = tapTokenHelper.prepareLzCall(
+                ITapToken(address(aTapOFT)),
                 PrepareLzCallData({
                     dstEid: bEid,
                     recipient: OFTMsgCodec.addressToBytes32(address(this)),
@@ -937,7 +937,7 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
     }
 
     /**
-     * @dev Receiver for `TapOFTv2::PT_LOCK_TW_TAP` function.
+     * @dev Receiver for `TapToken::PT_LOCK_TW_TAP` function.
      */
     function onERC721Received(
         address, // operator
@@ -1006,12 +1006,12 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
 
     function _createNewToftToken(string memory _tokenLabel, address _endpoint)
         internal
-        returns (TapOFTV2Mock newToken_)
+        returns (TapTokenMock newToken_)
     {
-        newToken_ = TapOFTV2Mock(
+        newToken_ = TapTokenMock(
             payable(
                 _deployOApp(
-                    type(TapOFTV2Mock).creationCode,
+                    type(TapTokenMock).creationCode,
                     abi.encode(
                         _endpoint,
                         __contributors,
@@ -1022,8 +1022,8 @@ contract TapOFTV2Test is TapTestHelper, IERC721Receiver {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(new TapOFTSender(_endpoint, address(this))),
-                        address(new TapOFTReceiver(_endpoint, address(this)))
+                        address(new TapTokenSender(_endpoint, address(this))),
+                        address(new TapTokenReceiver(_endpoint, address(this)))
                     )
                 )
             )

@@ -30,7 +30,7 @@ contract TapiocaOmnichainSender is BaseTapiocaOmnichainEngine {
     {}
 
     /**
-     * @notice Sends TapOFTv2 messages.
+     * @notice Sends TapToken messages.
      *
      * @dev Slightly modified version of the OFT send() operation. Includes a `_msgType` parameter.
      * The `_buildMsgAndOptionsByType()` appends the packet type to the message.

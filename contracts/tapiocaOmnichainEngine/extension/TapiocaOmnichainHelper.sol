@@ -28,6 +28,7 @@ import {
     RemoteTransferMsg
 } from "../ITapiocaOmnichainEngine.sol";
 import {TapiocaOmnichainEngineCodec} from "../TapiocaOmnichainEngineCodec.sol";
+import {BaseToeMsgType} from "../BaseToeMsgType.sol";
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -266,7 +267,7 @@ contract TapiocaOmnichainHelper is BaseToeMsgType {
         _sanitizeMsgType(_msgType);
         _sanitizeMsgIndex(_msgIndex, _tapComposedMsg);
 
-        message = TapiocaOmnichainEngineCodec.encodeTapComposeMsg(_msg, _msgType, _msgIndex, _tapComposedMsg);
+        message = TapiocaOmnichainEngineCodec.encodeToeComposeMsg(_msg, _msgType, _msgIndex, _tapComposedMsg);
 
         // TODO fix
         // _sanitizeExtraOptionsIndex(_msgIndex, _extraOptions);

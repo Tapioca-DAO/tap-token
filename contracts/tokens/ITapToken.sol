@@ -19,8 +19,8 @@ interface ITapToken {
 
     enum Module {
         NonModule, //0
-        TapOFTSender,
-        TapOFTReceiver
+        TapTokenSender,
+        TapTokenReceiver
     }
 
     /**
@@ -106,7 +106,7 @@ struct ClaimTwTapRewardsMsg {
 }
 
 /**
- * @dev Used in TapOFTv2Helper.
+ * @dev Used in TapTokenHelper.
  */
 struct RemoteTransferMsg {
     address owner;

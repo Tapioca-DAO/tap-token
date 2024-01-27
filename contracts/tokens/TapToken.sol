@@ -14,11 +14,11 @@ import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 // Tapioca
 import {TwTAP} from "contracts/governance/twTAP.sol";
 
-import {ERC20PermitStruct, ITapOFTv2, LZSendParam} from "contracts/tokens/ITapOFTv2.sol";
-import {ModuleManager} from "./modules/ModuleManager.sol";
-import {TapOFTReceiver} from "./TapOFTReceiver.sol";
-import {TapOFTSender} from "./TapOFTSender.sol";
-import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
+import {ERC20PermitStruct, ITapToken, LZSendParam} from "contracts/tokens/ITapToken.sol";
+import {ModuleManager} from "./module/ModuleManager.sol";
+import {TapTokenReceiver} from "./TapTokenReceiver.sol";
+import {TapTokenSender} from "./TapTokenSender.sol";
+import {BaseTapToken} from "./BaseTapToken.sol";
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -36,7 +36,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 /// @title Tapioca OFTv2 token
 /// @notice OFT compatible TAP token
 /// @dev Emissions E(x)= E(x-1) - E(x-1) * D with E being total supply a x week, and D the initial decay rate
-contract TapToken is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
+contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     uint256 public constant INITIAL_SUPPLY = 46_686_595 * 1e18; // Everything minus DSO
     uint256 public dso_supply = 53_313_405 * 1e18; // Emission supply for DSO
 
@@ -137,9 +137,9 @@ contract TapToken is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
         address _airdrop,
         uint256 _governanceEid,
         address _owner,
-        address _tapOftSenderModule,
-        address _tapOFTReceiverModule
-    ) BaseTapOFTv2(_endpoint, _owner) ERC20Permit("TapOFT") {
+        address _TapTokenSenderModule,
+        address _TapTokenReceiverModule
+    ) BaseTapToken(_endpoint, _owner) ERC20Permit("TapOFT") {
         if (_endpoint == address(0)) revert AddressWrong();
         governanceEid = _governanceEid;
 
@@ -156,11 +156,11 @@ contract TapToken is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
         emissionsStartTime = block.timestamp;
 
         // Initialize modules
-        if (_tapOftSenderModule == address(0)) revert NotValid();
-        if (_tapOFTReceiverModule == address(0)) revert NotValid();
+        if (_TapTokenSenderModule == address(0)) revert NotValid();
+        if (_TapTokenReceiverModule == address(0)) revert NotValid();
 
-        _setModule(uint8(ITapOFTv2.Module.TapOFTSender), _tapOftSenderModule);
-        _setModule(uint8(ITapOFTv2.Module.TapOFTReceiver), _tapOFTReceiverModule);
+        _setModule(uint8(ITapToken.Module.TapTokenSender), _TapTokenSenderModule);
+        _setModule(uint8(ITapToken.Module.TapTokenReceiver), _TapTokenReceiverModule);
     }
 
     /// =====================
@@ -172,7 +172,7 @@ contract TapToken is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
      */
     fallback() external payable {
         /// @dev Call the receiver module on fallback, assume it's gonna be called by endpoint.
-        _executeModule(uint8(ITapOFTv2.Module.TapOFTReceiver), msg.data, false);
+        _executeModule(uint8(ITapToken.Module.TapTokenReceiver), msg.data, false);
     }
 
     receive() external payable {}
@@ -199,7 +199,7 @@ contract TapToken is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
     ) public payable override {
         // Call the internal OApp implementation of lzReceive.
         _executeModule(
-            uint8(ITapOFTv2.Module.TapOFTReceiver),
+            uint8(ITapToken.Module.TapTokenReceiver),
             abi.encodeWithSelector(OAppReceiver.lzReceive.selector, _origin, _guid, _message, _executor, _extraData),
             false
         );
@@ -217,7 +217,7 @@ contract TapToken is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
      *
      * @return returnData The return data from the module execution, if any.
      */
-    function executeModule(ITapOFTv2.Module _module, bytes memory _data, bool _forwardRevert)
+    function executeModule(ITapToken.Module _module, bytes memory _data, bool _forwardRevert)
         external
         payable
         returns (bytes memory returnData)
@@ -263,8 +263,8 @@ contract TapToken is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
     {
         (msgReceipt, oftReceipt) = abi.decode(
             _executeModule(
-                uint8(ITapOFTv2.Module.TapOFTSender),
-                abi.encodeCall(TapOFTSender.sendPacket, (_lzSendParam, _composeMsg)),
+                uint8(ITapToken.Module.TapTokenSender),
+                abi.encodeCall(TapTokenSender.sendPacket, (_lzSendParam, _composeMsg)),
                 false
             ),
             (MessagingReceipt, OFTReceipt)

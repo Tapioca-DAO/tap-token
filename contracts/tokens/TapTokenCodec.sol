@@ -9,7 +9,7 @@ import {BytesLib} from "solidity-bytes-utils/contracts/BytesLib.sol";
 
 // Tapioca
 import {
-    ITapOFTv2,
+    ITapToken,
     LockTwTapPositionMsg,
     UnlockTwTapPositionMsg,
     ERC20PermitApprovalMsg,
@@ -17,7 +17,7 @@ import {
     LZSendParam,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "./ITapOFTv2.sol";
+} from "./ITapToken.sol";
 
 import {TapiocaOmnichainEngineCodec} from "contracts/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
 
@@ -73,7 +73,7 @@ library TapTokenCodec {
     // LZ message offsets
     uint8 internal constant LZ_COMPOSE_SENDER = 32;
 
-    // TapOFTv2 receiver message offsets
+    // TapToken receiver message offsets
     uint8 internal constant MSG_TYPE_OFFSET = 2;
     uint8 internal constant MSG_LENGTH_OFFSET = 4;
     uint8 internal constant MSG_INDEX_OFFSET = 6;
@@ -94,9 +94,9 @@ library TapTokenCodec {
     }
 
     /**
-     * @notice Decodes a TapOFTv2 composed message. Used by the TapOFTv2 receiver.
+     * @notice Decodes a TapToken composed message. Used by the TapToken receiver.
      *
-     *           *    TapOFTv2 message packet   *
+     *           *    TapToken message packet   *
      * ------------------------------------------------------------- *
      * Name          | type      | start | end                       *
      * ------------------------------------------------------------- *
@@ -139,7 +139,7 @@ library TapTokenCodec {
     }
 
     /**
-     * @notice Decodes the index of a TapOFTv2 composed message.
+     * @notice Decodes the index of a TapToken composed message.
      *
      * @param _msg The composed message for the send() operation.
      * @return msgIndex_ The index of the current message.
@@ -149,7 +149,7 @@ library TapTokenCodec {
     }
 
     /**
-     * @notice Decodes the next message of a TapOFTv2 composed message, if any.
+     * @notice Decodes the next message of a TapToken composed message, if any.
      * @param _msg The composed message for the send() operation.
      * @return nextMsg_ The next composed message. If the message is not composed, it'll be empty.
      */
@@ -313,7 +313,7 @@ library TapTokenCodec {
     /**
      * @notice Decode an encoded message for the lockTwTapPosition() operation.
      *
-     * @param _msg The encoded message. see `TapOFTMsgCoder.buildLockTwTapPositionMsg()`
+     * @param _msg The encoded message. see `TapTokenCodec.buildLockTwTapPositionMsg()`
      * @return lockTwTapPositionMsg_ The data of the lock.
      *          - user::address: The user address.
      *          - duration::uint96: The duration of the lock.
@@ -351,7 +351,7 @@ library TapTokenCodec {
     /**
      * @notice Decode an encoded message for the unlockTwTapPosition() operation.
      *
-     * @param _msg The encoded message. see `TapOFTMsgCoder.buildUnlockTwTapPositionMsg()`
+     * @param _msg The encoded message. see `TapTokenCodec.buildUnlockTwTapPositionMsg()`
      *          - user::address: The user address.
      *          - tokenId::uint256: The tokenId of the TwTap position to unlock.
      * @return unlockTwTapPositionMsg_ The needed data.
@@ -422,7 +422,7 @@ library TapTokenCodec {
     }
 
     /**
-     * @notice Encodes the message for the `TapOFTReceiver._erc20PermitApprovalReceiver()` operation.
+     * @notice Encodes the message for the `TapTokenReceiver._erc20PermitApprovalReceiver()` operation.
      */
     function buildERC20PermitApprovalMsg(ERC20PermitApprovalMsg memory _erc20PermitApprovalMsg)
         internal
@@ -442,7 +442,7 @@ library TapTokenCodec {
     }
 
     /**
-     * @notice Encodes the message for the `TapOFTReceiver._erc721PermitApprovalReceiver()` operation.
+     * @notice Encodes the message for the `TapTokenReceiver._erc721PermitApprovalReceiver()` operation.
      */
     function buildERC721PermitApprovalMsg(ERC721PermitApprovalMsg memory _erc721PermitApprovalMsg)
         internal
@@ -461,7 +461,7 @@ library TapTokenCodec {
     }
 
     /**
-     * @notice Decodes an encoded message for the `TapOFTReceiver.erc721PermitApprovalReceiver()` operation.
+     * @notice Decodes an encoded message for the `TapTokenReceiver.erc721PermitApprovalReceiver()` operation.
      */
     function decodeArrayOfERC721PermitApprovalMsg(bytes memory _msg)
         internal
@@ -472,7 +472,7 @@ library TapTokenCodec {
     }
 
     /**
-     * @notice Decodes an encoded message for the `TapOFTReceiver.erc20PermitApprovalReceiver()` operation.
+     * @notice Decodes an encoded message for the `TapTokenReceiver.erc20PermitApprovalReceiver()` operation.
      *
      *                    *   message packet   *
      * ------------------------------------------------------------- *
@@ -495,7 +495,7 @@ library TapTokenCodec {
      * s             | bytes32   | 157   | 189                       *
      * ------------------------------------------------------------- *
      *
-     * @param _msg The encoded message. see `TapOFTMsgCoder.buildERC20PermitApprovalMsg()`
+     * @param _msg The encoded message. see `TapTokenCodec.buildERC20PermitApprovalMsg()`
      */
     struct __offsets {
         uint8 tokenOffset;
@@ -547,10 +547,10 @@ library TapTokenCodec {
     }
 
     /**
-     * @dev Decode an array of encoded messages for the `TapOFTReceiver.erc20PermitApprovalReceiver()` operation.
+     * @dev Decode an array of encoded messages for the `TapTokenReceiver.erc20PermitApprovalReceiver()` operation.
      * @dev The message length must be a multiple of 189.
      *
-     * @param _msg The encoded message. see `TapOFTMsgCoder.buildERC20PermitApprovalMsg()`
+     * @param _msg The encoded message. see `TapTokenCodec.buildERC20PermitApprovalMsg()`
      */
     function decodeArrayOfERC20PermitApprovalMsg(bytes memory _msg)
         internal

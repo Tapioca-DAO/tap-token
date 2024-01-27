@@ -14,7 +14,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 // Tapioca
 import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
 import {TWAML, FullMath} from "contracts/options/twAML.sol"; // TODO Naming
-import {TapOFTV2} from "contracts/tokens/TapOFTV2.sol";
+import {TapToken} from "contracts/tokens/TapToken.sol";
 import {AOTAP, AirdropTapOption} from "./aoTAP.sol";
 
 /*
@@ -45,7 +45,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
 
     bytes public tapOracleData;
     ITapiocaOracle public tapOracle;
-    TapOFTV2 public immutable tapOFT;
+    TapToken public immutable tapOFT;
     AOTAP public immutable aoTAP;
     IERC721 public immutable PCNFT;
 
@@ -126,7 +126,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         address _owner
     ) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
-        tapOFT = TapOFTV2(_tapOFT);
+        tapOFT = TapToken(_tapOFT);
         aoTAP = AOTAP(_aoTAP);
         PCNFT = IERC721(_pcnft);
         tapOracle = ITapiocaOracle(_tapOracle);
