@@ -36,7 +36,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 /// @title Tapioca OFTv2 token
 /// @notice OFT compatible TAP token
 /// @dev Emissions E(x)= E(x-1) - E(x-1) * D with E being total supply a x week, and D the initial decay rate
-contract TapOFTV2 is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
+contract TapToken is BaseTapOFTv2, ModuleManager, ERC20Permit, Pausable {
     uint256 public constant INITIAL_SUPPLY = 46_686_595 * 1e18; // Everything minus DSO
     uint256 public dso_supply = 53_313_405 * 1e18; // Emission supply for DSO
 

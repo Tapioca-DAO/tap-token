@@ -19,7 +19,7 @@ import {
     RemoteTransferMsg
 } from "./ITapOFTv2.sol";
 
-import "forge-std/console.sol";
+import {TapiocaOmnichainEngineCodec} from "contracts/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -33,7 +33,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
         _______\///________\///________\///__\///______________\///////////_______\/////_____________\/////////__\///________\///__
 */
 
-library TapOFTMsgCoder {
+library TapTokenCodec {
     /**
      * @dev Option Builder offsets
      *
@@ -204,7 +204,6 @@ library TapOFTMsgCoder {
         )
     {
         workerId_ = BytesLib.toUint8(BytesLib.slice(_options, OP_BLDR_WORKER_ID_OFFSETS, 1), 0);
-        console.log("workerId_", workerId_);
         // If the workerId is not decoded correctly, it means option index != 0.
         if (workerId_ != OP_BLDR_EXECUTOR_WORKER_ID_) {
             // add the new options prefix
@@ -215,13 +214,9 @@ library TapOFTMsgCoder {
         /// @dev Option length is not the size of the actual `_options`, but the size of the option
         /// starting from `OPTION_TYPE`.
         optionLength_ = BytesLib.toUint16(BytesLib.slice(_options, OP_BLDR_OPTION_LENGTH_OFFSET, 2), 0);
-        console.log("optionLength_", optionLength_);
         optionType_ = BytesLib.toUint8(BytesLib.slice(_options, OP_BLDR_OPTIONS_TYPE_OFFSET, 1), 0);
-        console.log("optionType_", optionType_);
         index_ = BytesLib.toUint16(BytesLib.slice(_options, OP_BLDR_INDEX_OFFSET, 2), 0);
-        console.log("index_", index_);
         gas_ = BytesLib.toUint128(BytesLib.slice(_options, OP_BLDR_GAS_OFFSET, 16), 0);
-        console.log("gas_", gas_);
 
         /// @dev `value_` is not encoded if it's 0, check LZ `OptionBuilder.addExecutorLzComposeOption()`
         /// and `ExecutorOptions.encodeLzComposeOption()` for more info.

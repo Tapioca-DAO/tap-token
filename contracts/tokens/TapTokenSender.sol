@@ -24,7 +24,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 */
 
-contract TapOFTSender is BaseTapOFTv2 {
+contract TapTokenSender is BaseTapOFTv2 {
     constructor(address _endpoint, address _owner) BaseTapOFTv2(_endpoint, _owner) {}
 
     /**

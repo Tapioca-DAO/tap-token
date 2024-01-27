@@ -28,9 +28,6 @@ import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
 import {BaseTapOFTv2} from "./BaseTapOFTv2.sol";
 import {TapOFTSender} from "./TapOFTSender.sol";
 
-// TODO remove console
-import "forge-std/console.sol";
-
 /*
 
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -45,7 +42,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 */
 
-contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
+contract TapTokenReceiver is BaseTapOFTv2, IOAppComposer {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
 
@@ -59,6 +56,8 @@ contract TapOFTReceiver is BaseTapOFTv2, IOAppComposer {
     error InvalidCaller(address caller); // Should be the endpoint address
     // See `this._claimTwpTapRewardsReceiver()`. Triggered if the length of the claimed rewards are not equal to the length of the lzSendParam array.
     error InvalidSendParamLength(uint256 expectedLength, uint256 actualLength);
+
+    error InvalidMsgType(uint16 msgType); // Triggered if the msgType is invalid on an `_lzCompose`.
 
     /// @dev Compose received.
     event ComposeReceived(uint16 indexed msgType, bytes32 indexed guid, bytes composeMsg);

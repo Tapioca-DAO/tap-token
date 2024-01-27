@@ -2,7 +2,6 @@
 pragma solidity 0.8.22;
 
 // LZ
-import {ExecutorOptions} from "@layerzerolabs/lz-evm-protocol-v2/contracts/messagelib/libs/ExecutorOptions.sol";
 import {IOAppMsgInspector} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppMsgInspector.sol";
 import {SendParam, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
@@ -13,14 +12,8 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import {BytesLib} from "solidity-bytes-utils/contracts/BytesLib.sol";
 
 // Tapioca
-import {TwTAP} from "contracts/governance/twTAP.sol";
-
 import {TapOFTExtExec} from "./extensions/TapOFTExtExec.sol";
-import {TapOFTMsgCoder} from "./TapOFTMsgCoder.sol";
-
-import "forge-std/console.sol";
-
-// import {TwTAP} from "../../governance/twTAP.sol";
+import {TwTAP} from "contracts/governance/twTAP.sol";
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
@@ -35,7 +28,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 */
 
-contract BaseTapOFTv2 is OFT {
+contract BaseTapToken is OFT {
     using BytesLib for bytes;
     using SafeERC20 for IERC20;
     using OFTMsgCodec for bytes;
@@ -57,7 +50,6 @@ contract BaseTapOFTv2 is OFT {
     TapOFTExtExec public tapOFTExtExec;
 
     error OnlyHostChain(); // Can execute an action only on host chain
-    error InvalidMsgType(uint16 msgType); // Triggered if the msgType is invalid on an `_lzCompose`.
 
     constructor(address _endpoint, address _owner) OFT("TAP", "TAP", _endpoint, _owner) {
         tapOFTExtExec = new TapOFTExtExec();

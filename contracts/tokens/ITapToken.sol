@@ -3,7 +3,7 @@ pragma solidity 0.8.22;
 
 import {SendParam, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 
-interface ITapOFTv2 {
+interface ITapToken {
     /**
      * EVENTS
      */
