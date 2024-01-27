@@ -7,15 +7,14 @@ import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProo
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IOracle} from "tapioca-periph/contracts/interfaces/IOracle.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // Tapioca
+import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
 import {TWAML, FullMath} from "contracts/options/twAML.sol"; // TODO Naming
 import {TapOFTV2} from "contracts/tokens/TapOFTV2.sol";
-
 import {AOTAP, AirdropTapOption} from "./aoTAP.sol";
 
 /*
@@ -31,7 +30,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 */
 
 struct PaymentTokenOracle {
-    IOracle oracle;
+    ITapiocaOracle oracle;
     bytes oracleData;
 }
 
@@ -45,7 +44,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     bytes public tapOracleData;
-    IOracle public tapOracle;
+    ITapiocaOracle public tapOracle;
     TapOFTV2 public immutable tapOFT;
     AOTAP public immutable aoTAP;
     IERC721 public immutable PCNFT;
@@ -130,7 +129,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         tapOFT = TapOFTV2(_tapOFT);
         aoTAP = AOTAP(_aoTAP);
         PCNFT = IERC721(_pcnft);
-        tapOracle = IOracle(_tapOracle);
+        tapOracle = ITapiocaOracle(_tapOracle);
         owner = _owner;
     }
 
@@ -142,8 +141,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 aoTapTokenID, uint256 amount
     );
     event NewEpoch(uint256 indexed epoch, uint256 epochTAPValuation);
-    event SetPaymentToken(ERC20 paymentToken, IOracle oracle, bytes oracleData);
-    event SetTapOracle(IOracle oracle, bytes oracleData);
+    event SetPaymentToken(ERC20 paymentToken, ITapiocaOracle oracle, bytes oracleData);
+    event SetTapOracle(ITapiocaOracle oracle, bytes oracleData);
     event Phase2MerkleRootsUpdated();
 
     // ==========
@@ -173,7 +172,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         PaymentTokenOracle memory paymentTokenOracle = paymentTokens[_paymentToken];
 
         // Check requirements
-        if (paymentTokenOracle.oracle == IOracle(address(0))) {
+        if (paymentTokenOracle.oracle == ITapiocaOracle(address(0))) {
             revert PaymentTokenNotValid();
         }
 
@@ -232,7 +231,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         PaymentTokenOracle memory paymentTokenOracle = paymentTokens[_paymentToken];
 
         // Check requirements
-        if (paymentTokenOracle.oracle == IOracle(address(0))) {
+        if (paymentTokenOracle.oracle == ITapiocaOracle(address(0))) {
             revert PaymentTokenNotValid();
         }
         if (!aoTAP.isApprovedOrOwner(msg.sender, _aoTAPTokenID)) {
@@ -289,7 +288,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @notice Set the TapOFT Oracle address and data
     /// @param _tapOracle The new TapOFT Oracle address
     /// @param _tapOracleData The new TapOFT Oracle data
-    function setTapOracle(IOracle _tapOracle, bytes calldata _tapOracleData) external onlyOwner {
+    function setTapOracle(ITapiocaOracle _tapOracle, bytes calldata _tapOracleData) external onlyOwner {
         tapOracle = _tapOracle;
         tapOracleData = _tapOracleData;
 
@@ -330,7 +329,10 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
 
     /// @notice Activate or deactivate a payment token
     /// @dev set the oracle to address(0) to deactivate, expect the same decimal precision as TAP oracle
-    function setPaymentToken(ERC20 _paymentToken, IOracle _oracle, bytes calldata _oracleData) external onlyOwner {
+    function setPaymentToken(ERC20 _paymentToken, ITapiocaOracle _oracle, bytes calldata _oracleData)
+        external
+        onlyOwner
+    {
         paymentTokens[_paymentToken].oracle = _oracle;
         paymentTokens[_paymentToken].oracleData = _oracleData;
 

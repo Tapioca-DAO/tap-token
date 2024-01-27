@@ -3,12 +3,12 @@
 pragma solidity 0.8.22;
 
 // Tapioca
-import {AirdropBroker, IOracle} from "contracts/option-airdrop/AirdropBroker.sol";
+import {AirdropBroker, ITapiocaOracle} from "contracts/option-airdrop/AirdropBroker.sol";
 
 import "forge-std/Test.sol";
 
 // TODO Move to common repo
-contract ADBOracleMock is IOracle {
+contract ADBOracleMock is ITapiocaOracle {
     constructor() {}
     function decimals() external view virtual override returns (uint8) {}
 

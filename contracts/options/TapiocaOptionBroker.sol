@@ -5,15 +5,14 @@ pragma solidity 0.8.22;
 import {BoringOwnable} from "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IOracle} from "tapioca-periph/contracts/interfaces/IOracle.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // Tapioca
-import {TapOFTV2} from "contracts/tokens/TapOFTV2.sol";
-
 import {TapiocaOptionLiquidityProvision, LockPosition, SingularityPool} from "./TapiocaOptionLiquidityProvision.sol";
+import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
+import {TapOFTV2} from "contracts/tokens/TapOFTV2.sol";
 import {OTAP, TapOption} from "./oTAP.sol";
 import {TWAML} from "./twAML.sol";
 
@@ -43,7 +42,7 @@ struct TWAMLPool {
 }
 
 struct PaymentTokenOracle {
-    IOracle oracle;
+    ITapiocaOracle oracle;
     bytes oracleData;
 }
 
@@ -54,7 +53,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     bytes public tapOracleData;
     TapOFTV2 public immutable tapOFT;
     OTAP public immutable oTAP;
-    IOracle public tapOracle;
+    ITapiocaOracle public tapOracle;
 
     uint256 public epochTAPValuation; // TAP price for the current epoch
     uint256 public epoch; // Represents the number of weeks since the start of the contract
@@ -137,8 +136,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     );
     event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValuation);
     event ExitPosition(uint256 indexed epoch, uint256 tolpTokenId, uint256 amount);
-    event SetPaymentToken(ERC20 indexed paymentToken, IOracle oracle, bytes oracleData);
-    event SetTapOracle(IOracle indexed oracle, bytes indexed oracleData);
+    event SetPaymentToken(ERC20 indexed paymentToken, ITapiocaOracle oracle, bytes oracleData);
+    event SetTapOracle(ITapiocaOracle indexed oracle, bytes indexed oracleData);
 
     // ==========
     //    READ
@@ -184,7 +183,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         PaymentTokenOracle memory paymentTokenOracle = paymentTokens[_paymentToken];
 
         // Check requirements
-        if (paymentTokenOracle.oracle == IOracle(address(0))) {
+        if (paymentTokenOracle.oracle == ITapiocaOracle(address(0))) {
             revert PaymentTokenNotSupported();
         }
         if (block.timestamp < tOLPLockPosition.lockTime + EPOCH_DURATION) {
@@ -361,7 +360,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         PaymentTokenOracle memory paymentTokenOracle = paymentTokens[_paymentToken];
 
         // Check requirements
-        if (paymentTokenOracle.oracle == IOracle(address(0))) {
+        if (paymentTokenOracle.oracle == ITapiocaOracle(address(0))) {
             revert PaymentTokenNotSupported();
         }
         if (!oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID)) {
@@ -439,7 +438,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     /// @notice Set the TapOFT Oracle address and data
     /// @param _tapOracle The new TapOFT Oracle address
     /// @param _tapOracleData The new TapOFT Oracle data
-    function setTapOracle(IOracle _tapOracle, bytes calldata _tapOracleData) external onlyOwner {
+    function setTapOracle(ITapiocaOracle _tapOracle, bytes calldata _tapOracleData) external onlyOwner {
         tapOracle = _tapOracle;
         tapOracleData = _tapOracleData;
 
@@ -448,7 +447,10 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
 
     /// @notice Activate or deactivate a payment token
     /// @dev set the oracle to address(0) to deactivate, expect the same decimal precision as TAP oracle
-    function setPaymentToken(ERC20 _paymentToken, IOracle _oracle, bytes calldata _oracleData) external onlyOwner {
+    function setPaymentToken(ERC20 _paymentToken, ITapiocaOracle _oracle, bytes calldata _oracleData)
+        external
+        onlyOwner
+    {
         paymentTokens[_paymentToken].oracle = _oracle;
         paymentTokens[_paymentToken].oracleData = _oracleData;
 
