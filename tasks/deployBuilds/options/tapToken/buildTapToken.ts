@@ -1,16 +1,16 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
-import { TapOFTV2__factory } from '@typechain/index';
 import { IDependentOn } from '@tapioca-sdk/ethers/hardhat/DeployerVM';
+import { TapToken__factory } from '@typechain/index';
 
-export const buildTapOFTv2 = async (
+export const buildTapToken = async (
     hre: HardhatRuntimeEnvironment,
     deploymentName: string,
-    args: Parameters<TapOFTV2__factory['deploy']>,
+    args: Parameters<TapToken__factory['deploy']>,
     dependsOn: IDependentOn[],
-): Promise<IDeployerVMAdd<TapOFTV2__factory>> => {
+): Promise<IDeployerVMAdd<TapToken__factory>> => {
     return {
-        contract: await hre.ethers.getContractFactory('TapOFTV2'),
+        contract: await hre.ethers.getContractFactory('TapToken'),
         deploymentName,
         args,
         dependsOn,

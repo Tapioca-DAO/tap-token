@@ -3,7 +3,7 @@ import inquirer from 'inquirer';
 import { TContract, TLocalDeployment } from 'tapioca-sdk/dist/shared';
 import { EChainID } from '@tapioca-sdk/api/config';
 import { loadVM } from '../utils';
-import { IMulticall3, TapOFTV2__factory } from "@typechain";
+import { IMulticall3, TapOFTV2__factory } from '@typechain';
 import { Multicall3 } from '@tapioca-sdk/typechain/tapioca-periphery';
 import { ethers } from 'hardhat';
 
@@ -44,17 +44,17 @@ export const sendTokens__task = async (
     }
 
     // Transfer Ownership at the beginning of the calls
-    const tapOFTv2 = await hre.ethers.getContractAt(
-        'TapOFTV2',
+    const tapToken = await hre.ethers.getContractAt(
+        'TapToken',
         localContract.address,
     );
 
     const tapOFTHelper = await hre.ethers.getContractAt(
-        'TapOFTv2Helper',
+        'TapTokenHelper',
         '0xD99fFcb12f9Dd2B337a27046C6F198F2deb2fAB4',
     );
 
-    const data = await tapOFTHelper.prepareLzCall(tapOFTv2.address, {
+    const data = await tapOFTHelper.prepareLzCall(tapToken.address, {
         dstEid: dstChainInfo.lzChainId,
         lzReceiveGas: 200_000,
         lzReceiveValue: 0,
@@ -75,7 +75,7 @@ export const sendTokens__task = async (
         },
     });
 
-    const tx = await tapOFTv2.sendPacket(data.lzSendParam, '0x', {
+    const tx = await tapToken.sendPacket(data.lzSendParam, '0x', {
         value: data.msgFee.nativeFee,
     });
     console.log(`[+] Tx: ${tx.hash}}`);

@@ -11,7 +11,7 @@ export const buildAfterDepSetup = async (
     /**
      * Load addresses
      */
-    const tapAddr = deps.find((e) => e.name === 'TapOFTv2')?.address;
+    const tapAddr = deps.find((e) => e.name === 'TapToken')?.address;
     const twTapAddr = deps.find((e) => e.name === 'TwTAP')?.address;
     const tOBAddr = deps.find(
         (e) =>
@@ -38,7 +38,7 @@ export const buildAfterDepSetup = async (
     /**
      * Load contracts
      */
-    const tap = await hre.ethers.getContractAt('TapOFTV2', tapAddr);
+    const tap = await hre.ethers.getContractAt('TapToken', tapAddr);
     const tob = await hre.ethers.getContractAt('TapiocaOptionBroker', tOBAddr);
     const oTap = await hre.ethers.getContractAt('OTAP', oTapAddr);
 
@@ -49,7 +49,7 @@ export const buildAfterDepSetup = async (
     if (
         (await tap.minter()).toLocaleLowerCase() !== tOBAddr.toLocaleLowerCase()
     ) {
-        console.log('[+] Setting tOB as minter for TapOFTv2');
+        console.log('[+] Setting tOB as minter for TapToken');
         await (await tap.setMinter(tOBAddr)).wait(1);
     }
 
@@ -75,7 +75,7 @@ export const buildAfterDepSetup = async (
         (await tap.twTap()).toLocaleLowerCase() !==
         twTapAddr.toLocaleLowerCase()
     ) {
-        console.log('[+] +Call queue: set twTAP in TapOFTv2');
+        console.log('[+] +Call queue: set twTAP in TapToken');
         calls.push({
             target: tapAddr,
             allowFailure: false,

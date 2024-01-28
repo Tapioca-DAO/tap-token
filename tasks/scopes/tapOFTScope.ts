@@ -5,7 +5,7 @@ import { setGovernanceChainIdentifierOnTap__task } from 'tasks/exec/tap/26-tap-s
 import { updatePauseOnTap__task } from 'tasks/exec/tap/27-tap-updatePause';
 import { setMinterOnTap__task } from 'tasks/exec/tap/28-tap-setMinter';
 import { sendTokens__task } from 'tasks/exec/sendTokens';
-import { setOFTPeers__task } from 'tasks/exec/setOFTPeers';
+import { setOFTPeers__task } from 'tasks/exec/setToePeers';
 import { setOracleMockRate__task } from 'tasks/exec/setterTasks';
 
 const tapOFTScope = scope('tapoft', 'TapOFT setter tasks');

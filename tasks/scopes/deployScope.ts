@@ -5,7 +5,7 @@ import {
     deployVesting__task,
 } from '../deploy/contractDeployment';
 import { deployStack__task } from '../deploy/deployStack';
-import { deployTapOFTv2__task } from '../deploy/deployTapOFTv2';
+import { deployTapToken__task } from '../deploy/testnet/deployTapToken';
 
 const deployScope = scope('deploys', 'Deployment tasks');
 
@@ -24,7 +24,7 @@ deployScope
 deployScope.task(
     'tapOft',
     'Deploys just the TapOFT contract',
-    deployTapOFTv2__task,
+    deployTapToken__task,
 );
 
 deployScope

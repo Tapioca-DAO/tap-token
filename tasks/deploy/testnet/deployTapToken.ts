@@ -1,15 +1,15 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { buildTapOFTv2 } from '../deployBuilds/01-buildTapOFTv2';
-import { loadVM } from '../utils';
+import { buildTapToken } from '../../deployBuilds/options/tapToken/buildTapToken';
+import { loadVM } from '../../utils';
 import { TAP_DISTRIBUTION } from '@tapioca-sdk/api/constants';
 import { EChainID, ELZChainID } from '@tapioca-sdk/api/config';
 import inquirer from 'inquirer';
-import { buildTapOFTSenderModule } from '../deployBuilds/TapOFTv2/buildTapOFTSenderModule';
-import { buildTapOFTReceiverModule } from '../deployBuilds/TapOFTv2/buildTapOFTReceiverModule';
-import { buildTapOFTHelper } from '../deployBuilds/TapOFTv2/buildTapOFTHelper';
+import { buildTapTokenSenderModule } from '../../deployBuilds/options/tapToken/buildTapTokenSenderModule';
+import { buildTapTokenReceiverModule } from '../../deployBuilds/options/tapToken/buildTapTokenReceiverModule';
+import { buildTapTokenHelper } from '../../deployBuilds/options/tapToken/buildTapTokenHelper';
 
 // hh deployTapOFT -network goerli
-export const deployTapOFTv2__task = async (
+export const deployTapToken__task = async (
     {},
     hre: HardhatRuntimeEnvironment,
 ) => {
@@ -44,21 +44,25 @@ export const deployTapOFTv2__task = async (
     const lzEndpoint = chainInfo.address;
 
     VM.add(
-        await buildTapOFTSenderModule(hre, 'TapOFTSenderModule', [
+        await buildTapTokenSenderModule(hre, 'TapOFTSenderModule', [
+            '', // Name
+            '', // Symbol
             '0x464570adA09869d8741132183721B4f0769a0287', // Endpoint address
             signer.address, // Owner
         ]),
     )
         .add(
-            await buildTapOFTReceiverModule(hre, 'TapOFTReceiverModule', [
+            await buildTapTokenReceiverModule(hre, 'TapOFTReceiverModule', [
+                '', // Name
+                '', // Symbol
                 '0x464570adA09869d8741132183721B4f0769a0287', // Endpoint address
                 signer.address, // Owner
             ]),
         )
         .add(
-            await buildTapOFTv2(
+            await buildTapToken(
                 hre,
-                'TapOFTv2',
+                'TapToken',
                 [
                     '0x464570adA09869d8741132183721B4f0769a0287',
                     signer.address, //contributor address, // TODO change to a real contributor address
@@ -84,7 +88,7 @@ export const deployTapOFTv2__task = async (
                 ],
             ),
         )
-        .add(await buildTapOFTHelper(hre, 'TapOFTHelper', []));
+        .add(await buildTapTokenHelper(hre, 'TapOFTHelper', []));
 
     // Add and execute
     await VM.execute(3);

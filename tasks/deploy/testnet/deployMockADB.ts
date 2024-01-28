@@ -4,12 +4,12 @@ import MerkleTree from 'merkletreejs';
 import { TDeploymentVMContract } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
 import { ERC721Mock__factory } from '@tapioca-sdk/typechain/tapioca-mocks';
-import { buildADB } from '../deployBuilds/buildADB';
-import { buildAOTAP } from '../deployBuilds/buildAOTAP';
-import { buildERC721Mock } from '../deployBuilds/buildERC721Mock';
-import { buildERC20Mock } from '../deployBuilds/buildMockERC20';
-import { buildOracleMock } from '../deployBuilds/buildOracleMock';
-import { loadVM } from '../utils';
+import { buildADB } from '../../deployBuilds/airdrop/buildADB';
+import { buildAOTAP } from '../../deployBuilds/airdrop/buildAOTAP';
+import { buildERC721Mock } from '../../deployBuilds/mocks/buildERC721Mock';
+import { buildERC20Mock } from '../../deployBuilds/mocks/buildMockERC20';
+import { buildOracleMock } from '../../deployBuilds/mocks/buildOracleMock';
+import { loadVM } from '../../utils';
 
 export const deployMockADB__task = async (
     taskArgs: { load?: boolean },

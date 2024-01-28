@@ -5,16 +5,16 @@ import {
 } from '@tapioca-sdk/api/config';
 import { TAP_DISTRIBUTION } from '@tapioca-sdk/api/constants';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { buildTapOFTv2 } from '../deployBuilds/01-buildTapOFTv2';
-import { buildTOLP } from '../deployBuilds/02-buildTOLP';
-import { buildOTAP } from '../deployBuilds/03-buildOTAP';
-import { buildTOB } from '../deployBuilds/04-buildTOB';
-import { buildTwTap } from '../deployBuilds/04-deployTwTap';
-import { buildAfterDepSetup } from '../deployBuilds/05-buildAfterDepSetup';
-import { buildTapOFTReceiverModule } from '../deployBuilds/TapOFTv2/buildTapOFTReceiverModule';
-import { buildTapOFTSenderModule } from '../deployBuilds/TapOFTv2/buildTapOFTSenderModule';
+import { buildTOLP } from '../deployBuilds/options/buildTOLP';
+import { buildOTAP } from '../deployBuilds/options/03-buildOTAP';
+import { buildTOB } from '../deployBuilds/options/04-buildTOB';
+import { buildTwTap } from '../deployBuilds/options/04-deployTwTap';
+import { buildAfterDepSetup } from '../deployBuilds/afterDepSetup/05-buildAfterDepSetup';
+import { buildTapTokenReceiverModule } from '../deployBuilds/options/tapToken/buildTapTokenReceiverModule';
+import { buildTapTokenSenderModule } from '../deployBuilds/options/tapToken/buildTapTokenSenderModule';
 import { buildVesting } from '../deployBuilds/buildVesting';
 import { loadVM } from '../utils';
+import { buildTapToken } from 'tasks/deployBuilds/options/tapToken/buildTapToken';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
@@ -91,21 +91,25 @@ export const deployStack__task = async (
                 ]),
             )
             .add(
-                await buildTapOFTSenderModule(hre, 'TapOFTSenderModule', [
+                await buildTapTokenSenderModule(hre, 'TapOFTSenderModule', [
+                    '', // Name
+                    '', // Symbol
                     lzEndpoint, // Endpoint address
                     signer.address, // Owner
                 ]),
             )
             .add(
-                await buildTapOFTReceiverModule(hre, 'TapOFTReceiverModule', [
+                await buildTapTokenReceiverModule(hre, 'TapOFTReceiverModule', [
+                    '', // Name
+                    '', // Symbol
                     lzEndpoint, // Endpoint address
                     signer.address, // Owner
                 ]),
             )
             .add(
-                await buildTapOFTv2(
+                await buildTapToken(
                     hre,
-                    'TapOFTv2',
+                    'TapToken',
                     [
                         lzEndpoint, // Static endpoint address, // TODO put it in config file
                         hre.ethers.constants.AddressZero, //contributors address
@@ -169,7 +173,7 @@ export const deployStack__task = async (
                             deploymentName: 'TapiocaOptionLiquidityProvision',
                         },
                         { argPosition: 1, deploymentName: 'OTAP' },
-                        { argPosition: 2, deploymentName: 'TapOFTv2' },
+                        { argPosition: 2, deploymentName: 'TapToken' },
                     ],
                 ),
             )
@@ -180,7 +184,7 @@ export const deployStack__task = async (
                         hre.ethers.constants.AddressZero, // TapOFT
                         signer.address,
                     ],
-                    [{ argPosition: 0, deploymentName: 'TapOFTv2' }],
+                    [{ argPosition: 0, deploymentName: 'TapToken' }],
                 ),
             );
 

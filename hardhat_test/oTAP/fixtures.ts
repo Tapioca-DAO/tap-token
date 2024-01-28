@@ -33,7 +33,7 @@ export const setupFixture = async () => {
     // Tap OFT
     const _to = signer.address;
     const tapOFT = await (
-        await ethers.getContractFactory('TapOFTV2')
+        await ethers.getContractFactory('TapToken')
     ).deploy(
         LZEndpointMockCurrentChain.address,
         _to,
