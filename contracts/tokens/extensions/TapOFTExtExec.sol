@@ -4,7 +4,7 @@ pragma solidity 0.8.22;
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 
 import {ERC20PermitApprovalMsg, ERC721PermitApprovalMsg} from "../ITapToken.sol";
-import {ERC721Permit} from "contracts/utils/ERC721Permit.sol"; // TODO audit
+import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol"; // TODO audit
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        

@@ -3,7 +3,7 @@ pragma solidity 0.8.22;
 
 // Tapioca
 import {IMulticall3} from "contracts/interfaces/IMulticall3.sol";
-import {TapiocaDeployer} from "contracts/utils/TapiocaDeployer.sol";
+import {TapiocaDeployer} from "tapioca-periph/utils/TapiocaDeployer.sol";
 import {OTAP} from "contracts/options/oTAP.sol";
 
 // solhint-disable-next-line

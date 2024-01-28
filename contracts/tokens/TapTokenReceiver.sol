@@ -25,7 +25,7 @@ import {
     RemoteTransferMsg,
     LZSendParam
 } from "./ITapToken.sol";
-import {TapiocaOmnichainReceiver} from "contracts/tapiocaOmnichainEngine/TapiocaOmnichainReceiver.sol";
+import {TapiocaOmnichainReceiver} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainReceiver.sol";
 import {TapTokenSender} from "./TapTokenSender.sol";
 import {TapTokenCodec} from "./TapTokenCodec.sol";
 import {BaseTapToken} from "./BaseTapToken.sol";

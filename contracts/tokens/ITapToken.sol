@@ -15,7 +15,7 @@ import {
     ERC20PermitApprovalMsg,
     ERC721PermitApprovalMsg,
     RemoteTransferMsg
-} from "contracts/tapiocaOmnichainEngine/ITapiocaOmnichainEngine.sol";
+} from "tapioca-periph/interfaces/periph/ITapiocaOmnichainEngine.sol";
 
 interface ITapToken is ITapiocaOmnichainEngine {
     /**

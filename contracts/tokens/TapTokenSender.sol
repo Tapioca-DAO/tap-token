@@ -6,7 +6,7 @@ import {
     MessagingReceipt, OFTReceipt, SendParam
 } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 // Tapioca
-import {TapiocaOmnichainSender} from "contracts/tapiocaOmnichainEngine/TapiocaOmnichainSender.sol";
+import {TapiocaOmnichainSender} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainSender.sol";
 import {BaseTapToken} from "./BaseTapToken.sol";
 import {LZSendParam} from "./ITapToken.sol";
 

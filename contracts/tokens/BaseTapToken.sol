@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 // Tapioca
-import {BaseTapiocaOmnichainEngine} from "contracts/tapiocaOmnichainEngine/BaseTapiocaOmnichainEngine.sol";
+import {BaseTapiocaOmnichainEngine} from "tapioca-periph/tapiocaOmnichainEngine/BaseTapiocaOmnichainEngine.sol";
 import {BaseTapTokenMsgType} from "./BaseTapTokenMsgType.sol";
 import {TwTAP} from "contracts/governance/twTAP.sol";
 

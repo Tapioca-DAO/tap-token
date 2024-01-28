@@ -40,7 +40,8 @@ import {
     ComposeMsgData
 } from "contracts/tokens/extensions/TapTokenHelper.sol";
 import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
-import {TapiocaOmnichainEngineCodec as ToeCodec} from "contracts/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
+import {TapiocaOmnichainEngineCodec as ToeCodec} from
+    "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
 import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
 import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
 import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
