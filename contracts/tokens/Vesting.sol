@@ -30,13 +30,16 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     uint256 public start;
 
     /// @notice returns the cliff period
-    uint256 public cliff;
+    uint256 public immutable cliff;
 
     /// @notice returns total vesting duration
-    uint256 public duration;
+    uint256 public immutable duration;
 
     /// @notice returns total available tokens
     uint256 public seeded;
+
+    /// @notice returns total registered amount
+    uint256 public totalRegisteredAmount;
 
     /// @notice Used for initial unlock
     uint256 private __initialUnlockTimeOffset;
@@ -51,7 +54,6 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
 
     mapping(address => UserData) public users;
 
-    uint256 private __totalAmount;
     uint256 private __totalClaimed;
 
     // ************** //
@@ -166,7 +168,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
         data.amount = _amount;
         users[_user] = data;
 
-        __totalAmount += _amount;
+        totalRegisteredAmount += _amount;
 
         emit UserRegistered(_user, _amount);
     }
@@ -180,8 +182,8 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
         if (_users.length != _amounts.length) revert("Lengths not equal");
 
         // Gas ops
-        uint256 totalAmount = __totalAmount;
-        uint256 cachedTotalAmount = totalAmount;
+        uint256 _totalAmount = totalRegisteredAmount;
+        uint256 _cachedTotalAmount = _totalAmount;
 
         UserData memory data;
 
@@ -196,7 +198,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
             data.amount = _amounts[i];
             users[_users[i]] = data;
 
-            totalAmount += _amounts[i];
+            _totalAmount += _amounts[i];
 
             unchecked {
                 ++i;
@@ -204,8 +206,8 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
         }
 
         // Record new totals
-        if (cachedTotalAmount > totalAmount) revert Overflow();
-        __totalAmount = totalAmount;
+        if (_cachedTotalAmount > _totalAmount) revert Overflow();
+        totalRegisteredAmount = _totalAmount;
     }
 
     /// @notice init the contract with total amount.
@@ -216,7 +218,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     function init(IERC20 _token, uint256 _seededAmount, uint256 _initialUnlock) external onlyOwner {
         if (start > 0) revert Initialized();
         if (_seededAmount == 0) revert NoTokens();
-        if (__totalAmount > _seededAmount) revert NotEnough();
+        if (totalRegisteredAmount > _seededAmount) revert NotEnough();
 
         token = _token;
         uint256 availableToken = _token.balanceOf(address(this));
@@ -225,6 +227,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
         seeded = _seededAmount;
         start = block.timestamp;
 
+        if (_initialUnlock > 10_000) revert AmountNotValid();
         if (_initialUnlock > 0) {
             uint256 initialUnlockAmount = (_seededAmount * _initialUnlock) / 10_000;
 

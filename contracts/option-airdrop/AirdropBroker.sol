@@ -457,7 +457,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @notice Participate in phase 4 of the Airdrop. twTAP and Cassava guild's role are given TAP pro-rata.
     function _participatePhase4() internal returns (uint256 oTAPTokenID) {
         uint256 _eligibleAmount = phase4Users[msg.sender];
-        if (_eligibleAmount <= 0) revert NotEligible();
+        if (_eligibleAmount == 0) revert NotEligible();
 
         // Close eligibility
         phase4Users[msg.sender] = 0;
@@ -478,6 +478,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         uint256 tapAmount,
         uint256 discount
     ) internal {
+        if (tapAmount == 0) revert TapAmountNotValid();
+
         // Get TAP valuation
         uint256 otcAmountInUSD = tapAmount * epochTAPValuation;
 
@@ -495,7 +497,6 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         uint256 balAfter = _paymentToken.balanceOf(address(this));
         if (balAfter - balBefore != discountedPaymentAmount) revert Failed();
 
-        if (tapAmount == 0) revert TapAmountNotValid();
         tapOFT.transfer(msg.sender, tapAmount);
     }
 
