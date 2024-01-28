@@ -1,6 +1,6 @@
 import { scope } from 'hardhat/config';
-import { registerUserForVesting__task } from 'tasks/exec/01-vesting-registerUser';
-import { initVesting__task } from 'tasks/exec/02-vesting-init';
+import { registerUserForVesting__task } from 'tasks/exec/vesting/01-vesting-registerUser';
+import { initVesting__task } from 'tasks/exec/vesting/02-vesting-init';
 
 const vestingScope = scope('vesting', 'Vesting setter tasks');
 

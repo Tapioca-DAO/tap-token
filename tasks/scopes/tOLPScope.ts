@@ -1,8 +1,8 @@
 import { scope } from 'hardhat/config';
-import { setRegisterSGLOnTOLP__task } from 'tasks/exec/19-tolp-setRegisterSGL';
-import { setSglPoolWeightOnTOLP__task } from 'tasks/exec/20-tolp-setSglPoolWeight';
-import { activateSglPoolRescueOnTOLP__task } from 'tasks/exec/21-tolp-activateSglPoolRescue';
-import { unregisterSingularityOnTOLP__task } from 'tasks/exec/22-tolp-unregisterSingularity';
+import { setRegisterSGLOnTOLP__task } from 'tasks/exec/tolp/19-tolp-setRegisterSGL';
+import { setSglPoolWeightOnTOLP__task } from 'tasks/exec/tolp/20-tolp-setSglPoolWeight';
+import { activateSglPoolRescueOnTOLP__task } from 'tasks/exec/tolp/21-tolp-activateSglPoolRescue';
+import { unregisterSingularityOnTOLP__task } from 'tasks/exec/tolp/22-tolp-unregisterSingularity';
 import {
     setTOLPRegisterSingularity__task,
     setTOLPUnregisterSingularity__task,

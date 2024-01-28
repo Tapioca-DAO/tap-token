@@ -1,9 +1,9 @@
 import { scope } from 'hardhat/config';
-import { setMinWeightFactorOnTOB__task } from 'tasks/exec/14-tob-setMinWeightFactor';
-import { setTapOracleOnTOB__task } from 'tasks/exec/15-tob-setTapOracle';
-import { setPaymentTokenOnTOB__task } from 'tasks/exec/16-tob-setPaymentToken';
-import { setPaymentTokenBeneficiaryOnTOB__task } from 'tasks/exec/17-tob-setPaymentTokenBeneficiary';
-import { collectPaymentTokensOnTOB__task } from 'tasks/exec/18-tob-collectPaymentTokens';
+import { setMinWeightFactorOnTOB__task } from 'tasks/exec/tob/14-tob-setMinWeightFactor';
+import { setTapOracleOnTOB__task } from 'tasks/exec/tob/15-tob-setTapOracle';
+import { setPaymentTokenOnTOB__task } from 'tasks/exec/tob/16-tob-setPaymentToken';
+import { setPaymentTokenBeneficiaryOnTOB__task } from 'tasks/exec/tob/17-tob-setPaymentTokenBeneficiary';
+import { collectPaymentTokensOnTOB__task } from 'tasks/exec/tob/18-tob-collectPaymentTokens';
 import { setTOBPaymentToken__task } from 'tasks/exec/setterTasks';
 
 const tOBScope = scope('tob', 'TapiocaOptionBroker setter tasks');

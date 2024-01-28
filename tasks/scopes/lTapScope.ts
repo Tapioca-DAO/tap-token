@@ -1,5 +1,5 @@
 import { scope } from 'hardhat/config';
-import { setLockedUntilOnLtap__task } from 'tasks/exec/23-ltap-setLockedUntil';
+import { setLockedUntilOnLtap__task } from 'tasks/exec/ltap/23-ltap-setLockedUntil';
 
 const lTapScope = scope('ltap', 'LockedTap setter tasks');
 // --- LTAP

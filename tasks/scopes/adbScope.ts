@@ -1,11 +1,11 @@
 import { scope } from 'hardhat/config';
-import { setTapOracle__task } from 'tasks/exec/07-ab-setTapOracle';
-import { setPhase2MerkleRoots__task } from 'tasks/exec/08-ab-setPhase2MerkleRoots';
-import { registerUserForPhase__task } from 'tasks/exec/09-ab-registerUserForPhase';
-import { setPaymentTokenOnAB__task } from 'tasks/exec/10-ab-setPaymentToken';
-import { setPaymentTokenBeneficiaryAB__task } from 'tasks/exec/11-ab-setPaymentTokenBeneficiary';
-import { collectPaymentTokensOnAB__task } from 'tasks/exec/12-ab-collectPaymentTokens';
-import { daoRecoverTAPFromAB__task } from 'tasks/exec/13-ab-daoRecoverTAP';
+import { setTapOracle__task } from 'tasks/exec/adb/07-ab-setTapOracle';
+import { setPhase2MerkleRoots__task } from 'tasks/exec/adb/08-ab-setPhase2MerkleRoots';
+import { registerUserForPhase__task } from 'tasks/exec/adb/09-ab-registerUserForPhase';
+import { setPaymentTokenOnAB__task } from 'tasks/exec/adb/10-ab-setPaymentToken';
+import { setPaymentTokenBeneficiaryAB__task } from 'tasks/exec/adb/11-ab-setPaymentTokenBeneficiary';
+import { collectPaymentTokensOnAB__task } from 'tasks/exec/adb/12-ab-collectPaymentTokens';
+import { daoRecoverTAPFromAB__task } from 'tasks/exec/adb/13-ab-daoRecoverTAP';
 
 const adbScope = scope('adb', 'AirdropBroker setter tasks');
 
