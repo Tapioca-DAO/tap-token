@@ -430,6 +430,17 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         twTap = TwTAP(_twTap);
     }
 
+    /**
+     * @notice Un/Pauses this contract.
+     */
+    function setPause(bool _pauseState) external onlyOwner {
+        if (_pauseState) {
+            _pause();
+        } else {
+            _unpause();
+        }
+    }
+
     /// =====================
     /// Internal
     /// =====================

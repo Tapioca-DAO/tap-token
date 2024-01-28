@@ -313,6 +313,17 @@ contract TapiocaOptionLiquidityProvision is
         emit UnregisterSingularity(address(singularity), sglAssetID);
     }
 
+    /**
+     * @notice Un/Pauses this contract.
+     */
+    function setPause(bool _pauseState) external onlyOwner {
+        if (_pauseState) {
+            _pause();
+        } else {
+            _unpause();
+        }
+    }
+
     // =========
     //  INTERNAL
     // =========
