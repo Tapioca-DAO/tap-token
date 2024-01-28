@@ -31,6 +31,13 @@ abstract contract BaseTapToken is BaseTapiocaOmnichainEngine, BaseTapTokenMsgTyp
         BaseTapiocaOmnichainEngine(_name, _symbol, _endpoint, _owner)
     {}
 
+    error twTapNotSet();
+
+    modifier twTapExists() {
+        if (address(twTap) == address(0)) revert twTapNotSet();
+        _;
+    }
+
     /**
      * @notice set the twTAP address, can be done only once.
      */

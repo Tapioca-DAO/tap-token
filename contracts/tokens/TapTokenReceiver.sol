@@ -111,7 +111,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
      */
 
     // TODO sanitize the user to use approve on behalf of him
-    function _lockTwTapPositionReceiver(address _srcChainSender, bytes memory _data) internal virtual {
+    function _lockTwTapPositionReceiver(address _srcChainSender, bytes memory _data) internal virtual twTapExists {
         LockTwTapPositionMsg memory lockTwTapPositionMsg_ = TapTokenCodec.decodeLockTwpTapDstMsg(_data);
 
         /// @dev xChain owner needs to have approved dst srcChain `sendPacket()` msg.sender in a previous composedMsg. Or be the same address.
@@ -130,7 +130,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
      * @param _data The call data containing info about the lock.
      *          - unlockTwTapPositionMsg_::UnlockTwTapPositionMsg: Unlocking data.
      */
-    function _unlockTwTapPositionReceiver(bytes memory _data) internal virtual {
+    function _unlockTwTapPositionReceiver(bytes memory _data) internal virtual twTapExists {
         UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_ = TapTokenCodec.decodeUnlockTwTapPositionMsg(_data);
 
         // Send TAP to the user address.
@@ -145,7 +145,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
      *
      * @param _data The call data containing info about the transfer (LZSendParam).
      */
-    function _claimTwpTapRewardsReceiver(bytes memory _data) internal virtual {
+    function _claimTwpTapRewardsReceiver(bytes memory _data) internal virtual twTapExists {
         ClaimTwTapRewardsMsg memory claimTwTapRewardsMsg_ = TapTokenCodec.decodeClaimTwTapRewardsMsg(_data);
 
         // Claim rewards, make sure to have approved this contract on TwTap.
