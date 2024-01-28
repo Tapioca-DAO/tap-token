@@ -24,37 +24,33 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 contract LTap is BoringOwnable, ERC20Permit {
     using SafeERC20 for IERC20;
 
-    IERC20 immutable tapToken;
-    uint256 public lockedUntil;
-    uint256 public immutable maxLockedUntil;
+    IERC20 tapToken;
 
-    error StillLocked();
-    error TooLate();
+    error TapNotSet();
 
     /// @notice Creates a new LTAP token
     /// @dev LTAP tokens are minted by depositing TAP
-    /// @param _tapToken Address of the TAP token
-    /// @param _maxLockedUntil Latest possible end of locking period
-    constructor(IERC20 _tapToken, uint256 _maxLockedUntil) ERC20("LTAP", "LTAP") ERC20Permit("LTAP") {
-        tapToken = _tapToken;
-        lockedUntil = _maxLockedUntil;
-        maxLockedUntil = _maxLockedUntil;
+    constructor() ERC20("LTAP", "LTAP") ERC20Permit("LTAP") {}
+
+    modifier tapExists() {
+        if (address(tapToken) == address(0)) revert TapNotSet();
+        _;
+    }
+    /// @notice Sets the TAP token address
+    /// @param _tapToken The TAP token address
+
+    function setTapToken(address _tapToken) external onlyOwner {
+        tapToken = IERC20(_tapToken);
     }
 
-    function deposit(uint256 amount) external {
+    function deposit(uint256 amount) external onlyOwner tapExists {
         tapToken.safeTransferFrom(msg.sender, address(this), amount);
         _mint(msg.sender, amount);
     }
 
-    function redeem() external {
-        if (block.timestamp <= lockedUntil) revert StillLocked();
+    function redeem() external tapExists {
         uint256 amount = balanceOf(msg.sender);
         _burn(msg.sender, amount);
         tapToken.safeTransfer(msg.sender, amount);
-    }
-
-    function setLockedUntil(uint256 _lockedUntil) external onlyOwner {
-        if (_lockedUntil > maxLockedUntil) revert TooLate();
-        lockedUntil = _lockedUntil;
     }
 }
