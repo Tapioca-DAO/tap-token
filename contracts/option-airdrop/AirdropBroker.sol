@@ -99,7 +99,6 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
 
     /// =====-------======
 
-    error OnlyBroker();
     error PaymentTokenNotValid();
     error OptionExpired();
     error TooHigh();
@@ -116,20 +115,19 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     error PaymentAmountNotValid();
     error TapAmountNotValid();
     error PaymentTokenValuationNotValid();
+    error TapOracleNotSet();
 
     constructor(
         address _aoTAP,
         address payable _tapOFT,
         address _pcnft,
         address _paymentTokenBeneficiary,
-        address _tapOracle,
         address _owner
     ) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         tapOFT = TapToken(_tapOFT);
         aoTAP = AOTAP(_aoTAP);
         PCNFT = IERC721(_pcnft);
-        tapOracle = ITapiocaOracle(_tapOracle);
         owner = _owner;
     }
 
@@ -144,6 +142,11 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     event SetPaymentToken(ERC20 paymentToken, ITapiocaOracle oracle, bytes oracleData);
     event SetTapOracle(ITapiocaOracle oracle, bytes oracleData);
     event Phase2MerkleRootsUpdated();
+
+    modifier tapOracleExists() {
+        if (address(tapOracle) == address(0)) revert TapOracleNotSet();
+        _;
+    }
 
     // ==========
     //    READ
@@ -161,6 +164,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     function getOTCDealDetails(uint256 _aoTAPTokenID, ERC20 _paymentToken, uint256 _tapAmount)
         external
         view
+        tapOracleExists
         returns (uint256 eligibleTapAmount, uint256 paymentTokenAmount, uint256 tapAmount)
     {
         // Load data
@@ -198,7 +202,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
 
     /// @notice Participate in the airdrop
     /// @param _data The data to be used for the participation, varies by phases
-    function participate(bytes calldata _data) external whenNotPaused returns (uint256 aoTAPTokenID) {
+    function participate(bytes calldata _data) external whenNotPaused tapOracleExists returns (uint256 aoTAPTokenID) {
         uint256 cachedEpoch = epoch;
         if (cachedEpoch == 0) revert NotStarted();
         if (cachedEpoch > LAST_EPOCH) revert Ended();
@@ -221,7 +225,11 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @param _aoTAPTokenID tokenId of the aoTAP position, position must be active
     /// @param _paymentToken Address of the payment token to use, must be whitelisted
     /// @param _tapAmount Amount of TAP to exercise. If 0, the full amount is exercised
-    function exerciseOption(uint256 _aoTAPTokenID, ERC20 _paymentToken, uint256 _tapAmount) external whenNotPaused {
+    function exerciseOption(uint256 _aoTAPTokenID, ERC20 _paymentToken, uint256 _tapAmount)
+        external
+        whenNotPaused
+        tapOracleExists
+    {
         // Load data
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(_aoTAPTokenID);
         if (aoTapOption.expiry < block.timestamp) revert OptionExpired();
@@ -255,7 +263,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     }
 
     /// @notice Start a new epoch, extract TAP from the TapOFT contract,
-    function newEpoch() external {
+    function newEpoch() external tapOracleExists {
         if (block.timestamp < lastEpochUpdate + EPOCH_DURATION) {
             revert TooSoon();
         }
