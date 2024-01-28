@@ -4,9 +4,10 @@ import { TContract, TLocalDeployment } from 'tapioca-sdk/dist/shared';
 import { EChainID } from '@tapioca-sdk/api/config';
 import { loadVM } from '../utils';
 import { Multicall3 } from '@tapioca-sdk/typechain/tapioca-periphery';
-import { TapOFTV2__factory } from '@typechain/index';
+import { TapToken__factory } from '@typechain/index';
 
-export const setEnforcedOptions_task = async (
+// hh deployTapOFT -network goerli
+export const setToePeers__task = async (
     taskArgs: {
         target: string;
     },
@@ -29,7 +30,7 @@ export const setEnforcedOptions_task = async (
     const localDeployments = hre.SDK.db.readDeployment('local', {
         tag,
     }) as TLocalDeployment;
-    const localContract = localDeployments[chainInfo.chainId]?.find(
+    const localContract = localDeployments[chainInfo.chainId]?.contracts.find(
         (e) => e.name === taskArgs.target,
     );
     if (!localContract) {
@@ -40,18 +41,18 @@ export const setEnforcedOptions_task = async (
     const links = await getLinkedContract(hre, tag, localContract);
 
     // Transfer Ownership at the beginning of the calls
-    const tapOFTv2 = await hre.ethers.getContractAt(
-        'TapOFTV2',
+    const tapToken = await hre.ethers.getContractAt(
+        'TapToken',
         localContract.address,
     );
-    await (await tapOFTv2.transferOwnership(multicall.address)).wait(3);
+    await (await tapToken.transferOwnership(multicall.address)).wait(3);
 
     // Prepare calls
-    const calls: IMulticall3.Call3Struct[] = [];
+    const calls: Multicall3.CallStruct[] = [];
     for (const link of links) {
         calls.push({
             target: localContract.address,
-            callData: TapOFTV2__factory.createInterface().encodeFunctionData(
+            callData: TapToken__factory.createInterface().encodeFunctionData(
                 'setPeer',
                 [
                     link.lzChainId,
@@ -68,7 +69,7 @@ export const setEnforcedOptions_task = async (
     // Transfer Ownership at the end of the calls
     calls.push({
         target: localContract.address,
-        callData: TapOFTV2__factory.createInterface().encodeFunctionData(
+        callData: TapToken__factory.createInterface().encodeFunctionData(
             'transferOwnership',
             [signer.address],
         ),
@@ -99,7 +100,7 @@ async function getLinkedContract(
 
     // For each chain, get the matching contract
     for (const chainId of localChainIds) {
-        const linked = localDeployments[chainId].find(
+        const linked = localDeployments[chainId].contracts.find(
             (e) => e.name === contractToConf.name,
         );
         if (linked) {
