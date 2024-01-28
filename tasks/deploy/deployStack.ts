@@ -6,13 +6,13 @@ import {
 import { TAP_DISTRIBUTION } from '@tapioca-sdk/api/constants';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { buildTOLP } from '../deployBuilds/options/buildTOLP';
-import { buildOTAP } from '../deployBuilds/options/03-buildOTAP';
-import { buildTOB } from '../deployBuilds/options/04-buildTOB';
-import { buildTwTap } from '../deployBuilds/options/04-deployTwTap';
-import { buildAfterDepSetup } from '../deployBuilds/afterDepSetup/05-buildAfterDepSetup';
+import { buildOTAP } from '../deployBuilds/options/buildOTAP';
+import { buildTOB } from '../deployBuilds/options/buildTOB';
+import { buildTwTap } from '../deployBuilds/options/deployTwTap';
+import { buildStackPostDepSetup } from '../deployBuilds/postDepSetup/buildStackPostDepSetup';
 import { buildTapTokenReceiverModule } from '../deployBuilds/options/tapToken/buildTapTokenReceiverModule';
 import { buildTapTokenSenderModule } from '../deployBuilds/options/tapToken/buildTapTokenSenderModule';
-import { buildVesting } from '../deployBuilds/buildVesting';
+import { buildVesting } from '../deployBuilds/vesting/buildVesting';
 import { loadVM } from '../utils';
 import { buildTapToken } from 'tasks/deployBuilds/options/tapToken/buildTapToken';
 
@@ -198,7 +198,7 @@ export const deployStack__task = async (
     // After deployment setup
 
     console.log('[+] After deployment setup');
-    const calls = await buildAfterDepSetup(hre, vmList);
+    const calls = await buildStackPostDepSetup(hre, vmList);
 
     // Execute
     console.log('[+] Number of calls:', calls.length);

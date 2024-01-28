@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { TDeploymentVMContract } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
 
-export const buildAfterDepSetup = async (
+export const buildLbpStackPostDepSetup = async (
     hre: HardhatRuntimeEnvironment,
     deps: TDeploymentVMContract[],
 ): Promise<Multicall3.CallStruct[]> => {
