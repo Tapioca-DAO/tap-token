@@ -12,7 +12,7 @@ contract ADBOracleMock is ITapiocaOracle {
     constructor() {}
     function decimals() external view virtual override returns (uint8) {}
 
-    function get(bytes calldata data) external pure override returns (bool success, uint256 rate) {
+    function get(bytes calldata) external pure override returns (bool success, uint256 rate) {
         return (true, 1e18);
     }
 

@@ -373,7 +373,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];
         uint256 netAmount = uint256(netDepositedForEpoch[cachedEpoch][tOLPLockPosition.sglAssetID]);
-        if (netAmount <= 0) revert NoLiquidity();
+        if (netAmount == 0) revert NoLiquidity();
         uint256 eligibleTapAmount = muldiv(tOLPLockPosition.ybShares, gaugeTotalForEpoch, netAmount);
         eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         if (eligibleTapAmount < _tapAmount) revert TooHigh();
@@ -511,7 +511,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     /// @param _lock The lock position
     /// @return isPositionActive True if the position is active
     function _isPositionActive(LockPosition memory _lock) internal view returns (bool isPositionActive) {
-        if (_lock.lockTime <= 0) revert PositionNotValid();
+        if (_lock.lockTime == 0) revert PositionNotValid();
         if (_isSGLInRescueMode(_lock)) revert SingularityInRescueMode();
 
         uint256 expiryWeek = _timestampToWeek(_lock.lockTime + _lock.lockDuration);
@@ -563,7 +563,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         uint256 _discount,
         uint256 _paymentTokenDecimals
     ) internal pure returns (uint256 paymentAmount) {
-        if (_paymentTokenValuation <= 0) revert PaymentTokenValuationNotValid();
+        if (_paymentTokenValuation == 0) revert PaymentTokenValuationNotValid();
 
         uint256 discountedOTCAmountInUSD = _otcAmountInUSD - muldiv(_otcAmountInUSD, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
 
