@@ -216,13 +216,32 @@ abstract contract BaseTapOFT is OFTV2 {
         if (rewardTokens.length != rewardClaimSendParams.length)
             revert LengthMismatch();
 
+        (, uint256 dstExtraGas, uint256 airdropAmount, ) = LzLib
+            .decodeAdapterParams(adapterParams);
+
+        uint256 len = rewardClaimSendParams.length;
+        uint ethSum = 0;
+        for (uint256 i; i < len; i++) {
+            ethSum += rewardClaimSendParams[i].ethValue;
+        }
+
+        if (airdropAmount < ethSum) revert TooSmall();
+
         bytes memory lzPayload = abi.encode(
             PT_CLAIM_REWARDS, // packet type
             msg.sender,
             to,
             tokenID,
             rewardTokens,
-            rewardClaimSendParams
+            rewardClaimSendParams,
+            airdropAmount
+        );
+
+        _checkAdapterParams(
+            lzDstChainId,
+            PT_CLAIM_REWARDS,
+            adapterParams,
+            dstExtraGas
         );
 
         _checkGasLimit(
@@ -361,13 +380,23 @@ abstract contract BaseTapOFT is OFTV2 {
         bytes calldata adapterParams,
         LzCallParams calldata twTapSendBackAdapterParams
     ) external payable {
+        (, uint256 dstExtraGas, uint256 airdropAmount, ) = LzLib
+            .decodeAdapterParams(adapterParams);
         bytes memory lzPayload = abi.encode(
             PT_UNLOCK_TWTAP, // packet type
             msg.sender,
             to,
             msg.sender,
             tokenID,
-            twTapSendBackAdapterParams
+            twTapSendBackAdapterParams,
+            airdropAmount
+        );
+
+        _checkAdapterParams(
+            lzDstChainId,
+            PT_UNLOCK_TWTAP,
+            adapterParams,
+            dstExtraGas
         );
 
         _checkGasLimit(
@@ -405,10 +434,19 @@ abstract contract BaseTapOFT is OFTV2 {
             address to,
             address sender,
             uint256 tokenID,
-            LzCallParams memory twTapSendBackAdapterParams
+            LzCallParams memory twTapSendBackAdapterParams,
+            uint256 airdropAmount
         ) = abi.decode(
                 _payload,
-                (uint16, address, address, address, uint256, LzCallParams)
+                (
+                    uint16,
+                    address,
+                    address,
+                    address,
+                    uint256,
+                    LzCallParams,
+                    uint256
+                )
             );
 
         // Only the owner can unlock
@@ -425,7 +463,7 @@ abstract contract BaseTapOFT is OFTV2 {
             }
 
             // Transfer them to the user
-            this.sendFrom{value: address(this).balance}(
+            this.sendFrom{value: airdropAmount}(
                 address(this),
                 _srcChainId,
                 LzLib.addressToBytes32(to),
