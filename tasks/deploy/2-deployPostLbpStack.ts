@@ -1,3 +1,4 @@
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
     EChainID,
     ELZChainID,
@@ -7,14 +8,12 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { buildTapToken } from 'tasks/deployBuilds/finalStack/options/tapToken/buildTapToken';
 import { buildADB } from 'tasks/deployBuilds/postLbpStack/airdrop/buildADB';
 import { buildAOTAP } from 'tasks/deployBuilds/postLbpStack/airdrop/buildAOTAP';
-import { buildStackPostDepSetup } from '../deployBuilds/finalStack/buildFinalStackPostDepSetup';
+import { buildPostLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/buildPostLbpStackPostDepSetup';
 import { buildTapTokenReceiverModule } from '../deployBuilds/finalStack/options/tapToken/buildTapTokenReceiverModule';
 import { buildTapTokenSenderModule } from '../deployBuilds/finalStack/options/tapToken/buildTapTokenSenderModule';
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
 import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { buildLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/buildPostLbpStackPostDepSetup';
 
 export const deployPostLbpStack__task = async (
     taskArgs: { tag?: string; load?: boolean },
@@ -72,7 +71,7 @@ export const deployPostLbpStack__task = async (
     // After deployment setup
 
     console.log('[+] After deployment setup');
-    const calls = await buildLbpStackPostDepSetup(hre, tag);
+    const calls = await buildPostLbpStackPostDepSetup(hre, tag);
 
     // Execute
     // TODO Move this to SDK

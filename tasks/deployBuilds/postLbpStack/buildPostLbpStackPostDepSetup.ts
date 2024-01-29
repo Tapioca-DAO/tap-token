@@ -1,9 +1,9 @@
 import { EChainID } from '@tapioca-sdk/api/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
-import { DEPLOY_CONFIG } from 'tasks/deploy/DEPLOY_CONFIG';
+import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from 'tasks/deploy/DEPLOY_CONFIG';
 
-export const buildLbpStackPostDepSetup = async (
+export const buildPostLbpStackPostDepSetup = async (
     hre: HardhatRuntimeEnvironment,
     tag: string,
 ): Promise<Multicall3.CallStruct[]> => {
@@ -54,7 +54,8 @@ export const buildLbpStackPostDepSetup = async (
     /**
      * Set USDC as payment token in ADB
      */
-    const usdcAddr = DEPLOY_CONFIG[EChainID.ARBITRUM].ADB.USDC_PAYMENT_TOKEN;
+    const usdcAddr =
+        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].ADB.USDC_PAYMENT_TOKEN;
     if (
         (await adb.paymentTokens(usdcAddr)).oracle.toLocaleLowerCase() !==
         usdcAddr.toLocaleLowerCase()
@@ -86,56 +87,27 @@ export const buildLbpStackPostDepSetup = async (
 };
 
 async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
-    const validateAddress = (addr: any, contractName: string) => {
-        if (!addr) {
-            throw new Error(
-                `[-] ${contractName} not found on chain ${hre.network.name} tag ${tag}`,
-            );
-        }
-    };
-
-    const tapTokenDeployment = hre.SDK.db.findLocalDeployment(
-        String(hre.network.config.chainId),
-        'TapToken',
+    const aoTapDeployment = getContract(
+        hre,
         tag,
-    )!;
-    validateAddress(tapTokenDeployment, 'TapToken');
+        DEPLOYMENT_NAMES.AOTAP,
+    ).address;
 
-    const adbDeployment = hre.SDK.db.findLocalDeployment(
-        String(hre.network.config.chainId),
-        'AirdropBroker',
+    const tapOracleDeployment = getContract(
+        hre,
         tag,
-    )!;
-    validateAddress(adbDeployment, 'AirdropBroker');
+        DEPLOYMENT_NAMES.TAP_ORACLE,
+    ).address;
 
-    const aoTapDeployment = hre.SDK.db.findLocalDeployment(
-        String(hre.network.config.chainId),
-        'AoTap',
-        tag,
-    )!;
-    validateAddress(adbDeployment, 'AirdropBroker');
-
-    const tapOracleDeployment = hre.SDK.db.findLocalDeployment(
-        String(hre.network.config.chainId),
-        'TapOracle',
-        tag,
-    )!;
-    validateAddress(adbDeployment, 'TapOracle');
-
-    const usdcOracleDeployment = hre.SDK.db.findLocalDeployment(
-        String(hre.network.config.chainId),
-        'UsdcOracle',
-        tag,
-    )!;
-    validateAddress(adbDeployment, 'UsdcOracle');
+    const usdcOracleDeployment = getContract(hre, tag, 'USDC_ORACLE').address; // TODO load the name from the SDK and centralize each repo config in the SDK
 
     const tapToken = await hre.ethers.getContractAt(
         'TapToken',
-        tapTokenDeployment.address,
+        getContract(hre, tag, DEPLOYMENT_NAMES.TAP_TOKEN).address,
     );
     const adb = await hre.ethers.getContractAt(
         'AirdropBroker',
-        adbDeployment.address,
+        getContract(hre, tag, DEPLOYMENT_NAMES.AIRDROP_BROKER).address,
     );
 
     return {
@@ -145,4 +117,22 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         usdcOracleDeployment,
         aoTapDeployment,
     };
+}
+
+function getContract(
+    hre: HardhatRuntimeEnvironment,
+    tag: string,
+    contractName: string,
+) {
+    const contract = hre.SDK.db.findLocalDeployment(
+        String(hre.network.config.chainId),
+        contractName,
+        tag,
+    )!;
+    if (!contract) {
+        throw new Error(
+            `[-] ${contractName} not found on chain ${hre.network.name} tag ${tag}`,
+        );
+    }
+    return contract;
 }
