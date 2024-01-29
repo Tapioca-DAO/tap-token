@@ -375,10 +375,10 @@ describe('TapiocaOptionLiquidityProvision', () => {
         expect(await tOLP.totalSingularityPoolWeights()).to.be.eq(2);
 
         await expect(
-            tOLP.connect(users[0]).setSGLPoolWEight(sglTokenMock.address, 1),
+            tOLP.connect(users[0]).setSGLPoolWeight(sglTokenMock.address, 1),
         ).to.be.reverted;
 
-        await expect(tOLP.setSGLPoolWEight(sglTokenMock.address, 4))
+        await expect(tOLP.setSGLPoolWeight(sglTokenMock.address, 4))
             .to.emit(tOLP, 'SetSGLPoolWeight')
             .withArgs(sglTokenMock.address, 4);
 

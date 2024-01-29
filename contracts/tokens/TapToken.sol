@@ -389,7 +389,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
             // Push unclaimed emission from last week to the current week
             unclaimed = emissionForWeek[week - 1] - mintedInWeek[week - 1];
         }
-        uint256 emission = uint256(_computeEmission());
+        uint256 emission = _computeEmission();
         emission += unclaimed;
 
         // Boosted TAP is burned and added to the emission to be minted on demand later on in `extractTAP()`

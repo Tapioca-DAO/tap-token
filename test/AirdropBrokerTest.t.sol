@@ -31,7 +31,7 @@ contract AirdropBrokerTestMock is AirdropBroker {
         address _PAYMENT_TOKEN_BENEFICIARY,
         address TAP_ORACLE,
         address _OWNER
-    ) AirdropBroker(_AOTAP, _TAPOFT, _PCNFT, _PAYMENT_TOKEN_BENEFICIARY, TAP_ORACLE, _OWNER) {}
+    ) AirdropBroker(_AOTAP, _PCNFT, _PAYMENT_TOKEN_BENEFICIARY, _OWNER) {}
 }
 
 contract AirdropBrokerTest is Test {

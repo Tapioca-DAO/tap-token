@@ -694,7 +694,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2,
             sglTokenMock2Asset,
         );
-        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await tOLP.setSGLPoolWeight(sglTokenMock.address, 2);
 
         await tOB.setPaymentToken(
             stableMock.address,
@@ -778,7 +778,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2,
             sglTokenMock2Asset,
         );
-        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await tOLP.setSGLPoolWeight(sglTokenMock.address, 2);
 
         await tOB.setPaymentToken(
             stableMock.address,
@@ -1046,7 +1046,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2,
             sglTokenMock2Asset,
         );
-        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await tOLP.setSGLPoolWeight(sglTokenMock.address, 2);
 
         await tOB.setPaymentToken(
             stableMock.address,
@@ -1464,7 +1464,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2,
             sglTokenMock2Asset,
         );
-        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await tOLP.setSGLPoolWeight(sglTokenMock.address, 2);
 
         await tOB.setPaymentToken(
             stableMock.address,
@@ -1906,7 +1906,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2,
             sglTokenMock2Asset,
         );
-        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await tOLP.setSGLPoolWeight(sglTokenMock.address, 2);
 
         await tOB.setPaymentToken(
             stableMock.address,
@@ -2058,7 +2058,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2,
             sglTokenMock2Asset,
         );
-        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await tOLP.setSGLPoolWeight(sglTokenMock.address, 2);
 
         await tOB.setPaymentToken(
             stableMock.address,
@@ -2148,7 +2148,7 @@ describe('TapiocaOptionBroker', () => {
             sglTokenMock2,
             sglTokenMock2Asset,
         );
-        await tOLP.setSGLPoolWEight(sglTokenMock.address, 2);
+        await tOLP.setSGLPoolWeight(sglTokenMock.address, 2);
 
         await tOB.setPaymentToken(
             stableMock.address,

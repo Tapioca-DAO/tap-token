@@ -236,7 +236,7 @@ contract TapiocaOptionLiquidityProvision is
     /// @notice Sets the pool weight of a given singularity market
     /// @param singularity Singularity market address
     /// @param weight Weight of the pool
-    function setSGLPoolWEight(IERC20 singularity, uint256 weight) external onlyOwner updateTotalSGLPoolWeights {
+    function setSGLPoolWeight(IERC20 singularity, uint256 weight) external onlyOwner updateTotalSGLPoolWeights {
         if (activeSingularities[singularity].sglAssetID == 0) {
             revert NotRegistered();
         }

@@ -139,7 +139,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
     /// @notice claim available tokens
     /// @dev claim works for msg.sender
     function claim() external nonReentrant {
-        if (start == 0 || seeded == 0) revert NotStarted();
+        if (start == 0) revert NotStarted();
         uint256 _claimable = claimable(msg.sender);
         if (_claimable == 0) revert NothingToClaim();
 
@@ -197,6 +197,7 @@ contract Vesting is BoringOwnable, ReentrancyGuard {
             // Effects
             data.amount = _amounts[i];
             users[_users[i]] = data;
+            emit UserRegistered(_users[i], _amounts[i]);
 
             _totalAmount += _amounts[i];
 
