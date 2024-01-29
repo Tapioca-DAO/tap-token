@@ -14,6 +14,7 @@ import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting'
 import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { buildLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/buildPostLbpStackPostDepSetup';
 
 export const deployPostLbpStack__task = async (
     taskArgs: { tag?: string; load?: boolean },
@@ -71,9 +72,10 @@ export const deployPostLbpStack__task = async (
     // After deployment setup
 
     console.log('[+] After deployment setup');
-    const calls = await buildStackPostDepSetup(hre, vmList);
+    const calls = await buildLbpStackPostDepSetup(hre, tag);
 
     // Execute
+    // TODO Move this to SDK
     console.log('[+] Number of calls:', calls.length);
     const multicall = await VM.getMulticall();
     try {
