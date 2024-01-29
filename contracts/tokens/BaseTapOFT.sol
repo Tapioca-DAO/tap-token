@@ -181,6 +181,8 @@ abstract contract BaseTapOFT is OFTV2 {
                 _reason.length > 1000 ? bytes("Reason too long") : _reason
             );
         }
+
+        emit ReceiveFromChain(_srcChainId, to, amount);
     }
 
     /// ------------------------------
@@ -329,6 +331,8 @@ abstract contract BaseTapOFT is OFTV2 {
                 _reason.length > 1000 ? bytes("Reason too long") : _reason
             );
         }
+
+        emit ReceiveFromChain(_srcChainId, to, 0);
     }
 
     /// --------------------------
@@ -446,6 +450,8 @@ abstract contract BaseTapOFT is OFTV2 {
                 _reason.length > 1000 ? bytes("Reason too long") : _reason
             );
         }
+
+        emit ReceiveFromChain(_srcChainId, to, 0);
     }
 
     /// @notice rescues unused ETH from the contract
