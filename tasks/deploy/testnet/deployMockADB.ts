@@ -4,8 +4,8 @@ import MerkleTree from 'merkletreejs';
 import { TDeploymentVMContract } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
 import { ERC721Mock__factory } from '@tapioca-sdk/typechain/tapioca-mocks';
-import { buildADB } from '../../deployBuilds/airdrop/buildADB';
-import { buildAOTAP } from '../../deployBuilds/airdrop/buildAOTAP';
+import { buildADB } from '../../deployBuilds/postLbpStack/airdrop/buildADB';
+import { buildAOTAP } from '../../deployBuilds/postLbpStack/airdrop/buildAOTAP';
 import { buildERC721Mock } from '../../deployBuilds/mocks/buildERC721Mock';
 import { buildERC20Mock } from '../../deployBuilds/mocks/buildMockERC20';
 import { buildOracleMock } from '../../deployBuilds/mocks/buildOracleMock';
@@ -26,7 +26,8 @@ export const deployMockADB__task = async (
             'default',
             String(hre.network.config.chainId),
         );
-        VM.load(data);
+        if (!data) throw new Error('[-] No data found');
+        VM.load(data.contracts);
     } else {
         // Build contracts
         VM.add(await buildAOTAP(hre, 'aoTAPMock', [signer.address]))

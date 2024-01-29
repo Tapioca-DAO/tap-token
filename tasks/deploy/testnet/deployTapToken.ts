@@ -1,12 +1,12 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { buildTapToken } from '../../deployBuilds/options/tapToken/buildTapToken';
+import { buildTapToken } from '../../deployBuilds/finalStack/options/tapToken/buildTapToken';
 import { loadVM } from '../../utils';
 import { TAP_DISTRIBUTION } from '@tapioca-sdk/api/constants';
 import { EChainID, ELZChainID } from '@tapioca-sdk/api/config';
 import inquirer from 'inquirer';
-import { buildTapTokenSenderModule } from '../../deployBuilds/options/tapToken/buildTapTokenSenderModule';
-import { buildTapTokenReceiverModule } from '../../deployBuilds/options/tapToken/buildTapTokenReceiverModule';
-import { buildTapTokenHelper } from '../../deployBuilds/options/tapToken/buildTapTokenHelper';
+import { buildTapTokenSenderModule } from '../../deployBuilds/finalStack/options/tapToken/buildTapTokenSenderModule';
+import { buildTapTokenReceiverModule } from '../../deployBuilds/finalStack/options/tapToken/buildTapTokenReceiverModule';
+import { buildTapTokenHelper } from '../../deployBuilds/finalStack/options/tapToken/buildTapTokenHelper';
 
 // hh deployTapOFT -network goerli
 export const deployTapToken__task = async (

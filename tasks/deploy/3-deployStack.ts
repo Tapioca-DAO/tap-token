@@ -5,16 +5,16 @@ import {
 } from '@tapioca-sdk/api/config';
 import { TAP_DISTRIBUTION } from '@tapioca-sdk/api/constants';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { buildTOLP } from '../deployBuilds/options/buildTOLP';
-import { buildOTAP } from '../deployBuilds/options/buildOTAP';
-import { buildTOB } from '../deployBuilds/options/buildTOB';
-import { buildTwTap } from '../deployBuilds/options/deployTwTap';
-import { buildStackPostDepSetup } from '../deployBuilds/postDepSetup/buildStackPostDepSetup';
-import { buildTapTokenReceiverModule } from '../deployBuilds/options/tapToken/buildTapTokenReceiverModule';
-import { buildTapTokenSenderModule } from '../deployBuilds/options/tapToken/buildTapTokenSenderModule';
-import { buildVesting } from '../deployBuilds/vesting/buildVesting';
+import { buildTOLP } from '../deployBuilds/finalStack/options/buildTOLP';
+import { buildOTAP } from '../deployBuilds/finalStack/options/buildOTAP';
+import { buildTOB } from '../deployBuilds/finalStack/options/buildTOB';
+import { buildTwTap } from '../deployBuilds/finalStack/options/deployTwTap';
+import { buildStackPostDepSetup } from '../deployBuilds/finalStack/buildFinalStackPostDepSetup';
+import { buildTapTokenReceiverModule } from '../deployBuilds/finalStack/options/tapToken/buildTapTokenReceiverModule';
+import { buildTapTokenSenderModule } from '../deployBuilds/finalStack/options/tapToken/buildTapTokenSenderModule';
+import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
 import { loadVM } from '../utils';
-import { buildTapToken } from 'tasks/deployBuilds/options/tapToken/buildTapToken';
+import { buildTapToken } from 'tasks/deployBuilds/finalStack/options/tapToken/buildTapToken';
 
 // hh deployStack --type build --network goerli
 export const deployStack__task = async (
