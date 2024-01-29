@@ -104,6 +104,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     error SingularityInRescueMode();
     error PaymentTokenValuationNotValid();
     error LockExpired();
+    error AdvanceEpochFirst();
 
     constructor(
         address _tOLP,
@@ -225,7 +226,9 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         // Compute option parameters
         LockPosition memory lock = tOLP.getLock(_tOLPTokenID);
         uint128 lockExpiry = lock.lockTime + lock.lockDuration;
+
         if (block.timestamp >= lockExpiry) revert LockExpired();
+        if (_timestampToWeek(block.timestamp) > epoch) revert AdvanceEpochFirst();
 
         bool isPositionActive = _isPositionActive(lock);
         if (!isPositionActive) revert OptionExpired();
