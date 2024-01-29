@@ -123,6 +123,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     error LockNotExpired();
     error LockNotAWeek();
     error LockTooLong();
+    error AdvanceEpochFirst();
 
     /// =====-------======
     constructor(address payable _tapOFT, address _owner)
@@ -287,6 +288,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     {
         if (_duration < EPOCH_DURATION) revert LockNotAWeek();
         if (_duration > MAX_LOCK_DURATION) revert LockTooLong();
+        if (_timestampToWeek(block.timestamp) > epoch) revert AdvanceEpochFirst();
 
         // Transfer TAP to this contract
         tapOFT.transferFrom(msg.sender, address(this), _amount);
