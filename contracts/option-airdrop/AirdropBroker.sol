@@ -79,7 +79,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     // [OG Pearls, Tapiocans, Oysters, Cassava]
     bytes32[4] public phase2MerkleRoots; // merkle root of phase 2 airdrop
     uint8[4] public PHASE_2_AMOUNT_PER_USER = [200, 200, 190, 190];
-    uint8[4] public PHASE_2_DISCOUNT_PER_USER = [50, 40, 33, 25];
+    uint24[4] public PHASE_2_DISCOUNT_PER_USER = [500_000, 400_000, 330_000, 250_000];
 
     /// =====-------======
     ///      Phase 3
@@ -428,7 +428,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         // Mint aoTAP
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
         uint256 eligibleAmount = uint256(PHASE_2_AMOUNT_PER_USER[_role]) * 1e18;
-        uint128 discount = uint128(PHASE_2_DISCOUNT_PER_USER[_role]) * 1e4;
+        uint128 discount = uint128(PHASE_2_DISCOUNT_PER_USER[_role]);
         oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
     }
 
