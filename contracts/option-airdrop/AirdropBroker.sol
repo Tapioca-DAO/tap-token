@@ -39,13 +39,15 @@ struct Phase2Info {
     uint8[4] discountsPerUsers;
 }
 
-/// @notice More details found here https://docs.tapioca.xyz/tapioca/launch/option-airdrop
+/**
+ * @notice More details found here https://docs.tapioca.xyz/tapioca/launch/option-airdrop
+ */
 contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     bytes public tapOracleData;
     ITapiocaOracle public tapOracle;
-    TapToken public immutable tapOFT;
+    TapToken public tapToken;
     AOTAP public immutable aoTAP;
     IERC721 public immutable PCNFT;
 
@@ -115,17 +117,11 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     error PaymentAmountNotValid();
     error TapAmountNotValid();
     error PaymentTokenValuationNotValid();
+    error TapNotSet();
     error TapOracleNotSet();
 
-    constructor(
-        address _aoTAP,
-        address payable _tapOFT,
-        address _pcnft,
-        address _paymentTokenBeneficiary,
-        address _owner
-    ) {
+    constructor(address _aoTAP, address _pcnft, address _paymentTokenBeneficiary, address _owner) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
-        tapOFT = TapToken(_tapOFT);
         aoTAP = AOTAP(_aoTAP);
         PCNFT = IERC721(_pcnft);
         owner = _owner;
@@ -143,8 +139,9 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     event SetTapOracle(ITapiocaOracle oracle, bytes oracleData);
     event Phase2MerkleRootsUpdated();
 
-    modifier tapOracleExists() {
+    modifier tapExists() {
         if (address(tapOracle) == address(0)) revert TapOracleNotSet();
+        if (address(tapToken) == address(0)) revert TapNotSet();
         _;
     }
 
@@ -164,7 +161,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     function getOTCDealDetails(uint256 _aoTAPTokenID, ERC20 _paymentToken, uint256 _tapAmount)
         external
         view
-        tapOracleExists
+        tapExists
         returns (uint256 eligibleTapAmount, uint256 paymentTokenAmount, uint256 tapAmount)
     {
         // Load data
@@ -202,7 +199,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
 
     /// @notice Participate in the airdrop
     /// @param _data The data to be used for the participation, varies by phases
-    function participate(bytes calldata _data) external whenNotPaused tapOracleExists returns (uint256 aoTAPTokenID) {
+    function participate(bytes calldata _data) external whenNotPaused tapExists returns (uint256 aoTAPTokenID) {
         uint256 cachedEpoch = epoch;
         if (cachedEpoch == 0) revert NotStarted();
         if (cachedEpoch > LAST_EPOCH) revert Ended();
@@ -228,7 +225,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     function exerciseOption(uint256 _aoTAPTokenID, ERC20 _paymentToken, uint256 _tapAmount)
         external
         whenNotPaused
-        tapOracleExists
+        tapExists
     {
         // Load data
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(_aoTAPTokenID);
@@ -262,8 +259,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         emit ExerciseOption(cachedEpoch, msg.sender, _paymentToken, _aoTAPTokenID, chosenAmount);
     }
 
-    /// @notice Start a new epoch, extract TAP from the TapOFT contract,
-    function newEpoch() external tapOracleExists {
+    /// @notice Start a new epoch, extract TAP from the tapToken contract,
+    function newEpoch() external tapExists {
         if (block.timestamp < lastEpochUpdate + EPOCH_DURATION) {
             revert TooSoon();
         }
@@ -293,9 +290,14 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     //   OWNER
     // =========
 
-    /// @notice Set the TapOFT Oracle address and data
-    /// @param _tapOracle The new TapOFT Oracle address
-    /// @param _tapOracleData The new TapOFT Oracle data
+    function setTapToken(address payable _tapToken) external onlyOwner {
+        if (address(tapToken) != address(0)) revert NotValid();
+        tapToken = TapToken(_tapToken);
+    }
+
+    /// @notice Set the tapToken Oracle address and data
+    /// @param _tapOracle The new tapToken Oracle address
+    /// @param _tapOracleData The new tapToken Oracle data
     function setTapOracle(ITapiocaOracle _tapOracle, bytes calldata _tapOracleData) external onlyOwner {
         tapOracle = _tapOracle;
         tapOracleData = _tapOracleData;
@@ -374,7 +376,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     function daoRecoverTAP() external onlyOwner {
         if (epoch <= LAST_EPOCH) revert TooSoon();
 
-        tapOFT.transfer(msg.sender, tapOFT.balanceOf(address(this)));
+        tapToken.transfer(msg.sender, tapToken.balanceOf(address(this)));
     }
 
     /**
@@ -505,7 +507,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         uint256 balAfter = _paymentToken.balanceOf(address(this));
         if (balAfter - balBefore != discountedPaymentAmount) revert Failed();
 
-        tapOFT.transfer(msg.sender, tapAmount);
+        tapToken.transfer(msg.sender, tapAmount);
     }
 
     /// @notice Computes the discounted payment amount for a given OTC amount in USD
