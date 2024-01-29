@@ -370,7 +370,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         if (!oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID)) {
             revert NotAuthorized();
         }
-        if (block.timestamp < tOLPLockPosition.lockTime + EPOCH_DURATION) {
+        if (block.timestamp < oTAPPosition.entry + EPOCH_DURATION) {
             revert OneEpochCooldown();
         } // Can only exercise after 1 epoch duration
 
