@@ -115,10 +115,8 @@ export async function deployTapiocaOFT(
     signer: SignerWithAddress,
     lzEndpoint: string,
     to: string,
-    chainId_?: number,
+    chainId: number,
 ) {
-    let { chainId } = await ethers.provider.getNetwork();
-    chainId = chainId_ ?? chainId;
     const oftContract = await (
         await ethers.getContractFactory('TapOFT')
     ).deploy(lzEndpoint, to, to, to, to, to, to, chainId, signer.address);

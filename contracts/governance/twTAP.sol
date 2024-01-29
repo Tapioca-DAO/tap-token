@@ -646,12 +646,6 @@ contract TwTAP is
         return false;
     }
 
-    /// @notice Returns the chain ID of the current network.
-    /// @dev Used for dev purposes.
-    function _getChainId() internal view virtual returns (uint256) {
-        return block.chainid;
-    }
-
     /**
      * @dev See {IERC165-supportsInterface}.
      */
