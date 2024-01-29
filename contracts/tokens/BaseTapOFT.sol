@@ -165,6 +165,13 @@ abstract contract BaseTapOFT is OFTV2 {
             // We send back the funds to the user
             emit CallFailedStr(_srcChainId, _payload, _reason);
             _transferFrom(address(this), sender, amount);
+            _storeFailedMessage(
+                _srcChainId,
+                _srcAddress,
+                _nonce,
+                _payload,
+                bytes(_reason)
+            );
         } catch (bytes memory _reason) {
             emit CallFailedBytes(
                 _srcChainId,
