@@ -215,7 +215,7 @@ async function getTapToken(
             hre.ethers.constants.AddressZero, //contributors address
             hre.ethers.constants.AddressZero, // early supporters address
             hre.ethers.constants.AddressZero, // supporters address
-            DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].TAP.LBP_ADDRESS, // LBP address
+            hre.ethers.constants.AddressZero, // aoTap address
             DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].TAP.DAO_ADDRESS, // DAO address
             hre.ethers.constants.AddressZero, // AirdropBroker address,
             ELZChainID.ARBITRUM, // Governance LZ ChainID
@@ -235,6 +235,10 @@ async function getTapToken(
             {
                 argPosition: 3,
                 deploymentName: DEPLOYMENT_NAMES.VESTING_SUPPORTERS,
+            },
+            {
+                argPosition: 3,
+                deploymentName: DEPLOYMENT_NAMES.AOTAP,
             },
             {
                 argPosition: 6,
