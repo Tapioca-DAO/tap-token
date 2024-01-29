@@ -103,6 +103,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     error TransferFailed();
     error SingularityInRescueMode();
     error PaymentTokenValuationNotValid();
+    error LockExpired();
 
     constructor(
         address _tOLP,
@@ -223,6 +224,9 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     function participate(uint256 _tOLPTokenID) external whenNotPaused nonReentrant returns (uint256 oTAPTokenID) {
         // Compute option parameters
         LockPosition memory lock = tOLP.getLock(_tOLPTokenID);
+        uint128 lockExpiry = lock.lockTime + lock.lockDuration;
+        if (block.timestamp >= lockExpiry) revert LockExpired();
+
         bool isPositionActive = _isPositionActive(lock);
         if (!isPositionActive) revert OptionExpired();
 
@@ -278,13 +282,13 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         // Record amount for next epoch exercise
         netDepositedForEpoch[epoch + 1][lock.sglAssetID] += int256(uint256(lock.ybShares));
 
-        uint256 lastEpoch = _timestampToWeek(lock.lockTime + lock.lockDuration);
+        uint256 lastEpoch = _timestampToWeek(lockExpiry);
         // And remove it from last epoch
         // Math is safe, check `_emitToGauges()`
         netDepositedForEpoch[lastEpoch + 1][lock.sglAssetID] -= int256(uint256(lock.ybShares));
 
         // Mint oTAP position
-        oTAPTokenID = oTAP.mint(msg.sender, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
+        oTAPTokenID = oTAP.mint(msg.sender, lockExpiry, uint128(target), _tOLPTokenID);
         emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, oTAPTokenID, target);
     }
 

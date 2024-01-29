@@ -259,7 +259,7 @@ contract TapiocaOptionLiquidityProvision is
      * @notice Requests a singularity market to be put in rescue mode. Needs to be activated later on in `activateSGLPoolRescue()`
      * @param _sglAssetID YieldBox asset ID of the singularity market
      */
-    function requestSglPoolRescue(uin256 _sglAssetID) external onlyOwner {
+    function requestSglPoolRescue(uint256 _sglAssetID) external onlyOwner {
         if (_sglAssetID == 0) revert NotRegistered();
         if (sglRescueRequest[_sglAssetID] != 0) revert AlreadyActive();
 
