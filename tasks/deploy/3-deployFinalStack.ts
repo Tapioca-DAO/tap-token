@@ -33,72 +33,62 @@ export const deployStack__task = async (
 
     const VM = await loadVM(hre, tag);
 
-    // Load previous deployment in the VM to execute after deployment setup
-    if (taskArgs.load) {
-        const data = hre.SDK.db.loadLocalDeployment(
-            'default',
-            String(hre.network.config.chainId),
-        );
-        if (!data) throw new Error('[-] No data found');
-        VM.load(data.contracts);
-    } else {
-        const yieldBox = hre.SDK.db.findGlobalDeployment(
-            TAPIOCA_PROJECTS_NAME.YieldBox,
-            chainInfo!.chainId,
-            'YieldBox',
-            tag,
-        );
+    const yieldBox = hre.SDK.db.findGlobalDeployment(
+        TAPIOCA_PROJECTS_NAME.YieldBox,
+        chainInfo!.chainId,
+        'YieldBox',
+        tag,
+    );
 
-        if (!yieldBox) {
-            throw '[-] YieldBox not found';
-        }
-
-        VM.add(
-            await buildTOLP(hre, 'TapiocaOptionLiquidityProvision', [
-                signer.address,
-                tapiocaOptionBrokerEpochDuration,
-                yieldBox?.address,
-            ]),
-        )
-            .add(await buildOTAP(hre, 'OTAP'))
-            .add(
-                await buildTOB(
-                    hre,
-                    'TapiocaOptionBroker',
-                    [
-                        hre.ethers.constants.AddressZero, // tOLP
-                        hre.ethers.constants.AddressZero, // oTAP
-                        hre.ethers.constants.AddressZero, // TapOFT
-                        signer.address,
-                        tapiocaOptionBrokerEpochDuration,
-                        signer.address,
-                    ],
-                    [
-                        {
-                            argPosition: 0,
-                            deploymentName: 'TapiocaOptionLiquidityProvision',
-                        },
-                        { argPosition: 1, deploymentName: 'OTAP' },
-                        { argPosition: 2, deploymentName: 'TapToken' },
-                    ],
-                ),
-            )
-            .add(
-                await buildTwTap(
-                    hre,
-                    [
-                        hre.ethers.constants.AddressZero, // TapOFT
-                        signer.address,
-                    ],
-                    [{ argPosition: 0, deploymentName: 'TapToken' }],
-                ),
-            );
-
-        // Add and execute
-        await VM.execute(3);
-        await VM.save();
-        // await VM.verify();
+    if (!yieldBox) {
+        throw '[-] YieldBox not found';
     }
+
+    VM.add(
+        await buildTOLP(hre, 'TapiocaOptionLiquidityProvision', [
+            signer.address,
+            tapiocaOptionBrokerEpochDuration,
+            yieldBox?.address,
+        ]),
+    )
+        .add(await buildOTAP(hre, 'OTAP'))
+        .add(
+            await buildTOB(
+                hre,
+                'TapiocaOptionBroker',
+                [
+                    hre.ethers.constants.AddressZero, // tOLP
+                    hre.ethers.constants.AddressZero, // oTAP
+                    hre.ethers.constants.AddressZero, // TapOFT
+                    signer.address,
+                    tapiocaOptionBrokerEpochDuration,
+                    signer.address,
+                ],
+                [
+                    {
+                        argPosition: 0,
+                        deploymentName: 'TapiocaOptionLiquidityProvision',
+                    },
+                    { argPosition: 1, deploymentName: 'OTAP' },
+                    { argPosition: 2, deploymentName: 'TapToken' },
+                ],
+            ),
+        )
+        .add(
+            await buildTwTap(
+                hre,
+                [
+                    hre.ethers.constants.AddressZero, // TapOFT
+                    signer.address,
+                ],
+                [{ argPosition: 0, deploymentName: 'TapToken' }],
+            ),
+        );
+
+    // Add and execute
+    await VM.execute(3);
+    await VM.save();
+    await VM.verify();
 
     const vmList = VM.list();
     // After deployment setup
