@@ -90,6 +90,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     error AllowanceNotValid();
     error OnlyMinter();
     error TwTapAlreadySet();
+    error InsufficientEmissions();
 
     // ===========
     // *MODIFIERS*
@@ -347,7 +348,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
 
         uint256 week = _timestampToWeek(block.timestamp);
         if (emissionForWeek[week] < mintedInWeek[week] + _amount) {
-            revert AllowanceNotValid();
+            revert InsufficientEmissions();
         }
         _mint(_to, _amount);
         mintedInWeek[week] += _amount;
