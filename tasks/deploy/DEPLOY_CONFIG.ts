@@ -48,6 +48,8 @@ const POST_LBP = {
     },
 };
 
+const FINAL = {};
+
 const MISC = {
     [EChainID.ARBITRUM]: {
         MISC: {
@@ -58,5 +60,6 @@ const MISC = {
 
 export const DEPLOY_CONFIG = {
     POST_LBP,
+    FINAL,
     MISC,
 };

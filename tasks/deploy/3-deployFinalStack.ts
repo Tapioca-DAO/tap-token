@@ -17,7 +17,7 @@ import { loadVM } from '../utils';
 import { buildTapToken } from 'tasks/deployBuilds/finalStack/options/tapToken/buildTapToken';
 
 // hh deployStack --type build --network goerli
-export const deployStack__task = async (
+export const deployFinalStack__task = async (
     taskArgs: { tag?: string; load?: boolean },
     hre: HardhatRuntimeEnvironment,
 ) => {
