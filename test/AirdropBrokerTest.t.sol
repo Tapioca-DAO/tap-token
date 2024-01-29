@@ -24,14 +24,9 @@ contract ADBOracleMock is ITapiocaOracle {
 
 /// @dev We mock the AirdropBroker contract to be able to access internal functions with external ones.
 contract AirdropBrokerTestMock is AirdropBroker {
-    constructor(
-        address _AOTAP,
-        address payable _TAPOFT,
-        address _PCNFT,
-        address _PAYMENT_TOKEN_BENEFICIARY,
-        address TAP_ORACLE,
-        address _OWNER
-    ) AirdropBroker(_AOTAP, _TAPOFT, _PCNFT, _PAYMENT_TOKEN_BENEFICIARY, TAP_ORACLE, _OWNER) {}
+    constructor(address _AOTAP, address _PCNFT, address _PAYMENT_TOKEN_BENEFICIARY, address _OWNER)
+        AirdropBroker(_AOTAP, _PCNFT, _PAYMENT_TOKEN_BENEFICIARY, _OWNER)
+    {}
 }
 
 contract AirdropBrokerTest is Test {
@@ -45,7 +40,7 @@ contract AirdropBrokerTest is Test {
     address OWNER = address(this);
 
     function setUp() public {
-        airdropBroker = new AirdropBrokerTestMock(AOTAP, TAPOFT, PCNFT, PAYMENT_TOKEN_BENEFICIARY, TAP_ORACLE, OWNER);
+        airdropBroker = new AirdropBrokerTestMock(AOTAP, PCNFT, PAYMENT_TOKEN_BENEFICIARY, OWNER);
     }
 
     error NotValid();
