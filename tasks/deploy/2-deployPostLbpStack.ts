@@ -67,46 +67,11 @@ export const deployPostLbpStack__task = async (
         await VM.verify();
     }
 
-    const vmList = VM.list();
     // After deployment setup
-
     console.log('[+] After deployment setup');
-    const calls = await buildPostLbpStackPostDepSetup(hre, tag);
+    await VM.executeMulticall(await buildPostLbpStackPostDepSetup(hre, tag));
 
-    // Execute
-    // TODO Move this to SDK
-    console.log('[+] Number of calls:', calls.length);
-    const multicall = await VM.getMulticall();
-    try {
-        const tx = await (await multicall.multicall(calls)).wait(1);
-        console.log(
-            '[+] After deployment setup multicall Tx: ',
-            tx.transactionHash,
-        );
-    } catch (e) {
-        console.log('[-] After deployment setup multicall failed');
-        console.log(
-            '[+] Trying to execute calls one by one with owner account',
-        );
-        // If one fail, try them one by one with owner's account
-        for (const call of calls) {
-            // Static call simulation
-            await signer.call({
-                from: signer.address,
-                data: call.callData,
-                to: call.target,
-            });
-
-            await (
-                await signer.sendTransaction({
-                    data: call.callData,
-                    to: call.target,
-                })
-            ).wait();
-        }
-    }
-
-    console.log('[+] Stack deployed! 🎉');
+    console.log('[+] Post LBP Stack deployed! 🎉');
 };
 
 async function getVestingContributors(

@@ -12,8 +12,20 @@ export const buildPostLbpStackPostDepSetup = async (
     /**
      * Load contracts
      */
-    const { adb, tapToken, tapOracleDeployment, usdcOracleDeployment } =
+    const { adb, tapToken, tapOracleDeployment, usdcOracleDeployment, aoTap } =
         await loadContract(hre, tag);
+
+    /**
+     * Broker claim for AOTAP
+     */
+    if ((await aoTap.broker()) !== adb.address) {
+        console.log('[+] +Call queue: AOTAP broker claim');
+        calls.push({
+            target: adb.address,
+            allowFailure: false,
+            callData: adb.interface.encodeFunctionData('aoTAPBrokerClaim'),
+        });
+    }
 
     /**
      * Set tapToken in ADB
@@ -83,23 +95,29 @@ export const buildPostLbpStackPostDepSetup = async (
         );
     }
 
+    /**
+     * AirDropBroker new epoch
+     */
+    if ((await adb.epoch()).toNumber() == 0) {
+        console.log('[+] +Call queue: AirdropBroker going to epoch 1');
+        calls.push({
+            target: adb.address,
+            allowFailure: false,
+            callData: adb.interface.encodeFunctionData('newEpoch'),
+        });
+    }
+
     return calls;
 };
 
 async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
-    const aoTapDeployment = getContract(
-        hre,
-        tag,
-        DEPLOYMENT_NAMES.AOTAP,
-    ).address;
-
     const tapOracleDeployment = getContract(
         hre,
         tag,
         DEPLOYMENT_NAMES.TAP_ORACLE,
-    ).address;
+    );
 
-    const usdcOracleDeployment = getContract(hre, tag, 'USDC_ORACLE').address; // TODO load the name from the SDK and centralize each repo config in the SDK
+    const usdcOracleDeployment = getContract(hre, tag, 'USDC_ORACLE'); // TODO load the name from the SDK and centralize each repo config in the SDK
 
     const tapToken = await hre.ethers.getContractAt(
         'TapToken',
@@ -109,13 +127,17 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         'AirdropBroker',
         getContract(hre, tag, DEPLOYMENT_NAMES.AIRDROP_BROKER).address,
     );
+    const aoTap = await hre.ethers.getContractAt(
+        'AOTAP',
+        getContract(hre, tag, DEPLOYMENT_NAMES.AOTAP).address,
+    );
 
     return {
         tapToken,
         adb,
         tapOracleDeployment,
         usdcOracleDeployment,
-        aoTapDeployment,
+        aoTap,
     };
 }
 
