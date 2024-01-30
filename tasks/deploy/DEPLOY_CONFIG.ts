@@ -1,4 +1,4 @@
-import { EChainID } from 'tapioca-sdk/src/api/config';
+import { EChainID } from '@tapioca-sdk/api/config';
 
 // Name of the contract deployments to be used in the deployment scripts and saved in the deployments file
 export const DEPLOYMENT_NAMES = {
@@ -15,6 +15,12 @@ export const DEPLOYMENT_NAMES = {
     AOTAP: 'AOTAP',
     AIRDROP_BROKER: 'AIRDROP_BROKER',
     // Final
+    TAPIOCA_OPTION_LIQUIDITY_PROVISION: 'TAPIOCA_OPTION_LIQUIDITY_PROVISION',
+    TAPIOCA_OPTION_BROKER: 'TAPIOCA_OPTION_BROKER',
+    OTAP: 'OTAP',
+    TWTAP: 'TWTAP',
+    YB_SGL_GLP_STRATEGY: 'YB_SGL_GLP_STRATEGY',
+    ARBITRUM_SGL_GLP: 'ARBITRUM_SGL_GLP', // TODO move to tapioca bar repo name config
 };
 
 const POST_LBP = {
@@ -48,7 +54,16 @@ const POST_LBP = {
     },
 };
 
-const FINAL = {};
+const FINAL = {
+    [EChainID.ARBITRUM]: {
+        TOLP: {
+            EPOCH_DURATION: 604800, // 7 days
+        },
+        TOB: {
+            PAYMENT_TOKEN_ADDRESS: '0x464570adA09869d8741132183721B4f0769a0287', // TODO replace by real address
+        },
+    },
+};
 
 const MISC = {
     [EChainID.ARBITRUM]: {

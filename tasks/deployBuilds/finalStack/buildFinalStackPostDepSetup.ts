@@ -1,56 +1,87 @@
+import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
+import { TContract } from '@tapioca-sdk/shared';
+import { IYieldBox } from '@typechain/index';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { TDeploymentVMContract } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
+import { ERC20WithoutStrategy__factory } from '@tapioca-sdk/typechain/YieldBox';
 import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
+import { DEPLOYMENT_NAMES } from 'tasks/deploy/DEPLOY_CONFIG';
+import { loadVM } from 'tasks/utils';
+import { yieldbox } from '@typechain/tapioca-periph/interfaces';
 
-export const buildStackPostDepSetup = async (
+export const buildFinalStackPostDepSetup = async (
     hre: HardhatRuntimeEnvironment,
-    deps: TDeploymentVMContract[],
+    tag: string,
 ): Promise<Multicall3.CallStruct[]> => {
     const calls: Multicall3.CallStruct[] = [];
+    const signer = (await hre.ethers.getSigners())[0];
 
     /**
      * Load addresses
      */
-    const tapAddr = deps.find((e) => e.name === 'TapToken')?.address;
-    const twTapAddr = deps.find((e) => e.name === 'TwTAP')?.address;
-    const tOBAddr = deps.find(
-        (e) =>
-            e.name === 'TapiocaOptionBroker' ||
-            e.name === 'TapiocaOptionBrokerMock',
-    )?.address;
-    const oTapAddr = deps.find((e) => e.name === 'OTAP')?.address;
-
-    if (!tapAddr) {
-        throw new Error('[-] TAP not found');
-    }
-
-    if (!tOBAddr) {
-        throw new Error('[-] tOB not found');
-    }
-
-    if (!twTapAddr) {
-        throw new Error('[-] twTap not found');
-    }
-    if (!oTapAddr) {
-        throw new Error('[-] oTap not found');
-    }
+    const {
+        tapToken,
+        oTap,
+        tob,
+        twTap,
+        tOlp,
+        yieldbox,
+        arbSglGlpDeployment,
+        mainnetToftSglDaiDeployment,
+        ybStrategyArbSglGlpDeployment,
+    } = await loadContract(hre, tag);
 
     /**
-     * Load contracts
+     * Set Singularities on tOLp
      */
-    const tap = await hre.ethers.getContractAt('TapToken', tapAddr);
-    const tob = await hre.ethers.getContractAt('TapiocaOptionBroker', tOBAddr);
-    const oTap = await hre.ethers.getContractAt('OTAP', oTapAddr);
+    // Check if Arb SGL-GLP is already set
+    if (
+        (
+            await tOlp.activeSingularities(arbSglGlpDeployment.address)
+        ).sglAssetID.toNumber() === 0
+    ) {
+        const ybAsset = await yieldbox.ids(
+            1,
+            arbSglGlpDeployment.address,
+            ybStrategyArbSglGlpDeployment.address,
+            0,
+        );
+        if (ybAsset.toNumber() === 0) {
+            console.log('[+] Depositing SGL_GLP to YieldBox');
+            const balance = await (
+                await hre.ethers.getContractAt(
+                    'ERC20',
+                    arbSglGlpDeployment.address,
+                )
+            ).balanceOf(signer.address);
+            calls.push({
+                target: yieldbox.address,
+                allowFailure: false,
+                callData: yieldbox.interface.encodeFunctionData(
+                    'depositAsset',
+                    [
+                        ybAsset,
+                        signer.address,
+                        signer.address,
+                        hre.ethers.utils.formatEther(balance),
+                        0,
+                    ],
+                ),
+            });
+            console.log('\t- Parameters', ybAsset, signer.address, balance, 0);
+        }
+    }
 
     /**
      * Set tOB as minter for TapOFT
      */
 
     if (
-        (await tap.minter()).toLocaleLowerCase() !== tOBAddr.toLocaleLowerCase()
+        (await tapToken.minter()).toLocaleLowerCase() !==
+        tob.address.toLocaleLowerCase()
     ) {
         console.log('[+] Setting tOB as minter for TapToken');
-        await (await tap.setMinter(tOBAddr)).wait(1);
+        await (await tapToken.setMinter(tob.address)).wait(1);
+        console.log('\t- Parameters', 'tOB', tob.address);
     }
 
     /**
@@ -84,3 +115,111 @@ export const buildStackPostDepSetup = async (
     }
     return calls;
 };
+
+async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
+    const tapToken = await hre.ethers.getContractAt(
+        'TapToken',
+        getContract(hre, tag, DEPLOYMENT_NAMES.TAP_TOKEN).address,
+    );
+    const twTap = await hre.ethers.getContractAt(
+        'TwTAP',
+        getContract(hre, tag, DEPLOYMENT_NAMES.TWTAP).address,
+    );
+    const tob = await hre.ethers.getContractAt(
+        'TapiocaOptionBroker',
+        getContract(hre, tag, DEPLOYMENT_NAMES.TAPIOCA_OPTION_BROKER).address,
+    );
+    const oTap = await hre.ethers.getContractAt(
+        'OTAP',
+        getContract(hre, tag, DEPLOYMENT_NAMES.OTAP).address,
+    );
+    const tOlp = await hre.ethers.getContractAt(
+        'TapiocaOptionLiquidityProvision',
+        getContract(
+            hre,
+            tag,
+            DEPLOYMENT_NAMES.TAPIOCA_OPTION_LIQUIDITY_PROVISION,
+        ).address,
+    );
+    const yieldbox = await hre.ethers.getContractAt(
+        'IYieldBox',
+        getGlobalDeployment(
+            hre,
+            tag,
+            TAPIOCA_PROJECTS_NAME.YieldBox,
+            String(hre.network.config.chainId),
+            'YIELDBOX', // TODO replace by YB NAME CONFIG
+        ).address,
+    );
+
+    const arbSglGlpDeployment = getGlobalDeployment(
+        hre,
+        tag,
+        TAPIOCA_PROJECTS_NAME.TapiocaBar,
+        String(hre.network.config.chainId),
+        'SGL-GLP', // TODO replace by BAR NAME CONFIG
+    );
+    const mainnetToftSglDaiDeployment = getGlobalDeployment(
+        hre,
+        tag,
+        TAPIOCA_PROJECTS_NAME.TapiocaBar,
+        hre.SDK.config.EChainID.MAINNET,
+        'TOFT-SGL-DAI', // TODO replace by TapiocaZ NAME CONFIG
+    );
+    const ybStrategyArbSglGlpDeployment = getContract(
+        hre,
+        tag,
+        DEPLOYMENT_NAMES.YB_SGL_GLP_STRATEGY,
+    );
+
+    return {
+        tapToken,
+        twTap,
+        tob,
+        oTap,
+        tOlp,
+        yieldbox,
+        arbSglGlpDeployment,
+        mainnetToftSglDaiDeployment,
+        ybStrategyArbSglGlpDeployment,
+    };
+}
+
+function getContract(
+    hre: HardhatRuntimeEnvironment,
+    tag: string,
+    contractName: string,
+) {
+    const contract = hre.SDK.db.findLocalDeployment(
+        String(hre.network.config.chainId),
+        contractName,
+        tag,
+    )!;
+    if (!contract) {
+        throw new Error(
+            `[-] ${contractName} not found on chain ${hre.network.name} tag ${tag}`,
+        );
+    }
+    return contract;
+}
+
+function getGlobalDeployment(
+    hre: HardhatRuntimeEnvironment,
+    tag: string,
+    project: TAPIOCA_PROJECTS_NAME,
+    chainId: string,
+    contractName: string,
+) {
+    const contract = hre.SDK.db.findGlobalDeployment(
+        project,
+        chainId,
+        contractName,
+        tag,
+    )!;
+    if (!contract) {
+        throw new Error(
+            `[-] ${contractName} not found on project ${project} chain ${hre.network.name} tag ${tag}`,
+        );
+    }
+    return contract;
+}
