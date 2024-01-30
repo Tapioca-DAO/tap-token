@@ -501,7 +501,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     // ============
     //   INTERNAL
     // ============
-    /// @notice returns week for timestasmp
+    /// @notice returns week for timestamp
     function _timestampToWeek(uint256 timestamp) internal view returns (uint256) {
         return ((timestamp - emissionsStartTime) / EPOCH_DURATION);
     }

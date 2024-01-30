@@ -288,7 +288,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     {
         if (_duration < EPOCH_DURATION) revert LockNotAWeek();
         if (_duration > MAX_LOCK_DURATION) revert LockTooLong();
-        if (_timestampToWeek(block.timestamp) > epoch) revert AdvanceEpochFirst();
+        if (_timestampToWeek(block.timestamp) > currentWeek()) revert AdvanceEpochFirst();
 
         // Transfer TAP to this contract
         tapOFT.transferFrom(msg.sender, address(this), _amount);
@@ -519,6 +519,11 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     // ============
     //   INTERNAL
     // ============
+
+    /// @notice returns week for timestamp
+    function _timestampToWeek(uint256 timestamp) internal view returns (uint256) {
+        return ((timestamp - creation) / EPOCH_DURATION);
+    }
 
     /**
      * @dev Use `_isApprovedOrOwner()` internally.
