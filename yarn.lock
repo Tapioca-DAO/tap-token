@@ -537,25 +537,25 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
-"@layerzerolabs/lz-evm-messagelib-v2@^2.0.2":
-  version "2.0.11"
-  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-messagelib-v2/-/lz-evm-messagelib-v2-2.0.11.tgz#8437a2a30e9794c56393d83b3f9d2671aadf2648"
-  integrity sha512-i6nZvzxzH+3bMzGRxIzf6fFXTzxQIZ1vyduAoFTy3U2zK9xZUHunKFfpC+vqCY1goNzjBquX4VnClWMWlc5ZIA==
+"@layerzerolabs/lz-evm-messagelib-v2@^2.0.25":
+  version "2.0.25"
+  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-messagelib-v2/-/lz-evm-messagelib-v2-2.0.25.tgz#08df421a5a61719e00e30ba65ea58006aa1dbb21"
+  integrity sha512-qvWQr+zXkA4WeaMv96OlUC2Y22gF89YLDZ4Nr3BzfImP/51S3L7s7P9AJlMKGn3SSBeyswuFL/S5FgmZP9WN4g==
 
-"@layerzerolabs/lz-evm-oapp-v2@^2.0.2":
-  version "2.0.11"
-  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-oapp-v2/-/lz-evm-oapp-v2-2.0.11.tgz#c2e1d0a2a4b3749f033b63043acb154d6ea6990b"
-  integrity sha512-xd1TJCqYihLpH/LkbGz9hwFDwDnNSIQd5Mmb9icqV8UCTDwp6SAzt+U3PiAfA0Iu+VULvQ5KI/98BDSsVZJTHA==
+"@layerzerolabs/lz-evm-oapp-v2@^2.0.25":
+  version "2.0.25"
+  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-oapp-v2/-/lz-evm-oapp-v2-2.0.25.tgz#a10c89ec988630c712d115098ccc519f240f3436"
+  integrity sha512-UW5HY1/2eXj1jOvqCnVhKxcdyaptFppeDFOo8AuF6ZfOj7xO6Dj/vaXaJYFHgDbxm1r9XwzcXH27xYPqVjCOTg==
 
-"@layerzerolabs/lz-evm-protocol-v2@^2.0.2":
-  version "2.0.11"
-  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-protocol-v2/-/lz-evm-protocol-v2-2.0.11.tgz#4f341e7716f24653bff68c5451ddb3b369df265b"
-  integrity sha512-hkcNheUjTOYNxoAnBTSatLLzLe71Y7kcmw1+56aazezyUb6SCu330V4sJg+jsp8Ag6Sb7y1tLLYn1Sa5EWgCxg==
+"@layerzerolabs/lz-evm-protocol-v2@^2.0.25":
+  version "2.0.25"
+  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-protocol-v2/-/lz-evm-protocol-v2-2.0.25.tgz#c070d2a4ba83d4db22198fc54cce9088ec1de69c"
+  integrity sha512-EyyieamTgu2yFd5hLJ6B/vMCMKItGIHUPaa2X1NbdJTUEKyYWGupxXZUY7N/EXedfJhYdUVcNt1ZYjp6HgsYlw==
 
-"@layerzerolabs/lz-evm-v1-0.7@^2.0.11":
-  version "2.0.11"
-  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-v1-0.7/-/lz-evm-v1-0.7-2.0.11.tgz#a0dd2b70aade211a6e6aadba17e75e7239dd6cc0"
-  integrity sha512-sF2CusTwSauaduNqcbrkuWQSexSKOGZcUdVvKPZkAof/KK5thgG3Fovmzj0hXvn+C2Fnf0IszTdvPQ/NXlq+wQ==
+"@layerzerolabs/lz-evm-v1-0.7@^2.0.25":
+  version "2.0.25"
+  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-v1-0.7/-/lz-evm-v1-0.7-2.0.25.tgz#2cbdf482058342364a9836717c703ef14795a06a"
+  integrity sha512-Kex5kvG9iD1UDcHSIyVMXBV6sck9Qnl+FblwEfqOZSThf8XwXRKV47OptNuI8e4VpCxAq90MlsbmbMCXWm/XxA==
 
 "@layerzerolabs/solidity-bytes-utils@^0.8.0":
   version "0.8.0"

@@ -51,6 +51,6 @@ contract OFTMock is OFT {
         bytes calldata _composeMsg,
         uint256 _amountToCreditLD
     ) public view returns (bytes memory message, bytes memory options) {
-        return _buildMsgAndOptions(_sendParam, _extraOptions, _composeMsg, _amountToCreditLD);
+        return _buildMsgAndOptions(_sendParam, _amountToCreditLD);
     }
 }
