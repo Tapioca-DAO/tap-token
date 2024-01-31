@@ -70,6 +70,9 @@
   "dependencies": {
     "@prb/math": "^2.5.0",
     "@types/inquirer": "^9.0.3",
+    "@uniswap/sdk-core": "^4.0.10",
+    "@uniswap/smart-order-router": "^3.21.0",
+    "@uniswap/v3-sdk": "^3.10.2",
     "bignumber.js": "^9.1.1",
     "hardhat-tracer": "^2.5.0",
     "husky": "^8.0.1",
