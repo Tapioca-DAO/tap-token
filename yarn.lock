@@ -6119,10 +6119,10 @@ table@^6.0.9, table@^6.8.0, table@^6.8.1:
     string-width "^4.2.3"
     strip-ansi "^6.0.1"
 
-tapioca-sdk@1.6.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.6.0.tgz#29af7504f807a86a0030e28d4c71ea91655dac67"
-  integrity sha512-yv4ZH0tWxbIHdqV4U7HjiiE+TgExZhVms2F2pWYrv50GP85sSnvU8RrKhm0hC2VHoLN25O7wumbxYHm+GnlMmA==
+tapioca-sdk@1.6.2:
+  version "1.6.2"
+  resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.6.2.tgz#f50372194188edded77f93a31cde7b609b0ad221"
+  integrity sha512-pKgkKtSOdjCNzlIPYMShR7pp8giB3oAdCtopNwCq/unm+oubOUKEGElHQa4q7Sbuliq5DGEv/dVTtfOSoyGrxA==
   dependencies:
     dotenv "^16.3.2"
     ethers "^5.4.7"
