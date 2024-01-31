@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { ERC20WithoutStrategy__factory } from '@tapioca-sdk/typechain/YieldBox';
 
-export const buildArbGlpYbStrategy = async (
+export const buildEmptyYbStrategy = async (
     hre: HardhatRuntimeEnvironment,
     deploymentName: string,
     args: Parameters<ERC20WithoutStrategy__factory['deploy']>,
