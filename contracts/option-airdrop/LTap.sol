@@ -26,8 +26,10 @@ contract LTap is BoringOwnable, ERC20Permit {
 
     IERC20 tapToken;
     address immutable lbp;
+    bool openRedemption;
 
     error TapNotSet();
+    error RedemptionNotOpen();
 
     /// @notice Creates a new LTAP token
     /// @dev LTAP tokens are minted by depositing TAP
@@ -46,7 +48,12 @@ contract LTap is BoringOwnable, ERC20Permit {
         tapToken = IERC20(_tapToken);
     }
 
+    function setOpenRedemption() external onlyOwner {
+        openRedemption = true;
+    }
+
     function redeem() external tapExists {
+        if (!openRedemption) revert RedemptionNotOpen();
         uint256 amount = balanceOf(msg.sender);
         _burn(msg.sender, amount);
         tapToken.safeTransfer(msg.sender, amount);
