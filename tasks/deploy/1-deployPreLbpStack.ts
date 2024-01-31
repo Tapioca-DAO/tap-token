@@ -12,7 +12,16 @@ export const deployPreLbpStack__task = async (
     const VM = await loadVM(hre, tag);
 
     // Build contracts
-    VM.add(await buildLTap(hre, DEPLOYMENT_NAMES.LTAP, [], []));
+    VM.add(
+        await buildLTap(
+            hre,
+            DEPLOYMENT_NAMES.LTAP,
+            [
+                DEPLOYMENT_NAMES.LBP, // TODO replace by find global deployment?
+            ],
+            [],
+        ),
+    );
 
     // Add and execute
     await VM.execute(3);

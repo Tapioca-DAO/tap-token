@@ -4,6 +4,7 @@ import { EChainID } from '@tapioca-sdk/api/config';
 export const DEPLOYMENT_NAMES = {
     // Pre-LBP
     LTAP: 'LTAP',
+    LBP: 'LBP',
     // Post-LBP
     VESTING_CONTRIBUTORS: 'VESTING_CONTRIBUTORS',
     VESTING_EARLY_SUPPORTERS: 'VESTING_EARLY_SUPPORTERS',
