@@ -8,7 +8,10 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { buildTapToken } from 'tasks/deployBuilds/finalStack/options/tapToken/buildTapToken';
 import { buildADB } from 'tasks/deployBuilds/postLbpStack/airdrop/buildADB';
 import { buildAOTAP } from 'tasks/deployBuilds/postLbpStack/airdrop/buildAOTAP';
-import { buildPostLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/buildPostLbpStackPostDepSetup';
+import {
+    buildPostLbpStackPostDepSetup_1,
+    buildPostLbpStackPostDepSetup_2,
+} from 'tasks/deployBuilds/postLbpStack/buildPostLbpStackPostDepSetup';
 import { buildTapTokenReceiverModule } from '../deployBuilds/finalStack/options/tapToken/buildTapTokenReceiverModule';
 import { buildTapTokenSenderModule } from '../deployBuilds/finalStack/options/tapToken/buildTapTokenSenderModule';
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
@@ -28,6 +31,7 @@ export const deployPostLbpStack__task = async (
     )!;
 
     const VM = await loadVM(hre, tag);
+    const tapiocaMulticall = await VM.getMulticall();
 
     // Load previous deployment in the VM to execute after deployment setup
     if (taskArgs.load) {
@@ -50,16 +54,36 @@ export const deployPostLbpStack__task = async (
         }
 
         // Build contracts
-        VM.add(await buildAOTAP(hre, DEPLOYMENT_NAMES.AOTAP, [signer.address]))
-            .add(await getVestingContributors(hre, signer))
-            .add(await getVestingEarlySupporters(hre, signer))
-            .add(await getVestingSupporters(hre, signer))
-            .add(await getAdb(hre, signer))
-            .add(await getTapTokenSenderModule(hre, signer, chainInfo.address))
+        VM.add(
+            await buildAOTAP(hre, DEPLOYMENT_NAMES.AOTAP, [
+                tapiocaMulticall.address,
+            ]),
+        )
+            .add(await getVestingContributors(hre, tapiocaMulticall.address))
+            .add(await getVestingEarlySupporters(hre, tapiocaMulticall.address))
+            .add(await getVestingSupporters(hre, tapiocaMulticall.address))
+            .add(await getAdb(hre, tapiocaMulticall.address))
             .add(
-                await getTapTokenReceiverModule(hre, signer, chainInfo.address),
+                await getTapTokenSenderModule(
+                    hre,
+                    tapiocaMulticall.address,
+                    chainInfo.address,
+                ),
             )
-            .add(await getTapToken(hre, signer, chainInfo.address));
+            .add(
+                await getTapTokenReceiverModule(
+                    hre,
+                    tapiocaMulticall.address,
+                    chainInfo.address,
+                ),
+            )
+            .add(
+                await getTapToken(
+                    hre,
+                    tapiocaMulticall.address,
+                    chainInfo.address,
+                ),
+            );
 
         // Add and execute
         await VM.execute(3);
@@ -69,50 +93,50 @@ export const deployPostLbpStack__task = async (
 
     // After deployment setup
     console.log('[+] After deployment setup');
-    await VM.executeMulticall(await buildPostLbpStackPostDepSetup(hre, tag));
+    // Create UniV3 Tap/WETH pool, TapOracle, USDCOracle
+    await VM.executeMulticall(await buildPostLbpStackPostDepSetup_1(hre, tag));
+    // Setup contracts
+    await VM.executeMulticall(await buildPostLbpStackPostDepSetup_2(hre, tag));
 
     console.log('[+] Post LBP Stack deployed! 🎉');
 };
 
 async function getVestingContributors(
     hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
+    owner: string,
 ) {
     return await buildVesting(hre, DEPLOYMENT_NAMES.VESTING_CONTRIBUTORS, [
         DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING.CONTRIBUTORS_CLIFF, // 12 months cliff
         DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING.CONTRIBUTORS_PERIOD, // 36 months vesting
-        signer.address,
+        owner,
     ]);
 }
 
 async function getVestingEarlySupporters(
     hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
+    owner: string,
 ) {
     return await buildVesting(hre, DEPLOYMENT_NAMES.VESTING_EARLY_SUPPORTERS, [
         DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING
             .EARLY_SUPPORTERS_CLIFF, // 0 months cliff
         DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING
             .EARLY_SUPPORTERS_PERIOD, // 24 months vesting
-        signer.address,
+        owner,
     ]);
 }
 
 async function getVestingSupporters(
     hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
+    owner: string,
 ) {
     return await buildVesting(hre, DEPLOYMENT_NAMES.VESTING_SUPPORTERS, [
         DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING.SUPPORTERS_CLIFF, // 0 months cliff
         DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING.SUPPORTERS_PERIOD, // 18 months vesting
-        signer.address,
+        owner,
     ]);
 }
 
-async function getAdb(
-    hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
-) {
+async function getAdb(hre: HardhatRuntimeEnvironment, owner: string) {
     return await buildADB(
         hre,
         DEPLOYMENT_NAMES.AIRDROP_BROKER,
@@ -121,7 +145,7 @@ async function getAdb(
             DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].PCNFT.ADDRESS, // PCNFT
             DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].ADB
                 .PAYMENT_TOKEN_BENEFICIARY, // Payment token beneficiary
-            signer.address, // Owner
+            owner, // Owner
         ],
         [
             {
@@ -134,7 +158,7 @@ async function getAdb(
 
 async function getTapTokenSenderModule(
     hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
+    owner: string,
     lzEndpointAddress: string,
 ) {
     return await buildTapTokenSenderModule(
@@ -144,14 +168,14 @@ async function getTapTokenSenderModule(
             '', // Name
             '', // Symbol
             lzEndpointAddress, // Endpoint address
-            signer.address, // Owner
+            owner, // Owner
         ],
     );
 }
 
 async function getTapTokenReceiverModule(
     hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
+    owner: string,
     lzEndpointAddress: string,
 ) {
     return await buildTapTokenReceiverModule(
@@ -161,14 +185,14 @@ async function getTapTokenReceiverModule(
             '', // Name
             '', // Symbol
             lzEndpointAddress, // Endpoint address
-            signer.address, // Owner
+            owner, // Owner
         ],
     );
 }
 
 async function getTapToken(
     hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
+    owner: string,
     lzEndpointAddress: string,
 ) {
     return await buildTapToken(
@@ -183,7 +207,7 @@ async function getTapToken(
             DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].TAP.DAO_ADDRESS, // DAO address
             hre.ethers.constants.AddressZero, // AirdropBroker address,
             ELZChainID.ARBITRUM, // Governance LZ ChainID
-            signer.address, // Owner
+            owner, // Owner
             hre.ethers.constants.AddressZero, // TapTokenSenderModule
             hre.ethers.constants.AddressZero, // TapTokenReceiverModule
         ],
