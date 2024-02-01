@@ -4,11 +4,11 @@ import { loadVM } from 'tasks/utils';
 import { DEPLOYMENT_NAMES } from './DEPLOY_CONFIG';
 
 export const deployPreLbpStack__task = async (
-    {},
+    taskArgs: { tag?: string },
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
-    const tag = await hre.SDK.hardhatUtils.askForTag(hre, 'local');
+    const tag = taskArgs.tag ?? 'default';
     const VM = await loadVM(hre, tag);
 
     // Build contracts

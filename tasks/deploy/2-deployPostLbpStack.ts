@@ -15,7 +15,7 @@ import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
 
 export const deployPostLbpStack__task = async (
-    taskArgs: { tag?: string; load?: boolean },
+    taskArgs: { tag?: string },
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
@@ -28,63 +28,38 @@ export const deployPostLbpStack__task = async (
     const VM = await loadVM(hre, tag);
     const tapiocaMulticall = await VM.getMulticall();
 
-    // Load previous deployment in the VM to execute after deployment setup
-    if (taskArgs.load) {
-        const data = hre.SDK.db.loadLocalDeployment(
-            'default',
-            String(hre.network.config.chainId),
-        );
-        if (!data) throw new Error('[-] No data found');
-        VM.load(data.contracts);
-    } else {
-        const yieldBox = hre.SDK.db.findGlobalDeployment(
-            TAPIOCA_PROJECTS_NAME.YieldBox,
-            chainInfo!.chainId,
-            'YieldBox',
-            tag,
-        );
-
-        if (!yieldBox) {
-            throw '[-] YieldBox not found';
-        }
-
-        // Build contracts
-        VM.add(
-            await buildAOTAP(hre, DEPLOYMENT_NAMES.AOTAP, [
+    // Build contracts
+    VM.add(
+        await buildAOTAP(hre, DEPLOYMENT_NAMES.AOTAP, [
+            tapiocaMulticall.address,
+        ]),
+    )
+        .add(await getVestingContributors(hre, tapiocaMulticall.address))
+        .add(await getVestingEarlySupporters(hre, tapiocaMulticall.address))
+        .add(await getVestingSupporters(hre, tapiocaMulticall.address))
+        .add(await getAdb(hre, tapiocaMulticall.address))
+        .add(
+            await getTapTokenSenderModule(
+                hre,
                 tapiocaMulticall.address,
-            ]),
+                chainInfo.address,
+            ),
         )
-            .add(await getVestingContributors(hre, tapiocaMulticall.address))
-            .add(await getVestingEarlySupporters(hre, tapiocaMulticall.address))
-            .add(await getVestingSupporters(hre, tapiocaMulticall.address))
-            .add(await getAdb(hre, tapiocaMulticall.address))
-            .add(
-                await getTapTokenSenderModule(
-                    hre,
-                    tapiocaMulticall.address,
-                    chainInfo.address,
-                ),
-            )
-            .add(
-                await getTapTokenReceiverModule(
-                    hre,
-                    tapiocaMulticall.address,
-                    chainInfo.address,
-                ),
-            )
-            .add(
-                await getTapToken(
-                    hre,
-                    tapiocaMulticall.address,
-                    chainInfo.address,
-                ),
-            );
+        .add(
+            await getTapTokenReceiverModule(
+                hre,
+                tapiocaMulticall.address,
+                chainInfo.address,
+            ),
+        )
+        .add(
+            await getTapToken(hre, tapiocaMulticall.address, chainInfo.address),
+        );
 
-        // Add and execute
-        await VM.execute(3);
-        await VM.save();
-        await VM.verify();
-    }
+    // Add and execute
+    await VM.execute(3);
+    await VM.save();
+    await VM.verify();
 
     // After deployment setup
     console.log('[+] After deployment setup');

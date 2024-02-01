@@ -14,7 +14,7 @@ import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
 
 export const deployFinalStack__task = async (
-    taskArgs: { tag?: string; load?: boolean },
+    taskArgs: { tag?: string },
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
