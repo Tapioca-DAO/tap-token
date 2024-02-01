@@ -266,6 +266,23 @@ export const buildFinalStackPostDepSetup_2 = async (
         );
     }
 
+    /**
+     * Set USDO as reward token in TwTap if not set
+     */
+    if (
+        (await twTap.rewardTokenIndex(usdoDeployment.address)).toNumber() === 0
+    ) {
+        console.log('[+] +Call queue: set USDO as reward token in TwTap');
+        calls.push({
+            target: twTap.address,
+            allowFailure: false,
+            callData: twTap.interface.encodeFunctionData('addRewardToken', [
+                usdoDeployment.address,
+            ]),
+        });
+        console.log('\t- Parameters', 'USDO', usdoDeployment.address);
+    }
+
     return calls;
 };
 
