@@ -91,7 +91,7 @@ export const deployTapToken__task = async (
         .add(await buildTapTokenHelper(hre, 'TapOFTHelper', []));
 
     // Add and execute
-    await VM.execute(3);
+    await VM.execute();
     await VM.save();
     await VM.verify();
 };

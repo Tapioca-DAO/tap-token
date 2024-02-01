@@ -32,7 +32,6 @@ export const DEPLOYMENT_NAMES = {
 type TPostLbp = {
     [key in EChainID]?: {
         TAP: {
-            LBP_ADDRESS: string;
             DAO_ADDRESS: string;
         };
         ADB: {
@@ -66,7 +65,6 @@ type TPostLbp = {
 const POST_LBP: TPostLbp = {
     [EChainID.ARBITRUM]: {
         TAP: {
-            LBP_ADDRESS: '0x464570adA09869d8741132183721B4f0769a0287', // TODO replace by real address
             DAO_ADDRESS: '0x464570adA09869d8741132183721B4f0769a0287', // TODO replace by real address
         },
         ADB: {
@@ -101,6 +99,8 @@ const POST_LBP: TPostLbp = {
         },
     },
 };
+POST_LBP[EChainID.ARBITRUM_SEPOLIA] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
+POST_LBP['31337' as EChainID] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
 
 type TFinal = {
     [key in EChainID]?: {
@@ -123,6 +123,8 @@ const FINAL: TFinal = {
         },
     },
 };
+FINAL[EChainID.ARBITRUM_SEPOLIA] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
+FINAL['31337' as EChainID] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
 
 type TMisc = {
     [key in EChainID]?: {
@@ -138,6 +140,7 @@ const MISC: TMisc = {
         USDC: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     },
 };
+MISC[EChainID.ARBITRUM_SEPOLIA] = MISC[EChainID.ARBITRUM]; // Copy from Arbitrum
 
 const UNISWAP = {
     NONFUNGIBLE_POSITION_MANAGER: '0xc36442b4a4522e871399cd717abdd847ab11fe88',

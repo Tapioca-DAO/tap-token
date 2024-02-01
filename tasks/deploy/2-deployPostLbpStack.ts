@@ -15,7 +15,7 @@ import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
 
 export const deployPostLbpStack__task = async (
-    taskArgs: { tag?: string },
+    taskArgs: { tag?: string; load?: boolean; verify: boolean },
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
@@ -28,38 +28,52 @@ export const deployPostLbpStack__task = async (
     const VM = await loadVM(hre, tag);
     const tapiocaMulticall = await VM.getMulticall();
 
-    // Build contracts
-    VM.add(
-        await buildAOTAP(hre, DEPLOYMENT_NAMES.AOTAP, [
-            tapiocaMulticall.address,
-        ]),
-    )
-        .add(await getVestingContributors(hre, tapiocaMulticall.address))
-        .add(await getVestingEarlySupporters(hre, tapiocaMulticall.address))
-        .add(await getVestingSupporters(hre, tapiocaMulticall.address))
-        .add(await getAdb(hre, tapiocaMulticall.address))
-        .add(
-            await getTapTokenSenderModule(
-                hre,
-                tapiocaMulticall.address,
-                chainInfo.address,
-            ),
-        )
-        .add(
-            await getTapTokenReceiverModule(
-                hre,
-                tapiocaMulticall.address,
-                chainInfo.address,
-            ),
-        )
-        .add(
-            await getTapToken(hre, tapiocaMulticall.address, chainInfo.address),
+    if (taskArgs.load) {
+        VM.load(
+            hre.SDK.db.loadLocalDeployment(tag, hre.SDK.eChainId)?.contracts ??
+                [],
         );
+    } else {
+        // Build contracts
+        VM.add(
+            await buildAOTAP(hre, DEPLOYMENT_NAMES.AOTAP, [
+                tapiocaMulticall.address,
+            ]),
+        )
+            .add(await getVestingContributors(hre, tapiocaMulticall.address))
+            .add(await getVestingEarlySupporters(hre, tapiocaMulticall.address))
+            .add(await getVestingSupporters(hre, tapiocaMulticall.address))
+            .add(await getAdb(hre, tapiocaMulticall.address))
+            .add(
+                await getTapTokenSenderModule(
+                    hre,
+                    tapiocaMulticall.address,
+                    chainInfo.address,
+                ),
+            )
+            .add(
+                await getTapTokenReceiverModule(
+                    hre,
+                    tapiocaMulticall.address,
+                    chainInfo.address,
+                ),
+            )
+            .add(
+                await getTapToken(
+                    hre,
+                    tag,
+                    tapiocaMulticall.address,
+                    chainInfo.address,
+                ),
+            );
 
-    // Add and execute
-    await VM.execute(3);
-    await VM.save();
-    await VM.verify();
+        // Add and execute
+        await VM.execute();
+        await VM.save();
+        if (taskArgs.verify) {
+            await VM.verify();
+        }
+    }
 
     // After deployment setup
     console.log('[+] After deployment setup');
@@ -72,9 +86,15 @@ export const deployPostLbpStack__task = async (
     } else {
         // Deploying testnet mock payment oracles
         // This'll also inject newly created USDC mock in DEPLOY_CONFIG
-        await executeTestnetPostLbpStackPostDepSetup(hre, tag);
+        if (!taskArgs.load) {
+            // Since it's deployments, if load is true, we don't need to deploy again
+            await executeTestnetPostLbpStackPostDepSetup(
+                hre,
+                tag,
+                taskArgs.verify,
+            );
+        }
     }
-
     // Setup contracts
     await VM.executeMulticall(await buildPostLbpStackPostDepSetup_2(hre, tag));
 
@@ -172,9 +192,17 @@ async function getTapTokenReceiverModule(
 
 async function getTapToken(
     hre: HardhatRuntimeEnvironment,
+    tag: string,
     owner: string,
     lzEndpointAddress: string,
 ) {
+    const ltap = hre.SDK.db.findLocalDeployment(
+        hre.SDK.eChainId,
+        DEPLOYMENT_NAMES.LTAP,
+        tag,
+    );
+    if (!ltap) throw new Error('[-] LTAP not found');
+
     return await buildTapToken(
         hre,
         DEPLOYMENT_NAMES.TAP_TOKEN,
@@ -183,7 +211,7 @@ async function getTapToken(
             hre.ethers.constants.AddressZero, //contributors address
             hre.ethers.constants.AddressZero, // early supporters address
             hre.ethers.constants.AddressZero, // supporters address
-            hre.ethers.constants.AddressZero, // aoTap address
+            ltap.address, // LTap address
             DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS, // DAO address
             hre.ethers.constants.AddressZero, // AirdropBroker address,
             ELZChainID.ARBITRUM, // Governance LZ ChainID
@@ -203,10 +231,6 @@ async function getTapToken(
             {
                 argPosition: 3,
                 deploymentName: DEPLOYMENT_NAMES.VESTING_SUPPORTERS,
-            },
-            {
-                argPosition: 3,
-                deploymentName: DEPLOYMENT_NAMES.AOTAP,
             },
             {
                 argPosition: 6,

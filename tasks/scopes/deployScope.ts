@@ -12,10 +12,16 @@ deployScope
         'Deploy the Pre LBP stack of the tap-token repo. Includes the LTAP.',
         deployPreLbpStack__task,
     )
-    .addFlag(
+    .addOptionalParam(
         'tag',
         'The tag to use for the deployment. Defaults to "default" if not specified.',
-    );
+        'default',
+    )
+    .addFlag(
+        'load',
+        'Load the contracts from the database instead of building them.',
+    )
+    .addFlag('verify', 'Add to verify the contracts after deployment.');
 
 deployScope
     .task(
@@ -23,17 +29,29 @@ deployScope
         'Deploy and init the Post LBP stack of the tap-token repo. Includes AOTAP, ADB, Vesting, TapToken.',
         deployPostLbpStack__task,
     )
-    .addFlag(
+    .addOptionalParam(
         'tag',
         'The tag to use for the deployment. Defaults to "default" if not specified.',
-    );
+        'default',
+    )
+    .addFlag(
+        'load',
+        'Load the contracts from the database instead of building them.',
+    )
+    .addFlag('verify', 'Add to verify the contracts after deployment.');
 deployScope
     .task(
         'final',
         'Deploy and init the final stack of the tap-token repo. Includes the TOB, TOLP, OTAP, TwTap.',
         deployFinalStack__task,
     )
-    .addFlag(
+    .addOptionalParam(
         'tag',
         'The tag to use for the deployment. Defaults to "default" if not specified.',
-    );
+        'default',
+    )
+    .addFlag(
+        'load',
+        'Load the contracts from the database instead of building them.',
+    )
+    .addFlag('verify', 'Add to verify the contracts after deployment.');

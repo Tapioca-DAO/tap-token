@@ -48,7 +48,7 @@ export const executeTestnetFinalStackPostDepSetup = async (
             ]),
         );
 
-    await VM.execute(3);
+    await VM.execute();
     await VM.verify();
 
     // Perform a fake save globally to store the Mocks
@@ -57,7 +57,14 @@ export const executeTestnetFinalStackPostDepSetup = async (
             [hre.SDK.eChainId]: {
                 name: hre.network.name,
                 lastBlockHeight: await hre.ethers.provider.getBlockNumber(),
-                contracts: VM.list(),
+                contracts: VM.list().map((contract) => ({
+                    ...contract,
+                    meta: {
+                        ...contract.meta,
+                        mock: true,
+                        description: 'Mock contract deployed from tap-token',
+                    },
+                })),
             },
         },
         TAPIOCA_PROJECTS_NAME.TapiocaBar,

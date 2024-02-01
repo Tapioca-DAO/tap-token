@@ -94,7 +94,7 @@ export const deployMockADB__task = async (
             );
 
         // Add and execute
-        await VM.execute(3);
+        await VM.execute();
         VM.save();
         await VM.verify();
     }

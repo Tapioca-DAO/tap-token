@@ -14,7 +14,7 @@ import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
 
 export const deployFinalStack__task = async (
-    taskArgs: { tag?: string },
+    taskArgs: { tag?: string; load?: boolean; verify: boolean },
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
@@ -39,17 +39,26 @@ export const deployFinalStack__task = async (
         throw '[-] YieldBox not found';
     }
 
-    VM.add(await getTolp(hre, tapiocaMulticall.address, yieldBox.address))
-        .add(await buildOTAP(hre, DEPLOYMENT_NAMES.OTAP))
-        .add(await getTob(hre, tapiocaMulticall.address))
-        .add(await getTwTap(hre, tapiocaMulticall.address))
-        .add(await getArbGlpYbStrategy(hre, yieldBox.address))
-        .add(await getMainnetDaiYbStrategy(hre, yieldBox.address));
+    if (taskArgs.load) {
+        VM.load(
+            hre.SDK.db.loadLocalDeployment(tag, hre.SDK.eChainId)?.contracts ??
+                [],
+        );
+    } else {
+        VM.add(await getTolp(hre, tapiocaMulticall.address, yieldBox.address))
+            .add(await buildOTAP(hre, DEPLOYMENT_NAMES.OTAP))
+            .add(await getTob(hre, tapiocaMulticall.address))
+            .add(await getTwTap(hre, tapiocaMulticall.address))
+            .add(await getArbGlpYbStrategy(hre, yieldBox.address))
+            .add(await getMainnetDaiYbStrategy(hre, yieldBox.address));
 
-    // Add and execute
-    await VM.execute(3);
-    await VM.save();
-    await VM.verify();
+        // Add and execute
+        await VM.execute();
+        await VM.save();
+        if (taskArgs.verify) {
+            await VM.verify();
+        }
+    }
 
     // After deployment setup
     console.log('[+] After deployment setup');
