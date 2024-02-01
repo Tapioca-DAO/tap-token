@@ -25,6 +25,7 @@ export const DEPLOYMENT_NAMES = {
     TWTAP: 'TWTAP',
     YB_SGL_ARB_GLP_STRATEGY: 'YB_SGL_ARB_GLP_STRATEGY',
     YB_SGL_MAINNET_DAI_STRATEGY: 'YB_SGL_MAINNET_DAI_STRATEGY',
+    // TO MOVE
     ARBITRUM_SGL_GLP: 'ARBITRUM_SGL_GLP', // TODO move to tapioca bar repo name config
     MAINNET_SGL_DAI: 'MAINNET_SGL_DAI', // TODO move to tapioca bar repo name config
 };

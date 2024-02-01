@@ -318,7 +318,7 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
             tag,
             TAPIOCA_PROJECTS_NAME.YieldBox,
             hre.SDK.eChainId,
-            'YIELDBOX', // TODO replace by YB NAME CONFIG
+            'YieldBox', // TODO replace by YB NAME CONFIG
         ).address,
     );
 
@@ -349,11 +349,13 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         tag,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
         hre.SDK.eChainId,
-        'ARB_SGL_GLP', // TODO replace by BAR NAME CONFIG
+        DEPLOYMENT_NAMES.ARBITRUM_SGL_GLP, // TODO replace by BAR NAME CONFIG
     );
-    const ybStrategyArbSglGlpDeployment = getContract(
+    const ybStrategyArbSglGlpDeployment = getGlobalDeployment(
         hre,
         tag,
+        TAPIOCA_PROJECTS_NAME.TapiocaBar,
+        hre.SDK.eChainId,
         DEPLOYMENT_NAMES.YB_SGL_ARB_GLP_STRATEGY,
     );
 
@@ -363,11 +365,13 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         tag,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
         hre.SDK.eChainId,
-        'TOFT_MAINNET_SGL_DAI', // TODO replace by TapiocaZ NAME CONFIG
+        DEPLOYMENT_NAMES.MAINNET_SGL_DAI, // TODO replace by TapiocaZ NAME CONFIG
     );
-    const ybStrategyMainnetSglDaiDeployment = getContract(
+    const ybStrategyMainnetSglDaiDeployment = getGlobalDeployment(
         hre,
         tag,
+        TAPIOCA_PROJECTS_NAME.TapiocaBar,
+        hre.SDK.eChainId,
         DEPLOYMENT_NAMES.YB_SGL_MAINNET_DAI_STRATEGY,
     );
 
@@ -456,11 +460,17 @@ async function registerAssetInYieldbox(
                 ybAsset,
                 signer,
                 signer,
-                hre.ethers.utils.formatEther(balance),
+                balance,
                 0,
             ]),
         });
-        console.log('\t- Parameters', ybAsset, signer, balance, 0);
+        console.log(
+            '\t- Parameters',
+            ybAsset,
+            signer,
+            hre.ethers.utils.formatEther(balance),
+            0,
+        );
     }
     return calls;
 }
