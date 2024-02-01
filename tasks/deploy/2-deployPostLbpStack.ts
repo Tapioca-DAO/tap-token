@@ -1,9 +1,4 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import {
-    EChainID,
-    ELZChainID,
-    TAPIOCA_PROJECTS_NAME,
-} from '@tapioca-sdk/api/config';
+import { ELZChainID, TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { buildTapToken } from 'tasks/deployBuilds/finalStack/options/tapToken/buildTapToken';
 import { buildADB } from 'tasks/deployBuilds/postLbpStack/airdrop/buildADB';
@@ -12,12 +7,12 @@ import {
     buildPostLbpStackPostDepSetup_1,
     buildPostLbpStackPostDepSetup_2,
 } from 'tasks/deployBuilds/postLbpStack/buildPostLbpStackPostDepSetup';
+import { executeTestnetPostLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/executeTestnetPostLbpStackPostDepSetup';
 import { buildTapTokenReceiverModule } from '../deployBuilds/finalStack/options/tapToken/buildTapTokenReceiverModule';
 import { buildTapTokenSenderModule } from '../deployBuilds/finalStack/options/tapToken/buildTapTokenSenderModule';
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
 import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
-import { executeTestnetPostLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/testnet/executeTestnetPostLbpStackPostDepSetup';
 
 export const deployPostLbpStack__task = async (
     taskArgs: { tag?: string; load?: boolean },
@@ -25,7 +20,6 @@ export const deployPostLbpStack__task = async (
 ) => {
     // Settings
     const tag = taskArgs.tag ?? 'default';
-    const signer = (await hre.ethers.getSigners())[0];
     const chainInfo = hre.SDK.utils.getChainBy(
         'chainId',
         Number(hre.network.config.chainId),

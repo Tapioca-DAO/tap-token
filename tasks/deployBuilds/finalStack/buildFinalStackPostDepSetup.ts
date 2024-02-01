@@ -9,9 +9,9 @@ import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from 'tasks/deploy/DEPLOY_CONFIG';
 export const buildFinalStackPostDepSetup_1 = async (
     hre: HardhatRuntimeEnvironment,
     tag: string,
+    signer: string,
 ): Promise<TapiocaMulticall.CallStruct[]> => {
     let calls: TapiocaMulticall.CallStruct[] = [];
-    const signer = (await hre.ethers.getSigners())[0];
 
     /**
      * Load addresses
@@ -325,7 +325,7 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
     const usdcOracleDeployment = getContract(
         hre,
         tag,
-        DEPLOYMENT_NAMES.USDC_USDC_CL_POOl,
+        DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE,
     );
 
     const usdoDeployment = getGlobalDeployment(
@@ -340,7 +340,7 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         tag,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
         hre.SDK.eChainId,
-        'USDO_UNI_POOL', // TODO replace by BAR NAME CONFIG
+        'USDO_SEER_UNI_ORACLE', // TODO replace by BAR NAME CONFIG
     );
 
     // Arbitrum SGL-GLP
@@ -432,7 +432,7 @@ async function registerAssetInYieldbox(
     sglDeployment: TContract,
     ybStrategy: TContract,
     yieldbox: IYieldBox,
-    signer: SignerWithAddress,
+    signer: string,
 ) {
     const calls: TapiocaMulticall.CallStruct[] = [];
 
@@ -448,19 +448,19 @@ async function registerAssetInYieldbox(
         console.log('[+] Depositing SGL_GLP to YieldBox');
         const balance = await (
             await hre.ethers.getContractAt('ERC20', sglDeployment.address)
-        ).balanceOf(signer.address);
+        ).balanceOf(signer);
         calls.push({
             target: yieldbox.address,
             allowFailure: false,
             callData: yieldbox.interface.encodeFunctionData('depositAsset', [
                 ybAsset,
-                signer.address,
-                signer.address,
+                signer,
+                signer,
                 hre.ethers.utils.formatEther(balance),
                 0,
             ]),
         });
-        console.log('\t- Parameters', ybAsset, signer.address, balance, 0);
+        console.log('\t- Parameters', ybAsset, signer, balance, 0);
     }
     return calls;
 }

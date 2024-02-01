@@ -1,6 +1,7 @@
-import { EChainID, TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
+import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { buildEmptyYbStrategy } from 'tasks/deployBuilds/finalStack/buildEmptyYbStrategy';
+import { executeTestnetFinalStackPostDepSetup } from 'tasks/deployBuilds/finalStack/executeTestnetFinalStackPostDepSetup';
 import {
     buildFinalStackPostDepSetup_1,
     buildFinalStackPostDepSetup_2,
@@ -25,6 +26,7 @@ export const deployFinalStack__task = async (
     )!;
 
     const VM = await loadVM(hre, tag);
+    const tapiocaMulticall = await VM.getMulticall();
 
     const yieldBox = hre.SDK.db.findGlobalDeployment(
         TAPIOCA_PROJECTS_NAME.YieldBox,
@@ -36,7 +38,6 @@ export const deployFinalStack__task = async (
     if (!yieldBox) {
         throw '[-] YieldBox not found';
     }
-    const tapiocaMulticall = await VM.getMulticall();
 
     VM.add(await getTolp(hre, tapiocaMulticall.address, yieldBox.address))
         .add(await buildOTAP(hre, DEPLOYMENT_NAMES.OTAP))
@@ -52,7 +53,16 @@ export const deployFinalStack__task = async (
 
     // After deployment setup
     console.log('[+] After deployment setup');
-    await VM.executeMulticall(await buildFinalStackPostDepSetup_1(hre, tag));
+    const isTestnet = chainInfo.tags.find((tag) => tag === 'testnet');
+
+    // Execute testnet setup. Deploy mocks and other testnet specific contracts that comes from tapioca-bar
+    if (isTestnet) {
+        await executeTestnetFinalStackPostDepSetup(hre, tag);
+    }
+
+    await VM.executeMulticall(
+        await buildFinalStackPostDepSetup_1(hre, tag, tapiocaMulticall.address),
+    );
     await VM.executeMulticall(await buildFinalStackPostDepSetup_2(hre, tag));
 
     console.log('[+] Stack deployed! 🎉');
