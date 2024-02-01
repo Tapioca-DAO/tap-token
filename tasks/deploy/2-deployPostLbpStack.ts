@@ -17,6 +17,7 @@ import { buildTapTokenSenderModule } from '../deployBuilds/finalStack/options/ta
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
 import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
+import { executeTestnetPostLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/testnet/executeTestnetPostLbpStackPostDepSetup';
 
 export const deployPostLbpStack__task = async (
     taskArgs: { tag?: string; load?: boolean },
@@ -95,9 +96,16 @@ export const deployPostLbpStack__task = async (
     console.log('[+] After deployment setup');
     const isTestnet = chainInfo.tags.find((tag) => tag === 'testnet');
     // Create UniV3 Tap/WETH pool, TapOracle, USDCOracle
-    await VM.executeMulticall(
-        await buildPostLbpStackPostDepSetup_1(hre, tag, !isTestnet),
-    );
+    if (!isTestnet) {
+        await VM.executeMulticall(
+            await buildPostLbpStackPostDepSetup_1(hre, tag),
+        );
+    } else {
+        // Deploying testnet mock payment oracles
+        // This'll also inject newly created USDC mock in DEPLOY_CONFIG
+        await executeTestnetPostLbpStackPostDepSetup(hre, tag);
+    }
+
     // Setup contracts
     await VM.executeMulticall(await buildPostLbpStackPostDepSetup_2(hre, tag));
 

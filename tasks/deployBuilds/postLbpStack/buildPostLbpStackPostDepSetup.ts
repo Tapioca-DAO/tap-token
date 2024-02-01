@@ -16,7 +16,6 @@ import { loadVM } from 'tasks/utils';
 export const buildPostLbpStackPostDepSetup_1 = async (
     hre: HardhatRuntimeEnvironment,
     tag: string,
-    deployUniV3Pool = true,
 ): Promise<TapiocaMulticall.CallStruct[]> => {
     const calls: TapiocaMulticall.CallStruct[] = [];
     const signer = (await hre.ethers.getSigners())[0];
@@ -39,7 +38,6 @@ export const buildPostLbpStackPostDepSetup_1 = async (
      * Deploy Uniswap V3 Pool if not deployed
      */
     if (
-        deployUniV3Pool &&
         (
             await uniV3Factory.getPool(
                 tapToken.address,
@@ -47,7 +45,7 @@ export const buildPostLbpStackPostDepSetup_1 = async (
                 FeeAmount.MEDIUM,
             )
         ).toLocaleLowerCase() ===
-            hre.ethers.constants.AddressZero.toLocaleLowerCase()
+        hre.ethers.constants.AddressZero.toLocaleLowerCase()
     ) {
         newPool = true;
         console.log('[+] +Call queue: Deploy Uniswap V3 Pool');
@@ -133,7 +131,7 @@ export const buildPostLbpStackPostDepSetup_1 = async (
      * Deploy USDC oracle if not deployed
      */
     try {
-        getContract(hre, tag, DEPLOYMENT_NAMES.USDC_USDC_CL_POOl);
+        getContract(hre, tag, DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE);
     } catch (err) {
         const usdcOracle = await new SeerCLSolo__factory(signer).deploy(
             'USDC/USD',
@@ -156,7 +154,7 @@ export const buildPostLbpStackPostDepSetup_1 = async (
         await usdcOracle.deployed();
         VM.load([
             {
-                name: DEPLOYMENT_NAMES.USDC_USDC_CL_POOl,
+                name: DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE,
                 address: usdcOracle.address,
                 meta: {
                     CL_POOL:
@@ -275,7 +273,7 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
     const usdcOracleDeployment = getContract(
         hre,
         tag,
-        DEPLOYMENT_NAMES.USDC_USDC_CL_POOl,
+        DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE,
     );
 
     const weth = await hre.ethers.getContractAt(
