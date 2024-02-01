@@ -16,6 +16,7 @@ import { loadVM } from 'tasks/utils';
 export const buildPostLbpStackPostDepSetup_1 = async (
     hre: HardhatRuntimeEnvironment,
     tag: string,
+    deployUniV3Pool = true,
 ): Promise<TapiocaMulticall.CallStruct[]> => {
     const calls: TapiocaMulticall.CallStruct[] = [];
     const signer = (await hre.ethers.getSigners())[0];
@@ -38,6 +39,7 @@ export const buildPostLbpStackPostDepSetup_1 = async (
      * Deploy Uniswap V3 Pool if not deployed
      */
     if (
+        deployUniV3Pool &&
         (
             await uniV3Factory.getPool(
                 tapToken.address,
@@ -45,7 +47,7 @@ export const buildPostLbpStackPostDepSetup_1 = async (
                 FeeAmount.MEDIUM,
             )
         ).toLocaleLowerCase() ===
-        hre.ethers.constants.AddressZero.toLocaleLowerCase()
+            hre.ethers.constants.AddressZero.toLocaleLowerCase()
     ) {
         newPool = true;
         console.log('[+] +Call queue: Deploy Uniswap V3 Pool');
@@ -88,33 +90,25 @@ export const buildPostLbpStackPostDepSetup_1 = async (
     if (newPool) {
         // TODO Use TAP/WETH UNI => WETH/USDC UNI for now. Change to TAP/WETH UNI => WETH/USDC CL when possible
         const tapOracle = await new SeerUniSolo__factory(signer).deploy(
-            DEPLOY_CONFIG.POST_LBP[
-                hre.SDK.eChainId as keyof typeof DEPLOY_CONFIG.POST_LBP
-            ].TAP_ORACLE.NAME,
-            DEPLOY_CONFIG.POST_LBP[
-                hre.SDK.eChainId as keyof typeof DEPLOY_CONFIG.POST_LBP
-            ].TAP_ORACLE.NAME,
+            DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP_ORACLE.NAME,
+            DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP_ORACLE.NAME,
             18,
             {
                 addressInAndOutUni: [tapToken.address, weth.address],
                 _circuitUniswap: [
                     computedPoolAddress, /// TAP/WETH
-                    DEPLOY_CONFIG.POST_LBP[
-                        hre.SDK.eChainId as keyof typeof DEPLOY_CONFIG.MISC
-                    ].TAP_ORACLE.WETH_USDC_UNI_POOL, // WETH-USDC Uniswap V3 Pool. 500 FeeAmount
+                    DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP_ORACLE
+                        .WETH_USDC_UNI_POOL, // WETH-USDC Uniswap V3 Pool. 500 FeeAmount
                 ],
                 _circuitUniIsMultiplied: [1, 0], // Multiply/divide Uni
                 _twapPeriod: 600, // 5min TWAP
                 observationLength: 10, // 10 min Observation length
                 guardians: [signer.address], // Owner
                 _description:
-                    DEPLOY_CONFIG.POST_LBP[
-                        hre.SDK.eChainId as keyof typeof DEPLOY_CONFIG.MISC
-                    ].TAP_ORACLE.DESCRIPTION, // Description,
+                    DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP_ORACLE
+                        .DESCRIPTION, // Description,
                 _sequencerUptimeFeed:
-                    DEPLOY_CONFIG.MISC[
-                        hre.SDK.eChainId as keyof typeof DEPLOY_CONFIG.MISC
-                    ].CL_SEQUENCER,
+                    DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.CL_SEQUENCER,
                 _admin: signer.address, // Owner
             },
         );
@@ -126,9 +120,8 @@ export const buildPostLbpStackPostDepSetup_1 = async (
                 meta: {
                     _circuitUniswap: [
                         computedPoolAddress, /// TAP/WETH
-                        DEPLOY_CONFIG.POST_LBP[
-                            hre.SDK.eChainId as keyof typeof DEPLOY_CONFIG.MISC
-                        ].TAP_ORACLE.WETH_USDC_UNI_POOL, // WETH-USDC Uniswap V3 Pool. 500 FeeAmount
+                        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP_ORACLE
+                            .WETH_USDC_UNI_POOL, // WETH-USDC Uniswap V3 Pool. 500 FeeAmount
                     ],
                 },
             },
@@ -148,17 +141,14 @@ export const buildPostLbpStackPostDepSetup_1 = async (
             18,
             {
                 _poolChainlink:
-                    DEPLOY_CONFIG.POST_LBP[
-                        hre.SDK.eChainId as keyof typeof DEPLOY_CONFIG.POST_LBP
-                    ].TAP_ORACLE.ETH_USD_CHAINLINK, // CL Pool
+                    DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP_ORACLE
+                        .ETH_USD_CHAINLINK, // CL Pool
                 _isChainlinkMultiplied: 1,
                 stalePeriod: 86400, // CL stale period, 1 day
                 guardians: [signer.address],
                 _description: hre.ethers.utils.formatBytes32String('ETH/USD'), // Description,
                 _sequencerUptimeFeed:
-                    DEPLOY_CONFIG.MISC[
-                        hre.SDK.eChainId as keyof typeof DEPLOY_CONFIG.MISC
-                    ].CL_SEQUENCER,
+                    DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.CL_SEQUENCER,
                 _inBase: (1e18).toString(),
                 _admin: signer.address,
             },
@@ -170,10 +160,8 @@ export const buildPostLbpStackPostDepSetup_1 = async (
                 address: usdcOracle.address,
                 meta: {
                     CL_POOL:
-                        DEPLOY_CONFIG.POST_LBP[
-                            hre.SDK
-                                .eChainId as keyof typeof DEPLOY_CONFIG.POST_LBP
-                        ].TAP_ORACLE.ETH_USD_CHAINLINK,
+                        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP_ORACLE
+                            .ETH_USD_CHAINLINK,
                 },
             },
         ]);
@@ -246,8 +234,7 @@ export const buildPostLbpStackPostDepSetup_2 = async (
     /**
      * Set USDC as payment token in ADB
      */
-    const usdcAddr =
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].ADB.USDC_PAYMENT_TOKEN;
+    const usdcAddr = DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.USDC;
     if (
         (await adb.paymentTokens(usdcAddr)).oracle.toLocaleLowerCase() !==
         usdcOracleDeployment.address.toLocaleLowerCase()
@@ -293,11 +280,7 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
 
     const weth = await hre.ethers.getContractAt(
         'ERC20',
-        DEPLOY_CONFIG.MISC[
-            String(
-                hre.network.config.chainId,
-            ) as keyof typeof DEPLOY_CONFIG.MISC
-        ].WETH,
+        DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.WETH,
     );
     const tapToken = await hre.ethers.getContractAt(
         'TapToken',
@@ -333,7 +316,7 @@ function getContract(
     contractName: string,
 ) {
     const contract = hre.SDK.db.findLocalDeployment(
-        String(hre.network.config.chainId),
+        hre.SDK.eChainId,
         contractName,
         tag,
     )!;

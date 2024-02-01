@@ -1,26 +1,22 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
+import { EChainID, TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import { TContract } from '@tapioca-sdk/shared';
 import { IYieldBox } from '@typechain/index';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { Multicall3 } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
-import { DEPLOYMENT_NAMES } from 'tasks/deploy/DEPLOY_CONFIG';
+import { TapiocaMulticall } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
+import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from 'tasks/deploy/DEPLOY_CONFIG';
 
 export const buildFinalStackPostDepSetup_1 = async (
     hre: HardhatRuntimeEnvironment,
     tag: string,
-): Promise<Multicall3.CallStruct[]> => {
-    let calls: Multicall3.CallStruct[] = [];
+): Promise<TapiocaMulticall.CallStruct[]> => {
+    let calls: TapiocaMulticall.CallStruct[] = [];
     const signer = (await hre.ethers.getSigners())[0];
 
     /**
      * Load addresses
      */
     const {
-        tapToken,
-        oTap,
-        tob,
-        twTap,
         yieldbox,
         arbSglGlpDeployment,
         ybStrategyArbSglGlpDeployment,
@@ -57,70 +53,31 @@ export const buildFinalStackPostDepSetup_1 = async (
     ];
 
     /**
-     * Set tOB as minter for TapOFT
+     * Deploy TapTokenOptionOracle
      */
 
-    if (
-        (await tapToken.minter()).toLocaleLowerCase() !==
-        tob.address.toLocaleLowerCase()
-    ) {
-        console.log('[+] Setting tOB as minter for TapToken');
-        calls.push({
-            target: tapToken.address,
-            allowFailure: false,
-            callData: tapToken.interface.encodeFunctionData('setMinter', [
-                tob.address,
-            ]),
-        });
-        console.log('\t- Parameters', 'tOB', tob.address);
-    }
-
-    /**
-     * Set tOB Broker role for tOB on oTAP
-     */
-    if (
-        (await oTap.broker()).toLocaleLowerCase() !==
-        tob.address.toLocaleLowerCase()
-    ) {
-        console.log('[+] +Call queue: oTAP broker claim');
-        calls.push({
-            target: tob.address,
-            allowFailure: false,
-            callData: tob.interface.encodeFunctionData('oTAPBrokerClaim'),
-        });
-    }
-
-    /**
-     * Set twTAP in TapOFT
-     */
-    if (
-        (await tapToken.twTap()).toLocaleLowerCase() !==
-        twTap.address.toLocaleLowerCase()
-    ) {
-        console.log('[+] +Call queue: set twTAP in TapToken');
-        calls.push({
-            target: tapToken.address,
-            allowFailure: false,
-            callData: tapToken.interface.encodeFunctionData('setTwTAP', [
-                twTap.address,
-            ]),
-        });
-    }
     return calls;
 };
 
 export const buildFinalStackPostDepSetup_2 = async (
     hre: HardhatRuntimeEnvironment,
     tag: string,
-): Promise<Multicall3.CallStruct[]> => {
-    const calls: Multicall3.CallStruct[] = [];
+): Promise<TapiocaMulticall.CallStruct[]> => {
+    const calls: TapiocaMulticall.CallStruct[] = [];
 
     /**
      * Load addresses
      */
     const {
+        tapToken,
+        oTap,
+        tob,
+        twTap,
         tOlp,
         yieldbox,
+        usdoDeployment,
+        usdoOracleDeployment,
+        usdcOracleDeployment,
         arbSglGlpDeployment,
         ybStrategyArbSglGlpDeployment,
         ybStrategyMainnetSglDaiDeployment,
@@ -199,6 +156,116 @@ export const buildFinalStackPostDepSetup_2 = async (
         );
     }
 
+    /**
+     * Set tOB as minter for TapOFT
+     */
+
+    if (
+        (await tapToken.minter()).toLocaleLowerCase() !==
+        tob.address.toLocaleLowerCase()
+    ) {
+        console.log('[+] Setting tOB as minter for TapToken');
+        calls.push({
+            target: tapToken.address,
+            allowFailure: false,
+            callData: tapToken.interface.encodeFunctionData('setMinter', [
+                tob.address,
+            ]),
+        });
+        console.log('\t- Parameters', 'tOB', tob.address);
+    }
+
+    /**
+     * Set tOB Broker role for tOB on oTAP
+     */
+    if (
+        (await oTap.broker()).toLocaleLowerCase() !==
+        tob.address.toLocaleLowerCase()
+    ) {
+        console.log('[+] +Call queue: oTAP broker claim');
+        calls.push({
+            target: tob.address,
+            allowFailure: false,
+            callData: tob.interface.encodeFunctionData('oTAPBrokerClaim'),
+        });
+    }
+
+    /**
+     * Set twTAP in TapOFT
+     */
+    if (
+        (await tapToken.twTap()).toLocaleLowerCase() !==
+        twTap.address.toLocaleLowerCase()
+    ) {
+        console.log('[+] +Call queue: set twTAP in TapToken');
+        calls.push({
+            target: tapToken.address,
+            allowFailure: false,
+            callData: tapToken.interface.encodeFunctionData('setTwTAP', [
+                twTap.address,
+            ]),
+        });
+    }
+
+    /**
+     * Set USDO as payment token in tOB if not set
+     */
+    if (
+        (
+            await tob.paymentTokens(usdoDeployment.address)
+        ).oracle.toLocaleLowerCase() !==
+        usdoDeployment.address.toLocaleLowerCase()
+    ) {
+        console.log('[+] +Call queue: set USDO as payment token in tOB');
+        calls.push({
+            target: tob.address,
+            allowFailure: false,
+            callData: tob.interface.encodeFunctionData('setPaymentToken', [
+                usdoDeployment.address,
+                usdoOracleDeployment.address,
+                '0x00',
+            ]),
+        });
+        console.log(
+            '\t- Parameters',
+            'USDO',
+            usdoDeployment.address,
+            'USDO Oracle',
+            usdoOracleDeployment.address,
+            'Data',
+            '0x00',
+        );
+    }
+
+    /**
+     * Set USDC as payment token in tOB if not set
+     */
+    const usdcAddr = DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.USDC;
+    if (
+        (await tob.paymentTokens(usdcAddr)).oracle.toLocaleLowerCase() !==
+        usdcOracleDeployment.address.toLocaleLowerCase()
+    ) {
+        console.log('[+] +Call queue: set USDO as payment token in tOB');
+        calls.push({
+            target: tob.address,
+            allowFailure: false,
+            callData: tob.interface.encodeFunctionData('setPaymentToken', [
+                usdcAddr,
+                usdcOracleDeployment.address,
+                '0x00',
+            ]),
+        });
+        console.log(
+            '\t- Parameters',
+            'USDO',
+            usdcAddr,
+            'USDO Oracle',
+            usdcOracleDeployment.address,
+            'Data',
+            '0x00',
+        );
+    }
+
     return calls;
 };
 
@@ -233,9 +300,30 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
             hre,
             tag,
             TAPIOCA_PROJECTS_NAME.YieldBox,
-            String(hre.network.config.chainId),
+            hre.SDK.eChainId,
             'YIELDBOX', // TODO replace by YB NAME CONFIG
         ).address,
+    );
+
+    const usdcOracleDeployment = getContract(
+        hre,
+        tag,
+        DEPLOYMENT_NAMES.USDC_USDC_CL_POOl,
+    );
+
+    const usdoDeployment = getGlobalDeployment(
+        hre,
+        tag,
+        TAPIOCA_PROJECTS_NAME.TapiocaBar,
+        hre.SDK.eChainId,
+        'USDO', // TODO replace by BAR NAME CONFIG
+    );
+    const usdoOracleDeployment = getGlobalDeployment(
+        hre,
+        tag,
+        TAPIOCA_PROJECTS_NAME.TapiocaBar,
+        hre.SDK.eChainId,
+        'USDO_UNI_POOL', // TODO replace by BAR NAME CONFIG
     );
 
     // Arbitrum SGL-GLP
@@ -243,7 +331,7 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         hre,
         tag,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
-        String(hre.network.config.chainId),
+        hre.SDK.eChainId,
         'ARB_SGL_GLP', // TODO replace by BAR NAME CONFIG
     );
     const ybStrategyArbSglGlpDeployment = getContract(
@@ -257,7 +345,7 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         hre,
         tag,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
-        hre.SDK.config.EChainID.MAINNET,
+        hre.SDK.eChainId,
         'TOFT_MAINNET_SGL_DAI', // TODO replace by TapiocaZ NAME CONFIG
     );
     const ybStrategyMainnetSglDaiDeployment = getContract(
@@ -273,6 +361,9 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         oTap,
         tOlp,
         yieldbox,
+        usdoDeployment,
+        usdoOracleDeployment,
+        usdcOracleDeployment,
         arbSglGlpDeployment,
         ybStrategyArbSglGlpDeployment,
         mainnetSglDaiDeployment,
@@ -286,7 +377,7 @@ function getContract(
     contractName: string,
 ) {
     const contract = hre.SDK.db.findLocalDeployment(
-        String(hre.network.config.chainId),
+        hre.SDK.eChainId,
         contractName,
         tag,
     )!;
@@ -326,7 +417,7 @@ async function registerAssetInYieldbox(
     yieldbox: IYieldBox,
     signer: SignerWithAddress,
 ) {
-    const calls: Multicall3.CallStruct[] = [];
+    const calls: TapiocaMulticall.CallStruct[] = [];
 
     // Check if SGL is registered
     const ybAsset = await yieldbox.ids(

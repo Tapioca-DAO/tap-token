@@ -29,7 +29,41 @@ export const DEPLOYMENT_NAMES = {
     MAINNET_SGL_DAI: 'MAINNET_SGL_DAI', // TODO move to tapioca bar repo name config
 };
 
-const POST_LBP = {
+type TPostLbp = {
+    [key in EChainID]?: {
+        TAP: {
+            LBP_ADDRESS: string;
+            DAO_ADDRESS: string;
+        };
+        ADB: {
+            PAYMENT_TOKEN_BENEFICIARY: string;
+        };
+        TAP_ORACLE: {
+            NAME: string;
+            DESCRIPTION: string;
+            ETH_USD_CHAINLINK: string;
+            WETH_USDC_UNI_POOL: string;
+        };
+        PCNFT: {
+            ADDRESS: string;
+        };
+        VESTING: {
+            CONTRIBUTORS_CLIFF: number;
+            CONTRIBUTORS_PERIOD: number;
+            EARLY_SUPPORTERS_CLIFF: number;
+            EARLY_SUPPORTERS_PERIOD: number;
+            SUPPORTERS_CLIFF: number;
+            SUPPORTERS_PERIOD: number;
+        };
+        UNISWAP_POOL: {
+            TAP_AMOUNT: number;
+            WETH_AMOUNT: number;
+            FEE_AMOUNT: FeeAmount;
+        };
+    };
+};
+
+const POST_LBP: TPostLbp = {
     [EChainID.ARBITRUM]: {
         TAP: {
             LBP_ADDRESS: '0x464570adA09869d8741132183721B4f0769a0287', // TODO replace by real address
@@ -38,7 +72,6 @@ const POST_LBP = {
         ADB: {
             PAYMENT_TOKEN_BENEFICIARY:
                 '0x464570adA09869d8741132183721B4f0769a0287', // TODO replace by real address
-            USDC_PAYMENT_TOKEN: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
         },
         TAP_ORACLE: {
             NAME: 'TAP/USD',
@@ -69,7 +102,18 @@ const POST_LBP = {
     },
 };
 
-const FINAL = {
+type TFinal = {
+    [key in EChainID]?: {
+        TOLP: {
+            EPOCH_DURATION: number;
+        };
+        TOB: {
+            PAYMENT_TOKEN_ADDRESS: string;
+        };
+    };
+};
+
+const FINAL: TFinal = {
     [EChainID.ARBITRUM]: {
         TOLP: {
             EPOCH_DURATION: 604800, // 7 days
@@ -80,10 +124,18 @@ const FINAL = {
     },
 };
 
-const MISC = {
+type TMisc = {
+    [key in EChainID]?: {
+        CL_SEQUENCER: string;
+        WETH: string;
+        USDC: string;
+    };
+};
+const MISC: TMisc = {
     [EChainID.ARBITRUM]: {
         CL_SEQUENCER: '0xFdB631F5EE196F0ed6FAa767959853A9F217697D', // Arbitrum mainnet ChainLink sequencer uptime feed
         WETH: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+        USDC: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     },
 };
 

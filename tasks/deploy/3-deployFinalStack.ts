@@ -36,12 +36,12 @@ export const deployFinalStack__task = async (
     if (!yieldBox) {
         throw '[-] YieldBox not found';
     }
-    const owner = await VM.getMulticall();
+    const tapiocaMulticall = await VM.getMulticall();
 
-    VM.add(await getTolp(hre, owner.address, yieldBox.address))
+    VM.add(await getTolp(hre, tapiocaMulticall.address, yieldBox.address))
         .add(await buildOTAP(hre, DEPLOYMENT_NAMES.OTAP))
-        .add(await getTob(hre, owner.address))
-        .add(await getTwTap(hre, owner.address))
+        .add(await getTob(hre, tapiocaMulticall.address))
+        .add(await getTwTap(hre, tapiocaMulticall.address))
         .add(await getArbGlpYbStrategy(hre, yieldBox.address))
         .add(await getMainnetDaiYbStrategy(hre, yieldBox.address));
 
@@ -68,7 +68,7 @@ async function getTolp(
         DEPLOYMENT_NAMES.TAPIOCA_OPTION_LIQUIDITY_PROVISION,
         [
             yieldBoxAddress, // Yieldbox
-            DEPLOY_CONFIG.FINAL[EChainID.ARBITRUM].TOLP.EPOCH_DURATION, // Epoch duration
+            DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
             owner, // Owner
         ],
     );
@@ -82,8 +82,8 @@ async function getTob(hre: HardhatRuntimeEnvironment, owner: string) {
             hre.ethers.constants.AddressZero, // tOLP
             hre.ethers.constants.AddressZero, // oTAP
             hre.ethers.constants.AddressZero, // TapOFT
-            DEPLOY_CONFIG.FINAL[EChainID.ARBITRUM].TOB.PAYMENT_TOKEN_ADDRESS, // Payment token address
-            DEPLOY_CONFIG.FINAL[EChainID.ARBITRUM].TOLP.EPOCH_DURATION, // Epoch duration
+            DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOB.PAYMENT_TOKEN_ADDRESS, // Payment token address
+            DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
             owner, // Owner
         ],
         [

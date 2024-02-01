@@ -93,8 +93,11 @@ export const deployPostLbpStack__task = async (
 
     // After deployment setup
     console.log('[+] After deployment setup');
+    const isTestnet = chainInfo.tags.find((tag) => tag === 'testnet');
     // Create UniV3 Tap/WETH pool, TapOracle, USDCOracle
-    await VM.executeMulticall(await buildPostLbpStackPostDepSetup_1(hre, tag));
+    await VM.executeMulticall(
+        await buildPostLbpStackPostDepSetup_1(hre, tag, !isTestnet),
+    );
     // Setup contracts
     await VM.executeMulticall(await buildPostLbpStackPostDepSetup_2(hre, tag));
 
@@ -106,8 +109,8 @@ async function getVestingContributors(
     owner: string,
 ) {
     return await buildVesting(hre, DEPLOYMENT_NAMES.VESTING_CONTRIBUTORS, [
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING.CONTRIBUTORS_CLIFF, // 12 months cliff
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING.CONTRIBUTORS_PERIOD, // 36 months vesting
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING.CONTRIBUTORS_CLIFF, // 12 months cliff
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING.CONTRIBUTORS_PERIOD, // 36 months vesting
         owner,
     ]);
 }
@@ -117,9 +120,9 @@ async function getVestingEarlySupporters(
     owner: string,
 ) {
     return await buildVesting(hre, DEPLOYMENT_NAMES.VESTING_EARLY_SUPPORTERS, [
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING
             .EARLY_SUPPORTERS_CLIFF, // 0 months cliff
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING
             .EARLY_SUPPORTERS_PERIOD, // 24 months vesting
         owner,
     ]);
@@ -130,8 +133,8 @@ async function getVestingSupporters(
     owner: string,
 ) {
     return await buildVesting(hre, DEPLOYMENT_NAMES.VESTING_SUPPORTERS, [
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING.SUPPORTERS_CLIFF, // 0 months cliff
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING.SUPPORTERS_PERIOD, // 18 months vesting
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING.SUPPORTERS_CLIFF, // 0 months cliff
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING.SUPPORTERS_PERIOD, // 18 months vesting
         owner,
     ]);
 }
@@ -142,8 +145,8 @@ async function getAdb(hre: HardhatRuntimeEnvironment, owner: string) {
         DEPLOYMENT_NAMES.AIRDROP_BROKER,
         [
             hre.ethers.constants.AddressZero, // aoTAP
-            DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].PCNFT.ADDRESS, // PCNFT
-            DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].ADB
+            DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.PCNFT.ADDRESS, // PCNFT
+            DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.ADB
                 .PAYMENT_TOKEN_BENEFICIARY, // Payment token beneficiary
             owner, // Owner
         ],
@@ -204,7 +207,7 @@ async function getTapToken(
             hre.ethers.constants.AddressZero, // early supporters address
             hre.ethers.constants.AddressZero, // supporters address
             hre.ethers.constants.AddressZero, // aoTap address
-            DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].TAP.DAO_ADDRESS, // DAO address
+            DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS, // DAO address
             hre.ethers.constants.AddressZero, // AirdropBroker address,
             ELZChainID.ARBITRUM, // Governance LZ ChainID
             owner, // Owner
