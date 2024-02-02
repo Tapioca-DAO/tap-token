@@ -8,6 +8,7 @@ import 'hardhat-contract-sizer';
 import 'hardhat-tracer';
 import { HardhatUserConfig } from 'hardhat/config';
 import { HttpNetworkConfig, HttpNetworkUserConfig } from 'hardhat/types';
+import fs from 'fs';
 
 // Utils
 import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
@@ -26,6 +27,11 @@ declare global {
 
 // Load the env vars from the .env/<network>.env file. the <network> file name is the same as the network in hh `--network arbitrum_sepolia`
 loadEnv();
+// Check if the folder /gen/typechain exists, if not, create it. This is needed if the repo was freshly cloned.
+if (!fs.existsSync('./gen/typechain')) {
+    fs.mkdirSync('./gen/typechain');
+    fs.writeFileSync('./gen/typechain/index.ts', '');
+}
 
 // TODO refactor all of that in the SDK?
 type TNetwork = ReturnType<
