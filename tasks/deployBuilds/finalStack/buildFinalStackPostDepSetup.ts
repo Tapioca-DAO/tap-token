@@ -34,7 +34,6 @@ export const buildFinalStackPostDepSetup_1 = async (
             arbSglGlpDeployment,
             ybStrategyArbSglGlpDeployment,
             yieldbox,
-            signer,
         )),
     ];
 
@@ -48,7 +47,6 @@ export const buildFinalStackPostDepSetup_1 = async (
             mainnetSglDaiDeployment,
             ybStrategyMainnetSglDaiDeployment,
             yieldbox,
-            signer,
         )),
     ];
 
@@ -436,7 +434,6 @@ async function registerAssetInYieldbox(
     sglDeployment: TContract,
     ybStrategy: TContract,
     yieldbox: IYieldBox,
-    signer: string,
 ) {
     const calls: TapiocaMulticall.CallStruct[] = [];
 
@@ -449,26 +446,26 @@ async function registerAssetInYieldbox(
     );
     // Check if SGL is registered in YieldBox
     if (ybAsset.toNumber() === 0) {
-        console.log('[+] Depositing SGL_GLP to YieldBox');
-        const balance = await (
-            await hre.ethers.getContractAt('ERC20', sglDeployment.address)
-        ).balanceOf(signer);
+        console.log(`[+] Register ${sglDeployment.name} in YieldBox`);
         calls.push({
             target: yieldbox.address,
             allowFailure: false,
-            callData: yieldbox.interface.encodeFunctionData('depositAsset', [
-                ybAsset,
-                signer,
-                signer,
-                balance,
+            callData: yieldbox.interface.encodeFunctionData('registerAsset', [
+                1,
+                sglDeployment.address,
+                ybStrategy.address,
                 0,
             ]),
         });
         console.log(
             '\t- Parameters',
-            ybAsset,
-            signer,
-            hre.ethers.utils.formatEther(balance),
+            'Token type',
+            'signer',
+            'Token address',
+            sglDeployment.address,
+            'Strategy address',
+            ybStrategy.address,
+            'Token ID',
             0,
         );
     }

@@ -14,7 +14,7 @@ import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
 
 export const deployFinalStack__task = async (
-    taskArgs: { tag?: string; load?: boolean; verify: boolean },
+    taskArgs: { tag?: string; load?: boolean; verify?: boolean },
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
@@ -53,9 +53,9 @@ export const deployFinalStack__task = async (
         // Add and execute
         await VM.execute();
         await VM.save();
-        if (taskArgs.verify) {
-            await VM.verify();
-        }
+    }
+    if (taskArgs.verify) {
+        await VM.verify();
     }
 
     // After deployment setup
@@ -67,6 +67,7 @@ export const deployFinalStack__task = async (
             hre,
             tag,
             yieldBox,
+            taskArgs.load,
             taskArgs.verify,
         );
     }
@@ -76,7 +77,7 @@ export const deployFinalStack__task = async (
     );
     await VM.executeMulticall(await buildFinalStackPostDepSetup_2(hre, tag));
 
-    console.log('[+] Stack deployed! 🎉');
+    console.log('[+] Final Stack deployed! 🎉');
 };
 
 async function getTolp(

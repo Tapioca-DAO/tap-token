@@ -12,102 +12,106 @@ export const executeTestnetFinalStackPostDepSetup = async (
     hre: HardhatRuntimeEnvironment,
     tag: string,
     yieldbox: TContract,
+    load?: boolean,
     verify?: boolean,
 ) => {
     const VM = await loadVM(hre, tag);
     const multicall = await VM.getMulticall();
 
-    VM.add(
-        await buildERC20Mock(hre, 'USDO', [
-            'MOCK_USDO',
-            'MOCK_USDO',
-            (1e18).toString(),
-            18,
-            multicall.address,
-        ]),
-    )
-        .add(
-            await buildOracleMock(hre, 'USDO_SEER_UNI_ORACLE', [
-                'MOCK_USDO_ORACLE',
-                'MOCK_USDO_ORACLE',
-                (1e18).toString(), // 1 USDC = 1 USD
-            ]),
-        )
-        .add(
-            await buildERC20Mock(hre, DEPLOYMENT_NAMES.ARBITRUM_SGL_GLP, [
-                'MOCK_ARB_SGL_GLP',
-                'MOCK_ARB_SGL_GLP',
+    if (!load) {
+        VM.add(
+            await buildERC20Mock(hre, 'USDO', [
+                'MOCK_USDO',
+                'MOCK_USDO',
                 (1e18).toString(),
                 18,
                 multicall.address,
             ]),
         )
-        .add(
-            await buildERC20Mock(hre, DEPLOYMENT_NAMES.MAINNET_SGL_DAI, [
-                'MOCK_TOFT_MAINNET_SGL_DAI',
-                'MOCK_TOFT_MAINNET_SGL_DAI',
-                (1e18).toString(),
-                18,
-                multicall.address,
-            ]),
-        )
-        .add(
-            await buildEmptyYbStrategy(
-                hre,
-                DEPLOYMENT_NAMES.YB_SGL_ARB_GLP_STRATEGY,
-                [
-                    yieldbox.address, // Yieldbox
-                    hre.ethers.constants.AddressZero, // Underlying token
-                ],
-                [
-                    {
-                        argPosition: 1,
-                        deploymentName: DEPLOYMENT_NAMES.ARBITRUM_SGL_GLP,
-                    },
-                ],
-            ),
-        )
-        .add(
-            await buildEmptyYbStrategy(
-                hre,
-                DEPLOYMENT_NAMES.YB_SGL_MAINNET_DAI_STRATEGY,
-                [
-                    yieldbox.address, // Yieldbox
-                    hre.ethers.constants.AddressZero, // Underlying token // TODO move name to config
-                ],
-                [
-                    {
-                        argPosition: 1,
-                        deploymentName: DEPLOYMENT_NAMES.MAINNET_SGL_DAI,
-                    },
-                ],
-            ),
-        );
+            .add(
+                await buildOracleMock(hre, 'USDO_SEER_UNI_ORACLE', [
+                    'MOCK_USDO_ORACLE',
+                    'MOCK_USDO_ORACLE',
+                    (1e18).toString(), // 1 USDC = 1 USD
+                ]),
+            )
+            .add(
+                await buildERC20Mock(hre, DEPLOYMENT_NAMES.ARBITRUM_SGL_GLP, [
+                    'MOCK_ARB_SGL_GLP',
+                    'MOCK_ARB_SGL_GLP',
+                    (1e18).toString(),
+                    18,
+                    multicall.address,
+                ]),
+            )
+            .add(
+                await buildERC20Mock(hre, DEPLOYMENT_NAMES.MAINNET_SGL_DAI, [
+                    'MOCK_TOFT_MAINNET_SGL_DAI',
+                    'MOCK_TOFT_MAINNET_SGL_DAI',
+                    (1e18).toString(),
+                    18,
+                    multicall.address,
+                ]),
+            )
+            .add(
+                await buildEmptyYbStrategy(
+                    hre,
+                    DEPLOYMENT_NAMES.YB_SGL_ARB_GLP_STRATEGY,
+                    [
+                        yieldbox.address, // Yieldbox
+                        hre.ethers.constants.AddressZero, // Underlying token
+                    ],
+                    [
+                        {
+                            argPosition: 1,
+                            deploymentName: DEPLOYMENT_NAMES.ARBITRUM_SGL_GLP,
+                        },
+                    ],
+                ),
+            )
+            .add(
+                await buildEmptyYbStrategy(
+                    hre,
+                    DEPLOYMENT_NAMES.YB_SGL_MAINNET_DAI_STRATEGY,
+                    [
+                        yieldbox.address, // Yieldbox
+                        hre.ethers.constants.AddressZero, // Underlying token // TODO move name to config
+                    ],
+                    [
+                        {
+                            argPosition: 1,
+                            deploymentName: DEPLOYMENT_NAMES.MAINNET_SGL_DAI,
+                        },
+                    ],
+                ),
+            );
 
-    await VM.execute();
-    if (verify) {
-        await VM.verify();
-    }
+        await VM.execute();
+        if (verify) {
+            await VM.verify();
+        }
 
-    // Perform a fake save globally to store the Mocks
-    hre.SDK.db.saveGlobally(
-        {
-            [hre.SDK.eChainId]: {
-                name: hre.network.name,
-                lastBlockHeight: await hre.ethers.provider.getBlockNumber(),
-                contracts: VM.list().map((contract) => ({
-                    ...contract,
-                    meta: {
-                        ...contract.meta,
-                        mock: true,
-                        description: 'Mock contract deployed from tap-token',
-                    },
-                })),
+        // Perform a fake save globally to store the Mocks
+        hre.SDK.db.saveGlobally(
+            {
+                [hre.SDK.eChainId]: {
+                    name: hre.network.name,
+                    lastBlockHeight: await hre.ethers.provider.getBlockNumber(),
+                    contracts: VM.list().map((contract) => ({
+                        ...contract,
+                        meta: {
+                            ...contract.meta,
+                            mock: true,
+                            description:
+                                'Mock contract deployed from tap-token',
+                        },
+                    })),
+                },
             },
-        },
-        TAPIOCA_PROJECTS_NAME.TapiocaBar,
-        tag,
-    );
+            TAPIOCA_PROJECTS_NAME.TapiocaBar,
+            tag,
+        );
+    }
 
     const { mockUsdc, mockArbSglGlp, mockToftMainnetSglDai } =
         await loadContract(hre, tag);
