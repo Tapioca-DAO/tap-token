@@ -48,8 +48,8 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
 
-    constructor(string memory _name, string memory _symbol, address _endpoint, address _owner)
-        BaseTapToken(_name, _symbol, _endpoint, _owner)
+    constructor(string memory _name, string memory _symbol, address _endpoint, address _delegate)
+        BaseTapToken(_name, _symbol, _endpoint, _delegate)
     {}
 
     /// @dev twTAP lock operation received.

@@ -142,6 +142,8 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         address _TapTokenSenderModule,
         address _TapTokenReceiverModule
     ) BaseTapToken("TapToken", "TAP", _endpoint, _owner) ERC20Permit("TAP") {
+        _transferOwnership(_owner);
+
         if (_endpoint == address(0)) revert AddressWrong();
         governanceEid = _governanceEid;
 
