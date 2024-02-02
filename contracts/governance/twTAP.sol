@@ -448,6 +448,9 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     /// @param _amount amount of reward token to distribute.
     function distributeReward(uint256 _rewardTokenId, uint256 _amount) external nonReentrant {
         if (lastProcessedWeek != currentWeek()) revert AdvanceWeekFirst();
+        if (_amount == 0) revert NotValid();
+        if (_rewardTokenId == 0) revert NotValid(); // @dev rewardTokens[0] is 0x0
+
         WeekTotals storage totals = weekTotals[lastProcessedWeek];
         IERC20 rewardToken = rewardTokens[_rewardTokenId];
         // If this is a DBZ then there are no positions to give the reward to.
@@ -458,7 +461,6 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
         // TODO: Word this better
         totals.totalDistPerVote[_rewardTokenId] += (_amount * DIST_PRECISION) / uint256(totals.netActiveVotes);
 
-        if (_amount == 0) revert NotValid();
         rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
     }
 

@@ -90,6 +90,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     error AllowanceNotValid();
     error OnlyMinter();
     error TwTapAlreadySet();
+    error InsufficientEmissions();
 
     // ===========
     // *MODIFIERS*
@@ -349,7 +350,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
 
         uint256 week = _timestampToWeek(block.timestamp);
         if (emissionForWeek[week] < mintedInWeek[week] + _amount) {
-            revert AllowanceNotValid();
+            revert InsufficientEmissions();
         }
         _mint(_to, _amount);
         mintedInWeek[week] += _amount;
@@ -391,7 +392,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
             // Push unclaimed emission from last week to the current week
             unclaimed = emissionForWeek[week - 1] - mintedInWeek[week - 1];
         }
-        uint256 emission = uint256(_computeEmission());
+        uint256 emission = _computeEmission();
         emission += unclaimed;
 
         // Boosted TAP is burned and added to the emission to be minted on demand later on in `extractTAP()`

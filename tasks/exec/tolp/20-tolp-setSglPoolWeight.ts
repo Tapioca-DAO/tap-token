@@ -29,5 +29,5 @@ export const setSglPoolWeightOnTOLP__task = async (
         message: 'Singularity weight',
     });
 
-    await (await tOLP.setSGLPoolWEight(singularity, weight)).wait(3);
+    await (await tOLP.setSGLPoolWeight(singularity, weight)).wait(3);
 };
