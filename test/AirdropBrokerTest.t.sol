@@ -45,7 +45,7 @@ contract AirdropBrokerTest is Test {
     address OWNER = address(this);
 
     function setUp() public {
-        airdropBroker = new AirdropBrokerTestMock(AOTAP, TAPOFT, PCNFT, PAYMENT_TOKEN_BENEFICIARY, TAP_ORACLE, OWNER);
+        airdropBroker = new AirdropBrokerTestMock(AOTAP, PCNFT, PAYMENT_TOKEN_BENEFICIARY, OWNER);
     }
 
     error NotValid();

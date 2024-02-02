@@ -1,161 +1,156 @@
-import {
-    EChainID,
-    ELZChainID,
-    TAPIOCA_PROJECTS_NAME,
-} from '@tapioca-sdk/api/config';
+import { ELZChainID, TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { buildTapToken } from 'tasks/deployBuilds/finalStack/options/tapToken/buildTapToken';
+import { buildTapToken } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapToken';
 import { buildADB } from 'tasks/deployBuilds/postLbpStack/airdrop/buildADB';
 import { buildAOTAP } from 'tasks/deployBuilds/postLbpStack/airdrop/buildAOTAP';
-import { buildStackPostDepSetup } from '../deployBuilds/finalStack/buildFinalStackPostDepSetup';
-import { buildTapTokenReceiverModule } from '../deployBuilds/finalStack/options/tapToken/buildTapTokenReceiverModule';
-import { buildTapTokenSenderModule } from '../deployBuilds/finalStack/options/tapToken/buildTapTokenSenderModule';
+import {
+    buildPostLbpStackPostDepSetup_1,
+    buildPostLbpStackPostDepSetup_2,
+} from 'tasks/deployBuilds/postLbpStack/buildPostLbpStackPostDepSetup';
+import { executeTestnetPostLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/executeTestnetPostLbpStackPostDepSetup';
+import { buildTapTokenReceiverModule } from '../deployBuilds/postLbpStack/tapToken/buildTapTokenReceiverModule';
+import { buildTapTokenSenderModule } from '../deployBuilds/postLbpStack/tapToken/buildTapTokenSenderModule';
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
 import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 export const deployPostLbpStack__task = async (
-    taskArgs: { tag?: string; load?: boolean },
+    taskArgs: { tag?: string; load?: boolean; verify: boolean },
     hre: HardhatRuntimeEnvironment,
 ) => {
     // Settings
     const tag = taskArgs.tag ?? 'default';
-    const signer = (await hre.ethers.getSigners())[0];
     const chainInfo = hre.SDK.utils.getChainBy(
         'chainId',
         Number(hre.network.config.chainId),
     )!;
 
     const VM = await loadVM(hre, tag);
+    const tapiocaMulticall = await VM.getMulticall();
+    const isTestnet = chainInfo.tags.find((tag) => tag === 'testnet');
 
-    // Load previous deployment in the VM to execute after deployment setup
     if (taskArgs.load) {
-        const data = hre.SDK.db.loadLocalDeployment(
-            'default',
-            String(hre.network.config.chainId),
+        console.log(
+            hre.SDK.db.loadLocalDeployment(tag, hre.SDK.eChainId)?.contracts,
         );
-        if (!data) throw new Error('[-] No data found');
-        VM.load(data.contracts);
+        VM.load(
+            hre.SDK.db.loadLocalDeployment(tag, hre.SDK.eChainId)?.contracts ??
+                [],
+        );
     } else {
-        const yieldBox = hre.SDK.db.findGlobalDeployment(
-            TAPIOCA_PROJECTS_NAME.YieldBox,
-            chainInfo!.chainId,
-            'YieldBox',
-            tag,
-        );
-
-        if (!yieldBox) {
-            throw '[-] YieldBox not found';
-        }
-
         // Build contracts
-        VM.add(await buildAOTAP(hre, DEPLOYMENT_NAMES.AOTAP, [signer.address]))
-            .add(await getVestingContributors(hre, signer))
-            .add(await getVestingEarlySupporters(hre, signer))
-            .add(await getVestingSupporters(hre, signer))
-            .add(await getAdb(hre, signer))
-            .add(await getTapTokenSenderModule(hre, signer, chainInfo.address))
+        VM.add(
+            await buildAOTAP(hre, DEPLOYMENT_NAMES.AOTAP, [
+                tapiocaMulticall.address,
+            ]),
+        )
+            .add(await getVestingContributors(hre, tapiocaMulticall.address))
+            .add(await getVestingEarlySupporters(hre, tapiocaMulticall.address))
+            .add(await getVestingSupporters(hre, tapiocaMulticall.address))
+            .add(await getAdb(hre, tapiocaMulticall.address))
             .add(
-                await getTapTokenReceiverModule(hre, signer, chainInfo.address),
+                await getTapTokenSenderModule(
+                    hre,
+                    tapiocaMulticall.address,
+                    chainInfo.address,
+                ),
             )
-            .add(await getTapToken(hre, signer, chainInfo.address));
+            .add(
+                await getTapTokenReceiverModule(
+                    hre,
+                    tapiocaMulticall.address,
+                    chainInfo.address,
+                ),
+            )
+            .add(
+                await getTapToken(
+                    hre,
+                    tag,
+                    !!isTestnet,
+                    tapiocaMulticall.address,
+                    chainInfo.address,
+                ),
+            );
 
         // Add and execute
-        await VM.execute(3);
+        await VM.execute();
         await VM.save();
+    }
+    if (taskArgs.verify) {
         await VM.verify();
     }
 
-    const vmList = VM.list();
     // After deployment setup
-
     console.log('[+] After deployment setup');
-    const calls = await buildStackPostDepSetup(hre, vmList);
 
-    // Execute
-    console.log('[+] Number of calls:', calls.length);
-    const multicall = await VM.getMulticall();
-    try {
-        const tx = await (await multicall.multicall(calls)).wait(1);
-        console.log(
-            '[+] After deployment setup multicall Tx: ',
-            tx.transactionHash,
+    // Create UniV3 Tap/WETH pool, TapOracle, USDCOracle
+    if (!isTestnet) {
+        await VM.executeMulticall(
+            await buildPostLbpStackPostDepSetup_1(hre, tag),
         );
-    } catch (e) {
-        console.log('[-] After deployment setup multicall failed');
-        console.log(
-            '[+] Trying to execute calls one by one with owner account',
-        );
-        // If one fail, try them one by one with owner's account
-        for (const call of calls) {
-            // Static call simulation
-            await signer.call({
-                from: signer.address,
-                data: call.callData,
-                to: call.target,
-            });
-
-            await (
-                await signer.sendTransaction({
-                    data: call.callData,
-                    to: call.target,
-                })
-            ).wait();
+    } else {
+        // Deploying testnet mock payment oracles
+        // This'll also inject newly created USDC mock in DEPLOY_CONFIG
+        if (!taskArgs.load) {
+            // Since it's deployments, if load is true, we don't need to deploy again
+            await executeTestnetPostLbpStackPostDepSetup(
+                hre,
+                tag,
+                taskArgs.verify,
+            );
         }
     }
+    // Setup contracts
+    await VM.executeMulticall(await buildPostLbpStackPostDepSetup_2(hre, tag));
 
-    console.log('[+] Stack deployed! 🎉');
+    console.log('[+] Post LBP Stack deployed! 🎉');
 };
 
 async function getVestingContributors(
     hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
+    owner: string,
 ) {
     return await buildVesting(hre, DEPLOYMENT_NAMES.VESTING_CONTRIBUTORS, [
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING.CONTRIBUTORS_CLIFF, // 12 months cliff
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING.CONTRIBUTORS_PERIOD, // 36 months vesting
-        signer.address,
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING.CONTRIBUTORS_CLIFF, // 12 months cliff
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING.CONTRIBUTORS_PERIOD, // 36 months vesting
+        owner,
     ]);
 }
 
 async function getVestingEarlySupporters(
     hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
+    owner: string,
 ) {
     return await buildVesting(hre, DEPLOYMENT_NAMES.VESTING_EARLY_SUPPORTERS, [
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING
             .EARLY_SUPPORTERS_CLIFF, // 0 months cliff
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING
             .EARLY_SUPPORTERS_PERIOD, // 24 months vesting
-        signer.address,
+        owner,
     ]);
 }
 
 async function getVestingSupporters(
     hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
+    owner: string,
 ) {
     return await buildVesting(hre, DEPLOYMENT_NAMES.VESTING_SUPPORTERS, [
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING.SUPPORTERS_CLIFF, // 0 months cliff
-        DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].VESTING.SUPPORTERS_PERIOD, // 18 months vesting
-        signer.address,
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING.SUPPORTERS_CLIFF, // 0 months cliff
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING.SUPPORTERS_PERIOD, // 18 months vesting
+        owner,
     ]);
 }
 
-async function getAdb(
-    hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
-) {
+async function getAdb(hre: HardhatRuntimeEnvironment, owner: string) {
     return await buildADB(
         hre,
         DEPLOYMENT_NAMES.AIRDROP_BROKER,
         [
             hre.ethers.constants.AddressZero, // aoTAP
-            DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].PCNFT.ADDRESS, // PCNFT
-            DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].ADB
+            DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.PCNFT.ADDRESS, // PCNFT
+            DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.ADB
                 .PAYMENT_TOKEN_BENEFICIARY, // Payment token beneficiary
-            signer.address, // Owner
+            owner, // Owner
         ],
         [
             {
@@ -168,7 +163,7 @@ async function getAdb(
 
 async function getTapTokenSenderModule(
     hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
+    owner: string,
     lzEndpointAddress: string,
 ) {
     return await buildTapTokenSenderModule(
@@ -178,14 +173,14 @@ async function getTapTokenSenderModule(
             '', // Name
             '', // Symbol
             lzEndpointAddress, // Endpoint address
-            signer.address, // Owner
+            owner, // Owner
         ],
     );
 }
 
 async function getTapTokenReceiverModule(
     hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
+    owner: string,
     lzEndpointAddress: string,
 ) {
     return await buildTapTokenReceiverModule(
@@ -195,16 +190,25 @@ async function getTapTokenReceiverModule(
             '', // Name
             '', // Symbol
             lzEndpointAddress, // Endpoint address
-            signer.address, // Owner
+            owner, // Owner
         ],
     );
 }
 
 async function getTapToken(
     hre: HardhatRuntimeEnvironment,
-    signer: SignerWithAddress,
+    tag: string,
+    isTestnet: boolean,
+    owner: string,
     lzEndpointAddress: string,
 ) {
+    const ltap = hre.SDK.db.findLocalDeployment(
+        hre.SDK.eChainId,
+        DEPLOYMENT_NAMES.LTAP,
+        tag,
+    );
+    if (!ltap) throw new Error('[-] LTAP not found');
+
     return await buildTapToken(
         hre,
         DEPLOYMENT_NAMES.TAP_TOKEN,
@@ -213,11 +217,11 @@ async function getTapToken(
             hre.ethers.constants.AddressZero, //contributors address
             hre.ethers.constants.AddressZero, // early supporters address
             hre.ethers.constants.AddressZero, // supporters address
-            DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].TAP.LBP_ADDRESS, // LBP address
-            DEPLOY_CONFIG.POST_LBP[EChainID.ARBITRUM].TAP.DAO_ADDRESS, // DAO address
+            ltap.address, // LTap address
+            DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS, // DAO address
             hre.ethers.constants.AddressZero, // AirdropBroker address,
-            ELZChainID.ARBITRUM, // Governance LZ ChainID
-            signer.address, // Owner
+            isTestnet ? ELZChainID.ARBITRUM_SEPOLIA : ELZChainID.ARBITRUM, // Governance LZ ChainID
+            owner, // Owner
             hre.ethers.constants.AddressZero, // TapTokenSenderModule
             hre.ethers.constants.AddressZero, // TapTokenReceiverModule
         ],

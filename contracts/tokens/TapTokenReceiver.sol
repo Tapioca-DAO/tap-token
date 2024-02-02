@@ -48,8 +48,8 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
 
-    constructor(string memory _name, string memory _symbol, address _endpoint, address _owner)
-        BaseTapToken(_name, _symbol, _endpoint, _owner)
+    constructor(string memory _name, string memory _symbol, address _endpoint, address _delegate)
+        BaseTapToken(_name, _symbol, _endpoint, _delegate)
     {}
 
     /// @dev twTAP lock operation received.
@@ -183,8 +183,8 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
             }
 
             // Add 1 to `claimedAmount_` index because the first index is reserved.
-            claimTwTapRewardsMsg_.sendParam[sendParamIndex].sendParam.amountToSendLD = amountWithoutDust; // Set the amount to send to the claimed amount
-            claimTwTapRewardsMsg_.sendParam[sendParamIndex].sendParam.minAmountToCreditLD = amountWithoutDust; // Set the amount to send to the claimed amount
+            claimTwTapRewardsMsg_.sendParam[sendParamIndex].sendParam.amountLD = amountWithoutDust; // Set the amount to send to the claimed amount
+            claimTwTapRewardsMsg_.sendParam[sendParamIndex].sendParam.minAmountLD = amountWithoutDust; // Set the amount to send to the claimed amount
 
             // Send back packet
             TapTokenSender(rewardToken_).sendPacket{

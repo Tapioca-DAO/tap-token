@@ -11,7 +11,7 @@ export const buildTOB = async (
 ): Promise<IDeployerVMAdd<TapiocaOptionBroker__factory>> => {
     return {
         contract: (await hre.ethers.getContractFactory(
-            deploymentName,
+            'TapiocaOptionBroker',
         )) as TapiocaOptionBroker__factory,
         deploymentName,
         args,

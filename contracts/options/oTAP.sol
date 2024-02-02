@@ -23,6 +23,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 
 // TODO naming
 struct TapOption {
+    uint128 entry; // time when the option position was created
     uint128 expiry; // timestamp, as once one wise man said, the sun will go dark before this overflows
     uint128 discount; // discount in basis points
     uint256 tOLP; // tOLP token ID
@@ -88,6 +89,7 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
 
         tokenId = ++mintedOTAP;
         TapOption storage option = options[tokenId];
+        option.entry = uint128(block.timestamp);
         option.expiry = _expiry;
         option.discount = _discount;
         option.tOLP = _tOLP;

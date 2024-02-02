@@ -103,6 +103,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     error TransferFailed();
     error SingularityInRescueMode();
     error PaymentTokenValuationNotValid();
+    error LockExpired();
+    error AdvanceEpochFirst();
 
     constructor(
         address _tOLP,
@@ -223,6 +225,11 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     function participate(uint256 _tOLPTokenID) external whenNotPaused nonReentrant returns (uint256 oTAPTokenID) {
         // Compute option parameters
         LockPosition memory lock = tOLP.getLock(_tOLPTokenID);
+        uint128 lockExpiry = lock.lockTime + lock.lockDuration;
+
+        if (block.timestamp >= lockExpiry) revert LockExpired();
+        if (_timestampToWeek(block.timestamp) > epoch) revert AdvanceEpochFirst();
+
         bool isPositionActive = _isPositionActive(lock);
         if (!isPositionActive) revert OptionExpired();
 
@@ -278,13 +285,13 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         // Record amount for next epoch exercise
         netDepositedForEpoch[epoch + 1][lock.sglAssetID] += int256(uint256(lock.ybShares));
 
-        uint256 lastEpoch = _timestampToWeek(lock.lockTime + lock.lockDuration);
+        uint256 lastEpoch = _timestampToWeek(lockExpiry);
         // And remove it from last epoch
         // Math is safe, check `_emitToGauges()`
         netDepositedForEpoch[lastEpoch + 1][lock.sglAssetID] -= int256(uint256(lock.ybShares));
 
         // Mint oTAP position
-        oTAPTokenID = oTAP.mint(msg.sender, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
+        oTAPTokenID = oTAP.mint(msg.sender, lockExpiry, uint128(target), _tOLPTokenID);
         emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, oTAPTokenID, target);
     }
 
@@ -366,7 +373,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         if (!oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID)) {
             revert NotAuthorized();
         }
-        if (block.timestamp < tOLPLockPosition.lockTime + EPOCH_DURATION) {
+        if (block.timestamp < oTAPPosition.entry + EPOCH_DURATION) {
             revert OneEpochCooldown();
         } // Can only exercise after 1 epoch duration
 
@@ -494,7 +501,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     // ============
     //   INTERNAL
     // ============
-    /// @notice returns week for timestasmp
+    /// @notice returns week for timestamp
     function _timestampToWeek(uint256 timestamp) internal view returns (uint256) {
         return ((timestamp - emissionsStartTime) / EPOCH_DURATION);
     }

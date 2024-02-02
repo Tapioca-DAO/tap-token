@@ -55,6 +55,9 @@ contract TapiocaOptionLiquidityProvision is
     mapping(uint256 => IERC20) public sglAssetIDToAddress; // Singularity market YieldBox asset ID => Singularity market address
     uint256[] public singularities; // Array of active singularity asset IDs
 
+    uint256 public rescueCooldown = 2 days; // Cooldown before a singularity pool can be put in rescue mode
+    mapping(uint256 sglId => uint256 rescueTime) public sglRescueRequest; // Time when the pool was put in rescue mode
+
     uint256 public totalSingularityPoolWeights; // Total weight of all active singularity pools
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
     uint256 public constant MAX_LOCK_DURATION = 100 * 365 days; // 100 years
@@ -74,6 +77,8 @@ contract TapiocaOptionLiquidityProvision is
     error AlreadyRegistered();
     error NotAuthorized();
     error NotInRescueMode();
+    error NotActive();
+    error RescueCooldownNotReached();
 
     constructor(address _yieldBox, uint256 _epochDuration, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
@@ -91,6 +96,7 @@ contract TapiocaOptionLiquidityProvision is
     event Burn(address indexed to, uint128 indexed sglAssetID, uint256 tokenId);
     event UpdateTotalSingularityPoolWeights(uint256 totalSingularityPoolWeights);
     event SetSGLPoolWeight(address indexed sgl, uint256 poolWeight);
+    event RequestSglPoolRescue(uint256 sglAssetId, uint256 timestamp);
     event ActivateSGLPoolRescue(address sgl);
     event RegisterSingularity(address sgl, uint256 assetID);
     event UnregisterSingularity(address sgl, uint256 assetID);
@@ -245,12 +251,32 @@ contract TapiocaOptionLiquidityProvision is
         emit SetSGLPoolWeight(address(singularity), weight);
     }
 
+    function setRescueCooldown(uint256 _rescueCooldown) external onlyOwner {
+        rescueCooldown = _rescueCooldown;
+    }
+
+    /**
+     * @notice Requests a singularity market to be put in rescue mode. Needs to be activated later on in `activateSGLPoolRescue()`
+     * @param _sglAssetID YieldBox asset ID of the singularity market
+     */
+    function requestSglPoolRescue(uint256 _sglAssetID) external onlyOwner {
+        if (_sglAssetID == 0) revert NotRegistered();
+        if (sglRescueRequest[_sglAssetID] != 0) revert AlreadyActive();
+
+        sglRescueRequest[_sglAssetID] = block.timestamp;
+
+        emit RequestSglPoolRescue(_sglAssetID, block.timestamp);
+    }
+
     /// @notice Sets the rescue status of a given singularity market
     /// @param singularity Singularity market address
     function activateSGLPoolRescue(IERC20 singularity) external onlyOwner updateTotalSGLPoolWeights {
         SingularityPool memory sgl = activeSingularities[singularity];
+
         if (sgl.sglAssetID == 0) revert NotRegistered();
         if (sgl.rescue) revert AlreadyActive();
+        if (sglRescueRequest[sgl.sglAssetID] == 0) revert NotActive();
+        if (block.timestamp < sglRescueRequest[sgl.sglAssetID] + rescueCooldown) revert RescueCooldownNotReached();
 
         activeSingularities[singularity].rescue = true;
 

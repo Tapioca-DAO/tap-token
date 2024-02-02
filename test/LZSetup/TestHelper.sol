@@ -11,6 +11,7 @@ import {
     ExecutorConfig
 } from "@layerzerolabs/lz-evm-messagelib-v2/contracts/SendLibBase.sol";
 import {ReceiveUln302} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/uln302/ReceiveUln302.sol";
+import {IDVN} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/interfaces/IDVN.sol";
 import {DVN, ExecuteParam} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/dvn/DVN.sol";
 import {DVNFeeLib} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/uln/dvn/DVNFeeLib.sol";
 import {IExecutor} from "@layerzerolabs/lz-evm-messagelib-v2/contracts/interfaces/IExecutor.sol";
@@ -24,10 +25,8 @@ import {EndpointV2} from "@layerzerolabs/lz-evm-protocol-v2/contracts/EndpointV2
 import {ExecutorOptions} from "@layerzerolabs/lz-evm-protocol-v2/contracts/messagelib/libs/ExecutorOptions.sol";
 import {PacketV1Codec} from "@layerzerolabs/lz-evm-protocol-v2/contracts/messagelib/libs/PacketV1Codec.sol";
 import {Origin} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
-
 import {OApp} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
-
 import {OptionsHelper} from "./mocks/OptionsHelper.sol";
 import {SendUln302Mock as SendUln302} from "./mocks/SendUln302Mock.sol";
 import {SimpleMessageLibMock} from "./mocks/SimpleMessageLibMock.sol";
@@ -131,9 +130,9 @@ contract TestHelper is Test, OptionsHelper {
                     dvn.setWorkerFeeLib(address(dvnLib));
                 }
 
-                //todo: setDstGas
                 uint32 endpointNum = _endpointNum;
                 IExecutor.DstConfigParam[] memory dstConfigParams = new IExecutor.DstConfigParam[](endpointNum);
+                IDVN.DstConfigParam[] memory dvnConfigParams = new IDVN.DstConfigParam[](endpointNum);
                 for (uint8 j = 0; j < endpointNum; j++) {
                     if (i == j) continue;
                     uint32 dstEid = j + 1;
@@ -176,6 +175,10 @@ contract TestHelper is Test, OptionsHelper {
                         nativeCap: executorValueCap
                     });
 
+                    // dvn config
+                    dvnConfigParams[j] =
+                        IDVN.DstConfigParam({dstEid: dstEid, gas: 5000, multiplierBps: 10000, floorMarginUSD: 1e10});
+
                     uint128 denominator = priceFeed.getPriceRatioDenominator();
                     ILayerZeroPriceFeed.UpdatePrice[] memory prices = new ILayerZeroPriceFeed.UpdatePrice[](1);
                     prices[0] =
@@ -183,6 +186,7 @@ contract TestHelper is Test, OptionsHelper {
                     priceFeed.setPrice(prices);
                 }
                 executor.setDstConfig(dstConfigParams);
+                dvn.setDstConfig(dvnConfigParams);
             } else if (_libraryType == LibraryType.SimpleMessageLib) {
                 SimpleMessageLibMock messageLib = new SimpleMessageLibMock(payable(this), address(endpointList[i]));
                 endpointList[i].registerLibrary(address(messageLib));

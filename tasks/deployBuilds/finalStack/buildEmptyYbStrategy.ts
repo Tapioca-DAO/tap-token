@@ -1,18 +1,17 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { IDeployerVMAdd } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
-import { TwTAP__factory } from '@typechain/index';
+import { ERC20WithoutStrategy__factory } from '@tapioca-sdk/typechain/YieldBox';
 import { IDependentOn } from '@tapioca-sdk/ethers/hardhat/DeployerVM';
 
-export const buildTwTap = async (
+export const buildEmptyYbStrategy = async (
     hre: HardhatRuntimeEnvironment,
     deploymentName: string,
-    args: Parameters<TwTAP__factory['deploy']>,
+    args: Parameters<ERC20WithoutStrategy__factory['deploy']>,
     dependsOn: IDependentOn[],
-): Promise<IDeployerVMAdd<TwTAP__factory>> => {
+): Promise<IDeployerVMAdd<ERC20WithoutStrategy__factory>> => {
+    const signer = (await hre.ethers.getSigners())[0];
     return {
-        contract: (await hre.ethers.getContractFactory(
-            'TwTAP',
-        )) as TwTAP__factory,
+        contract: new ERC20WithoutStrategy__factory(signer),
         deploymentName,
         args,
         dependsOn,
