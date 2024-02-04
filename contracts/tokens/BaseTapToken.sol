@@ -27,8 +27,8 @@ abstract contract BaseTapToken is BaseTapiocaOmnichainEngine, BaseTapTokenMsgTyp
     /// @dev Can't be set as constructor params because TwTAP is deployed after TapToken. TwTAP constructor needs TapOFT as param.
     TwTAP public twTap;
 
-    constructor(string memory _name, string memory _symbol, address _endpoint, address _delegate)
-        BaseTapiocaOmnichainEngine(_name, _symbol, _endpoint, _delegate)
+    constructor(string memory _name, string memory _symbol, address _endpoint, address _delegate, address _extExec)
+        BaseTapiocaOmnichainEngine(_name, _symbol, _endpoint, _delegate, _extExec)
     {}
 
     error twTapNotSet();

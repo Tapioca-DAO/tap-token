@@ -39,10 +39,11 @@ import {
     PrepareLzCallReturn,
     ComposeMsgData
 } from "contracts/tokens/extensions/TapTokenHelper.sol";
-import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
-import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
+import {TapiocaOmnichainExtExec} from "tapioca-periph/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
 import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
+import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
 import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
+import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
 
 // Tapioca Tests
 import {TapTestHelper} from "./TapTestHelper.t.sol";
@@ -112,6 +113,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
+        TapiocaOmnichainExtExec extExec = new TapiocaOmnichainExtExec();
         aTapOFT = TapTokenMock(
             payable(
                 _deployOApp(
@@ -126,8 +128,9 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(new TapTokenSender("", "", address(endpoints[aEid]), address(this))),
-                        address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this)))
+                        address(new TapTokenSender("", "", address(endpoints[aEid]), address(this), address(0))),
+                        address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this), address(0))),
+                        address(extExec)
                     )
                 )
             )
@@ -147,8 +150,9 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(new TapTokenSender("", "", address(endpoints[bEid]), address(this))),
-                        address(new TapTokenReceiver("", "", address(endpoints[bEid]), address(this)))
+                        address(new TapTokenSender("", "", address(endpoints[bEid]), address(this), address(0))),
+                        address(new TapTokenReceiver("", "", address(endpoints[bEid]), address(this), address(0))),
+                        address(extExec)
                     )
                 )
             )
@@ -1008,6 +1012,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         internal
         returns (TapTokenMock newToken_)
     {
+        TapiocaOmnichainExtExec extExec = new TapiocaOmnichainExtExec();
         newToken_ = TapTokenMock(
             payable(
                 _deployOApp(
@@ -1022,8 +1027,9 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(new TapTokenSender("", "", _endpoint, address(this))),
-                        address(new TapTokenReceiver("", "", _endpoint, address(this)))
+                        address(new TapTokenSender("", "", _endpoint, address(this), address(0))),
+                        address(new TapTokenReceiver("", "", _endpoint, address(this), address(0))),
+                        address(extExec)
                     )
                 )
             )

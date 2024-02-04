@@ -36,6 +36,21 @@ interface ITapToken is ITapiocaOmnichainEngine {
         TapTokenSender,
         TapTokenReceiver
     }
+
+    struct TapTokenConstructorData {
+        address endpoint;
+        address contributors;
+        address earlySupporters;
+        address supporters;
+        address aoTap;
+        address dao;
+        address airdrop;
+        uint256 governanceEid;
+        address owner;
+        address tapTokenSenderModule;
+        address tapTokenReceiverModule;
+        address extExec;
+    }
 }
 
 /// ================================

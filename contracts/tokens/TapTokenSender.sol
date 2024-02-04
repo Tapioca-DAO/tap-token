@@ -25,7 +25,7 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 */
 
 contract TapTokenSender is BaseTapToken, TapiocaOmnichainSender {
-    constructor(string memory _name, string memory _symbol, address _endpoint, address _delegate)
-        BaseTapToken(_name, _symbol, _endpoint, _delegate)
+    constructor(string memory _name, string memory _symbol, address _endpoint, address _delegate, address _extExec)
+        BaseTapToken(_name, _symbol, _endpoint, _delegate, _extExec)
     {}
 }

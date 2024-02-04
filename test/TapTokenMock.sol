@@ -5,6 +5,7 @@ pragma solidity 0.8.22;
 import {SendParam} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 
 // Tapioca
+import {ITapToken} from "contracts/tokens/ITapToken.sol";
 import {TapToken} from "contracts/tokens/TapToken.sol";
 
 /*
@@ -21,31 +22,5 @@ __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\
 */
 
 contract TapTokenMock is TapToken {
-    constructor(
-        address _endpoint,
-        address _contributors,
-        address _earlySupporters,
-        address _supporters,
-        address _lbp,
-        address _dao,
-        address _airdrop,
-        uint256 _governanceEid,
-        address _owner,
-        address _TapTokenSenderModule,
-        address _TapTokenReceiverModule
-    )
-        TapToken(
-            _endpoint,
-            _contributors,
-            _earlySupporters,
-            _supporters,
-            _lbp,
-            _dao,
-            _airdrop,
-            _governanceEid,
-            _owner,
-            _TapTokenSenderModule,
-            _TapTokenReceiverModule
-        )
-    {}
+    constructor(ITapToken.TapTokenConstructorData memory _data) TapToken(_data) {}
 }

@@ -120,52 +120,46 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      * Airdrop: 2.5m
      * == 100M ==
      *
-     * @param _endpoint The layer zero address endpoint deployed on the current chain.
-     * @param _contributors Address of the  contributors. 15m TAP.
-     * @param _earlySupporters Address of early supporters. 3,686,595 TAP.
-     * @param _supporters Address of supporters. 12.5m TAP.
-     * @param _aoTap Address of the LBP redemption token, aoTap. 5m TAP.
-     * @param _dao Address of the DAO. 8m TAP.
-     * @param _airdrop Address of the airdrop contract. 2.5m TAP.
-     * @param _governanceEid Governance chain endpoint ID. Should be EID of the twTAP chain.
-     * @param _owner Address of the conservator/owner.
+     * @param _data.endpoint The layer zero address endpoint deployed on the current chain.
+     * @param _data.contributors Address of the  contributors. 15m TAP.
+     * @param _data.earlySupporters Address of early supporters. 3,686,595 TAP.
+     * @param _data.supporters Address of supporters. 12.5m TAP.
+     * @param _data.aoTap Address of the LBP redemption token, aoTap. 5m TAP.
+     * @param _data.dao Address of the DAO. 8m TAP.
+     * @param _data.airdrop Address of the airdrop contract. 2.5m TAP.
+     * @param _data.governanceEid Governance chain endpoint ID. Should be EID of the twTAP chain.
+     * @param _data.owner Address of the conservator/owner.
+     * @param _data.tapTokenSenderModule Address of the TapTokenSenderModule.
+     * @param _data.tapTokenReceiverModule Address of the TapTokenReceiverModule.
+     * @param _data.extExec Address of the external executor.
      */
-    constructor(
-        address _endpoint,
-        address _contributors,
-        address _earlySupporters,
-        address _supporters,
-        address _aoTap,
-        address _dao,
-        address _airdrop,
-        uint256 _governanceEid,
-        address _owner,
-        address _TapTokenSenderModule,
-        address _TapTokenReceiverModule
-    ) BaseTapToken("TapToken", "TAP", _endpoint, _owner) ERC20Permit("TAP") {
-        _transferOwnership(_owner);
+    constructor(ITapToken.TapTokenConstructorData memory _data)
+        BaseTapToken("TapToken", "TAP", _data.endpoint, _data.owner, _data.extExec)
+        ERC20Permit("TAP")
+    {
+        _transferOwnership(_data.owner);
 
-        if (_endpoint == address(0)) revert AddressWrong();
-        governanceEid = _governanceEid;
+        if (_data.endpoint == address(0)) revert AddressWrong();
+        governanceEid = _data.governanceEid;
 
         // Mint only on the governance chain
-        if (_getChainId() == _governanceEid) {
-            _mint(_contributors, 1e18 * 15_000_000);
-            _mint(_earlySupporters, 1e18 * 3_686_595);
-            _mint(_supporters, 1e18 * 12_500_000);
-            _mint(_aoTap, 1e18 * 5_000_000);
-            _mint(_dao, 1e18 * 8_000_000);
-            _mint(_airdrop, 1e18 * 2_500_000);
+        if (_getChainId() == _data.governanceEid) {
+            _mint(_data.contributors, 1e18 * 15_000_000);
+            _mint(_data.earlySupporters, 1e18 * 3_686_595);
+            _mint(_data.supporters, 1e18 * 12_500_000);
+            _mint(_data.aoTap, 1e18 * 5_000_000);
+            _mint(_data.dao, 1e18 * 8_000_000);
+            _mint(_data.airdrop, 1e18 * 2_500_000);
             if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
         }
         emissionsStartTime = block.timestamp;
 
         // Initialize modules
-        if (_TapTokenSenderModule == address(0)) revert NotValid();
-        if (_TapTokenReceiverModule == address(0)) revert NotValid();
+        if (_data.tapTokenSenderModule == address(0)) revert NotValid();
+        if (_data.tapTokenReceiverModule == address(0)) revert NotValid();
 
-        _setModule(uint8(ITapToken.Module.TapTokenSender), _TapTokenSenderModule);
-        _setModule(uint8(ITapToken.Module.TapTokenReceiver), _TapTokenReceiverModule);
+        _setModule(uint8(ITapToken.Module.TapTokenSender), _data.tapTokenSenderModule);
+        _setModule(uint8(ITapToken.Module.TapTokenReceiver), _data.tapTokenReceiverModule);
     }
 
     /// =====================
