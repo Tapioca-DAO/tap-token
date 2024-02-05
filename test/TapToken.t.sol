@@ -288,7 +288,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             approvals_[0] = permitApprovalB_;
             approvals_[1] = permitApprovalC_;
 
-            approvalsMsg_ = tapTokenHelper.buildPermitApprovalMsg(approvals_);
+            approvalsMsg_ = tapTokenHelper.encodeERC20PermitApprovalMsg(approvals_);
         }
 
         PrepareLzCallReturn memory prepareLzCallReturn_ = tapTokenHelper.prepareLzCall(
@@ -384,7 +384,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             approvals_[0] = permitApprovalB_;
             approvals_[1] = permitApprovalC_;
 
-            approvalsMsg_ = tapTokenHelper.buildNftPermitApprovalMsg(approvals_);
+            approvalsMsg_ = tapTokenHelper.encodeERC721PermitApprovalMsg(approvals_);
         }
 
         PrepareLzCallReturn memory prepareLzCallReturn_ = tapTokenHelper.prepareLzCall(

@@ -479,7 +479,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
             }
         }
 
-        bytes memory approvalsMsg_ = tapTokenHelper.buildPermitApprovalMsg(approvals_);
+        bytes memory approvalsMsg_ = tapTokenHelper.encodeERC20PermitApprovalMsg(approvals_);
         _data.prepareLzCallData.composeMsgData.data = approvalsMsg_; // Overwrite data
 
         erc20ApprovalsReturn_ = SetupERC20ApprovalMsgReturn({
@@ -698,7 +698,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
             }
         }
 
-        bytes memory approvalsMsg_ = tapTokenHelper.buildNftPermitApprovalMsg(approvals_);
+        bytes memory approvalsMsg_ = tapTokenHelper.encodeERC721PermitApprovalMsg(approvals_);
         _data.prepareLzCallData.composeMsgData.data = approvalsMsg_; // Overwrite data
 
         PrepareLzCallReturn memory prepareLzCallReturn_ =
