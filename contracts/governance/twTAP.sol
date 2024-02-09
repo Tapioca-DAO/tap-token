@@ -2,14 +2,15 @@
 pragma solidity 0.8.22;
 
 // External
-import {BoringOwnable} from "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
+import {ERC721NftLoader} from "contracts/erc721NftLoader/ERC721NftLoader.sol";
 import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol"; // TODO audit
 import {ERC721PermitStruct} from "contracts/tokens/ITapToken.sol";
 import {TapToken} from "contracts/tokens/TapToken.sol";
@@ -65,7 +66,7 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, Pausable {
+contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, ERC721NftLoader, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
     TapToken public immutable tapOFT;
@@ -127,11 +128,10 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
 
     /// =====-------======
     constructor(address payable _tapOFT, address _owner)
-        ERC721("Time Weighted TAP", "twTAP")
+        ERC721NftLoader("Time Weighted TAP", "twTAP", _owner)
         ERC721Permit("Time Weighted TAP")
     {
         tapOFT = TapToken(_tapOFT);
-        owner = _owner;
         creation = block.timestamp;
 
         rewardTokens.push(IERC20(address(0x0))); // 0 index is reserved
@@ -154,6 +154,13 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, BoringOwnable, ReentrancyGuard, P
     // ==========
     //    READ
     // ==========
+
+    /**
+     * @inheritdoc ERC721NftLoader
+     */
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721NftLoader) returns (string memory) {
+        return ERC721NftLoader.tokenURI(tokenId);
+    }
 
     /**
      * @notice Return the address of reward tokens.

@@ -4,9 +4,9 @@ pragma solidity 0.8.22;
 // External
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Tapioca
+import {ERC721NftLoader} from "contracts/erc721NftLoader/ERC721NftLoader.sol";
 import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol"; // TODO audit
 
 /*
@@ -29,14 +29,13 @@ struct TapOption {
     uint256 tOLP; // tOLP token ID
 }
 
-contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
+contract OTAP is ERC721, ERC721Permit, ERC721NftLoader, BaseBoringBatchable {
     uint256 public mintedOTAP; // total number of OTAP minted
     address public broker; // address of the onlyBroker
 
     mapping(uint256 => TapOption) public options; // tokenId => Option
-    mapping(uint256 => string) public tokenURIs; // tokenId => tokenURI
 
-    constructor() ERC721("Option TAP", "oTAP") ERC721Permit("Option TAP") {}
+    constructor(address _owner) ERC721NftLoader("Option TAP", "oTAP", _owner) ERC721Permit("Option TAP") {}
 
     // ==========
     //   EVENTS
@@ -52,8 +51,11 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     //    READ
     // =========
 
-    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
-        return tokenURIs[_tokenId];
+    /**
+     * @inheritdoc ERC721NftLoader
+     */
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721NftLoader) returns (string memory) {
+        return ERC721NftLoader.tokenURI(tokenId);
     }
 
     function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool) {
@@ -73,11 +75,6 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     // ==========
     //    WRITE
     // ==========
-
-    function setTokenURI(uint256 _tokenId, string calldata _tokenURI) external {
-        if (!_isApprovedOrOwner(msg.sender, _tokenId)) revert NotAuthorized();
-        tokenURIs[_tokenId] = _tokenURI;
-    }
 
     /// @notice mints an OTAP
     /// @param _to address to mint to
