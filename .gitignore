@@ -6,17 +6,7 @@ typechain
 package-lock.json
 docs
 
-#Hardhat files
-cache
-artifacts
-
-# Forge files
-out
-cache_forge
-
-# forge-deploy
-/generated
-/deployments/localhost
-/deployments/31337
+#Hardhat & forge files
+gen
 
 .DS_Store
