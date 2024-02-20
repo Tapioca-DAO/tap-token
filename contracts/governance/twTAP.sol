@@ -10,8 +10,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
+import {IPearlmit, PearlmitHandler} from "tapioca-periph/Pearlmit/PearlmitHandler.sol";
 import {ERC721NftLoader} from "contracts/erc721NftLoader/ERC721NftLoader.sol";
-import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol"; // TODO audit
+import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol";
 import {ERC721PermitStruct} from "contracts/tokens/ITapToken.sol";
 import {TapToken} from "contracts/tokens/TapToken.sol";
 import {TWAML} from "contracts/options/twAML.sol";
@@ -65,7 +66,7 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, ERC721NftLoader, ReentrancyGuard, Pausable {
+contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721NftLoader, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
     TapToken public immutable tapOFT;
@@ -126,9 +127,10 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, ERC721NftLoader, Reentra
     error AdvanceEpochFirst();
 
     /// =====-------======
-    constructor(address payable _tapOFT, address _owner)
+    constructor(address payable _tapOFT, IPearlmit _pearlmit, address _owner)
         ERC721NftLoader("Time Weighted TAP", "twTAP", _owner)
         ERC721Permit("Time Weighted TAP")
+        PearlmitHandler(_pearlmit)
     {
         tapOFT = TapToken(_tapOFT);
         creation = block.timestamp;
@@ -283,6 +285,8 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, ERC721NftLoader, Reentra
     // ===========
 
     /// @notice Participate in twAML voting and mint an twTap position
+    /// @dev Requires a Pearlmit approval for the TAP amount
+    ///
     /// @param _participant The address of the participant
     /// @param _amount The amount of TAP to participate with
     /// @param _duration The duration of the lock
@@ -297,7 +301,8 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, ERC721NftLoader, Reentra
         if (_timestampToWeek(block.timestamp) > currentWeek()) revert AdvanceEpochFirst();
 
         // Transfer TAP to this contract
-        tapOFT.transferFrom(msg.sender, address(this), _amount);
+        // tapOFT.transferFrom(msg.sender, address(this), _amount);
+        pearlmit.transferFromERC20(msg.sender, address(this), address(tapOFT), _amount);
 
         // Copy to memory
         TWAMLPool memory pool = twAML;
@@ -537,7 +542,9 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, ERC721NftLoader, Reentra
      * @dev Use `_isApprovedOrOwner()` internally.
      */
     function _requireClaimPermission(address _to, uint256 _tokenId) internal view {
-        if (!_isApprovedOrOwner(_to, _tokenId)) revert NotApproved(_tokenId, msg.sender);
+        if (!_isApprovedOrOwner(_to, _tokenId) && !isERC721Approved(_ownerOf(_tokenId), _to, address(this), _tokenId)) {
+            revert NotApproved(_tokenId, msg.sender);
+        }
     }
 
     /**
