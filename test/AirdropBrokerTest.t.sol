@@ -4,6 +4,7 @@ pragma solidity 0.8.22;
 
 // Tapioca
 import {AirdropBroker, ITapiocaOracle} from "contracts/option-airdrop/AirdropBroker.sol";
+import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
 
 import "forge-std/Test.sol";
 
@@ -30,8 +31,9 @@ contract AirdropBrokerTestMock is AirdropBroker {
         address _PCNFT,
         address _PAYMENT_TOKEN_BENEFICIARY,
         address TAP_ORACLE,
+        IPearlmit _PEARLMIT,
         address _OWNER
-    ) AirdropBroker(_AOTAP, _PCNFT, _PAYMENT_TOKEN_BENEFICIARY, _OWNER) {}
+    ) AirdropBroker(_AOTAP, _PCNFT, _PAYMENT_TOKEN_BENEFICIARY, _PEARLMIT, _OWNER) {}
 }
 
 contract AirdropBrokerTest is Test {
@@ -43,9 +45,11 @@ contract AirdropBrokerTest is Test {
     address TAP_ORACLE = address(new ADBOracleMock());
     address PAYMENT_TOKEN_BENEFICIARY = address(0);
     address OWNER = address(this);
+    IPearlmit PEARLMIT = IPearlmit(address(new Pearlmit("Pearlmit", "1")));
 
     function setUp() public {
-        airdropBroker = new AirdropBrokerTestMock(AOTAP, TAPOFT, PCNFT, PAYMENT_TOKEN_BENEFICIARY, TAP_ORACLE, OWNER);
+        airdropBroker =
+            new AirdropBrokerTestMock(AOTAP, TAPOFT, PCNFT, PAYMENT_TOKEN_BENEFICIARY, TAP_ORACLE, PEARLMIT, OWNER);
     }
 
     error NotValid();

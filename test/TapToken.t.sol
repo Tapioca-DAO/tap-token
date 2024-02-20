@@ -9,11 +9,8 @@ import {
     MessagingReceipt,
     OFTReceipt
 } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
-import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
-import {BytesLib} from "solidity-bytes-utils/contracts/BytesLib.sol";
-import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 
 // External
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
@@ -40,15 +37,17 @@ import {
     ComposeMsgData
 } from "contracts/tokens/extensions/TapTokenHelper.sol";
 import {TapiocaOmnichainExtExec} from "tapioca-periph/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
+import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
 import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
 import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
 import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
 import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
 
 // Tapioca Tests
 import {TapTestHelper} from "./TapTestHelper.t.sol";
-import {ERC721Mock} from "./ERC721Mock.sol";
 import {TapTokenMock} from "./TapTokenMock.sol";
+import {ERC721Mock} from "./ERC721Mock.sol";
 
 import "forge-std/Test.sol";
 
@@ -113,7 +112,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
-        TapiocaOmnichainExtExec extExec = new TapiocaOmnichainExtExec();
+        TapiocaOmnichainExtExec extExec = new TapiocaOmnichainExtExec(ICluster(address(0)), __owner);
         aTapOFT = TapTokenMock(
             payable(
                 _deployOApp(
@@ -159,7 +158,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         );
         vm.label(address(bTapOFT), "bTapOFT");
 
-        twTap = new TwTAP(payable(address(bTapOFT)), address(this));
+        IPearlmit pearlmit = IPearlmit(address(new Pearlmit("Pearlmit", "1")));
+        twTap = new TwTAP(payable(address(bTapOFT)), pearlmit, address(this));
         vm.label(address(twTap), "twTAP");
 
         bTapOFT.setTwTAP(address(twTap));
@@ -1012,7 +1012,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         internal
         returns (TapTokenMock newToken_)
     {
-        TapiocaOmnichainExtExec extExec = new TapiocaOmnichainExtExec();
+        TapiocaOmnichainExtExec extExec = new TapiocaOmnichainExtExec(ICluster(address(0)), __owner);
         newToken_ = TapTokenMock(
             payable(
                 _deployOApp(
