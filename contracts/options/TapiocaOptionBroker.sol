@@ -11,6 +11,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
 import {TapiocaOptionLiquidityProvision, LockPosition, SingularityPool} from "./TapiocaOptionLiquidityProvision.sol";
+import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
 import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
 import {TapToken} from "contracts/tokens/TapToken.sol";
 import {OTAP, TapOption} from "./oTAP.sol";
@@ -45,7 +46,7 @@ struct PaymentTokenOracle {
     bytes oracleData;
 }
 
-contract TapiocaOptionBroker is Pausable, Ownable, TWAML, ReentrancyGuard {
+contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, TWAML, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     TapiocaOptionLiquidityProvision public immutable tOLP;
@@ -111,8 +112,9 @@ contract TapiocaOptionBroker is Pausable, Ownable, TWAML, ReentrancyGuard {
         address payable _tapOFT,
         address _paymentTokenBeneficiary,
         uint256 _epochDuration,
+        IPearlmit _pearlmit,
         address _owner
-    ) {
+    ) PearlmitHandler(_pearlmit) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         tOLP = TapiocaOptionLiquidityProvision(_tOLP);
 
@@ -245,7 +247,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, TWAML, ReentrancyGuard {
         }
 
         // Transfer tOLP position to this contract
-        tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
+        // tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
+        pearlmit.transferFromERC721(msg.sender, address(this), address(tOLP), _tOLPTokenID);
 
         uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
@@ -549,7 +552,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, TWAML, ReentrancyGuard {
             _getDiscountedPaymentAmount(otcAmountInUSD, paymentTokenValuation, discount, _paymentToken.decimals());
 
         uint256 balBefore = _paymentToken.balanceOf(address(this));
-        IERC20(address(_paymentToken)).safeTransferFrom(msg.sender, address(this), discountedPaymentAmount);
+        // IERC20(address(_paymentToken)).safeTransferFrom(msg.sender, address(this), discountedPaymentAmount);
+        pearlmit.transferFromERC20(msg.sender, address(this), address(_paymentToken), discountedPaymentAmount);
         uint256 balAfter = _paymentToken.balanceOf(address(this));
         if (balAfter - balBefore != discountedPaymentAmount) {
             revert TransferFailed();

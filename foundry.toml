@@ -15,13 +15,9 @@ remappings = [
 	"solidity-bytes-utils/=node_modules/@layerzerolabs/solidity-bytes-utils/",
 	"tapioca-sdk/=gitmodule/tapioca-sdk/contracts/",
 	"tapioca-periph/=gitmodule/tapioca-periph/contracts/",
+	"permitc/=gitmodule/tapioca-periph/gitmodule/permitc/src/", # Needs to be init in the periph repo
 ]
 
-# forge-dpeloy
-fs_permissions = [
-	{ access = "read-write", path = "./deployments"},
-	{ access = "read", path = "./out"}
-]
 
 [etherscan]
 arbitrum-sepolia = { key = "${ARBITRUM_SEPOLIA_API_KEY}", url = "https://api-sepolia.arbiscan.io/api"}

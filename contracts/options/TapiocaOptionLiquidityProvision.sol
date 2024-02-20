@@ -11,6 +11,9 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+// Tapioca
+import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
+
 /*
 
 ████████╗ █████╗ ██████╗ ██╗ ██████╗  ██████╗ █████╗ 
@@ -37,11 +40,12 @@ struct SingularityPool {
 }
 
 contract TapiocaOptionLiquidityProvision is
+    Ownable,
+    PearlmitHandler,
     ERC721,
     ERC721Permit,
     BaseBoringBatchable,
     Pausable,
-    Ownable,
     ReentrancyGuard
 {
     uint256 public tokenCounter; // Counter for token IDs
@@ -79,9 +83,10 @@ contract TapiocaOptionLiquidityProvision is
     error NotActive();
     error RescueCooldownNotReached();
 
-    constructor(address _yieldBox, uint256 _epochDuration, address _owner)
+    constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
         ERC721Permit("TapiocaOptionLiquidityProvision")
+        PearlmitHandler(_pearlmit)
     {
         yieldBox = IYieldBox(_yieldBox);
         EPOCH_DURATION = _epochDuration;
@@ -159,6 +164,12 @@ contract TapiocaOptionLiquidityProvision is
         return _isApprovedOrOwner(_spender, _tokenId);
     }
 
+    /// @notice Returns super approve check or if the spender is approved for the tOLP NFT on Pearlmit
+    function _isApprovedOrOwner(address _spender, uint256 _tokenId) internal view override returns (bool) {
+        return super._isApprovedOrOwner(_spender, _tokenId)
+            || isERC721Approved(_ownerOf(_tokenId), _spender, address(this), _tokenId);
+    }
+
     // ==========
     //    WRITE
     // ==========
@@ -186,7 +197,8 @@ contract TapiocaOptionLiquidityProvision is
         if (sglAssetID == 0) revert SingularityNotActive();
 
         // Transfer the Singularity position to this contract
-        yieldBox.transfer(msg.sender, address(this), sglAssetID, _ybShares);
+        // yieldBox.transfer(msg.sender, address(this), sglAssetID, _ybShares);
+        pearlmit.transferFromERC1155(msg.sender, address(this), address(yieldBox), sglAssetID, _ybShares);
         activeSingularities[_singularity].totalDeposited += _ybShares;
 
         // Create the lock position

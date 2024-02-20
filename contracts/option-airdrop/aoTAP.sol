@@ -4,11 +4,11 @@ pragma solidity 0.8.22;
 // External
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
-import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol"; // TODO audit
+import {IPearlmit, PearlmitHandler} from "tapioca-periph/Pearlmit/PearlmitHandler.sol";
+import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol";
 
 /*
 
@@ -27,14 +27,18 @@ struct AirdropTapOption {
     uint256 amount; // amount of eligible TAP
 }
 
-contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, Ownable {
+contract AOTAP is Ownable, PearlmitHandler, ERC721, ERC721Permit, BaseBoringBatchable {
     uint256 public mintedAOTAP; // total number of AOTAP minted
     address public broker; // address of the onlyBroker
 
     mapping(uint256 => AirdropTapOption) public options; // tokenId => Option
     mapping(uint256 => string) public tokenURIs; // tokenId => tokenURI
 
-    constructor(address _owner) ERC721("Airdrop Option TAP", "aoTAP") ERC721Permit("Airdrop Option TAP") {
+    constructor(IPearlmit _pearlmit, address _owner)
+        ERC721("Airdrop Option TAP", "aoTAP")
+        ERC721Permit("Airdrop Option TAP")
+        PearlmitHandler(_pearlmit)
+    {
         _transferOwnership(_owner);
     }
 
@@ -57,7 +61,8 @@ contract AOTAP is ERC721, ERC721Permit, BaseBoringBatchable, Ownable {
     }
 
     function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool) {
-        return _isApprovedOrOwner(_spender, _tokenId);
+        return _isApprovedOrOwner(_spender, _tokenId)
+            || isERC721Approved(_ownerOf(_tokenId), _spender, address(this), _tokenId);
     }
 
     /// @notice Return the owner of the tokenId and the attributes of the option.
