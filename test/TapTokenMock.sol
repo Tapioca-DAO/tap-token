@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-// LZ
-import {SendParam} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
-
 // Tapioca
 import {ITapToken} from "contracts/tokens/ITapToken.sol";
 import {TapToken} from "contracts/tokens/TapToken.sol";

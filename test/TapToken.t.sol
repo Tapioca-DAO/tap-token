@@ -127,8 +127,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(new TapTokenSender("", "", address(endpoints[aEid]), address(this), address(0))),
-                        address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this), address(0))),
+                        address(new TapTokenSender()),
+                        address(new TapTokenReceiver()),
                         address(extExec)
                     )
                 )
@@ -149,8 +149,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(new TapTokenSender("", "", address(endpoints[bEid]), address(this), address(0))),
-                        address(new TapTokenReceiver("", "", address(endpoints[bEid]), address(this), address(0))),
+                        address(new TapTokenSender()),
+                        address(new TapTokenReceiver()),
                         address(extExec)
                     )
                 )
@@ -1027,8 +1027,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(new TapTokenSender("", "", _endpoint, address(this), address(0))),
-                        address(new TapTokenReceiver("", "", _endpoint, address(this), address(0))),
+                        address(new TapTokenSender()),
+                        address(new TapTokenReceiver()),
                         address(extExec)
                     )
                 )
