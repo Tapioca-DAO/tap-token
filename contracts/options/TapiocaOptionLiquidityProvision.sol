@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 // External
-import {IYieldBox} from "contracts/interfaces/IYieldBox.sol"; // TODO refactor to other repo
+import {IYieldBox} from "tap-token/interfaces/IYieldBox.sol"; // TODO refactor to other repo
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol";

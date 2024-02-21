@@ -5,7 +5,7 @@ pragma solidity 0.8.22;
 import {BaseTapiocaOmnichainEngine} from "tapioca-periph/tapiocaOmnichainEngine/BaseTapiocaOmnichainEngine.sol";
 import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
 import {BaseTapTokenMsgType} from "./BaseTapTokenMsgType.sol";
-import {TwTAP} from "contracts/governance/twTAP.sol";
+import {TwTAP} from "tap-token/governance/twTAP.sol";
 
 /*
 

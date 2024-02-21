@@ -32,19 +32,19 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "contracts/tokens/ITapToken.sol";
+} from "tap-token/tokens/ITapToken.sol";
 import {
     TapTokenHelper,
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "contracts/tokens/extensions/TapTokenHelper.sol";
-import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
+} from "tap-token/tokens/extensions/TapTokenHelper.sol";
+import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
 import {TapiocaOmnichainEngineCodec as ToeCodec} from
     "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
-import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
-import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
-import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
+import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
+import {TapTokenReceiver} from "tap-token/tokens/TapTokenReceiver.sol";
+import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
 import {TapTokenMock} from "./TapTokenMock.sol";
 
 // Tapioca

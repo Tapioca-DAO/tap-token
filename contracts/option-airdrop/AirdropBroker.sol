@@ -14,8 +14,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 // Tapioca
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
 import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
-import {TWAML, FullMath} from "contracts/options/twAML.sol"; // TODO Naming
-import {TapToken} from "contracts/tokens/TapToken.sol";
+import {TWAML, FullMath} from "tap-token/options/twAML.sol"; // TODO Naming
+import {TapToken} from "tap-token/tokens/TapToken.sol";
 import {AOTAP, AirdropTapOption} from "./aoTAP.sol";
 
 /*

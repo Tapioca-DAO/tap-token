@@ -2,8 +2,8 @@
 pragma solidity 0.8.22;
 
 // Tapioca
-import {ITapToken} from "contracts/tokens/ITapToken.sol";
-import {TapToken} from "contracts/tokens/TapToken.sol";
+import {ITapToken} from "tap-token/tokens/ITapToken.sol";
+import {TapToken} from "tap-token/tokens/TapToken.sol";
 
 /*
 __/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        

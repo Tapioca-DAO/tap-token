@@ -14,10 +14,10 @@ import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 // Tapioca
 import {BaseTapiocaOmnichainEngine} from "tapioca-periph/tapiocaOmnichainEngine/BaseTapiocaOmnichainEngine.sol";
 import {TapiocaOmnichainSender} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainSender.sol";
-import {ERC20PermitStruct, ITapToken, LZSendParam} from "contracts/tokens/ITapToken.sol";
+import {ERC20PermitStruct, ITapToken, LZSendParam} from "tap-token/tokens/ITapToken.sol";
 import {ModuleManager} from "./module/ModuleManager.sol";
 import {TapTokenReceiver} from "./TapTokenReceiver.sol";
-import {TwTAP} from "contracts/governance/twTAP.sol";
+import {TwTAP} from "tap-token/governance/twTAP.sol";
 import {TapTokenSender} from "./TapTokenSender.sol";
 import {BaseTapToken} from "./BaseTapToken.sol";
 
