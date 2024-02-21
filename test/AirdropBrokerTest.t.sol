@@ -3,8 +3,9 @@
 pragma solidity 0.8.22;
 
 // Tapioca
-import {AirdropBroker, ITapiocaOracle} from "contracts/option-airdrop/AirdropBroker.sol";
+import {AirdropBroker, ITapiocaOracle} from "tap-token/option-airdrop/AirdropBroker.sol";
 import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
+import {ERC20Mock} from "tap-token/mocks/ERC20Mock.sol";
 
 import "forge-std/Test.sol";
 
@@ -25,22 +26,16 @@ contract ADBOracleMock is ITapiocaOracle {
 
 /// @dev We mock the AirdropBroker contract to be able to access internal functions with external ones.
 contract AirdropBrokerTestMock is AirdropBroker {
-    constructor(
-        address _AOTAP,
-        address payable _TAPOFT,
-        address _PCNFT,
-        address _PAYMENT_TOKEN_BENEFICIARY,
-        address TAP_ORACLE,
-        IPearlmit _PEARLMIT,
-        address _OWNER
-    ) AirdropBroker(_AOTAP, _PCNFT, _PAYMENT_TOKEN_BENEFICIARY, _PEARLMIT, _OWNER) {}
+    constructor(address _AOTAP, address _PCNFT, address _PAYMENT_TOKEN_BENEFICIARY, IPearlmit _PEARLMIT, address _OWNER)
+        AirdropBroker(_AOTAP, _PCNFT, _PAYMENT_TOKEN_BENEFICIARY, _PEARLMIT, _OWNER)
+    {}
 }
 
 contract AirdropBrokerTest is Test {
     AirdropBrokerTestMock airdropBroker;
 
     address AOTAP = address(0);
-    address payable TAPOFT = payable(0);
+    address payable TAPOFT = payable(address(new ERC20Mock("TAPOFT", "TAPOFT")));
     address PCNFT = address(0);
     address TAP_ORACLE = address(new ADBOracleMock());
     address PAYMENT_TOKEN_BENEFICIARY = address(0);
@@ -48,8 +43,9 @@ contract AirdropBrokerTest is Test {
     IPearlmit PEARLMIT = IPearlmit(address(new Pearlmit("Pearlmit", "1")));
 
     function setUp() public {
-        airdropBroker =
-            new AirdropBrokerTestMock(AOTAP, TAPOFT, PCNFT, PAYMENT_TOKEN_BENEFICIARY, TAP_ORACLE, PEARLMIT, OWNER);
+        airdropBroker = new AirdropBrokerTestMock(AOTAP, PCNFT, PAYMENT_TOKEN_BENEFICIARY, PEARLMIT, OWNER);
+        airdropBroker.setTapOracle(ITapiocaOracle(TAP_ORACLE), "0x");
+        airdropBroker.setTapToken(TAPOFT);
     }
 
     error NotValid();
