@@ -47,7 +47,9 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
     /**
      * @dev Used as a module for `TapToken`. Only delegate calls with `TapToken` state are used.
      */
-    constructor() BaseTapToken("", "", address(0), address(0), address(0), IPearlmit(address(0))) {}
+    constructor(string memory _name, string memory _symbol, address _endpoint, address _delegate, address _extExec)
+        BaseTapToken(_name, _symbol, _endpoint, _delegate, _extExec, IPearlmit(address(0)))
+    {}
 
     /// @dev twTAP lock operation received.
     event LockTwTapReceived(address indexed user, uint96 duration, uint256 amount);
