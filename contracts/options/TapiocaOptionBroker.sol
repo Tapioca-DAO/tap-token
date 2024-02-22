@@ -2,6 +2,7 @@
 pragma solidity 0.8.22;
 
 // External
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
@@ -46,7 +47,7 @@ struct PaymentTokenOracle {
     bytes oracleData;
 }
 
-contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, TWAML, ReentrancyGuard {
+contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Receiver, TWAML, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     TapiocaOptionLiquidityProvision public immutable tOLP;
@@ -620,5 +621,12 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, TWAML, Reent
                 curr[sglAssetID] += prev[sglAssetID];
             }
         }
+    }
+
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
+        external
+        returns (bytes4)
+    {
+        return this.onERC721Received.selector;
     }
 }
