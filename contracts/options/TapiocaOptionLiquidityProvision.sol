@@ -2,17 +2,19 @@
 pragma solidity 0.8.22;
 
 // External
-import {IYieldBox} from "tap-token/interfaces/IYieldBox.sol"; // TODO refactor to other repo
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol";
-import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
+import {IYieldBox} from "tap-token/interfaces/IYieldBox.sol";
 
 /*
 
@@ -44,6 +46,7 @@ contract TapiocaOptionLiquidityProvision is
     PearlmitHandler,
     ERC721,
     ERC721Permit,
+    IERC1155Receiver,
     BaseBoringBatchable,
     Pausable,
     ReentrancyGuard
@@ -385,5 +388,27 @@ contract TapiocaOptionLiquidityProvision is
         }
 
         return total;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, IERC165) returns (bool) {
+        return interfaceId == type(IERC1155Receiver).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    function onERC1155Received(address operator, address from, uint256 id, uint256 value, bytes calldata data)
+        external
+        returns (bytes4)
+    {
+        // bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))
+        return 0xf23a6e61;
+    }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] calldata ids,
+        uint256[] calldata values,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return bytes4(0);
     }
 }
