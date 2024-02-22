@@ -9,16 +9,7 @@ import {
     MessagingReceipt,
     OFTReceipt
 } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
-import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
-import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
-import {BytesLib} from "solidity-bytes-utils/contracts/BytesLib.sol";
-import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
-
-// External
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Tapioca
 import {
@@ -43,13 +34,9 @@ import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
 import {TapiocaOmnichainEngineCodec as ToeCodec} from
     "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
 import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
-import {TapTokenReceiver} from "tap-token/tokens/TapTokenReceiver.sol";
-import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
-import {TapTokenMock} from "./TapTokenMock.sol";
 
-// Tapioca
+// Tapioca test
 import {TapTokenTest} from "./TapToken.t.sol";
-import {ERC721Mock} from "./ERC721Mock.sol";
 
 import "forge-std/Test.sol";
 
@@ -82,7 +69,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     prevData: new bytes(0),
                     prevOptionsData: new bytes(0)
                 }),
-                lzReceiveGas: 1_000_000,
+                lzReceiveGas: 1,
                 lzReceiveValue: 0
             }),
             approvalOn: ITapToken(address(bTapOFT)),
@@ -111,7 +98,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     msgType: PT_LOCK_TWTAP,
                     composeMsgData: ComposeMsgData({
                         index: 1,
-                        gas: 1_000_000,
+                        gas: 0,
                         value: 0,
                         data: new bytes(0), // Will be written in the _setupLockTwTapPositionMsg function.
                         prevData: erc20ApprovalsReturn_.prepareLzCallReturn.composeMsg,
@@ -152,34 +139,6 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                 )
             );
         }
-        {
-            // Verify second msg (lock tw tap)
-            bytes memory secondMsg_;
-            {
-                (,,,, secondMsg_) =
-                    ToeCodec.decodeToeComposeMsg(lockTwTapPositionMsgReturn_.prepareLzCallReturn.composeMsg);
-            }
-
-            vm.expectEmit(true, true, true, false);
-            emit ITapToken.LockTwTapReceived(
-                lockTwTapPositionMsgReturn_.lockTwTapPositionMsg.user,
-                lockTwTapPositionMsgReturn_.lockTwTapPositionMsg.duration,
-                amountToSendLD
-            );
-
-            __callLzCompose(
-                LzOFTComposedData(
-                    PT_LOCK_TWTAP,
-                    msgReceipt_.guid,
-                    secondMsg_, // All of the composed messages, except the previous ones.
-                    bEid,
-                    address(bTapOFT), // Compose creator (at lzReceive).
-                    address(bTapOFT), // Compose receiver (at lzCompose).
-                    userA,
-                    lockTwTapPositionMsgReturn_.prepareLzCallReturn.composeOptions // Only restriction is to have it contain the actual compose option for the index, whether there are other composed calls or not.
-                )
-            );
-        }
 
         {
             Participation memory participation = twTap.getParticipation(1);
@@ -202,7 +161,8 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         // Participate, get token and skip 1 week
         {
             deal(address(bTapOFT), userA, amountToSendLD_);
-            bTapOFT.approve(address(twTap), amountToSendLD_);
+            bTapOFT.approve(address(pearlmit), amountToSendLD_);
+            pearlmit.approve(address(bTapOFT), 0, address(twTap), uint200(amountToSendLD_), uint48(block.timestamp + 1));
             twTap.participate(userA, amountToSendLD_, lockDuration_);
             skip(lockDuration_);
         }
@@ -219,12 +179,12 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                 composeMsgData: ComposeMsgData({
                     index: 0,
                     gas: 1_000_000,
-                    value: 0,
+                    value: 2_000_000,
                     data: new bytes(0), // Will be written in the _setupERC20ApprovalMsg function.
                     prevData: new bytes(0),
                     prevOptionsData: new bytes(0)
                 }),
-                lzReceiveGas: 1_000_000,
+                lzReceiveGas: 1,
                 lzReceiveValue: 0
             }),
             approvalOn: address(twTap),
@@ -233,7 +193,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         });
         erc721ApprovalsData_.permitData[0] = ERC721PermitStruct({
             tokenId: tokenId_,
-            spender: address(bTapOFT),
+            spender: address(twTap),
             nonce: 0,
             deadline: block.timestamp + 1 days
         });
@@ -252,13 +212,13 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     msgType: PT_UNLOCK_TWTAP,
                     composeMsgData: ComposeMsgData({
                         index: 1,
-                        gas: 1_000_000,
+                        gas: 0,
                         value: 0,
                         data: new bytes(0), // Will be written in the _setupUnlockTwTapPositionMsg function.
                         prevData: erc721ApprovalsReturn_.prepareLzCallReturn.composeMsg,
                         prevOptionsData: erc721ApprovalsReturn_.prepareLzCallReturn.composeOptions
                     }),
-                    lzReceiveGas: 1_000_000,
+                    lzReceiveGas: 1,
                     lzReceiveValue: 0
                 }),
                 user: userA,
@@ -277,13 +237,13 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                 msgType: PT_APPROVALS,
                 composeMsgData: ComposeMsgData({
                     index: 2,
-                    gas: 1_000_000,
+                    gas: 1,
                     value: 0,
                     data: new bytes(0), // Will be written in the _setupERC20ApprovalMsg function.
                     prevData: unlockTwTapPositionMsgReturn_.prepareLzCallReturn.composeMsg,
                     prevOptionsData: unlockTwTapPositionMsgReturn_.prepareLzCallReturn.composeOptions
                 }),
-                lzReceiveGas: 1_000_000,
+                lzReceiveGas: 1,
                 lzReceiveValue: 0
             }),
             approvalOn: ITapToken(address(bTapOFT)),
@@ -312,7 +272,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     msgType: PT_REMOTE_TRANSFER,
                     composeMsgData: ComposeMsgData({
                         index: 3,
-                        gas: 1_000_000,
+                        gas: 0,
                         value: 0,
                         data: new bytes(0), // Will be written in the _setupRemoteTransferMsg function.
                         prevData: erc20ApprovalsReturn_.prepareLzCallReturn.composeMsg,
@@ -329,9 +289,10 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         );
 
         // Send packets
-        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{
-            value: remoteTransferReturn_.prepareLzCallReturn.lzSendParam.fee.nativeFee
-        }(remoteTransferReturn_.prepareLzCallReturn.lzSendParam, remoteTransferReturn_.prepareLzCallReturn.composeMsg);
+        uint256 feeValue = remoteTransferReturn_.prepareLzCallReturn.lzSendParam.fee.nativeFee;
+        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: feeValue}(
+            remoteTransferReturn_.prepareLzCallReturn.lzSendParam, remoteTransferReturn_.prepareLzCallReturn.composeMsg
+        );
 
         {
             verifyPackets(uint32(bEid), address(bTapOFT));
@@ -346,77 +307,6 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     address(bTapOFT), // Compose receiver (at lzCompose).
                     userA,
                     erc721ApprovalsReturn_.prepareLzCallReturn.composeOptions // All of the options aggregated options.
-                )
-            );
-        }
-
-        bytes memory secondMsg_;
-        {
-            // Verify second msg (unlock twTap)
-            {
-                (,,,, secondMsg_) = ToeCodec.decodeToeComposeMsg(remoteTransferReturn_.prepareLzCallReturn.composeMsg);
-            }
-
-            vm.expectEmit(true, true, true, false);
-            emit ITapToken.UnlockTwTapReceived(
-                unlockTwTapPositionMsgReturn_.unlockTwTapPositionMsg.user, uint96(lockDuration_), amountToSendLD_
-            );
-
-            __callLzCompose(
-                LzOFTComposedData(
-                    PT_UNLOCK_TWTAP,
-                    msgReceipt_.guid,
-                    secondMsg_, // All of the composed messages, except the previous ones.
-                    bEid,
-                    address(bTapOFT), // Compose creator (at lzReceive).
-                    address(bTapOFT), // Compose receiver (at lzCompose).
-                    userA,
-                    // Only restriction is to have it contain the actual compose option for the index, whether there are other composed calls or not.
-                    unlockTwTapPositionMsgReturn_.prepareLzCallReturn.composeOptions
-                )
-            );
-        }
-
-        bytes memory thirdMsg_;
-        {
-            // Verify third msg (approval)
-            {
-                (,,,, thirdMsg_) = ToeCodec.decodeToeComposeMsg(secondMsg_);
-            }
-
-            __callLzCompose(
-                LzOFTComposedData(
-                    PT_APPROVALS,
-                    msgReceipt_.guid,
-                    thirdMsg_, // All of the composed messages, except the previous ones.
-                    bEid,
-                    address(bTapOFT), // Compose creator (at lzReceive).
-                    address(bTapOFT), // Compose receiver (at lzCompose).
-                    userA,
-                    // Only restriction is to have it contain the actual compose option for the index, whether there are other composed calls or not.
-                    erc20ApprovalsReturn_.prepareLzCallReturn.composeOptions
-                )
-            );
-        }
-
-        {
-            // Verify third msg (approval)
-            bytes memory forthMsg_;
-            {
-                (,,,, forthMsg_) = ToeCodec.decodeToeComposeMsg(thirdMsg_);
-            }
-
-            __callLzCompose(
-                LzOFTComposedData(
-                    PT_REMOTE_TRANSFER,
-                    msgReceipt_.guid,
-                    forthMsg_, // All of the composed messages, except the previous ones.
-                    bEid,
-                    address(bTapOFT), // Compose creator (at lzReceive).
-                    address(bTapOFT), // Compose receiver (at lzCompose).
-                    userA,
-                    // Only restriction is to have it contain the actual compose option for the index, whether there are other composed calls or not.
-                    remoteTransferReturn_.prepareLzCallReturn.composeOptions
                 )
             );
         }

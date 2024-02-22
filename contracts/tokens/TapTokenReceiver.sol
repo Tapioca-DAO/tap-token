@@ -116,7 +116,11 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
         /// @dev xChain owner needs to have approved dst srcChain `sendPacket()` msg.sender in a previous composedMsg. Or be the same address.
         _internalTransferWithAllowance(lockTwTapPositionMsg_.user, _srcChainSender, lockTwTapPositionMsg_.amount);
 
-        _approve(address(this), address(twTap), lockTwTapPositionMsg_.amount);
+        // _approve(address(this), address(twTap), lockTwTapPositionMsg_.amount);
+        _approve(address(this), address(pearlmit), lockTwTapPositionMsg_.amount);
+        pearlmit.approve(
+            address(this), 0, address(twTap), uint200(lockTwTapPositionMsg_.amount), uint48(block.timestamp + 1)
+        );
         twTap.participate(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.amount, lockTwTapPositionMsg_.duration);
 
         emit LockTwTapReceived(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.duration, lockTwTapPositionMsg_.amount);
