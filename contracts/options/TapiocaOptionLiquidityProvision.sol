@@ -82,6 +82,7 @@ contract TapiocaOptionLiquidityProvision is
     error NotInRescueMode();
     error NotActive();
     error RescueCooldownNotReached();
+    error TransferFailed();
 
     constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
@@ -198,7 +199,13 @@ contract TapiocaOptionLiquidityProvision is
 
         // Transfer the Singularity position to this contract
         // yieldBox.transfer(msg.sender, address(this), sglAssetID, _ybShares);
-        pearlmit.transferFromERC1155(msg.sender, address(this), address(yieldBox), sglAssetID, _ybShares);
+        {
+            bool isErr =
+                pearlmit.transferFromERC1155(msg.sender, address(this), address(yieldBox), sglAssetID, _ybShares);
+            if (isErr) {
+                revert TransferFailed();
+            }
+        }
         activeSingularities[_singularity].totalDeposited += _ybShares;
 
         // Create the lock position
