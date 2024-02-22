@@ -5,8 +5,6 @@ pragma solidity 0.8.22;
 import {
     MessagingReceipt, OFTReceipt, SendParam
 } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
-import {IOAppMsgInspector} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppMsgInspector.sol";
-import {IOAppComposer} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppComposer.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
 import {OFTCore} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
@@ -26,6 +24,7 @@ import {
     LZSendParam
 } from "./ITapToken.sol";
 import {TapiocaOmnichainReceiver} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainReceiver.sol";
+import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
 import {TapTokenSender} from "./TapTokenSender.sol";
 import {TapTokenCodec} from "./TapTokenCodec.sol";
 import {BaseTapToken} from "./BaseTapToken.sol";
@@ -45,8 +44,11 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
 
+    /**
+     * @dev Used as a module for `TapToken`. Only delegate calls with `TapToken` state are used.
+     */
     constructor(string memory _name, string memory _symbol, address _endpoint, address _delegate, address _extExec)
-        BaseTapToken(_name, _symbol, _endpoint, _delegate, _extExec)
+        BaseTapToken(_name, _symbol, _endpoint, _delegate, _extExec, IPearlmit(address(0)))
     {}
 
     /// @dev twTAP lock operation received.
@@ -114,7 +116,11 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
         /// @dev xChain owner needs to have approved dst srcChain `sendPacket()` msg.sender in a previous composedMsg. Or be the same address.
         _internalTransferWithAllowance(lockTwTapPositionMsg_.user, _srcChainSender, lockTwTapPositionMsg_.amount);
 
-        _approve(address(this), address(twTap), lockTwTapPositionMsg_.amount);
+        // _approve(address(this), address(twTap), lockTwTapPositionMsg_.amount);
+        _approve(address(this), address(pearlmit), lockTwTapPositionMsg_.amount);
+        pearlmit.approve(
+            address(this), 0, address(twTap), uint200(lockTwTapPositionMsg_.amount), uint48(block.timestamp + 1)
+        );
         twTap.participate(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.amount, lockTwTapPositionMsg_.duration);
 
         emit LockTwTapReceived(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.duration, lockTwTapPositionMsg_.amount);

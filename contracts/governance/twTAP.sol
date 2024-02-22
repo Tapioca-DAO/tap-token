@@ -11,11 +11,11 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/Pearlmit/PearlmitHandler.sol";
-import {ERC721NftLoader} from "contracts/erc721NftLoader/ERC721NftLoader.sol";
+import {ERC721NftLoader} from "tap-token/erc721NftLoader/ERC721NftLoader.sol";
 import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol";
-import {ERC721PermitStruct} from "contracts/tokens/ITapToken.sol";
-import {TapToken} from "contracts/tokens/TapToken.sol";
-import {TWAML} from "contracts/options/twAML.sol";
+import {ERC721PermitStruct} from "tap-token/tokens/ITapToken.sol";
+import {TapToken} from "tap-token/tokens/TapToken.sol";
+import {TWAML} from "tap-token/options/twAML.sol";
 
 /*
 
@@ -301,8 +301,11 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
         if (_timestampToWeek(block.timestamp) > currentWeek()) revert AdvanceEpochFirst();
 
         // Transfer TAP to this contract
-        // tapOFT.transferFrom(msg.sender, address(this), _amount);
-        pearlmit.transferFromERC20(msg.sender, address(this), address(tapOFT), _amount);
+        {
+            // tapOFT.transferFrom(msg.sender, address(this), _amount);
+            bool isErr = pearlmit.transferFromERC20(msg.sender, address(this), address(tapOFT), _amount);
+            if (isErr) revert NotAuthorized();
+        }
 
         // Copy to memory
         TWAMLPool memory pool = twAML;

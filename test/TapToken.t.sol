@@ -29,20 +29,20 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "contracts/tokens/ITapToken.sol";
+} from "tap-token/tokens/ITapToken.sol";
 import {
     TapTokenHelper,
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "contracts/tokens/extensions/TapTokenHelper.sol";
+} from "tap-token/tokens/extensions/TapTokenHelper.sol";
 import {TapiocaOmnichainExtExec} from "tapioca-periph/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
 import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
-import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
+import {TapTokenReceiver} from "tap-token/tokens/TapTokenReceiver.sol";
 import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
-import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
-import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
-import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
+import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
+import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
+import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
 
 // Tapioca Tests
 import {TapTestHelper} from "./TapTestHelper.t.sol";
@@ -50,6 +50,7 @@ import {TapTokenMock} from "./TapTokenMock.sol";
 import {ERC721Mock} from "./ERC721Mock.sol";
 
 import "forge-std/Test.sol";
+import "forge-std/console.sol";
 
 // TODO Split into multiple part?
 contract TapTokenTest is TapTestHelper, IERC721Receiver {
@@ -63,6 +64,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
     TapTokenMock aTapOFT;
     TapTokenMock bTapOFT;
 
+    TapiocaOmnichainExtExec extExec;
     TapTokenHelper tapTokenHelper;
 
     uint256 internal userAPKey = 0x1;
@@ -84,6 +86,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
     address __airdrop = address(0x35);
     uint256 __governanceEid = bEid;
     address __owner = address(this);
+    Pearlmit pearlmit;
     /**
      * DEPLOY setup addresses
      */
@@ -112,54 +115,48 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
-        TapiocaOmnichainExtExec extExec = new TapiocaOmnichainExtExec(ICluster(address(0)), __owner);
-        aTapOFT = TapTokenMock(
-            payable(
-                _deployOApp(
-                    type(TapTokenMock).creationCode,
-                    abi.encode(
-                        address(endpoints[aEid]),
-                        __contributors,
-                        __earlySupporters,
-                        __supporters,
-                        __lbp,
-                        __dao,
-                        __airdrop,
-                        __governanceEid,
-                        address(this),
-                        address(new TapTokenSender("", "", address(endpoints[aEid]), address(this), address(0))),
-                        address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this), address(0))),
-                        address(extExec)
-                    )
-                )
+        extExec = new TapiocaOmnichainExtExec(ICluster(address(0)), __owner);
+        pearlmit = new Pearlmit("Pearlmit", "1");
+
+        aTapOFT = new TapTokenMock(
+            ITapToken.TapTokenConstructorData(
+                address(endpoints[aEid]),
+                __contributors,
+                __earlySupporters,
+                __supporters,
+                __lbp,
+                __dao,
+                __airdrop,
+                __governanceEid,
+                address(this),
+                address(new TapTokenSender("", "", address(endpoints[aEid]), address(this), address(0))),
+                address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this), address(0))),
+                address(extExec),
+                IPearlmit(address(pearlmit))
             )
         );
         vm.label(address(aTapOFT), "aTapOFT");
-        bTapOFT = TapTokenMock(
-            payable(
-                _deployOApp(
-                    type(TapTokenMock).creationCode,
-                    abi.encode(
-                        address(endpoints[bEid]),
-                        __contributors,
-                        __earlySupporters,
-                        __supporters,
-                        __lbp,
-                        __dao,
-                        __airdrop,
-                        __governanceEid,
-                        address(this),
-                        address(new TapTokenSender("", "", address(endpoints[bEid]), address(this), address(0))),
-                        address(new TapTokenReceiver("", "", address(endpoints[bEid]), address(this), address(0))),
-                        address(extExec)
-                    )
-                )
+
+        bTapOFT = new TapTokenMock(
+            ITapToken.TapTokenConstructorData(
+                address(endpoints[bEid]),
+                __contributors,
+                __earlySupporters,
+                __supporters,
+                __lbp,
+                __dao,
+                __airdrop,
+                __governanceEid,
+                address(this),
+                address(new TapTokenSender("", "", address(endpoints[bEid]), address(this), address(0))),
+                address(new TapTokenReceiver("", "", address(endpoints[bEid]), address(this), address(0))),
+                address(extExec),
+                IPearlmit(address(pearlmit))
             )
         );
         vm.label(address(bTapOFT), "bTapOFT");
 
-        IPearlmit pearlmit = IPearlmit(address(new Pearlmit("Pearlmit", "1")));
-        twTap = new TwTAP(payable(address(bTapOFT)), pearlmit, address(this));
+        twTap = new TwTAP(payable(address(bTapOFT)), IPearlmit(address(pearlmit)), address(this));
         vm.label(address(twTap), "twTAP");
 
         bTapOFT.setTwTAP(address(twTap));
@@ -355,11 +352,13 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             deal(address(bTapOFT), address(userB), 1e18);
 
             vm.startPrank(userA);
-            bTapOFT.approve(address(twTap), 1e18);
+            bTapOFT.approve(address(pearlmit), 1e18);
+            pearlmit.approve(address(bTapOFT), 0, address(twTap), uint200(1e18), uint48(block.timestamp + 1));
             twTap.participate(address(userA), 1e18, 1 weeks);
 
             vm.startPrank(userB);
-            bTapOFT.approve(address(twTap), 1e18);
+            bTapOFT.approve(address(pearlmit), 1e18);
+            pearlmit.approve(address(bTapOFT), 0, address(twTap), uint200(1e18), uint48(block.timestamp + 1));
             twTap.participate(address(userB), 1e18, 1 weeks);
             vm.stopPrank();
         }
@@ -487,9 +486,6 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         verifyPackets(uint32(bEid), address(bTapOFT));
 
-        // Initiate approval
-        bTapOFT.approve(address(bTapOFT), amountToSendLD);
-
         vm.expectEmit(true, true, true, false);
         emit ITapToken.LockTwTapReceived(lockTwTapPositionMsg.user, lockTwTapPositionMsg.duration, amountToSendLD);
 
@@ -532,7 +528,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
          */
         {
             deal(address(bTapOFT), address(this), lockAmount_);
-            bTapOFT.approve(address(twTap), lockAmount_);
+            bTapOFT.approve(address(pearlmit), lockAmount_);
+            pearlmit.approve(address(bTapOFT), 0, address(twTap), uint200(lockAmount_), uint48(block.timestamp + 1));
             tokenId_ = twTap.participate(address(this), lockAmount_, lockDuration_);
 
             // Skip block timestamp to
@@ -574,9 +571,6 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         verifyPackets(uint32(bEid), address(bTapOFT));
-
-        // Initiate approval
-        bTapOFT.approve(address(bTapOFT), lockAmount_);
 
         vm.expectEmit(true, true, true, false);
         emit ITapToken.UnlockTwTapReceived(unlockTwTapPosition_.user, unlockTwTapPosition_.tokenId, lockAmount_);
@@ -753,8 +747,12 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             uint256 lockAmount_ = 1 ether;
             // Participate
             deal(address(bTapOFT), address(this), lockAmount_);
-            bTapOFT.approve(address(twTap), lockAmount_);
+
+            // bTapOFT.approve(address(twTap), lockAmount_);
+            pearlmit.approve(address(bTapOFT), 0, address(twTap), uint200(lockAmount_), uint48(block.timestamp + 1));
+            bTapOFT.approve(address(pearlmit), lockAmount_); // Approve pearlmit to transfer
             testData_.tokenId = twTap.participate(address(this), lockAmount_, 1 weeks);
+            bTapOFT.approve(address(pearlmit), 0); // reset approval
 
             // Distribute rewards
             deal(address(testData_.erc20Mock1), address(this), testData_.tokenAmount1);
@@ -1012,26 +1010,21 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         internal
         returns (TapTokenMock newToken_)
     {
-        TapiocaOmnichainExtExec extExec = new TapiocaOmnichainExtExec(ICluster(address(0)), __owner);
-        newToken_ = TapTokenMock(
-            payable(
-                _deployOApp(
-                    type(TapTokenMock).creationCode,
-                    abi.encode(
-                        _endpoint,
-                        __contributors,
-                        __earlySupporters,
-                        __supporters,
-                        __lbp,
-                        __dao,
-                        __airdrop,
-                        __governanceEid,
-                        address(this),
-                        address(new TapTokenSender("", "", _endpoint, address(this), address(0))),
-                        address(new TapTokenReceiver("", "", _endpoint, address(this), address(0))),
-                        address(extExec)
-                    )
-                )
+        newToken_ = new TapTokenMock(
+            ITapToken.TapTokenConstructorData(
+                _endpoint,
+                __contributors,
+                __earlySupporters,
+                __supporters,
+                __lbp,
+                __dao,
+                __airdrop,
+                __governanceEid,
+                address(this),
+                address(new TapTokenSender("", "", _endpoint, address(this), address(extExec))),
+                address(new TapTokenReceiver("", "", _endpoint, address(this), address(extExec))),
+                address(extExec),
+                IPearlmit(address(pearlmit))
             )
         );
         vm.label(address(newToken_), _tokenLabel);

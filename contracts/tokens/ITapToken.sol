@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-// LZ
-import {SendParam, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
-
 // Tapioca
 import {
     ITapiocaOmnichainEngine,
@@ -16,6 +13,7 @@ import {
     ERC721PermitApprovalMsg,
     RemoteTransferMsg
 } from "tapioca-periph/interfaces/periph/ITapiocaOmnichainEngine.sol";
+import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
 
 /*
 
@@ -61,6 +59,7 @@ interface ITapToken is ITapiocaOmnichainEngine {
         address tapTokenSenderModule;
         address tapTokenReceiverModule;
         address extExec;
+        IPearlmit pearlmit;
     }
 }
 

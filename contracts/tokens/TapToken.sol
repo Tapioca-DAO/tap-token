@@ -8,15 +8,16 @@ import {OAppReceiver} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OAppRec
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 
 // External
-import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import {ERC20Permit, ERC20} from "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 
 // Tapioca
+import {BaseTapiocaOmnichainEngine} from "tapioca-periph/tapiocaOmnichainEngine/BaseTapiocaOmnichainEngine.sol";
 import {TapiocaOmnichainSender} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainSender.sol";
-import {ERC20PermitStruct, ITapToken, LZSendParam} from "contracts/tokens/ITapToken.sol";
+import {ERC20PermitStruct, ITapToken, LZSendParam} from "tap-token/tokens/ITapToken.sol";
 import {ModuleManager} from "./module/ModuleManager.sol";
 import {TapTokenReceiver} from "./TapTokenReceiver.sol";
-import {TwTAP} from "contracts/governance/twTAP.sol";
+import {TwTAP} from "tap-token/governance/twTAP.sol";
 import {TapTokenSender} from "./TapTokenSender.sol";
 import {BaseTapToken} from "./BaseTapToken.sol";
 
@@ -132,7 +133,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      * @param _data.extExec Address of the external executor.
      */
     constructor(ITapToken.TapTokenConstructorData memory _data)
-        BaseTapToken("TapToken", "TAP", _data.endpoint, _data.owner, _data.extExec)
+        BaseTapToken("TapToken", "TAP", _data.endpoint, _data.owner, _data.extExec, _data.pearlmit)
         ERC20Permit("TAP")
     {
         _transferOwnership(_data.owner);
@@ -158,6 +159,17 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
 
         _setModule(uint8(ITapToken.Module.TapTokenSender), _data.tapTokenSenderModule);
         _setModule(uint8(ITapToken.Module.TapTokenReceiver), _data.tapTokenReceiverModule);
+    }
+
+    /**
+     * @inheritdoc BaseTapiocaOmnichainEngine
+     */
+    function transferFrom(address from, address to, uint256 value)
+        public
+        override(BaseTapiocaOmnichainEngine, ERC20)
+        returns (bool)
+    {
+        return BaseTapiocaOmnichainEngine.transferFrom(from, to, value);
     }
 
     /// =====================
