@@ -505,7 +505,11 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
 
         uint256 balBefore = _paymentToken.balanceOf(address(this));
         // IERC20(address(_paymentToken)).safeTransferFrom(msg.sender, address(this), discountedPaymentAmount);
-        pearlmit.transferFromERC20(msg.sender, address(this), address(_paymentToken), discountedPaymentAmount);
+        {
+            bool isErr =
+                pearlmit.transferFromERC20(msg.sender, address(this), address(_paymentToken), discountedPaymentAmount);
+            if (isErr) revert Failed();
+        }
         uint256 balAfter = _paymentToken.balanceOf(address(this));
         if (balAfter - balBefore != discountedPaymentAmount) revert Failed();
 

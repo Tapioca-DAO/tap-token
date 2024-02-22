@@ -248,7 +248,10 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, TWAML, Reent
 
         // Transfer tOLP position to this contract
         // tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
-        pearlmit.transferFromERC721(msg.sender, address(this), address(tOLP), _tOLPTokenID);
+        {
+            bool isErr = pearlmit.transferFromERC721(msg.sender, address(this), address(tOLP), _tOLPTokenID);
+            if (isErr) revert TransferFailed();
+        }
 
         uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
@@ -553,7 +556,11 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, TWAML, Reent
 
         uint256 balBefore = _paymentToken.balanceOf(address(this));
         // IERC20(address(_paymentToken)).safeTransferFrom(msg.sender, address(this), discountedPaymentAmount);
-        pearlmit.transferFromERC20(msg.sender, address(this), address(_paymentToken), discountedPaymentAmount);
+        {
+            bool isErr =
+                pearlmit.transferFromERC20(msg.sender, address(this), address(_paymentToken), discountedPaymentAmount);
+            if (isErr) revert TransferFailed();
+        }
         uint256 balAfter = _paymentToken.balanceOf(address(this));
         if (balAfter - balBefore != discountedPaymentAmount) {
             revert TransferFailed();
