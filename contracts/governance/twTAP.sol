@@ -301,8 +301,11 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
         if (_timestampToWeek(block.timestamp) > currentWeek()) revert AdvanceEpochFirst();
 
         // Transfer TAP to this contract
-        // tapOFT.transferFrom(msg.sender, address(this), _amount);
-        pearlmit.transferFromERC20(msg.sender, address(this), address(tapOFT), _amount);
+        {
+            // tapOFT.transferFrom(msg.sender, address(this), _amount);
+            bool isErr = pearlmit.transferFromERC20(msg.sender, address(this), address(tapOFT), _amount);
+            if (isErr) revert NotAuthorized();
+        }
 
         // Copy to memory
         TWAMLPool memory pool = twAML;
