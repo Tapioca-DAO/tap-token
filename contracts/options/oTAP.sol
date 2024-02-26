@@ -4,38 +4,37 @@ pragma solidity 0.8.22;
 // External
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Tapioca
-import {ERC721Permit} from "tapioca-sdk/dist/contracts/util/ERC4494.sol";
+import {ERC721NftLoader} from "tap-token/erc721NftLoader/ERC721NftLoader.sol";
+import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol"; // TODO audit
 
 /*
-__/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
- _\///////\\\/////____/\\\\\\\\\\\\\__\/\\\/////////\\\_\/////\\\///______/\\\///\\\________/\\\////////____/\\\\\\\\\\\\\__       
-  _______\/\\\________/\\\/////////\\\_\/\\\_______\/\\\_____\/\\\_______/\\\/__\///\\\____/\\\/____________/\\\/////////\\\_      
-   _______\/\\\_______\/\\\_______\/\\\_\/\\\\\\\\\\\\\/______\/\\\______/\\\______\//\\\__/\\\_____________\/\\\_______\/\\\_     
-    _______\/\\\_______\/\\\\\\\\\\\\\\\_\/\\\/////////________\/\\\_____\/\\\_______\/\\\_\/\\\_____________\/\\\\\\\\\\\\\\\_    
-     _______\/\\\_______\/\\\/////////\\\_\/\\\_________________\/\\\_____\//\\\______/\\\__\//\\\____________\/\\\/////////\\\_   
-      _______\/\\\_______\/\\\_______\/\\\_\/\\\_________________\/\\\______\///\\\__/\\\_____\///\\\__________\/\\\_______\/\\\_  
-       _______\/\\\_______\/\\\_______\/\\\_\/\\\______________/\\\\\\\\\\\____\///\\\\\/________\////\\\\\\\\\_\/\\\_______\/\\\_ 
-        _______\///________\///________\///__\///______________\///////////_______\/////_____________\/////////__\///________\///__
+
+████████╗ █████╗ ██████╗ ██╗ ██████╗  ██████╗ █████╗ 
+╚══██╔══╝██╔══██╗██╔══██╗██║██╔═══██╗██╔════╝██╔══██╗
+   ██║   ███████║██████╔╝██║██║   ██║██║     ███████║
+   ██║   ██╔══██║██╔═══╝ ██║██║   ██║██║     ██╔══██║
+   ██║   ██║  ██║██║     ██║╚██████╔╝╚██████╗██║  ██║
+   ╚═╝   ╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝
+   
 */
 
 // TODO naming
 struct TapOption {
+    uint128 entry; // time when the option position was created
     uint128 expiry; // timestamp, as once one wise man said, the sun will go dark before this overflows
     uint128 discount; // discount in basis points
     uint256 tOLP; // tOLP token ID
 }
 
-contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
+contract OTAP is ERC721, ERC721Permit, ERC721NftLoader, BaseBoringBatchable {
     uint256 public mintedOTAP; // total number of OTAP minted
     address public broker; // address of the onlyBroker
 
     mapping(uint256 => TapOption) public options; // tokenId => Option
-    mapping(uint256 => string) public tokenURIs; // tokenId => tokenURI
 
-    constructor() ERC721("Option TAP", "oTAP") ERC721Permit("Option TAP") {}
+    constructor(address _owner) ERC721NftLoader("Option TAP", "oTAP", _owner) ERC721Permit("Option TAP") {}
 
     // ==========
     //   EVENTS
@@ -51,8 +50,11 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     //    READ
     // =========
 
-    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
-        return tokenURIs[_tokenId];
+    /**
+     * @inheritdoc ERC721NftLoader
+     */
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721NftLoader) returns (string memory) {
+        return ERC721NftLoader.tokenURI(tokenId);
     }
 
     function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool) {
@@ -73,26 +75,22 @@ contract OTAP is ERC721, ERC721Permit, BaseBoringBatchable {
     //    WRITE
     // ==========
 
-    function setTokenURI(uint256 _tokenId, string calldata _tokenURI) external {
-        require(_isApprovedOrOwner(msg.sender, _tokenId), "OTAP: only approved or owner");
-        tokenURIs[_tokenId] = _tokenURI;
-    }
-
     /// @notice mints an OTAP
     /// @param _to address to mint to
     /// @param _expiry timestamp
     /// @param _discount TAP discount in basis points
     /// @param _tOLP tOLP token ID
     function mint(address _to, uint128 _expiry, uint128 _discount, uint256 _tOLP) external returns (uint256 tokenId) {
-        require(msg.sender == broker, "OTAP: only onlyBroker");
-        tokenId = ++mintedOTAP;
-        _safeMint(_to, tokenId);
+        if (msg.sender != broker) revert OnlyBroker();
 
+        tokenId = ++mintedOTAP;
         TapOption storage option = options[tokenId];
+        option.entry = uint128(block.timestamp);
         option.expiry = _expiry;
         option.discount = _discount;
         option.tOLP = _tOLP;
 
+        _safeMint(_to, tokenId);
         emit Mint(_to, tokenId, option);
     }
 

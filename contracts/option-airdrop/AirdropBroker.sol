@@ -2,35 +2,33 @@
 pragma solidity 0.8.22;
 
 // External
-import {BoringOwnable} from "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IOracle} from "tapioca-periph/contracts/interfaces/IOracle.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
-import {TapOFTV2} from "../tokens/TapOFTv2/TapOFTV2.sol";
+import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
+import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
+import {TWAML, FullMath} from "tap-token/options/twAML.sol"; // TODO Naming
+import {TapToken} from "tap-token/tokens/TapToken.sol";
 import {AOTAP, AirdropTapOption} from "./aoTAP.sol";
-import {TWAML, FullMath} from "../twAML.sol"; // TODO Naming
 
 /*
-__/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
- _\///////\\\/////____/\\\\\\\\\\\\\__\/\\\/////////\\\_\/////\\\///______/\\\///\\\________/\\\////////____/\\\\\\\\\\\\\__       
-  _______\/\\\________/\\\/////////\\\_\/\\\_______\/\\\_____\/\\\_______/\\\/__\///\\\____/\\\/____________/\\\/////////\\\_      
-   _______\/\\\_______\/\\\_______\/\\\_\/\\\\\\\\\\\\\/______\/\\\______/\\\______\//\\\__/\\\_____________\/\\\_______\/\\\_     
-    _______\/\\\_______\/\\\\\\\\\\\\\\\_\/\\\/////////________\/\\\_____\/\\\_______\/\\\_\/\\\_____________\/\\\\\\\\\\\\\\\_    
-     _______\/\\\_______\/\\\/////////\\\_\/\\\_________________\/\\\_____\//\\\______/\\\__\//\\\____________\/\\\/////////\\\_   
-      _______\/\\\_______\/\\\_______\/\\\_\/\\\_________________\/\\\______\///\\\__/\\\_____\///\\\__________\/\\\_______\/\\\_  
-       _______\/\\\_______\/\\\_______\/\\\_\/\\\______________/\\\\\\\\\\\____\///\\\\\/________\////\\\\\\\\\_\/\\\_______\/\\\_ 
-        _______\///________\///________\///__\///______________\///////////_______\/////_____________\/////////__\///________\///__
+████████╗ █████╗ ██████╗ ██╗ ██████╗  ██████╗ █████╗ 
+╚══██╔══╝██╔══██╗██╔══██╗██║██╔═══██╗██╔════╝██╔══██╗
+   ██║   ███████║██████╔╝██║██║   ██║██║     ███████║
+   ██║   ██╔══██║██╔═══╝ ██║██║   ██║██║     ██╔══██║
+   ██║   ██║  ██║██║     ██║╚██████╔╝╚██████╗██║  ██║
+   ╚═╝   ╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝
 */
 
 struct PaymentTokenOracle {
-    IOracle oracle;
+    ITapiocaOracle oracle;
     bytes oracleData;
 }
 
@@ -39,14 +37,16 @@ struct Phase2Info {
     uint8[4] discountsPerUsers;
 }
 
-/// @notice More details found here https://docs.tapioca.xyz/tapioca/launch/option-airdrop
-contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
+/**
+ * @notice More details found here https://docs.tapioca.xyz/tapioca/launch/option-airdrop
+ */
+contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     bytes public tapOracleData;
-    TapOFTV2 public immutable tapOFT;
+    ITapiocaOracle public tapOracle;
+    TapToken public tapToken;
     AOTAP public immutable aoTAP;
-    IOracle public tapOracle;
     IERC721 public immutable PCNFT;
 
     uint128 public epochTAPValuation; // TAP price for the current epoch
@@ -76,8 +76,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
 
     // [OG Pearls, Tapiocans, Oysters, Cassava]
     bytes32[4] public phase2MerkleRoots; // merkle root of phase 2 airdrop
-    uint8[4] public PHASE_2_AMOUNT_PER_USER = [200, 190, 200, 190];
-    uint8[4] public PHASE_2_DISCOUNT_PER_USER = [50, 40, 40, 33];
+    uint8[4] public PHASE_2_AMOUNT_PER_USER = [200, 200, 190, 190];
+    uint24[4] public PHASE_2_DISCOUNT_PER_USER = [500_000, 400_000, 330_000, 250_000];
 
     /// =====-------======
     ///      Phase 3
@@ -115,19 +115,17 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     error PaymentAmountNotValid();
     error TapAmountNotValid();
     error PaymentTokenValuationNotValid();
+    error TapNotSet();
+    error TapOracleNotSet();
 
-    constructor(
-        address _aoTAP,
-        address payable _tapOFT,
-        address _pcnft,
-        address _paymentTokenBeneficiary,
-        address _owner
-    ) {
+    constructor(address _aoTAP, address _pcnft, address _paymentTokenBeneficiary, IPearlmit _pearlmit, address _owner)
+        PearlmitHandler(_pearlmit)
+    {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
-        tapOFT = TapOFTV2(_tapOFT);
         aoTAP = AOTAP(_aoTAP);
         PCNFT = IERC721(_pcnft);
-        owner = _owner;
+
+        _transferOwnership(_owner);
     }
 
     // ==========
@@ -138,9 +136,15 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 aoTapTokenID, uint256 amount
     );
     event NewEpoch(uint256 indexed epoch, uint256 epochTAPValuation);
-    event SetPaymentToken(ERC20 paymentToken, IOracle oracle, bytes oracleData);
-    event SetTapOracle(IOracle oracle, bytes oracleData);
+    event SetPaymentToken(ERC20 paymentToken, ITapiocaOracle oracle, bytes oracleData);
+    event SetTapOracle(ITapiocaOracle oracle, bytes oracleData);
     event Phase2MerkleRootsUpdated();
+
+    modifier tapExists() {
+        if (address(tapOracle) == address(0)) revert TapOracleNotSet();
+        if (address(tapToken) == address(0)) revert TapNotSet();
+        _;
+    }
 
     // ==========
     //    READ
@@ -158,6 +162,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     function getOTCDealDetails(uint256 _aoTAPTokenID, ERC20 _paymentToken, uint256 _tapAmount)
         external
         view
+        tapExists
         returns (uint256 eligibleTapAmount, uint256 paymentTokenAmount, uint256 tapAmount)
     {
         // Load data
@@ -169,7 +174,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         PaymentTokenOracle memory paymentTokenOracle = paymentTokens[_paymentToken];
 
         // Check requirements
-        if (paymentTokenOracle.oracle == IOracle(address(0))) {
+        if (paymentTokenOracle.oracle == ITapiocaOracle(address(0))) {
             revert PaymentTokenNotValid();
         }
 
@@ -195,7 +200,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
 
     /// @notice Participate in the airdrop
     /// @param _data The data to be used for the participation, varies by phases
-    function participate(bytes calldata _data) external whenNotPaused returns (uint256 aoTAPTokenID) {
+    function participate(bytes calldata _data) external whenNotPaused tapExists returns (uint256 aoTAPTokenID) {
         uint256 cachedEpoch = epoch;
         if (cachedEpoch == 0) revert NotStarted();
         if (cachedEpoch > LAST_EPOCH) revert Ended();
@@ -218,7 +223,11 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @param _aoTAPTokenID tokenId of the aoTAP position, position must be active
     /// @param _paymentToken Address of the payment token to use, must be whitelisted
     /// @param _tapAmount Amount of TAP to exercise. If 0, the full amount is exercised
-    function exerciseOption(uint256 _aoTAPTokenID, ERC20 _paymentToken, uint256 _tapAmount) external whenNotPaused {
+    function exerciseOption(uint256 _aoTAPTokenID, ERC20 _paymentToken, uint256 _tapAmount)
+        external
+        whenNotPaused
+        tapExists
+    {
         // Load data
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(_aoTAPTokenID);
         if (aoTapOption.expiry < block.timestamp) revert OptionExpired();
@@ -228,7 +237,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         PaymentTokenOracle memory paymentTokenOracle = paymentTokens[_paymentToken];
 
         // Check requirements
-        if (paymentTokenOracle.oracle == IOracle(address(0))) {
+        if (paymentTokenOracle.oracle == ITapiocaOracle(address(0))) {
             revert PaymentTokenNotValid();
         }
         if (!aoTAP.isApprovedOrOwner(msg.sender, _aoTAPTokenID)) {
@@ -251,8 +260,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         emit ExerciseOption(cachedEpoch, msg.sender, _paymentToken, _aoTAPTokenID, chosenAmount);
     }
 
-    /// @notice Start a new epoch, extract TAP from the TapOFT contract,
-    function newEpoch() external {
+    /// @notice Start a new epoch, extract TAP from the tapToken contract,
+    function newEpoch() external tapExists {
         if (block.timestamp < lastEpochUpdate + EPOCH_DURATION) {
             revert TooSoon();
         }
@@ -282,10 +291,15 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     //   OWNER
     // =========
 
-    /// @notice Set the TapOFT Oracle address and data
-    /// @param _tapOracle The new TapOFT Oracle address
-    /// @param _tapOracleData The new TapOFT Oracle data
-    function setTapOracle(IOracle _tapOracle, bytes calldata _tapOracleData) external onlyOwner {
+    function setTapToken(address payable _tapToken) external onlyOwner {
+        if (address(tapToken) != address(0)) revert NotValid();
+        tapToken = TapToken(_tapToken);
+    }
+
+    /// @notice Set the tapToken Oracle address and data
+    /// @param _tapOracle The new tapToken Oracle address
+    /// @param _tapOracleData The new tapToken Oracle data
+    function setTapOracle(ITapiocaOracle _tapOracle, bytes calldata _tapOracleData) external onlyOwner {
         tapOracle = _tapOracle;
         tapOracleData = _tapOracleData;
 
@@ -293,10 +307,17 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     }
 
     function setPhase2MerkleRoots(bytes32[4] calldata _merkleRoots) external onlyOwner {
+        if (epoch >= 2) revert NotValid();
         phase2MerkleRoots = _merkleRoots;
         emit Phase2MerkleRootsUpdated();
     }
 
+    /**
+     * @notice Register users for a phase 1 or 4 with their eligible amount.
+     * @param _phase The phase to register the users for
+     * @param _users The users to register
+     * @param _amounts The eligible amount of TAP for each user
+     */
     function registerUsersForPhase(uint256 _phase, address[] calldata _users, uint256[] calldata _amounts)
         external
         onlyOwner
@@ -304,10 +325,13 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         if (_users.length != _amounts.length) revert NotValid();
 
         if (_phase == 1) {
+            if (epoch >= 1) revert NotValid();
             for (uint256 i; i < _users.length; i++) {
                 phase1Users[_users[i]] = _amounts[i];
             }
-        } else if (_phase == 4) {
+        }
+        /// @dev We want to be able to set phase 4 users in the future on subsequent epochs
+        else if (_phase == 4) {
             for (uint256 i; i < _users.length; i++) {
                 phase4Users[_users[i]] = _amounts[i];
             }
@@ -316,7 +340,10 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
 
     /// @notice Activate or deactivate a payment token
     /// @dev set the oracle to address(0) to deactivate, expect the same decimal precision as TAP oracle
-    function setPaymentToken(ERC20 _paymentToken, IOracle _oracle, bytes calldata _oracleData) external onlyOwner {
+    function setPaymentToken(ERC20 _paymentToken, ITapiocaOracle _oracle, bytes calldata _oracleData)
+        external
+        onlyOwner
+    {
         paymentTokens[_paymentToken].oracle = _oracle;
         paymentTokens[_paymentToken].oracleData = _oracleData;
 
@@ -348,8 +375,20 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @notice Recover the unclaimed TAP from the contract.
     /// Should occur after the end of the airdrop, which is 8 epochs, or 41 days long.
     function daoRecoverTAP() external onlyOwner {
-        require(epoch > LAST_EPOCH, "adb: too soon");
-        tapOFT.transfer(msg.sender, tapOFT.balanceOf(address(this)));
+        if (epoch <= LAST_EPOCH) revert TooSoon();
+
+        tapToken.transfer(msg.sender, tapToken.balanceOf(address(this)));
+    }
+
+    /**
+     * @notice Un/Pauses this contract.
+     */
+    function setPause(bool _pauseState) external onlyOwner {
+        if (_pauseState) {
+            _pause();
+        } else {
+            _unpause();
+        }
     }
 
     // ============
@@ -390,7 +429,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         // Mint aoTAP
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
         uint256 eligibleAmount = uint256(PHASE_2_AMOUNT_PER_USER[_role]) * 1e18;
-        uint128 discount = uint128(PHASE_2_DISCOUNT_PER_USER[_role]) * 1e4;
+        uint128 discount = uint128(PHASE_2_DISCOUNT_PER_USER[_role]);
         oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
     }
 
@@ -429,7 +468,7 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
     /// @notice Participate in phase 4 of the Airdrop. twTAP and Cassava guild's role are given TAP pro-rata.
     function _participatePhase4() internal returns (uint256 oTAPTokenID) {
         uint256 _eligibleAmount = phase4Users[msg.sender];
-        if (_eligibleAmount <= 0) revert NotEligible();
+        if (_eligibleAmount == 0) revert NotEligible();
 
         // Close eligibility
         phase4Users[msg.sender] = 0;
@@ -450,6 +489,8 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         uint256 tapAmount,
         uint256 discount
     ) internal {
+        if (tapAmount == 0) revert TapAmountNotValid();
+
         // Get TAP valuation
         uint256 otcAmountInUSD = tapAmount * epochTAPValuation;
 
@@ -463,12 +504,16 @@ contract AirdropBroker is Pausable, BoringOwnable, FullMath, ReentrancyGuard {
         if (discountedPaymentAmount == 0) revert PaymentAmountNotValid();
 
         uint256 balBefore = _paymentToken.balanceOf(address(this));
-        IERC20(address(_paymentToken)).safeTransferFrom(msg.sender, address(this), discountedPaymentAmount);
+        // IERC20(address(_paymentToken)).safeTransferFrom(msg.sender, address(this), discountedPaymentAmount);
+        {
+            bool isErr =
+                pearlmit.transferFromERC20(msg.sender, address(this), address(_paymentToken), discountedPaymentAmount);
+            if (isErr) revert Failed();
+        }
         uint256 balAfter = _paymentToken.balanceOf(address(this));
         if (balAfter - balBefore != discountedPaymentAmount) revert Failed();
 
-        if (tapAmount == 0) revert TapAmountNotValid();
-        tapOFT.transfer(msg.sender, tapAmount);
+        tapToken.transfer(msg.sender, tapAmount);
     }
 
     /// @notice Computes the discounted payment amount for a given OTC amount in USD

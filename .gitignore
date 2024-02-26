@@ -6,10 +6,7 @@ typechain
 package-lock.json
 docs
 
-#Hardhat files
-cache
-artifacts
+#Hardhat & forge files
+gen
 
-# Forge files
-out
-cache_forge
+.DS_Store

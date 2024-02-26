@@ -2,30 +2,31 @@
 pragma solidity 0.8.22;
 
 // External
-import {BoringOwnable} from "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IOracle} from "tapioca-periph/contracts/interfaces/IOracle.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
 import {TapiocaOptionLiquidityProvision, LockPosition, SingularityPool} from "./TapiocaOptionLiquidityProvision.sol";
-import {TapOFTV2} from "../tokens/TapOFTv2/TapOFTV2.sol";
+import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
+import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
+import {TapToken} from "tap-token/tokens/TapToken.sol";
 import {OTAP, TapOption} from "./oTAP.sol";
-import {TWAML} from "../twAML.sol";
+import {TWAML} from "./twAML.sol";
 
 /*
-__/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
- _\///////\\\/////____/\\\\\\\\\\\\\__\/\\\/////////\\\_\/////\\\///______/\\\///\\\________/\\\////////____/\\\\\\\\\\\\\__       
-  _______\/\\\________/\\\/////////\\\_\/\\\_______\/\\\_____\/\\\_______/\\\/__\///\\\____/\\\/____________/\\\/////////\\\_      
-   _______\/\\\_______\/\\\_______\/\\\_\/\\\\\\\\\\\\\/______\/\\\______/\\\______\//\\\__/\\\_____________\/\\\_______\/\\\_     
-    _______\/\\\_______\/\\\\\\\\\\\\\\\_\/\\\/////////________\/\\\_____\/\\\_______\/\\\_\/\\\_____________\/\\\\\\\\\\\\\\\_    
-     _______\/\\\_______\/\\\/////////\\\_\/\\\_________________\/\\\_____\//\\\______/\\\__\//\\\____________\/\\\/////////\\\_   
-      _______\/\\\_______\/\\\_______\/\\\_\/\\\_________________\/\\\______\///\\\__/\\\_____\///\\\__________\/\\\_______\/\\\_  
-       _______\/\\\_______\/\\\_______\/\\\_\/\\\______________/\\\\\\\\\\\____\///\\\\\/________\////\\\\\\\\\_\/\\\_______\/\\\_ 
-        _______\///________\///________\///__\///______________\///////////_______\/////_____________\/////////__\///________\///__
+
+████████╗ █████╗ ██████╗ ██╗ ██████╗  ██████╗ █████╗ 
+╚══██╔══╝██╔══██╗██╔══██╗██║██╔═══██╗██╔════╝██╔══██╗
+   ██║   ███████║██████╔╝██║██║   ██║██║     ███████║
+   ██║   ██╔══██║██╔═══╝ ██║██║   ██║██║     ██╔══██║
+   ██║   ██║  ██║██║     ██║╚██████╔╝╚██████╗██║  ██║
+   ╚═╝   ╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝
+   
 */
 
 struct Participation {
@@ -42,18 +43,18 @@ struct TWAMLPool {
 }
 
 struct PaymentTokenOracle {
-    IOracle oracle;
+    ITapiocaOracle oracle;
     bytes oracleData;
 }
 
-contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard {
+contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Receiver, TWAML, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     TapiocaOptionLiquidityProvision public immutable tOLP;
     bytes public tapOracleData;
-    TapOFTV2 public immutable tapOFT;
+    TapToken public immutable tapOFT;
     OTAP public immutable oTAP;
-    IOracle public tapOracle;
+    ITapiocaOracle public tapOracle;
 
     uint256 public epochTAPValuation; // TAP price for the current epoch
     uint256 public epoch; // Represents the number of weeks since the start of the contract
@@ -69,9 +70,12 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     /// ===== TWAML ======
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
 
-    uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, 10%
-    uint256 constant dMAX = 500_000; // 50 * 1e4; 5% - 50% discount
-    uint256 constant dMIN = 50_000; // 5 * 1e4;
+    /// @dev Virtual total amount to add to the total when computing twAML participation right. Default 10_000 * 1e18.
+    uint256 private VIRTUAL_TOTAL_AMOUNT = 10_000 ether;
+
+    uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
+    uint256 constant dMAX = 500_000; // 50 * 1e4; 0% - 50% discount
+    uint256 constant dMIN = 0;
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
 
     /// @notice starts time for emissions
@@ -100,6 +104,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     error TransferFailed();
     error SingularityInRescueMode();
     error PaymentTokenValuationNotValid();
+    error LockExpired();
+    error AdvanceEpochFirst();
 
     constructor(
         address _tOLP,
@@ -107,40 +113,36 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         address payable _tapOFT,
         address _paymentTokenBeneficiary,
         uint256 _epochDuration,
+        IPearlmit _pearlmit,
         address _owner
-    ) {
+    ) PearlmitHandler(_pearlmit) {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         tOLP = TapiocaOptionLiquidityProvision(_tOLP);
 
         if (_epochDuration != TapiocaOptionLiquidityProvision(_tOLP).EPOCH_DURATION()) revert NotEqualDurations();
 
-        tapOFT = TapOFTV2(_tapOFT);
+        tapOFT = TapToken(_tapOFT);
         oTAP = OTAP(_oTAP);
         EPOCH_DURATION = _epochDuration;
-        owner = _owner;
         emissionsStartTime = block.timestamp;
+
+        _transferOwnership(_owner);
     }
 
     // ==========
     //   EVENTS
     // ==========
     event Participate(
-        uint256 indexed epoch,
-        uint256 indexed sglAssetID,
-        uint256 indexed totalDeposited,
-        LockPosition lock,
-        uint256 discount
+        uint256 indexed epoch, uint256 indexed sglAssetID, uint256 totalDeposited, uint256 tokenId, uint256 discount
     );
-    event AMLDivergence(
-        uint256 indexed epoch, uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 totalParticipants
-    );
+    event AMLDivergence(uint256 indexed epoch, uint256 cumulative, uint256 averageMagnitude, uint256 totalParticipants);
     event ExerciseOption(
         uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 oTapTokenID, uint256 amount
     );
-    event NewEpoch(uint256 indexed epoch, uint256 indexed extractedTAP, uint256 indexed epochTAPValuation);
-    event ExitPosition(uint256 indexed epoch, uint256 indexed tokenId, uint256 indexed amount);
-    event SetPaymentToken(ERC20 indexed paymentToken, IOracle indexed oracle, bytes indexed oracleData);
-    event SetTapOracle(IOracle indexed oracle, bytes indexed oracleData);
+    event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValuation);
+    event ExitPosition(uint256 indexed epoch, uint256 tolpTokenId, uint256 amount);
+    event SetPaymentToken(ERC20 indexed paymentToken, ITapiocaOracle oracle, bytes oracleData);
+    event SetTapOracle(ITapiocaOracle indexed oracle, bytes indexed oracleData);
 
     // ==========
     //    READ
@@ -186,7 +188,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         PaymentTokenOracle memory paymentTokenOracle = paymentTokens[_paymentToken];
 
         // Check requirements
-        if (paymentTokenOracle.oracle == IOracle(address(0))) {
+        if (paymentTokenOracle.oracle == ITapiocaOracle(address(0))) {
             revert PaymentTokenNotSupported();
         }
         if (block.timestamp < tOLPLockPosition.lockTime + EPOCH_DURATION) {
@@ -226,6 +228,11 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     function participate(uint256 _tOLPTokenID) external whenNotPaused nonReentrant returns (uint256 oTAPTokenID) {
         // Compute option parameters
         LockPosition memory lock = tOLP.getLock(_tOLPTokenID);
+        uint128 lockExpiry = lock.lockTime + lock.lockDuration;
+
+        if (block.timestamp >= lockExpiry) revert LockExpired();
+        if (_timestampToWeek(block.timestamp) > epoch) revert AdvanceEpochFirst();
+
         bool isPositionActive = _isPositionActive(lock);
         if (!isPositionActive) revert OptionExpired();
 
@@ -241,7 +248,11 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         }
 
         // Transfer tOLP position to this contract
-        tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
+        // tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
+        {
+            bool isErr = pearlmit.transferFromERC721(msg.sender, address(this), address(tOLP), _tOLPTokenID);
+            if (isErr) revert TransferFailed();
+        }
 
         uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
@@ -251,7 +262,8 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
 
         bool divergenceForce;
         // Participate in twAMl voting
-        bool hasVotingPower = lock.ybShares >= computeMinWeight(pool.totalDeposited, MIN_WEIGHT_FACTOR);
+        bool hasVotingPower =
+            lock.ybShares >= computeMinWeight(pool.totalDeposited + VIRTUAL_TOTAL_AMOUNT, MIN_WEIGHT_FACTOR);
         if (hasVotingPower) {
             pool.totalParticipants++; // Save participation
             pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
@@ -280,14 +292,14 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         // Record amount for next epoch exercise
         netDepositedForEpoch[epoch + 1][lock.sglAssetID] += int256(uint256(lock.ybShares));
 
-        uint256 lastEpoch = _timestampToWeek(lock.lockTime + lock.lockDuration);
+        uint256 lastEpoch = _timestampToWeek(lockExpiry);
         // And remove it from last epoch
         // Math is safe, check `_emitToGauges()`
         netDepositedForEpoch[lastEpoch + 1][lock.sglAssetID] -= int256(uint256(lock.ybShares));
 
         // Mint oTAP position
-        oTAPTokenID = oTAP.mint(msg.sender, lock.lockTime + lock.lockDuration, uint128(target), _tOLPTokenID);
-        emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, lock, target);
+        oTAPTokenID = oTAP.mint(msg.sender, lockExpiry, uint128(target), _tOLPTokenID);
+        emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, oTAPTokenID, target);
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
@@ -362,20 +374,20 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         PaymentTokenOracle memory paymentTokenOracle = paymentTokens[_paymentToken];
 
         // Check requirements
-        if (paymentTokenOracle.oracle == IOracle(address(0))) {
+        if (paymentTokenOracle.oracle == ITapiocaOracle(address(0))) {
             revert PaymentTokenNotSupported();
         }
         if (!oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID)) {
             revert NotAuthorized();
         }
-        if (block.timestamp < tOLPLockPosition.lockTime + EPOCH_DURATION) {
+        if (block.timestamp < oTAPPosition.entry + EPOCH_DURATION) {
             revert OneEpochCooldown();
         } // Can only exercise after 1 epoch duration
 
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];
         uint256 netAmount = uint256(netDepositedForEpoch[cachedEpoch][tOLPLockPosition.sglAssetID]);
-        if (netAmount <= 0) revert NoLiquidity();
+        if (netAmount == 0) revert NoLiquidity();
         uint256 eligibleTapAmount = muldiv(tOLPLockPosition.ybShares, gaugeTotalForEpoch, netAmount);
         eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
         if (eligibleTapAmount < _tapAmount) revert TooHigh();
@@ -390,6 +402,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         emit ExerciseOption(cachedEpoch, msg.sender, _paymentToken, _oTAPTokenID, chosenAmount);
     }
 
+    // TODO Check at how many SGls this function breaks. Do we need to split calls into 2+ Txs?
     /// @notice Start a new epoch, extract TAP from the TapOFT contract,
     ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
@@ -420,8 +433,18 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     //   OWNER
     // =========
 
-    /// @notice Set the minimum weight factor
-    /// @param _minWeightFactor The new minimum weight factor
+    /**
+     * @notice Set the `VIRTUAL_TOTAL_AMOUNT` state variable.
+     * @param _virtualTotalAmount The new state variable value.
+     */
+    function setVirtualTotalAmount(uint256 _virtualTotalAmount) external onlyOwner {
+        VIRTUAL_TOTAL_AMOUNT = _virtualTotalAmount;
+    }
+
+    /**
+     * @notice Set the minimum weight factor.
+     * @param _minWeightFactor The new minimum weight factor.
+     */
     function setMinWeightFactor(uint256 _minWeightFactor) external onlyOwner {
         MIN_WEIGHT_FACTOR = _minWeightFactor;
     }
@@ -429,7 +452,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     /// @notice Set the TapOFT Oracle address and data
     /// @param _tapOracle The new TapOFT Oracle address
     /// @param _tapOracleData The new TapOFT Oracle data
-    function setTapOracle(IOracle _tapOracle, bytes calldata _tapOracleData) external onlyOwner {
+    function setTapOracle(ITapiocaOracle _tapOracle, bytes calldata _tapOracleData) external onlyOwner {
         tapOracle = _tapOracle;
         tapOracleData = _tapOracleData;
 
@@ -438,7 +461,10 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
 
     /// @notice Activate or deactivate a payment token
     /// @dev set the oracle to address(0) to deactivate, expect the same decimal precision as TAP oracle
-    function setPaymentToken(ERC20 _paymentToken, IOracle _oracle, bytes calldata _oracleData) external onlyOwner {
+    function setPaymentToken(ERC20 _paymentToken, ITapiocaOracle _oracle, bytes calldata _oracleData)
+        external
+        onlyOwner
+    {
         paymentTokens[_paymentToken].oracle = _oracle;
         paymentTokens[_paymentToken].oracleData = _oracleData;
 
@@ -468,10 +494,21 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         }
     }
 
+    /**
+     * @notice Un/Pauses this contract.
+     */
+    function setPause(bool _pauseState) external onlyOwner {
+        if (_pauseState) {
+            _pause();
+        } else {
+            _unpause();
+        }
+    }
+
     // ============
     //   INTERNAL
     // ============
-    /// @notice returns week for timestasmp
+    /// @notice returns week for timestamp
     function _timestampToWeek(uint256 timestamp) internal view returns (uint256) {
         return ((timestamp - emissionsStartTime) / EPOCH_DURATION);
     }
@@ -488,7 +525,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
     /// @param _lock The lock position
     /// @return isPositionActive True if the position is active
     function _isPositionActive(LockPosition memory _lock) internal view returns (bool isPositionActive) {
-        if (_lock.lockTime <= 0) revert PositionNotValid();
+        if (_lock.lockTime == 0) revert PositionNotValid();
         if (_isSGLInRescueMode(_lock)) revert SingularityInRescueMode();
 
         uint256 expiryWeek = _timestampToWeek(_lock.lockTime + _lock.lockDuration);
@@ -519,7 +556,12 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
             _getDiscountedPaymentAmount(otcAmountInUSD, paymentTokenValuation, discount, _paymentToken.decimals());
 
         uint256 balBefore = _paymentToken.balanceOf(address(this));
-        IERC20(address(_paymentToken)).safeTransferFrom(msg.sender, address(this), discountedPaymentAmount);
+        // IERC20(address(_paymentToken)).safeTransferFrom(msg.sender, address(this), discountedPaymentAmount);
+        {
+            bool isErr =
+                pearlmit.transferFromERC20(msg.sender, address(this), address(_paymentToken), discountedPaymentAmount);
+            if (isErr) revert TransferFailed();
+        }
         uint256 balAfter = _paymentToken.balanceOf(address(this));
         if (balAfter - balBefore != discountedPaymentAmount) {
             revert TransferFailed();
@@ -540,7 +582,7 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
         uint256 _discount,
         uint256 _paymentTokenDecimals
     ) internal pure returns (uint256 paymentAmount) {
-        if (_paymentTokenValuation <= 0) revert PaymentTokenValuationNotValid();
+        if (_paymentTokenValuation == 0) revert PaymentTokenValuationNotValid();
 
         uint256 discountedOTCAmountInUSD = _otcAmountInUSD - muldiv(_otcAmountInUSD, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
 
@@ -579,5 +621,12 @@ contract TapiocaOptionBroker is Pausable, BoringOwnable, TWAML, ReentrancyGuard 
                 curr[sglAssetID] += prev[sglAssetID];
             }
         }
+    }
+
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
+        external
+        returns (bytes4)
+    {
+        return this.onERC721Received.selector;
     }
 }

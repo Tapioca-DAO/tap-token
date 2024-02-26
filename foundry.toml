@@ -1,8 +1,9 @@
 [profile.default]
 src = 'contracts'
-out = 'out'
+out = 'gen/out'
 libs = ['node_modules', 'lib']
-cache_path  = 'cache_forge'
+cache_path  = 'gen/cache_forge'
+broadcast = 'gen/broadcast'
 
 solc_version='0.8.22'
 evm_version='paris'
@@ -10,5 +11,13 @@ optimizer = true
 optimizer_runs = 9999
 
 remappings = [
-    "@contracts/=contracts/",
+    "tap-token/=contracts/",
+	"solidity-bytes-utils/=node_modules/@layerzerolabs/solidity-bytes-utils/",
+	"tapioca-sdk/=gitmodule/tapioca-sdk/contracts/",
+	"tapioca-periph/=gitmodule/tapioca-periph/contracts/",
+	"permitc/=gitmodule/tapioca-periph/gitmodule/permitc/src/", # Needs to be init in the periph repo
 ]
+
+
+[etherscan]
+arbitrum-sepolia = { key = "${ARBITRUM_SEPOLIA_API_KEY}", url = "https://api-sepolia.arbiscan.io/api"}

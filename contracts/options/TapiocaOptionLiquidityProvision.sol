@@ -1,26 +1,30 @@
-// SPDX-License-Identifier: UNLICENSED
+    // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
 // External
-import {IYieldBox} from "tapioca-sdk/dist/contracts/YieldBox/contracts/interfaces/IYieldBox.sol";
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
-import {BoringOwnable} from "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {ERC721Permit} from "tapioca-sdk/dist/contracts/util/ERC4494.sol";
-import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
+// Tapioca
+import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
+import {IYieldBox} from "tap-token/interfaces/IYieldBox.sol";
 
 /*
-__/\\\\\\\\\\\\\\\_____/\\\\\\\\\_____/\\\\\\\\\\\\\____/\\\\\\\\\\\_______/\\\\\_____________/\\\\\\\\\_____/\\\\\\\\\____        
- _\///////\\\/////____/\\\\\\\\\\\\\__\/\\\/////////\\\_\/////\\\///______/\\\///\\\________/\\\////////____/\\\\\\\\\\\\\__       
-  _______\/\\\________/\\\/////////\\\_\/\\\_______\/\\\_____\/\\\_______/\\\/__\///\\\____/\\\/____________/\\\/////////\\\_      
-   _______\/\\\_______\/\\\_______\/\\\_\/\\\\\\\\\\\\\/______\/\\\______/\\\______\//\\\__/\\\_____________\/\\\_______\/\\\_     
-    _______\/\\\_______\/\\\\\\\\\\\\\\\_\/\\\/////////________\/\\\_____\/\\\_______\/\\\_\/\\\_____________\/\\\\\\\\\\\\\\\_    
-     _______\/\\\_______\/\\\/////////\\\_\/\\\_________________\/\\\_____\//\\\______/\\\__\//\\\____________\/\\\/////////\\\_   
-      _______\/\\\_______\/\\\_______\/\\\_\/\\\_________________\/\\\______\///\\\__/\\\_____\///\\\__________\/\\\_______\/\\\_  
-       _______\/\\\_______\/\\\_______\/\\\_\/\\\______________/\\\\\\\\\\\____\///\\\\\/________\////\\\\\\\\\_\/\\\_______\/\\\_ 
-        _______\///________\///________\///__\///______________\///////////_______\/////_____________\/////////__\///________\///__
+
+████████╗ █████╗ ██████╗ ██╗ ██████╗  ██████╗ █████╗ 
+╚══██╔══╝██╔══██╗██╔══██╗██║██╔═══██╗██╔════╝██╔══██╗
+   ██║   ███████║██████╔╝██║██║   ██║██║     ███████║
+   ██║   ██╔══██║██╔═══╝ ██║██║   ██║██║     ██╔══██║
+   ██║   ██║  ██║██║     ██║╚██████╔╝╚██████╗██║  ██║
+   ╚═╝   ╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝
+   
 */
 
 struct LockPosition {
@@ -38,11 +42,13 @@ struct SingularityPool {
 }
 
 contract TapiocaOptionLiquidityProvision is
+    Ownable,
+    PearlmitHandler,
     ERC721,
     ERC721Permit,
+    IERC1155Receiver,
     BaseBoringBatchable,
     Pausable,
-    BoringOwnable,
     ReentrancyGuard
 {
     uint256 public tokenCounter; // Counter for token IDs
@@ -55,12 +61,17 @@ contract TapiocaOptionLiquidityProvision is
     mapping(uint256 => IERC20) public sglAssetIDToAddress; // Singularity market YieldBox asset ID => Singularity market address
     uint256[] public singularities; // Array of active singularity asset IDs
 
+    uint256 public rescueCooldown = 2 days; // Cooldown before a singularity pool can be put in rescue mode
+    mapping(uint256 sglId => uint256 rescueTime) public sglRescueRequest; // Time when the pool was put in rescue mode
+
     uint256 public totalSingularityPoolWeights; // Total weight of all active singularity pools
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
+    uint256 public constant MAX_LOCK_DURATION = 100 * 365 days; // 100 years
 
     error NotRegistered();
     error InvalidSingularity();
     error DurationTooShort();
+    error DurationTooLong();
     error SharesNotValid();
     error SingularityInRescueMode();
     error SingularityNotActive();
@@ -72,23 +83,28 @@ contract TapiocaOptionLiquidityProvision is
     error AlreadyRegistered();
     error NotAuthorized();
     error NotInRescueMode();
+    error NotActive();
+    error RescueCooldownNotReached();
+    error TransferFailed();
 
-    constructor(address _yieldBox, uint256 _epochDuration, address _owner)
+    constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
         ERC721Permit("TapiocaOptionLiquidityProvision")
+        PearlmitHandler(_pearlmit)
     {
         yieldBox = IYieldBox(_yieldBox);
         EPOCH_DURATION = _epochDuration;
-        owner = _owner;
+        _transferOwnership(_owner);
     }
 
     // ==========
     //   EVENTS
     // ==========
-    event Mint(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition);
-    event Burn(address indexed to, uint128 indexed sglAssetID, LockPosition lockPosition);
+    event Mint(address indexed to, uint128 indexed sglAssetID, uint256 tokenId);
+    event Burn(address indexed to, uint128 indexed sglAssetID, uint256 tokenId);
     event UpdateTotalSingularityPoolWeights(uint256 totalSingularityPoolWeights);
     event SetSGLPoolWeight(address indexed sgl, uint256 poolWeight);
+    event RequestSglPoolRescue(uint256 sglAssetId, uint256 timestamp);
     event ActivateSGLPoolRescue(address sgl);
     event RegisterSingularity(address sgl, uint256 assetID);
     event UnregisterSingularity(address sgl, uint256 assetID);
@@ -152,6 +168,12 @@ contract TapiocaOptionLiquidityProvision is
         return _isApprovedOrOwner(_spender, _tokenId);
     }
 
+    /// @notice Returns super approve check or if the spender is approved for the tOLP NFT on Pearlmit
+    function _isApprovedOrOwner(address _spender, uint256 _tokenId) internal view override returns (bool) {
+        return super._isApprovedOrOwner(_spender, _tokenId)
+            || isERC721Approved(_ownerOf(_tokenId), _spender, address(this), _tokenId);
+    }
+
     // ==========
     //    WRITE
     // ==========
@@ -168,6 +190,8 @@ contract TapiocaOptionLiquidityProvision is
         returns (uint256 tokenId)
     {
         if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
+        if (_lockDuration > MAX_LOCK_DURATION) revert DurationTooLong();
+
         if (_ybShares == 0) revert SharesNotValid();
 
         SingularityPool memory sgl = activeSingularities[_singularity];
@@ -177,21 +201,28 @@ contract TapiocaOptionLiquidityProvision is
         if (sglAssetID == 0) revert SingularityNotActive();
 
         // Transfer the Singularity position to this contract
-        yieldBox.transfer(msg.sender, address(this), sglAssetID, _ybShares);
+        // yieldBox.transfer(msg.sender, address(this), sglAssetID, _ybShares);
+        {
+            bool isErr =
+                pearlmit.transferFromERC1155(msg.sender, address(this), address(yieldBox), sglAssetID, _ybShares);
+            if (isErr) {
+                revert TransferFailed();
+            }
+        }
         activeSingularities[_singularity].totalDeposited += _ybShares;
 
-        // Mint the tOLP NFT position
-        tokenId = ++tokenCounter;
-        _safeMint(_to, tokenId);
-
         // Create the lock position
+        tokenId = ++tokenCounter;
         LockPosition storage lockPosition = lockPositions[tokenId];
         lockPosition.lockTime = uint128(block.timestamp);
         lockPosition.sglAssetID = uint128(sglAssetID);
         lockPosition.lockDuration = _lockDuration;
         lockPosition.ybShares = _ybShares;
 
-        emit Mint(_to, uint128(sglAssetID), lockPosition);
+        // Mint the tOLP NFT position
+        _safeMint(_to, tokenId);
+
+        emit Mint(_to, uint128(sglAssetID), tokenId);
     }
 
     /// @notice Unlocks tOLP tokens
@@ -222,7 +253,7 @@ contract TapiocaOptionLiquidityProvision is
         yieldBox.transfer(address(this), _to, lockPosition.sglAssetID, lockPosition.ybShares);
         activeSingularities[_singularity].totalDeposited -= lockPosition.ybShares;
 
-        emit Burn(_to, lockPosition.sglAssetID, lockPosition);
+        emit Burn(_to, lockPosition.sglAssetID, _tokenId);
     }
 
     // =========
@@ -232,7 +263,7 @@ contract TapiocaOptionLiquidityProvision is
     /// @notice Sets the pool weight of a given singularity market
     /// @param singularity Singularity market address
     /// @param weight Weight of the pool
-    function setSGLPoolWEight(IERC20 singularity, uint256 weight) external onlyOwner updateTotalSGLPoolWeights {
+    function setSGLPoolWeight(IERC20 singularity, uint256 weight) external onlyOwner updateTotalSGLPoolWeights {
         if (activeSingularities[singularity].sglAssetID == 0) {
             revert NotRegistered();
         }
@@ -241,12 +272,32 @@ contract TapiocaOptionLiquidityProvision is
         emit SetSGLPoolWeight(address(singularity), weight);
     }
 
+    function setRescueCooldown(uint256 _rescueCooldown) external onlyOwner {
+        rescueCooldown = _rescueCooldown;
+    }
+
+    /**
+     * @notice Requests a singularity market to be put in rescue mode. Needs to be activated later on in `activateSGLPoolRescue()`
+     * @param _sglAssetID YieldBox asset ID of the singularity market
+     */
+    function requestSglPoolRescue(uint256 _sglAssetID) external onlyOwner {
+        if (_sglAssetID == 0) revert NotRegistered();
+        if (sglRescueRequest[_sglAssetID] != 0) revert AlreadyActive();
+
+        sglRescueRequest[_sglAssetID] = block.timestamp;
+
+        emit RequestSglPoolRescue(_sglAssetID, block.timestamp);
+    }
+
     /// @notice Sets the rescue status of a given singularity market
     /// @param singularity Singularity market address
     function activateSGLPoolRescue(IERC20 singularity) external onlyOwner updateTotalSGLPoolWeights {
         SingularityPool memory sgl = activeSingularities[singularity];
+
         if (sgl.sglAssetID == 0) revert NotRegistered();
         if (sgl.rescue) revert AlreadyActive();
+        if (sglRescueRequest[sgl.sglAssetID] == 0) revert NotActive();
+        if (block.timestamp < sglRescueRequest[sgl.sglAssetID] + rescueCooldown) revert RescueCooldownNotReached();
 
         activeSingularities[singularity].rescue = true;
 
@@ -309,6 +360,17 @@ contract TapiocaOptionLiquidityProvision is
         emit UnregisterSingularity(address(singularity), sglAssetID);
     }
 
+    /**
+     * @notice Un/Pauses this contract.
+     */
+    function setPause(bool _pauseState) external onlyOwner {
+        if (_pauseState) {
+            _pause();
+        } else {
+            _unpause();
+        }
+    }
+
     // =========
     //  INTERNAL
     // =========
@@ -326,5 +388,27 @@ contract TapiocaOptionLiquidityProvision is
         }
 
         return total;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, IERC165) returns (bool) {
+        return interfaceId == type(IERC1155Receiver).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    function onERC1155Received(address operator, address from, uint256 id, uint256 value, bytes calldata data)
+        external
+        returns (bytes4)
+    {
+        // bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))
+        return 0xf23a6e61;
+    }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] calldata ids,
+        uint256[] calldata values,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return bytes4(0);
     }
 }
