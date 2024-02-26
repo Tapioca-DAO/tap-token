@@ -3,7 +3,12 @@
 pragma solidity 0.8.22;
 
 // LZ
-import {SendParam, MessagingFee, MessagingReceipt, OFTReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import {
+    SendParam,
+    MessagingFee,
+    MessagingReceipt,
+    OFTReceipt
+} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
@@ -18,8 +23,24 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //Tapioca
-import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC721PermitStruct, ERC20PermitApprovalMsg, ERC721PermitApprovalMsg, ClaimTwTapRewardsMsg, RemoteTransferMsg} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
-import {TapOFTv2Helper, PrepareLzCallData, PrepareLzCallReturn, ComposeMsgData} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
+import {
+    ITapOFTv2,
+    LockTwTapPositionMsg,
+    UnlockTwTapPositionMsg,
+    LZSendParam,
+    ERC20PermitStruct,
+    ERC721PermitStruct,
+    ERC20PermitApprovalMsg,
+    ERC721PermitApprovalMsg,
+    ClaimTwTapRewardsMsg,
+    RemoteTransferMsg
+} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
+import {
+    TapOFTv2Helper,
+    PrepareLzCallData,
+    PrepareLzCallReturn,
+    ComposeMsgData
+} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
 import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTv2/TapOFTMsgCoder.sol";
 import {TwTAP, Participation} from "@contracts/governance/twTAP.sol";
 import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
@@ -106,18 +127,8 @@ contract twTAPTest is TapTestHelper, Errors {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(
-                            new TapOFTSender(
-                                address(endpoints[aEid]),
-                                address(this)
-                            )
-                        ),
-                        address(
-                            new TapOFTReceiver(
-                                address(endpoints[aEid]),
-                                address(this)
-                            )
-                        )
+                        address(new TapOFTSender(address(endpoints[aEid]), address(this))),
+                        address(new TapOFTReceiver(address(endpoints[aEid]), address(this)))
                     )
                 )
             )
@@ -131,11 +142,7 @@ contract twTAPTest is TapTestHelper, Errors {
         aotap = new AOTAP(address(this)); //deploy AOTAP and set address to owner
 
         airdropBroker = new AirdropBroker(
-            address(aotap),
-            payable(address(aTapOFT)),
-            address(erc721Mock),
-            tokenBeneficiary,
-            address(owner)
+            address(aotap), payable(address(aTapOFT)), address(erc721Mock), tokenBeneficiary, address(owner)
         );
 
         vm.startPrank(owner);
@@ -276,10 +283,10 @@ contract twTAPTest is TapTestHelper, Errors {
     function test_set_max_tokens_length_not_owner() public {
         //ok
         vm.startPrank(__earlySupporters);
-        uint maxRewardTokensBefore = twTAP.maxRewardTokens();
+        uint256 maxRewardTokensBefore = twTAP.maxRewardTokens();
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         twTAP.setMaxRewardTokensLength(30);
-        uint maxRewardTokensAfter = twTAP.maxRewardTokens();
+        uint256 maxRewardTokensAfter = twTAP.maxRewardTokens();
         assertEq(maxRewardTokensBefore, maxRewardTokensAfter);
         vm.stopPrank();
     }
@@ -287,7 +294,7 @@ contract twTAPTest is TapTestHelper, Errors {
     function test_set_max_tokens_length() public {
         //ok
         vm.startPrank(owner);
-        uint maxRewardTokens = twTAP.maxRewardTokens();
+        uint256 maxRewardTokens = twTAP.maxRewardTokens();
         IERC20[] memory tokens = twTAP.getRewardTokens();
         uint256 length = tokens.length;
         // vm.expectEmit(address(twTAP));
@@ -367,9 +374,7 @@ contract twTAPTest is TapTestHelper, Errors {
 
         IERC20(mockToken).approve(address(twTAP), type(uint256).max);
 
-        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(
-            address(owner)
-        );
+        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(address(owner));
         // vm.expectRevert(bytes("0x12"));ß
         vm.expectRevert(AdvanceWeekFirst.selector);
         twTAP.distributeReward(1, 1);
@@ -380,7 +385,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     function test_distribute_rewards_no_amount() public {
-  //ok
+        //ok
         vm.startPrank(owner);
 
         //add rewards tokens
@@ -423,9 +428,7 @@ contract twTAPTest is TapTestHelper, Errors {
         //distribute rewards
         IERC20(mockToken).approve(address(twTAP), type(uint256).max);
 
-        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(
-            address(owner)
-        );
+        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(address(owner));
         vm.expectRevert(NotValid.selector);
         twTAP.distributeReward(1, 0);
         uint256 balanceOwnerAfter = IERC20(mockToken).balanceOf(address(owner));
@@ -483,9 +486,7 @@ contract twTAPTest is TapTestHelper, Errors {
         //NOTE so cool thing is that netActiveVotes is incremented in the new week when you participate therefore if you participate and try and claim before a week has passed, you will get a panic revert
         //weekTotals[w0 + 1].netActiveVotes += int256(votes);
 
-        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(
-            address(owner)
-        );
+        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(address(owner));
         twTAP.distributeReward(1, 1);
         uint256 balanceOwnerAfter = IERC20(mockToken).balanceOf(address(owner));
         assertEq(balanceOwnerAfter, balanceOwnerBefore - 1);

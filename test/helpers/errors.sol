@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-
-
 contract Errors {
-
     error PaymentTokenNotValid();
     error OptionExpired();
     error TooHigh();
@@ -53,6 +50,6 @@ contract Errors {
     error BalanceTooLow();
     error VestingDurationNotValid();
     error Overflow();
-      error StillLocked();
+    error StillLocked();
     error TooLate();
 }

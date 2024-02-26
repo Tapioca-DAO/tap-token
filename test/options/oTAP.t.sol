@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.22;
 
-
 // External
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -34,7 +33,6 @@ import "forge-std/console.sol";
 contract oTapTest is TapTestHelper, Errors {
     using stdStorage for StdStorage;
 
-
     OTAP public otap; //instance of AOTAP
 
     uint256 internal userAPKey = 0x1;
@@ -57,10 +55,8 @@ contract oTapTest is TapTestHelper, Errors {
         assertEq(_broker, address(0));
     }
 
-
- function test_set_uri_not_approved() public {
+    function test_set_uri_not_approved() public {
         vm.startPrank(owner);
-
 
         otap.brokerClaim();
         uint256 tokenId = otap.mint(address(owner), 1, 1, 1);
@@ -71,30 +67,29 @@ contract oTapTest is TapTestHelper, Errors {
         assertEq(balanceBeneficiary, 1);
         assertEq(otap.balanceOf(address(owner)), 0);
 
-
         vm.expectRevert(bytes("OTAP: only approved or owner"));
-        otap.setTokenURI(1,"https://tapioca.games");
+        otap.setTokenURI(1, "https://tapioca.games");
         string memory tokenURI = otap.tokenURI(1);
         assertEq(tokenURI, "");
         vm.stopPrank();
     }
 
-
- function test_set_uri_not_invalid_id() public {
+    function test_set_uri_not_invalid_id() public {
         vm.startPrank(owner);
         vm.expectRevert(bytes("ERC721: invalid token ID"));
-        otap.setTokenURI(1,"https://tapioca.games");
+        otap.setTokenURI(1, "https://tapioca.games");
         string memory tokenURI = otap.tokenURI(1);
         assertEq(tokenURI, "");
         vm.stopPrank();
     }
+
     function test_set_uri() public {
         vm.startPrank(owner);
         otap.brokerClaim();
         uint256 tokenId = otap.mint(address(owner), 1, 1, 1);
         uint256 balance = otap.balanceOf(address(owner));
         assertEq(balance, 1);
-        otap.setTokenURI(1,"https://tapioca.games");
+        otap.setTokenURI(1, "https://tapioca.games");
         string memory tokenURI = otap.tokenURI(1);
         assertEq(tokenURI, "https://tapioca.games");
         vm.stopPrank();
@@ -122,7 +117,7 @@ contract oTapTest is TapTestHelper, Errors {
         vm.expectRevert(bytes("OTAP: only onlyBroker"));
         otap.mint(address(owner), 1, 1, 1);
         uint256 balance = otap.balanceOf(address(owner));
-         assertEq(balance, 0);
+        assertEq(balance, 0);
     }
 
     function test_mint_otap() public {
@@ -134,9 +129,8 @@ contract oTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-
-    function test_exists()public{
-         vm.startPrank(owner);
+    function test_exists() public {
+        vm.startPrank(owner);
         otap.brokerClaim();
         uint256 tokenId = otap.mint(address(owner), 1, 1, 1);
         uint256 balance = otap.balanceOf(address(owner));
@@ -149,7 +143,7 @@ contract oTapTest is TapTestHelper, Errors {
     function test_mint_several_otap() public {
         vm.startPrank(owner);
         otap.brokerClaim();
-        uint i;
+        uint256 i;
         for (i; i < 10; i++) {
             uint256 tokenId = otap.mint(address(owner), 1, 1, 1);
             uint256 balance = otap.balanceOf(address(owner));
@@ -167,7 +161,7 @@ contract oTapTest is TapTestHelper, Errors {
         otap.safeTransferFrom(owner, tokenBeneficiary, 1);
         address new_owner = otap.ownerOf(1);
         assertEq(tokenBeneficiary, new_owner);
-        uint bal = otap.balanceOf(tokenBeneficiary);
+        uint256 bal = otap.balanceOf(tokenBeneficiary);
         assertEq(bal, 1);
         vm.stopPrank();
     }
@@ -177,7 +171,7 @@ contract oTapTest is TapTestHelper, Errors {
         otap.brokerClaim();
         otap.mint(owner, 1, 1, 1);
         otap.burn(1);
-        uint bal = otap.balanceOf(owner);
+        uint256 bal = otap.balanceOf(owner);
         assertEq(bal, (0));
         vm.stopPrank();
     }
@@ -225,7 +219,7 @@ contract oTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-     // Testing of events
+    // Testing of events
 
     function testTransferEvent() public {
         vm.startPrank(owner);
@@ -252,11 +246,7 @@ contract oTapTest is TapTestHelper, Errors {
         otap.brokerClaim();
         otap.mint(owner, 1, 1, 1);
         vm.expectEmit(address(otap));
-        emit IERC721.ApprovalForAll(
-            address(owner),
-            address(tokenBeneficiary),
-            true
-        );
+        emit IERC721.ApprovalForAll(address(owner), address(tokenBeneficiary), true);
         otap.setApprovalForAll(tokenBeneficiary, true);
         vm.stopPrank();
     }

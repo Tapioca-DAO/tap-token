@@ -3,7 +3,12 @@
 pragma solidity 0.8.22;
 
 // LZ
-import {SendParam, MessagingFee, MessagingReceipt, OFTReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import {
+    SendParam,
+    MessagingFee,
+    MessagingReceipt,
+    OFTReceipt
+} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
@@ -18,8 +23,24 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //Tapioca
-import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC721PermitStruct, ERC20PermitApprovalMsg, ERC721PermitApprovalMsg, ClaimTwTapRewardsMsg, RemoteTransferMsg} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
-import {TapOFTv2Helper, PrepareLzCallData, PrepareLzCallReturn, ComposeMsgData} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
+import {
+    ITapOFTv2,
+    LockTwTapPositionMsg,
+    UnlockTwTapPositionMsg,
+    LZSendParam,
+    ERC20PermitStruct,
+    ERC721PermitStruct,
+    ERC20PermitApprovalMsg,
+    ERC721PermitApprovalMsg,
+    ClaimTwTapRewardsMsg,
+    RemoteTransferMsg
+} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
+import {
+    TapOFTv2Helper,
+    PrepareLzCallData,
+    PrepareLzCallReturn,
+    ComposeMsgData
+} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
 import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTv2/TapOFTMsgCoder.sol";
 import {TwTAP, Participation} from "@contracts/governance/twTAP.sol";
 import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
@@ -45,7 +66,7 @@ import {IYieldBox} from "tapioca-sdk/dist/contracts/YieldBox/contracts/interface
 
 import {IStrategy} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/interfaces/IStrategy.sol";
 
-import {TokenType}  from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/enums/YieldBoxTokenType.sol";
+import {TokenType} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/enums/YieldBoxTokenType.sol";
 
 // Import contract to test
 import {AirdropBroker} from "../../contracts/option-airdrop/AirdropBroker.sol";
@@ -113,9 +134,6 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         bool rescue; // If true, the pool will be used to rescue funds in case of emergency
     }
 
-   
-
-
     function setUp() public override {
         vm.deal(owner, 1000 ether); //give owner some ether
         vm.deal(tokenBeneficiary, 1000 ether); //give tokenBeneficiary some ether
@@ -138,18 +156,8 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(
-                            new TapOFTSender(
-                                address(endpoints[aEid]),
-                                address(this)
-                            )
-                        ),
-                        address(
-                            new TapOFTReceiver(
-                                address(endpoints[aEid]),
-                                address(this)
-                            )
-                        )
+                        address(new TapOFTSender(address(endpoints[aEid]), address(this))),
+                        address(new TapOFTReceiver(address(endpoints[aEid]), address(this)))
                     )
                 )
             )
@@ -163,18 +171,11 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
 
         yieldBoxURIBuilder = new YieldBoxURIBuilder();
         wrappedNativeMock = new WrappedNativeMock();
-        yieldBox = new YieldBox(
-            IWrappedNative(wrappedNativeMock),
-            yieldBoxURIBuilder
-        );
+        yieldBox = new YieldBox(IWrappedNative(wrappedNativeMock), yieldBoxURIBuilder);
         otap = new OTAP();
         aotap = new AOTAP(address(this)); //deploy AOTAP and set address to owner
 
-        tapiocaOptionLiquidityProvision = new TapiocaOptionLiquidityProvision(
-            address(yieldBox),
-            7 days,
-            address(owner)
-        );
+        tapiocaOptionLiquidityProvision = new TapiocaOptionLiquidityProvision(address(yieldBox), 7 days, address(owner));
         tapiocaOptionBroker = new TapiocaOptionBroker(
             address(tapiocaOptionLiquidityProvision),
             payable(address(otap)),
@@ -185,11 +186,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         );
 
         airdropBroker = new AirdropBroker(
-            address(aotap),
-            payable(address(aTapOFT)),
-            address(erc721Mock),
-            tokenBeneficiary,
-            address(owner)
+            address(aotap), payable(address(aTapOFT)), address(erc721Mock), tokenBeneficiary, address(owner)
         );
 
         vm.startPrank(owner);
@@ -221,21 +218,15 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         assertEq(_duration, 7 days);
         address _owner = tapiocaOptionLiquidityProvision.owner();
         assertEq(_owner, address(owner));
-
     }
-
-   
-
 
     function test_new_epoch_with_singularities() public {
         vm.startPrank(owner);
         vm.warp(block.timestamp + 7 days + 1 seconds);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 0);
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularitesAfter.length, 1);
         assertEq(singularitesAfter[0], 1);
         vm.stopPrank();
@@ -245,8 +236,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         vm.startPrank(tokenBeneficiary);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 0);
         vm.stopPrank();
     }
@@ -255,8 +245,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         vm.expectRevert(AssetIdNotValid.selector);
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 0, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 0);
         vm.stopPrank();
     }
@@ -264,13 +253,11 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
     function test_register_singularity_duplicated() public {
         vm.startPrank(owner);
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 1);
         vm.expectRevert(DuplicateAssetId.selector);
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularitesAfter.length, 1);
         assertEq(singularitesAfter[0], 1);
         vm.stopPrank();
@@ -279,13 +266,11 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
     function test_register_singularity_different_id() public {
         vm.startPrank(owner);
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 1);
         vm.expectRevert(AlreadyRegistered.selector);
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 2, 1);
-        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularitesAfter.length, 1);
         assertEq(singularitesAfter[0], 1);
         vm.stopPrank();
@@ -294,8 +279,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
     function test_register_singularity() public {
         vm.startPrank(owner);
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 1);
         assertEq(singularites[0], 1);
         vm.stopPrank();
@@ -305,8 +289,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         vm.startPrank(tokenBeneficiary);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 0);
         vm.stopPrank();
     }
@@ -315,8 +298,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         vm.expectRevert(NotRegistered.selector);
         tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 0);
         vm.stopPrank();
     }
@@ -325,15 +307,13 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         //register
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 1);
         assertEq(singularites[0], 1);
         //unregister
         vm.expectRevert(NotInRescueMode.selector);
         tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
-        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularitesAfter.length, 1);
         assertEq(singularitesAfter[0], 1);
         vm.stopPrank();
@@ -343,16 +323,14 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         //register
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 1);
         assertEq(singularites[0], 1);
         //activate
         tapiocaOptionLiquidityProvision.activateSGLPoolRescue(singularity);
         //unregister
         tapiocaOptionLiquidityProvision.unregisterSingularity(singularity);
-        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularitesAfter.length, 0);
         vm.stopPrank();
     }
@@ -366,8 +344,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
 
     function test_activate_sgl_pool_rescue_not_registered() public {
         vm.startPrank(owner);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 0);
         //activate
         vm.expectRevert(NotRegistered.selector);
@@ -379,8 +356,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         //register
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 1);
         assertEq(singularites[0], 1);
         //activate
@@ -392,8 +368,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         //register
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 1);
         assertEq(singularites[0], 1);
         //activate
@@ -423,12 +398,11 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         vm.startPrank(owner);
 
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 1);
         assertEq(singularites[0], 1);
-vm.expectEmit(address(tapiocaOptionLiquidityProvision));
-emit TapiocaOptionLiquidityProvision.SetSGLPoolWeight(address(singularity),100);
+        vm.expectEmit(address(tapiocaOptionLiquidityProvision));
+        emit TapiocaOptionLiquidityProvision.SetSGLPoolWeight(address(singularity), 100);
         tapiocaOptionLiquidityProvision.setSGLPoolWEight(singularity, 100);
         vm.stopPrank();
     }
@@ -436,24 +410,14 @@ emit TapiocaOptionLiquidityProvision.SetSGLPoolWeight(address(singularity),100);
     function test_lock_short_duration() public {
         vm.startPrank(owner);
         vm.expectRevert(DurationTooShort.selector);
-        tapiocaOptionLiquidityProvision.lock(
-            address(owner),
-            singularity,
-            3 days,
-            1
-        );
+        tapiocaOptionLiquidityProvision.lock(address(owner), singularity, 3 days, 1);
         vm.stopPrank();
     }
 
     function test_lock_not_valid_shares() public {
         vm.startPrank(owner);
         vm.expectRevert(SharesNotValid.selector);
-        tapiocaOptionLiquidityProvision.lock(
-            address(owner),
-            singularity,
-            8 days,
-            0
-        );
+        tapiocaOptionLiquidityProvision.lock(address(owner), singularity, 8 days, 0);
         vm.stopPrank();
     }
 
@@ -461,48 +425,31 @@ emit TapiocaOptionLiquidityProvision.SetSGLPoolWeight(address(singularity),100);
         vm.startPrank(owner);
         //register
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 1);
         assertEq(singularites[0], 1);
         //activate
         tapiocaOptionLiquidityProvision.activateSGLPoolRescue(singularity);
         vm.expectRevert(SingularityInRescueMode.selector);
-        tapiocaOptionLiquidityProvision.lock(
-            address(owner),
-            singularity,
-            8 days,
-            1
-        );
+        tapiocaOptionLiquidityProvision.lock(address(owner), singularity, 8 days, 1);
         vm.stopPrank();
     }
 
     function test_lock_not_active() public {
         vm.startPrank(owner);
         //register
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 0);
 
         vm.expectRevert(SingularityNotActive.selector);
-        tapiocaOptionLiquidityProvision.lock(
-            address(owner),
-            singularity,
-            8 days,
-            1
-        );
+        tapiocaOptionLiquidityProvision.lock(address(owner), singularity, 8 days, 1);
         vm.stopPrank();
     }
-    
-     function test_unlock_expired()public{
+
+    function test_unlock_expired() public {
         vm.startPrank(owner);
         vm.expectRevert(PositionExpired.selector);
-        tapiocaOptionLiquidityProvision.unlock(
-            1,
-            singularity,
-            address(owner)
-        );
+        tapiocaOptionLiquidityProvision.unlock(1, singularity, address(owner));
         vm.stopPrank();
-
     }
 }

@@ -188,9 +188,9 @@ contract VestingTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-      function test_init_twice() public {
+    function test_init_twice() public {
         vm.startPrank(owner);
-           uint256 amount1 = mockToken.balanceOf(address(vesting));
+        uint256 amount1 = mockToken.balanceOf(address(vesting));
         assertEq(amount1, 9_999_899);
         assertEq(vesting.start(), 0);
         assertEq(address(vesting.token()), address(0));

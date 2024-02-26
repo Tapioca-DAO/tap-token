@@ -3,7 +3,12 @@
 pragma solidity 0.8.22;
 
 // LZ
-import {SendParam, MessagingFee, MessagingReceipt, OFTReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import {
+    SendParam,
+    MessagingFee,
+    MessagingReceipt,
+    OFTReceipt
+} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
@@ -18,8 +23,24 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //Tapioca
-import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC721PermitStruct, ERC20PermitApprovalMsg, ERC721PermitApprovalMsg, ClaimTwTapRewardsMsg, RemoteTransferMsg} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
-import {TapOFTv2Helper, PrepareLzCallData, PrepareLzCallReturn, ComposeMsgData} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
+import {
+    ITapOFTv2,
+    LockTwTapPositionMsg,
+    UnlockTwTapPositionMsg,
+    LZSendParam,
+    ERC20PermitStruct,
+    ERC721PermitStruct,
+    ERC20PermitApprovalMsg,
+    ERC721PermitApprovalMsg,
+    ClaimTwTapRewardsMsg,
+    RemoteTransferMsg
+} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
+import {
+    TapOFTv2Helper,
+    PrepareLzCallData,
+    PrepareLzCallReturn,
+    ComposeMsgData
+} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
 import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTv2/TapOFTMsgCoder.sol";
 import {TwTAP, Participation} from "@contracts/governance/twTAP.sol";
 import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
@@ -45,7 +66,7 @@ import {IYieldBox} from "tapioca-sdk/dist/contracts/YieldBox/contracts/interface
 
 import {IStrategy} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/interfaces/IStrategy.sol";
 
-import {TokenType}  from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/enums/YieldBoxTokenType.sol";
+import {TokenType} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/enums/YieldBoxTokenType.sol";
 
 // Import contract to test
 import {AirdropBroker} from "../../contracts/option-airdrop/AirdropBroker.sol";
@@ -113,9 +134,6 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         bool rescue; // If true, the pool will be used to rescue funds in case of emergency
     }
 
-   
-
-
     function setUp() public override {
         vm.deal(owner, 1000 ether); //give owner some ether
         vm.deal(tokenBeneficiary, 1000 ether); //give tokenBeneficiary some ether
@@ -138,18 +156,8 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
                         __airdrop,
                         __governanceEid,
                         address(owner),
-                        address(
-                            new TapOFTSender(
-                                address(endpoints[aEid]),
-                                address(this)
-                            )
-                        ),
-                        address(
-                            new TapOFTReceiver(
-                                address(endpoints[aEid]),
-                                address(this)
-                            )
-                        )
+                        address(new TapOFTSender(address(endpoints[aEid]), address(this))),
+                        address(new TapOFTReceiver(address(endpoints[aEid]), address(this)))
                     )
                 )
             )
@@ -163,18 +171,11 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
 
         yieldBoxURIBuilder = new YieldBoxURIBuilder();
         wrappedNativeMock = new WrappedNativeMock();
-        yieldBox = new YieldBox(
-            IWrappedNative(wrappedNativeMock),
-            yieldBoxURIBuilder
-        );
+        yieldBox = new YieldBox(IWrappedNative(wrappedNativeMock), yieldBoxURIBuilder);
         otap = new OTAP();
         aotap = new AOTAP(address(this)); //deploy AOTAP and set address to owner
 
-        tapiocaOptionLiquidityProvision = new TapiocaOptionLiquidityProvision(
-            address(yieldBox),
-            7 days,
-            address(owner)
-        );
+        tapiocaOptionLiquidityProvision = new TapiocaOptionLiquidityProvision(address(yieldBox), 7 days, address(owner));
         tapiocaOptionBroker = new TapiocaOptionBroker(
             address(tapiocaOptionLiquidityProvision),
             payable(address(otap)),
@@ -185,11 +186,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         );
 
         airdropBroker = new AirdropBroker(
-            address(aotap),
-            payable(address(aTapOFT)),
-            address(erc721Mock),
-            tokenBeneficiary,
-            address(owner)
+            address(aotap), payable(address(aTapOFT)), address(erc721Mock), tokenBeneficiary, address(owner)
         );
 
         vm.startPrank(owner);
@@ -217,17 +214,11 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
     function test_timestamp() public {
         uint256 return_value = tapiocaOptionBroker.timestampToWeek(0);
         assertEq(return_value, 0);
-        uint256 return_value2 = tapiocaOptionBroker.timestampToWeek(
-            block.timestamp - 1 seconds
-        );
+        uint256 return_value2 = tapiocaOptionBroker.timestampToWeek(block.timestamp - 1 seconds);
         assertEq(return_value2, 0);
-        uint256 return_value3 = tapiocaOptionBroker.timestampToWeek(
-            block.timestamp + (7 days - 1 seconds)
-        );
+        uint256 return_value3 = tapiocaOptionBroker.timestampToWeek(block.timestamp + (7 days - 1 seconds));
         assertEq(return_value3, 0);
-        uint256 return_value4 = tapiocaOptionBroker.timestampToWeek(
-            block.timestamp + 8 days
-        );
+        uint256 return_value4 = tapiocaOptionBroker.timestampToWeek(block.timestamp + 8 days);
         assertEq(return_value4, 1);
     }
 
@@ -235,19 +226,13 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         vm.startPrank(__earlySupporters);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         tapiocaOptionBroker.setPaymentTokenBeneficiary(address(0x1));
-        assertEq(
-            tapiocaOptionBroker.paymentTokenBeneficiary(),
-            address(tokenBeneficiary)
-        );
+        assertEq(tapiocaOptionBroker.paymentTokenBeneficiary(), address(tokenBeneficiary));
         vm.stopPrank();
     }
 
     function test_set_payment_token_beneficiary() public {
         vm.startPrank(owner);
-        assertEq(
-            tapiocaOptionBroker.paymentTokenBeneficiary(),
-            address(tokenBeneficiary)
-        );
+        assertEq(tapiocaOptionBroker.paymentTokenBeneficiary(), address(tokenBeneficiary));
         tapiocaOptionBroker.setPaymentTokenBeneficiary(address(0x1));
         assertEq(tapiocaOptionBroker.paymentTokenBeneficiary(), address(0x1));
         vm.stopPrank();
@@ -286,11 +271,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         address user1 = address(0x01);
         bytes memory _data = abi.encode(uint256(3));
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        tapiocaOptionBroker.setPaymentToken(
-            (mockToken),
-            IOracle(tapOracleMock),
-            _data
-        );
+        tapiocaOptionBroker.setPaymentToken((mockToken), IOracle(tapOracleMock), _data);
 
         vm.stopPrank();
     }
@@ -299,11 +280,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         //ok
         vm.startPrank(owner);
         bytes memory _data = abi.encode(uint256(3));
-        tapiocaOptionBroker.setPaymentToken(
-            (mockToken),
-            IOracle(tapOracleMock),
-            _data
-        );
+        tapiocaOptionBroker.setPaymentToken((mockToken), IOracle(tapOracleMock), _data);
         IOracle _oracle = tapiocaOptionBroker.tapOracle();
         bytes memory data = tapiocaOptionBroker.tapOracleData();
 
@@ -362,19 +339,12 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         address[] memory tokens = new address[](1);
         tokens[0] = address(mockToken);
         //check balances of tokens before and after
-        uint256 balanceBeforeAirdrop = mockToken.balanceOf(
-            address(tapiocaOptionBroker)
-        );
+        uint256 balanceBeforeAirdrop = mockToken.balanceOf(address(tapiocaOptionBroker));
         uint256 balanceBeforeOwner = mockToken.balanceOf(address(owner));
         tapiocaOptionBroker.collectPaymentTokens(tokens);
-        uint256 balanceAfterAirdrop = mockToken.balanceOf(
-            address(tapiocaOptionBroker)
-        );
+        uint256 balanceAfterAirdrop = mockToken.balanceOf(address(tapiocaOptionBroker));
         uint256 balanceAfterOwner = mockToken.balanceOf(address(owner));
-        assertEq(
-            balanceBeforeAirdrop + balanceBeforeOwner,
-            balanceAfterOwner + balanceAfterAirdrop
-        ); //NOTE this is counting no fee-on-transfer tokens
+        assertEq(balanceBeforeAirdrop + balanceBeforeOwner, balanceAfterOwner + balanceAfterAirdrop); //NOTE this is counting no fee-on-transfer tokens
         assertEq(balanceAfterOwner, balanceBeforeOwner + balanceBeforeAirdrop);
         assertEq(balanceAfterAirdrop, 0);
         vm.stopPrank();
@@ -396,12 +366,10 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
     function test_new_epoch_with_singularities() public {
         vm.startPrank(owner);
         vm.warp(block.timestamp + 7 days + 1 seconds);
-        uint256[] memory singularites = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularites = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularites.length, 0);
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);
-        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision
-            .getSingularities();
+        uint256[] memory singularitesAfter = tapiocaOptionLiquidityProvision.getSingularities();
         assertEq(singularitesAfter.length, 1);
         assertEq(singularitesAfter[0], 1);
 
@@ -413,7 +381,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         //setOracle
         bytes memory _data = abi.encode(uint256(2));
         tapiocaOptionBroker.setTapOracle(tapOracleMock, _data);
-        
+
         uint256 _epoch = tapiocaOptionBroker.epoch();
         tapiocaOptionBroker.newEpoch();
         uint256 new_epoch = tapiocaOptionBroker.epoch();

@@ -284,7 +284,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
 
     /// @notice Claim the Broker role of the aoTAP contract
     function aoTAPBrokerClaim() external {
-        aoTAP.brokerClaim(); 
+        aoTAP.brokerClaim();
     }
 
     // =========
@@ -463,7 +463,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         uint256 eligibleAmount = arrLen * PHASE_3_AMOUNT_PER_USER * 1e18; // Phase 3 amount multiplied the number of PCNFTs
         uint128 discount = uint128(PHASE_3_DISCOUNT);
         oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
-    } 
+    }
 
     /// @notice Participate in phase 4 of the Airdrop. twTAP and Cassava guild's role are given TAP pro-rata.
     function _participatePhase4() internal returns (uint256 oTAPTokenID) {

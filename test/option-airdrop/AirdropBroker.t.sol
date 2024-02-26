@@ -3,7 +3,12 @@
 pragma solidity 0.8.22;
 
 // LZ
-import {SendParam, MessagingFee, MessagingReceipt, OFTReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import {
+    SendParam,
+    MessagingFee,
+    MessagingReceipt,
+    OFTReceipt
+} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
@@ -18,8 +23,24 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //Tapioca
-import {ITapOFTv2, LockTwTapPositionMsg, UnlockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC721PermitStruct, ERC20PermitApprovalMsg, ERC721PermitApprovalMsg, ClaimTwTapRewardsMsg, RemoteTransferMsg} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
-import {TapOFTv2Helper, PrepareLzCallData, PrepareLzCallReturn, ComposeMsgData} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
+import {
+    ITapOFTv2,
+    LockTwTapPositionMsg,
+    UnlockTwTapPositionMsg,
+    LZSendParam,
+    ERC20PermitStruct,
+    ERC721PermitStruct,
+    ERC20PermitApprovalMsg,
+    ERC721PermitApprovalMsg,
+    ClaimTwTapRewardsMsg,
+    RemoteTransferMsg
+} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
+import {
+    TapOFTv2Helper,
+    PrepareLzCallData,
+    PrepareLzCallReturn,
+    ComposeMsgData
+} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
 import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTv2/TapOFTMsgCoder.sol";
 import {TwTAP, Participation} from "@contracts/governance/twTAP.sol";
 import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
@@ -106,18 +127,8 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(
-                            new TapOFTSender(
-                                address(endpoints[aEid]),
-                                address(this)
-                            )
-                        ),
-                        address(
-                            new TapOFTReceiver(
-                                address(endpoints[aEid]),
-                                address(this)
-                            )
-                        )
+                        address(new TapOFTSender(address(endpoints[aEid]), address(this))),
+                        address(new TapOFTReceiver(address(endpoints[aEid]), address(this)))
                     )
                 )
             )
@@ -131,11 +142,7 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         aotap = new AOTAP(address(this)); //deploy AOTAP and set address to owner
 
         airdropBroker = new AirdropBroker(
-            address(aotap),
-            payable(address(aTapOFT)),
-            address(erc721Mock),
-            tokenBeneficiary,
-            address(owner)
+            address(aotap), payable(address(aTapOFT)), address(erc721Mock), tokenBeneficiary, address(owner)
         );
 
         vm.startPrank(owner);
@@ -243,7 +250,6 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-
     function test_dao_recover_tap_not_owner() public {
         vm.startPrank(tokenBeneficiary);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
@@ -253,7 +259,7 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
 
     function test_dao_recover_tap_before_end_epoch() public {
         vm.startPrank(owner);
-        
+
         //advance 2 epochs
         for (uint256 i = 1; i < 3; i++) {
             vm.warp(block.timestamp + 172810 * i);
@@ -265,13 +271,13 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    function test_dao_recover_tap_transfer() public {//ok
-
+    function test_dao_recover_tap_transfer() public {
+        //ok
         vm.startPrank(__earlySupporters);
 
         //transfer tokens to the airdropBroker contract
 
-        uint256 _balance = aTapOFT.balanceOf(address(__earlySupporters)); 
+        uint256 _balance = aTapOFT.balanceOf(address(__earlySupporters));
 
         aTapOFT.transfer(address(airdropBroker), _balance);
 
@@ -288,17 +294,12 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
             airdropBroker.newEpoch();
         }
 
-        uint256 balanceBeforeAirdrop = aTapOFT.balanceOf(
-            address(airdropBroker)
-        );
+        uint256 balanceBeforeAirdrop = aTapOFT.balanceOf(address(airdropBroker));
         uint256 balanceBeforeOwner = aTapOFT.balanceOf(address(owner));
         airdropBroker.daoRecoverTAP();
         uint256 balanceAfterAirdrop = aTapOFT.balanceOf(address(airdropBroker));
         uint256 balanceAfterOwner = aTapOFT.balanceOf(address(owner));
-        assertEq(
-            balanceBeforeAirdrop + balanceBeforeOwner,
-            balanceAfterOwner + balanceAfterAirdrop
-        ); //NOTE this is counting no fee-on-transfer tokens
+        assertEq(balanceBeforeAirdrop + balanceBeforeOwner, balanceAfterOwner + balanceAfterAirdrop); //NOTE this is counting no fee-on-transfer tokens
         assertEq(balanceAfterOwner, balanceBeforeOwner + balanceBeforeAirdrop);
         assertEq(balanceAfterAirdrop, 0);
 
@@ -396,7 +397,6 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-
     function test_payment_token_not_owner() public {
         //ok
 
@@ -404,7 +404,7 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         address user1 = address(0x01);
         bytes memory _data = abi.encode(uint256(3));
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        airdropBroker.setPaymentToken((mockToken),IOracle(tapOracleMock),_data);
+        airdropBroker.setPaymentToken((mockToken), IOracle(tapOracleMock), _data);
         vm.stopPrank();
     }
 
@@ -412,12 +412,11 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         //ok
         vm.startPrank(owner);
         bytes memory _data = abi.encode(uint256(3));
-        airdropBroker.setPaymentToken((mockToken),IOracle(tapOracleMock),_data);
+        airdropBroker.setPaymentToken((mockToken), IOracle(tapOracleMock), _data);
         IOracle _oracle = airdropBroker.tapOracle();
         bytes memory data = airdropBroker.tapOracleData();
         vm.stopPrank();
     }
-
 
     function test_beneficiary_not_set() public {
         //ok
@@ -440,23 +439,14 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         address[] memory tokens = new address[](1);
         tokens[0] = address(mockToken);
         //check balances of tokens before and after
-        uint256 balanceBeforeAirdrop = mockToken.balanceOf(
-            address(airdropBroker)
-        );
+        uint256 balanceBeforeAirdrop = mockToken.balanceOf(address(airdropBroker));
         uint256 balanceBeforeOwner = mockToken.balanceOf(address(owner));
         airdropBroker.collectPaymentTokens(tokens);
-        uint256 balanceAfterAirdrop = mockToken.balanceOf(
-            address(airdropBroker)
-        );
+        uint256 balanceAfterAirdrop = mockToken.balanceOf(address(airdropBroker));
         uint256 balanceAfterOwner = mockToken.balanceOf(address(owner));
-        assertEq(
-            balanceBeforeAirdrop + balanceBeforeOwner,
-            balanceAfterOwner + balanceAfterAirdrop
-        ); //NOTE this is counting no fee-on-transfer tokens
+        assertEq(balanceBeforeAirdrop + balanceBeforeOwner, balanceAfterOwner + balanceAfterAirdrop); //NOTE this is counting no fee-on-transfer tokens
         assertEq(balanceAfterOwner, balanceBeforeOwner + balanceBeforeAirdrop);
         assertEq(balanceAfterAirdrop, 0);
         vm.stopPrank();
     }
-
-
 }

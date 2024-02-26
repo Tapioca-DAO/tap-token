@@ -39,16 +39,8 @@ contract aoTapTest is TapTestHelper, Errors {
     address public owner = vm.addr(userAPKey);
     address public tokenBeneficiary = vm.addr(userBPKey);
 
-    event Transfer(
-        address indexed _from,
-        address indexed _to,
-        uint256 indexed _tokenId
-    );
-    event Approval(
-        address indexed _owner,
-        address indexed _approved,
-        uint256 indexed _tokenId
-    );
+    event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
+    event Approval(address indexed _owner, address indexed _approved, uint256 indexed _tokenId);
 
     function setUp() public override {
         vm.deal(owner, 1000 ether); //give owner some ether
@@ -118,7 +110,7 @@ contract aoTapTest is TapTestHelper, Errors {
     function test_mint_several_aoTAP() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        uint i;
+        uint256 i;
         for (i; i < 10; i++) {
             uint256 tokenId = aotap.mint(address(owner), 1, 1, 1);
             uint256 balance = aotap.balanceOf(address(owner));
@@ -147,7 +139,7 @@ contract aoTapTest is TapTestHelper, Errors {
         aotap.safeTransferFrom(owner, tokenBeneficiary, 1);
         address new_owner = aotap.ownerOf(1);
         assertEq(tokenBeneficiary, new_owner);
-        uint bal = aotap.balanceOf(tokenBeneficiary);
+        uint256 bal = aotap.balanceOf(tokenBeneficiary);
         assertEq(bal, 1);
         vm.stopPrank();
     }
@@ -157,7 +149,7 @@ contract aoTapTest is TapTestHelper, Errors {
         aotap.brokerClaim();
         aotap.mint(owner, 1, 1, 1);
         aotap.burn(1);
-        uint bal = aotap.balanceOf(owner);
+        uint256 bal = aotap.balanceOf(owner);
         assertEq(bal, (0));
         vm.stopPrank();
     }
@@ -232,11 +224,7 @@ contract aoTapTest is TapTestHelper, Errors {
         aotap.brokerClaim();
         aotap.mint(owner, 1, 1, 1);
         vm.expectEmit(address(aotap));
-        emit IERC721.ApprovalForAll(
-            address(owner),
-            address(tokenBeneficiary),
-            true
-        );
+        emit IERC721.ApprovalForAll(address(owner), address(tokenBeneficiary), true);
         aotap.setApprovalForAll(tokenBeneficiary, true);
         vm.stopPrank();
     }

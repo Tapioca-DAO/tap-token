@@ -18,7 +18,10 @@ import {LTap} from "../../contracts/tokens/LTap.sol";
 import {stdStorage, StdStorage} from "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-contract LTapTest is TapTestHelper, Errors { //100% DONE
+contract LTapTest is
+    TapTestHelper,
+    Errors //100% DONE
+{
     using stdStorage for StdStorage;
 
     LTap public ltap;
@@ -103,7 +106,7 @@ contract LTapTest is TapTestHelper, Errors { //100% DONE
         vm.warp(block.timestamp + 8 days);
         ltap.redeem();
         uint256 balAfter = mockToken.balanceOf(owner);
-        assertEq( balAfter , balBefore +  1000 ether);
+        assertEq(balAfter, balBefore + 1000 ether);
         uint256 balLtap = ltap.balanceOf(address(owner));
         assertEq(balLtap, 0);
         vm.stopPrank();
