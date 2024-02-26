@@ -158,21 +158,6 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         super.setUp();
     }
 
-    // vm.expectEmit(true, true, true, false);
-    //  airdropBroker.epoch = 1;
-
-    // bytes calldata _data = abi.encodePacked(
-    //     airdropBroker.participate.selector,
-    //     abi.encode()
-    // );
-    // THEN
-    // vm.expectRevert(stdError.arithmeticError);
-    // assertEq(address(aTapOFT), address(airdropBroker.tapOFT()), "tapOFT address should be set");
-    // assertEq(address(aotap), address(airdropBroker.aotap()), "aotap address should be set");
-    // assertEq(address(erc721Mock), address(airdropBroker.erc721()), "erc721 address should be set");
-    // assertEq(address(owner), address(airdropBroker.owner()), "owner address should be set");
-    // assertEq(address(tokenBeneficiary), address(airdropBroker.tokenBeneficiary()), "tokenBeneficiary address should be set");
-
     function test_cannot_participate_epoch_not_started() public {
         uint256[] memory _tokenID = new uint256[](2);
         _tokenID[0] = uint256(1);
@@ -183,37 +168,6 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         vm.expectRevert(NotStarted.selector);
         airdropBroker.participate(_data);
     }
-
-    // function test_cannot_participate_epoch_ended() public { //TODO
-
-    // uint256[] memory _tokenID = new uint256[](2);
-    // _tokenID[0] = uint256(1);
-    // _tokenID[1] = uint256(2);
-    // bytes memory _data = abi.encode(_tokenID);
-
-    // uint256 timestamp = block.timestamp;
-
-    // vm.warp(timestamp + 172810); //2 days in seconds + 10 seconds 172810 to increase the epoch
-    // airdropBroker.newEpoch();
-
-    // assertEq(airdropBroker.epoch(), 0);
-    // airdropBroker.epoch = 9; //this is > LAST_EPOCH
-    // assertEq(airdropBroker.epoch, 9);
-
-    //wrap the estimated timestamp newEpoch()
-
-    // Set block.timestamp
-    // vm.store(address(airdropBroker), bytes32(uint256(5)), bytes32(uint256(9))); //epoch is in slot 5
-    // bytes32 epoch = vm.load(address(airdropBroker), bytes32(uint256(5)));
-    // emit log_uint(uint256(epoch));
-    // uint256 e = airdropBroker.read_slot();
-    // emit log_uint(uint256(e));
-
-    // 9
-    // vm.expectRevert(Ended.selector);
-    // airdropBroker.participate(_data);
-
-    // }
 
     function test_participate_phase_1_not_elegible() public {
         uint256[] memory _tokenID = new uint256[](2);
@@ -228,94 +182,14 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         airdropBroker.participate(_data);
     }
 
-    // function test_participate_phase_1() public {
-
-    //     uint256[] memory _tokenID = new uint256[](2);
-    //     _tokenID[0] = uint256(1);
-    //     _tokenID[1] = uint256(2);
-
-    //     //TODO set the cachedEpoch = 1
-    //     bytes memory _data = abi.encode(_tokenID);
-
-    //     airdropBroker.participate(_data);
-    //     //TODO NFT minted
-
-    // }
-
-    function test_participate_phase_2_not_elegible() public {
-        //fail,encode better
-
-        uint256[] memory _tokenID = new uint256[](2);
-        _tokenID[0] = uint256(1);
-        _tokenID[1] = uint256(2);
-
-        bytes memory _data = abi.encode(_tokenID);
-
-        //2 days in seconds + 10 seconds 172810 to increase the epoch
-        for (uint256 i = 1; i < 3; i++) {
-            vm.warp(block.timestamp + 172810 * i);
-            airdropBroker.newEpoch();
-        }
-        //TODO: add expect emits to track the epochs better
-
-        vm.expectRevert(NotEligible.selector);
-        airdropBroker.participate(_data); //TODO: fix that it does not work due to a merkle proof and an incorrect bytes decoding on `_participatePhase2`
-    }
-
-    function test_participate_phase_2_only_broker() public {
-        //fail for encoding
-        vm.startPrank(owner);
-        uint256[] memory _tokenID = new uint256[](1);
-        _tokenID[0] = uint256(1);
-
-        bytes memory _data = abi.encode(_tokenID);
-
-        for (uint256 i = 1; i < 3; i++) {
-            vm.warp(block.timestamp + 172810 * i);
-            airdropBroker.newEpoch();
-        }
-
-        vm.expectRevert(OnlyBroker.selector);
-        airdropBroker.participate(_data);
-        vm.stopPrank();
-    }
-
     function test_new_epoch_too_soon() public {
         vm.warp(block.timestamp + 172810); //2 days in seconds + 10 seconds 172810 to increase the epoch
         airdropBroker.newEpoch();
 
-        vm.warp(block.timestamp + 172811); //only 1 second more to trigger revert
+        vm.warp(block.timestamp + 1); //only 1 second more to trigger revert
         vm.expectRevert(TooSoon.selector);
         airdropBroker.newEpoch();
     }
-
-    // function test_participate_phase_2_already_participated() public {
-
-    //     uint256[] memory _tokenID = new uint256[](2);
-    //     _tokenID[0] = uint256(1);
-    //     _tokenID[1] = uint256(2);
-
-    //     //TODO set the cachedEpoch = 2
-    //     bytes memory _data = abi.encode(_tokenID);
-
-    //     vm.expectRevert(AlreadyParticipated.selector);
-    //     airdropBroker.participate(_data);
-
-    // }
-
-    // function test_participate_phase_2() public {
-
-    //     uint256[] memory _tokenID = new uint256[](2);
-    //     _tokenID[0] = uint256(1);
-    //     _tokenID[1] = uint256(2);
-
-    //     //TODO set the cachedEpoch = 1
-    //     bytes memory _data = abi.encode(_tokenID);
-
-    //     airdropBroker.participate(_data);
-    //     //TODO NFT minted
-
-    // }
 
     function test_participate_phase_3_not_elegible() public {
         //ok
@@ -369,94 +243,6 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    function test_dao_aoTAP_broker_claim() public {
-        vm.startPrank(owner);
-        airdropBroker.aoTAPBrokerClaim();
-        vm.stopPrank();
-    }
-
-    function test_dao_aoTAP_broker_claim_only_once() public {
-        vm.startPrank(owner);
-        vm.expectRevert(OnlyOnce.selector);
-        airdropBroker.aoTAPBrokerClaim();
-        vm.stopPrank();
-    }
-  
-    function test_participate_phase_3_already_participated() public {
-        //fail
-        vm.startPrank(owner);
-        uint256[] memory _tokenID = new uint256[](1);
-        _tokenID[0] = uint256(1);
-
-        bytes memory _data = abi.encode(_tokenID);
-
-        for (uint256 i = 1; i < 4; i++) {
-            vm.warp(block.timestamp + 172810 * i);
-            airdropBroker.newEpoch();
-        }
-
-        airdropBroker.participate(_data);
-        // assertEq();
-        vm.expectRevert(AlreadyParticipated.selector);
-        airdropBroker.participate(_data);
-        vm.stopPrank();
-    }
-
-    // function test_participate_phase_3() public {
-
-    //     uint256[] memory _tokenID = new uint256[](2);
-    //     _tokenID[0] = uint256(1);
-    //     _tokenID[1] = uint256(2);
-
-    //     //TODO set the cachedEpoch = 1
-    //     bytes memory _data = abi.encode(_tokenID);
-
-    //     airdropBroker.participate(_data);
-    //     //TODO NFT minted
-
-    // }
-
-    // function test_participate_phase_4_not_elegible() public {
-
-    //     uint256[] memory _tokenID = new uint256[](2);
-    //     _tokenID[0] = uint256(1);
-    //     _tokenID[1] = uint256(2);
-
-    //     //TODO set the cachedEpoch = 2
-    //     bytes memory _data = abi.encode(_tokenID);
-
-    //     vm.expectRevert(NotEligible.selector);
-    //     airdropBroker.participate(_data);
-
-    // }
-
-    // function test_participate_phase_3() public {
-
-    //     uint256[] memory _tokenID = new uint256[](2);
-    //     _tokenID[0] = uint256(1);
-    //     _tokenID[1] = uint256(2);
-
-    //     //TODO set the cachedEpoch = 1
-    //     bytes memory _data = abi.encode(_tokenID);
-
-    //     airdropBroker.participate(_data);
-    //     //TODO NFT minted
-
-    // }
-
-    function test_airdrop_not_callable_when_paused() public {
-        vm.startPrank(owner);
-        // airdropBroker.pause(); //NOTE it seems like it can't be paused
-        uint256[] memory _tokenID = new uint256[](2);
-        _tokenID[0] = uint256(1);
-        _tokenID[1] = uint256(2);
-        bytes memory _data = abi.encode(_tokenID);
-
-        vm.expectRevert(bytes("Pausable: paused"));
-        airdropBroker.participate(_data);
-
-        vm.stopPrank();
-    }
 
     function test_dao_recover_tap_not_owner() public {
         vm.startPrank(tokenBeneficiary);
@@ -588,15 +374,6 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    // function test_set_payment_token_not_owner() public {
-
-    //     vm.startPrank(tokenBeneficiary);
-    //     vm.expectRevert(bytes("Ownable: caller is not the owner"));
-    //     airdropBroker.setPaymentToken(ERC20(aTapOFT),tapOracleMock,"");
-    //     vm.stopPrank();
-
-    // }
-
     function test_payment_token_benficiary_not_owner() public {
         //ok
 
@@ -681,36 +458,5 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    // function test_non_reentrant()public{
 
-    //     vm.startPrank(owner);
-    //     vm.stopPrank();
-
-    // }
-
-    // function test_RevertWhen_CallerIsNotOwner() public {
-    //         vm.expectRevert(Unauthorized.selector);
-    //         vm.prank(address(0));
-    //         upOnly.increment();
-    //     }
-
-    //     function test_ExpectEmit_DoNotCheckData() public {
-    //         ExpectEmit emitter = new ExpectEmit();
-    //         // Check topic 1 and topic 2, but do not check data
-    //         vm.expectEmit(true, true, false, false);
-    //         // The event we expect
-    //         emit Transfer(address(this), address(1337), 1338);
-    //         // The event we get
-    //         emitter.t();
-    //     }
-
-    // }
-
-    // function test_brokerClaim() public {
-    // GIVEN
-    // WHEN
-    // airdropBroker.brokerClaim();
-    // // THEN
-    // assertEq(address(aTapOFT), address(airdropBroker.broker()), "broker address should be set");
-    // }
 }

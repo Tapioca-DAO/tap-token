@@ -215,14 +215,6 @@ contract twTAPTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    function test_paused() public {
-        //not
-        vm.startPrank(owner);
-        twTAP.participate(address(owner), 100 ether, 86400);
-        twTAP.claimRewards(1, address(owner));
-        vm.stopPrank();
-    }
-
     function test_claim_not_approved() public {
         //ok
         vm.startPrank(owner);

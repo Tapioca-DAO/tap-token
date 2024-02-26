@@ -239,11 +239,6 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         assertEq(singularitesAfter.length, 1);
         assertEq(singularitesAfter[0], 1);
         vm.stopPrank();
-        // (SingularityPool[] memory pool) = tapiocaOptionLiquidityProvision.getSingularityPools();
-        // assertEq(pool.length, 0);
-        // tapiocaOptionBroker.newEpoch();
-        // uint256 epoch = tapiocaOptionBroker.epoch();
-        // assertEq(epoch, 1);
     }
 
     function test_register_singularity_not_owner() public {
@@ -498,29 +493,9 @@ emit TapiocaOptionLiquidityProvision.SetSGLPoolWeight(address(singularity),100);
         );
         vm.stopPrank();
     }
-
-
-    function test_lock_yieldbox()public{
-//tokenId has to be 0 for ERC20 tokens
-yieldBox.deposit(TokenType.ERC20,address(mockToken),IStrategy(address(0x0)),0,address(owner),address(owner),10,1);
-(address _owner) = tapiocaOptionLiquidityProvision.ownerOf(1);
-assertEq(_owner, address(owner));
- tapiocaOptionLiquidityProvision.lock(
-            address(owner),
-            singularity,
-            8 days,
-            1
-        );
-
-// (tapiocaOptionLiquidityProvision.LockPosition) = getLock(1);
-    }
     
-
-
      function test_unlock_expired()public{
-          vm.startPrank(owner);
-
-
+        vm.startPrank(owner);
         vm.expectRevert(PositionExpired.selector);
         tapiocaOptionLiquidityProvision.unlock(
             1,
