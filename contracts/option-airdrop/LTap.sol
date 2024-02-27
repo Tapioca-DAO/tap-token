@@ -21,9 +21,9 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 contract LTap is Ownable, ERC20Permit {
     using SafeERC20 for IERC20;
 
-    IERC20 tapToken;
-    address immutable lbp;
-    bool openRedemption;
+    IERC20 public tapToken;
+    address public immutable lbp;
+    bool public openRedemption;
 
     error TapNotSet();
     error RedemptionNotOpen();
