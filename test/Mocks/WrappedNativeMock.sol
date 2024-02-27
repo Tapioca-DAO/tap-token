@@ -2,8 +2,7 @@
 
 pragma solidity 0.8.22;
 
-import {IWrappedNative} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/interfaces/IWrappedNative.sol";
-import {IWrappedNativeMock} from "./interfaces/IWrappedNativeMock.sol";
+import {IWrappedNative} from "tap-yieldbox/interfaces/IWrappedNative.sol";
 
 contract WrappedNativeMock is IWrappedNative {
     string public name = "Wrapped Native";
@@ -16,7 +15,11 @@ contract WrappedNativeMock is IWrappedNative {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
-    fallback() external payable {
+    fallback() external {
+        deposit();
+    }
+
+    receive() external payable {
         deposit();
     }
 

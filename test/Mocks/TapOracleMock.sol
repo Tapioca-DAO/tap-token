@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-import {IOracle} from "tapioca-periph/contracts/interfaces/IOracle.sol";
+import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
 
-contract TapOracleMock is IOracle {
+contract TapOracleMock is ITapiocaOracle {
     constructor() {}
 
     function decimals() external view returns (uint8) {}

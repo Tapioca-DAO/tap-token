@@ -45,9 +45,9 @@ import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
 import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
 
 // Tapioca Tests
-import {TapTestHelper} from "./TapTestHelper.t.sol";
+import {TapTestHelper} from "../helpers/TapTestHelper.t.sol";
 import {TapTokenMock} from "./TapTokenMock.sol";
-import {ERC721Mock} from "./ERC721Mock.sol";
+import {ERC721Mock} from "../Mocks/ERC721Mock.sol";
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";

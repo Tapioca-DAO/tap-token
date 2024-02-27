@@ -2,17 +2,13 @@
 
 pragma solidity 0.8.22;
 
-// External
-
-import {MockToken} from "gitsub_tapioca-sdk/src/contracts/mocks/MockToken.sol";
-
 // Tapioca Tests
 import {TapTestHelper} from "./helpers/TapTestHelper.t.sol";
 
-import {MockToken} from "gitsub_tapioca-sdk/src/contracts/mocks/MockToken.sol";
+import {ERC20Mock} from "./Mocks/ERC20Mock.sol";
 
 import {Errors} from "./helpers/errors.sol";
-import {Vesting} from "../contracts/Vesting.sol";
+import {Vesting} from "tap-token/tokens/Vesting.sol";
 
 // import "forge-std/Test.sol";
 import {stdStorage, StdStorage} from "forge-std/Test.sol";
@@ -23,7 +19,7 @@ contract VestingTest is TapTestHelper, Errors {
 
     Vesting public vesting;
     Vesting public _vesting;
-    MockToken public mockToken; //instance of MockToken (erc20)
+    ERC20Mock public mockToken; //instance of ERC20Mock (erc20)
 
     uint256 internal userAPKey = 0x1;
     uint256 internal userBPKey = 0x2;
@@ -39,7 +35,7 @@ contract VestingTest is TapTestHelper, Errors {
         vm.expectRevert(VestingDurationNotValid.selector);
         _vesting = new Vesting(52 weeks, 0, address(owner));
         vesting = new Vesting(52 weeks, 208 weeks, address(owner));
-        mockToken = new MockToken("MockERC20", "Mock"); //deploy MockToken
+        mockToken = new ERC20Mock("MockERC20", "Mock"); //deploy ERC20Mock
         vm.label(address(mockToken), "erc20Mock"); //label address for test traces
         mockToken.transfer(address(this), 1_000_001); //transfer some tokens to address(this)
         mockToken.transfer(address(vesting), 9_999_899); //transfer some tokens to address(this)

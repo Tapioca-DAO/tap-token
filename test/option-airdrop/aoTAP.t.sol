@@ -7,13 +7,14 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {MockToken} from "gitsub_tapioca-sdk/src/contracts/mocks/MockToken.sol";
+import {ERC20Mock} from "../Mocks/ERC20Mock.sol";
 
 // Tapioca Tests
 
+import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
+import {TapTokenMock as TapOFTV2Mock} from "../Mocks/TapOFTV2Mock.sol";
 import {TapTestHelper} from "../helpers/TapTestHelper.t.sol";
 import {ERC721Mock} from "../Mocks/ERC721Mock.sol";
-import {TapOFTV2Mock} from "../Mocks/TapOFTV2Mock.sol";
 
 import {TapOracleMock} from "../Mocks/TapOracleMock.sol";
 
@@ -48,7 +49,7 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.label(owner, "owner"); //label address for test traces
         vm.label(tokenBeneficiary, "tokenBeneficiary"); //label address for test traces
 
-        aotap = new AOTAP(address(owner)); //deploy AOTAP and set address to owner
+        aotap = new AOTAP(,address(owner)); //deploy AOTAP and set address to owner
 
         super.setUp();
     }

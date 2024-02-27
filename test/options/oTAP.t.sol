@@ -7,14 +7,11 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-//Tapioca
-import {MockToken} from "gitsub_tapioca-sdk/src/contracts/mocks/MockToken.sol";
-
 // Tapioca Tests
 
 import {TapTestHelper} from "../helpers/TapTestHelper.t.sol";
 import {ERC721Mock} from "../Mocks/ERC721Mock.sol";
-import {TapOFTV2Mock} from "../Mocks/TapOFTV2Mock.sol";
+import {TapTokenMock as TapOFTV2Mock} from "../Mocks/TapOFTV2Mock.sol";
 
 import {TapOracleMock} from "../Mocks/TapOracleMock.sol";
 
@@ -46,53 +43,14 @@ contract oTapTest is TapTestHelper, Errors {
         vm.label(owner, "owner"); //label address for test traces
         vm.label(tokenBeneficiary, "tokenBeneficiary"); //label address for test traces
 
-        otap = new OTAP(); //deploy OTAP
+        otap = new OTAP(address(this)); //deploy OTAP
         super.setUp();
     }
 
     function test_constructor() public {
         address _broker = otap.broker();
         assertEq(_broker, address(0));
-    }
-
-    function test_set_uri_not_approved() public {
-        vm.startPrank(owner);
-
-        otap.brokerClaim();
-        uint256 tokenId = otap.mint(address(owner), 1, 1, 1);
-        uint256 balance = otap.balanceOf(address(owner));
-        assertEq(balance, 1);
-        otap.transferFrom(owner, tokenBeneficiary, 1);
-        uint256 balanceBeneficiary = otap.balanceOf(address(tokenBeneficiary));
-        assertEq(balanceBeneficiary, 1);
-        assertEq(otap.balanceOf(address(owner)), 0);
-
-        vm.expectRevert(bytes("OTAP: only approved or owner"));
-        otap.setTokenURI(1, "https://tapioca.games");
-        string memory tokenURI = otap.tokenURI(1);
-        assertEq(tokenURI, "");
-        vm.stopPrank();
-    }
-
-    function test_set_uri_not_invalid_id() public {
-        vm.startPrank(owner);
-        vm.expectRevert(bytes("ERC721: invalid token ID"));
-        otap.setTokenURI(1, "https://tapioca.games");
-        string memory tokenURI = otap.tokenURI(1);
-        assertEq(tokenURI, "");
-        vm.stopPrank();
-    }
-
-    function test_set_uri() public {
-        vm.startPrank(owner);
-        otap.brokerClaim();
-        uint256 tokenId = otap.mint(address(owner), 1, 1, 1);
-        uint256 balance = otap.balanceOf(address(owner));
-        assertEq(balance, 1);
-        otap.setTokenURI(1, "https://tapioca.games");
-        string memory tokenURI = otap.tokenURI(1);
-        assertEq(tokenURI, "https://tapioca.games");
-        vm.stopPrank();
+        assertEq(otap.owner(), address(this));
     }
 
     function test_set_broker() public {

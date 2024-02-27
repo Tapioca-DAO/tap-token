@@ -24,7 +24,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //Tapioca
 import {
-    ITapOFTv2,
+    ITapToken,
     LockTwTapPositionMsg,
     UnlockTwTapPositionMsg,
     LZSendParam,
@@ -34,26 +34,26 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
+} from "tap-token/tokens/ITapToken.sol";
 import {
-    TapOFTv2Helper,
+    TapTokenHelper,
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
-import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTv2/TapOFTMsgCoder.sol";
-import {TwTAP, Participation} from "@contracts/governance/twTAP.sol";
-import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
-import {TapOFTSender} from "@contracts/tokens/TapOFTv2/TapOFTSender.sol";
+} from "tap-token/tokens/extensions/TapTokenHelper.sol";
+import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
+import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
+import {TapTokenReceiver} from "tap-token/tokens/TapTokenReceiver.sol";
+import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
 
 // Tapioca Tests
 import {TapTestHelper} from "../helpers/TapTestHelper.t.sol";
 import {ERC721Mock} from "../Mocks/ERC721Mock.sol";
-import {TapOFTV2Mock} from "../Mocks/TapOFTV2Mock.sol";
+import {TapTokenMock as TapOFTV2Mock} from "../Mocks/TapOFTV2Mock.sol";
 
 import {TapOracleMock} from "../Mocks/TapOracleMock.sol";
 
-import {MockToken} from "gitsub_tapioca-sdk/src/contracts/mocks/MockToken.sol";
+import {ERC20Mock} from "../Mocks/ERC20Mock.sol";
 
 // Tapioca contracts
 import {AOTAP} from "../../contracts/option-airdrop/AOTAP.sol";
@@ -76,12 +76,12 @@ contract twTAPTest is TapTestHelper, Errors {
     uint32 aEid = 1;
     uint32 bEid = 2;
 
-    TapOFTv2Helper public tapOFTv2Helper; //instance of TapOFTv2Helper
+    TapTokenHelper public tapTokenHelper; //instance of TapTokenHelper
     TapOFTV2Mock public aTapOFT; //instance of TapOFTV2Mock
     TapOFTV2Mock public bTapOFT; //instance of TapOFTV2Mock NOTE unused to the moment
     AirdropBroker public airdropBroker; //instance of AirdropBroker
     TapOracleMock public tapOracleMock; //instance of TapOracleMock
-    MockToken public mockToken; //instance of MockToken (erc20)
+    ERC20Mock public mockToken; //instance of ERC20Mock (erc20)
     ERC721Mock public erc721Mock; //instance of ERC721Mock
     AOTAP public aotap; //instance of AOTAP
 
@@ -127,8 +127,8 @@ contract twTAPTest is TapTestHelper, Errors {
                         __airdrop,
                         __governanceEid,
                         address(this),
-                        address(new TapOFTSender(address(endpoints[aEid]), address(this))),
-                        address(new TapOFTReceiver(address(endpoints[aEid]), address(this)))
+                        address(new TapTokenSender(address(endpoints[aEid]), address(this))),
+                        address(new TapTokenReceiver(address(endpoints[aEid]), address(this)))
                     )
                 )
             )
@@ -137,7 +137,7 @@ contract twTAPTest is TapTestHelper, Errors {
 
         erc721Mock = new ERC721Mock("MockERC721", "Mock"); //deploy ERC721Mock
         vm.label(address(erc721Mock), "erc721Mock"); //label address for test traces
-        tapOFTv2Helper = new TapOFTv2Helper();
+        tapTokenHelper = new TapTokenHelper();
         tapOracleMock = new TapOracleMock();
         aotap = new AOTAP(address(this)); //deploy AOTAP and set address to owner
 
@@ -146,7 +146,7 @@ contract twTAPTest is TapTestHelper, Errors {
         );
 
         vm.startPrank(owner);
-        mockToken = new MockToken("MockERC20", "Mock"); //deploy MockToken
+        mockToken = new ERC20Mock("MockERC20", "Mock"); //deploy ERC20Mock
         vm.label(address(mockToken), "erc20Mock"); //label address for test traces
         mockToken.transfer(address(this), 1_000_001 * 10 ** 18); //transfer some tokens to address(this)
         mockToken.transfer(address(airdropBroker), 333333 * 10 ** 18);

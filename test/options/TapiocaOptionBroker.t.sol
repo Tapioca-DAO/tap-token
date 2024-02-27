@@ -24,7 +24,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //Tapioca
 import {
-    ITapOFTv2,
+    ITapToken,
     LockTwTapPositionMsg,
     UnlockTwTapPositionMsg,
     LZSendParam,
@@ -34,39 +34,41 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "@contracts/tokens/TapOFTv2/ITapOFTv2.sol";
+} from "tap-token/tokens/ITapToken.sol";
 import {
-    TapOFTv2Helper,
+    TapTokenHelper,
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "@contracts/tokens/TapOFTv2/extensions/TapOFTv2Helper.sol";
-import {TapOFTMsgCoder} from "@contracts/tokens/TapOFTv2/TapOFTMsgCoder.sol";
-import {TwTAP, Participation} from "@contracts/governance/twTAP.sol";
-import {TapOFTReceiver} from "@contracts/tokens/TapOFTv2/TapOFTReceiver.sol";
-import {TapOFTSender} from "@contracts/tokens/TapOFTv2/TapOFTSender.sol";
+} from "tap-token/tokens/extensions/TapTokenHelper.sol";
+import {TapiocaOmnichainExtExec} from "tapioca-periph/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
+import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {TapTokenReceiver} from "tap-token/tokens/TapTokenReceiver.sol";
+import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
+import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
+import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
 
 // Tapioca Tests
 
 import {TapTestHelper} from "../helpers/TapTestHelper.t.sol";
 import {ERC721Mock} from "../Mocks/ERC721Mock.sol";
-import {TapOFTV2Mock} from "../Mocks/TapOFTV2Mock.sol";
+import {TapTokenMock as TapOFTV2Mock} from "../Mocks/TapOFTV2Mock.sol";
 
 import {TapOracleMock} from "../Mocks/TapOracleMock.sol";
-import {IOracle} from "tapioca-periph/contracts/interfaces/IOracle.sol";
+import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
 
-import {MockToken} from "gitsub_tapioca-sdk/src/contracts/mocks/MockToken.sol";
+import {ERC20Mock} from "../Mocks/ERC20Mock.sol";
 
 // Tapioca contracts
 import {AOTAP} from "../../contracts/option-airdrop/AOTAP.sol";
 import {OTAP} from "../../contracts/options/oTAP.sol";
 
-import {YieldBox} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/YieldBox.sol";
-import {IYieldBox} from "tapioca-sdk/dist/contracts/YieldBox/contracts/interfaces/IYieldBox.sol";
+import {YieldBox} from "tap-yieldbox/YieldBox.sol";
+import {IYieldBox} from "tapioca-periph/interfaces/yieldbox/IYieldBox.sol";
 
-import {IStrategy} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/interfaces/IStrategy.sol";
-
-import {TokenType} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/enums/YieldBoxTokenType.sol";
+import {IStrategy} from "tap-yieldbox/interfaces/IStrategy.sol";
+import {TokenType} from "tap-yieldbox/enums/YieldBoxTokenType.sol";
 
 // Import contract to test
 import {AirdropBroker} from "../../contracts/option-airdrop/AirdropBroker.sol";
@@ -74,9 +76,9 @@ import {TapiocaOptionBroker} from "../../contracts/options/TapiocaOptionBroker.s
 import {TapiocaOptionLiquidityProvision} from "../../contracts/options/TapiocaOptionLiquidityProvision.sol";
 
 import {WrappedNativeMock} from "../Mocks/WrappedNativeMock.sol";
-import {IWrappedNative} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/interfaces/IWrappedNative.sol";
+import {IWrappedNative} from "tap-yieldbox/interfaces/IWrappedNative.sol";
 
-import {YieldBoxURIBuilder} from "gitsub_tapioca-sdk/src/contracts/YieldBox/contracts/YieldBoxURIBuilder.sol";
+import {YieldBoxURIBuilder} from "tap-yieldbox/YieldBoxURIBuilder.sol";
 import {Errors} from "../helpers/errors.sol";
 
 // import "forge-std/Test.sol";
@@ -93,13 +95,13 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
     uint32 aEid = 1;
     uint32 bEid = 2;
 
-    TapOFTv2Helper public tapOFTv2Helper; //instance of TapOFTv2Helper
+    TapTestHelper public tapOFTv2Helper; //instance of TapTestHelper
     TapOFTV2Mock public aTapOFT; //instance of TapOFTV2Mock
     TapOFTV2Mock public bTapOFT; //instance of TapOFTV2Mock NOTE unused to the moment
     AirdropBroker public airdropBroker; //instance of AirdropBroker
     TapOracleMock public tapOracleMock; //instance of TapOracleMock
-    MockToken public mockToken; //instance of MockToken (erc20)
-    MockToken public singularity; //instance of singularity (erc20)
+    ERC20Mock public mockToken; //instance of ERC20Mock (erc20)
+    ERC20Mock public singularity; //instance of singularity (erc20)
     ERC721Mock public erc721Mock; //instance of ERC721Mock
     AOTAP public aotap; //instance of AOTAP
     OTAP public otap;
@@ -108,6 +110,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
     YieldBox public yieldBox; //instance of YieldBox
     YieldBoxURIBuilder public yieldBoxURIBuilder;
     WrappedNativeMock public wrappedNativeMock; //instance of wrappedNativeMock
+    TapiocaOmnichainExtExec extExec;
 
     uint256 internal userAPKey = 0x1;
     uint256 internal userBPKey = 0x2;
@@ -126,6 +129,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
     address public __airdrop = address(0x35);
     uint256 public __governanceEid = aEid; //aEid, initially bEid
     address public __owner = address(this);
+    Pearlmit pearlmit;
 
     struct SingularityPool {
         uint256 sglAssetID; // Singularity market YieldBox asset ID
@@ -142,61 +146,53 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
 
         setUpEndpoints(3, LibraryType.UltraLightNode); //TODO: check if this is necessary
 
-        aTapOFT = TapOFTV2Mock(
-            payable(
-                _deployOApp(
-                    type(TapOFTV2Mock).creationCode,
-                    abi.encode(
-                        address(endpoints[aEid]),
-                        __contributors,
-                        __earlySupporters,
-                        __supporters,
-                        __lbp,
-                        __dao,
-                        __airdrop,
-                        __governanceEid,
-                        address(owner),
-                        address(new TapOFTSender(address(endpoints[aEid]), address(this))),
-                        address(new TapOFTReceiver(address(endpoints[aEid]), address(this)))
-                    )
-                )
+        extExec = new TapiocaOmnichainExtExec(ICluster(address(0)), __owner);
+        pearlmit = new Pearlmit("Pearlmit", "1");
+        aTapOFT = new TapOFTV2Mock(
+            ITapToken.TapTokenConstructorData(
+                address(endpoints[aEid]),
+                __contributors,
+                __earlySupporters,
+                __supporters,
+                __lbp,
+                __dao,
+                __airdrop,
+                __governanceEid,
+                address(this),
+                address(new TapTokenSender("", "", address(endpoints[aEid]), address(this), address(0))),
+                address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this), address(0))),
+                address(extExec),
+                IPearlmit(address(pearlmit))
             )
         );
         vm.label(address(aTapOFT), "aTapOFT"); //label address for test traces
 
         erc721Mock = new ERC721Mock("MockERC721", "Mock"); //deploy ERC721Mock
         vm.label(address(erc721Mock), "erc721Mock"); //label address for test traces
-        tapOFTv2Helper = new TapOFTv2Helper();
+        tapOFTv2Helper = new TapTestHelper();
         tapOracleMock = new TapOracleMock();
 
         yieldBoxURIBuilder = new YieldBoxURIBuilder();
         wrappedNativeMock = new WrappedNativeMock();
         yieldBox = new YieldBox(IWrappedNative(wrappedNativeMock), yieldBoxURIBuilder);
-        otap = new OTAP();
-        aotap = new AOTAP(address(this)); //deploy AOTAP and set address to owner
+        otap = new OTAP(address(this));
+        aotap = new AOTAP(IPearlmit(address(pearlmit)), address(this)); //deploy AOTAP and set address to owner
 
-        tapiocaOptionLiquidityProvision = new TapiocaOptionLiquidityProvision(address(yieldBox), 7 days, address(owner));
-        tapiocaOptionBroker = new TapiocaOptionBroker(
-            address(tapiocaOptionLiquidityProvision),
-            payable(address(otap)),
-            payable(address(aTapOFT)),
-            address(tokenBeneficiary),
-            7 days,
-            address(owner)
-        );
+        tapiocaOptionLiquidityProvision =
+            new TapiocaOptionLiquidityProvision(address(yieldBox), 7 days, IPearlmit(address(pearlmit)), address(owner));
 
         airdropBroker = new AirdropBroker(
-            address(aotap), payable(address(aTapOFT)), address(erc721Mock), tokenBeneficiary, address(owner)
+            address(aotap), address(erc721Mock), tokenBeneficiary, IPearlmit(address(pearlmit)), address(owner)
         );
 
         vm.startPrank(owner);
-        mockToken = new MockToken("MockERC20", "Mock"); //deploy MockToken
+        mockToken = new ERC20Mock("MockERC20", "Mock"); //deploy ERC20Mock
         vm.label(address(mockToken), "erc20Mock"); //label address for test traces
         mockToken.transfer(address(this), 1_000_001 * 10 ** 18); //transfer some tokens to address(this)
         mockToken.transfer(address(airdropBroker), 333333 * 10 ** 18);
         bytes memory _data = abi.encode(uint256(1));
 
-        singularity = new MockToken("Singularity", "SGL"); //deploy singularity
+        singularity = new ERC20Mock("Singularity", "SGL"); //deploy singularity
 
         erc721Mock.mint(address(owner), 1); //mint NFT id 1 to owner
         erc721Mock.mint(address(tokenBeneficiary), 2); //mint NFT id 2 to beneficiary
@@ -271,7 +267,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         address user1 = address(0x01);
         bytes memory _data = abi.encode(uint256(3));
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        tapiocaOptionBroker.setPaymentToken((mockToken), IOracle(tapOracleMock), _data);
+        tapiocaOptionBroker.setPaymentToken((mockToken), ITapiocaOracle(tapOracleMock), _data);
 
         vm.stopPrank();
     }
@@ -280,8 +276,8 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         //ok
         vm.startPrank(owner);
         bytes memory _data = abi.encode(uint256(3));
-        tapiocaOptionBroker.setPaymentToken((mockToken), IOracle(tapOracleMock), _data);
-        IOracle _oracle = tapiocaOptionBroker.tapOracle();
+        tapiocaOptionBroker.setPaymentToken((mockToken), ITapiocaOracle(tapOracleMock), _data);
+        ITapiocaOracle _oracle = tapiocaOptionBroker.tapOracle();
         bytes memory data = tapiocaOptionBroker.tapOracleData();
 
         vm.stopPrank();
@@ -302,7 +298,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         bytes memory _data = abi.encode(uint256(2));
         tapiocaOptionBroker.setTapOracle(tapOracleMock, _data);
-        IOracle _oracle = tapiocaOptionBroker.tapOracle();
+        ITapiocaOracle _oracle = tapiocaOptionBroker.tapOracle();
         bytes memory data = tapiocaOptionBroker.tapOracleData();
         assertEq(address(_oracle), address(tapOracleMock));
         assertEq(data, _data);
