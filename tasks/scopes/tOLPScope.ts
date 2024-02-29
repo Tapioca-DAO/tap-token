@@ -17,7 +17,8 @@ tOLPScope
         setTOLPRegisterSingularity__task,
     )
     .addParam('sglAddress', 'Address of the SGL receipt token')
-    .addParam('weight', 'Weight of the gauge');
+    .addParam('weight', 'Weight of the gauge')
+    .addOptionalParam('tag', 'Tag of the deployment');
 
 tOLPScope
     .task(

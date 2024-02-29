@@ -1,8 +1,15 @@
+import {
+    ERC20WithoutStrategy__factory,
+    YieldBox__factory,
+} from '@tapioca-sdk/typechain/YieldBox';
+import {
+    TapiocaOptionBroker,
+    TapiocaOptionLiquidityProvision__factory,
+} from '@typechain/index';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import SDK from 'tapioca-sdk';
-import { TapiocaOptionBroker } from '@typechain/index';
-import { ERC20WithoutStrategy__factory } from '@tapioca-sdk/typechain/YieldBox';
-import { YieldBox__factory } from '@tapioca-sdk/typechain/YieldBox';
+import { DEPLOYMENT_NAMES } from 'tasks/deploy/DEPLOY_CONFIG';
+import { loadVM } from 'tasks/utils';
 
 export const setOracleMockRate__task = async (
     taskArgs: { rate: string; oracleAddress: string },
@@ -57,16 +64,18 @@ export const setTOLPRegisterSingularity__task = async (
 ) => {
     const signer = (await hre.ethers.getSigners())[0];
 
-    const tOLPAdress = SDK.API.db.getLocalDeployment(
-        await hre.getChainId(),
-        'TapiocaOptionLiquidityProvision',
+    const tOLPAddress = SDK.API.db.findLocalDeployment(
+        hre.SDK.eChainId,
+        DEPLOYMENT_NAMES.TAPIOCA_OPTION_LIQUIDITY_PROVISION,
         taskArgs.tag,
     )?.address;
-    if (!tOLPAdress)
+
+    if (!tOLPAddress)
         throw new Error('TapiocaOptionLiquidityProvision not found');
-    const tOLP = await hre.ethers.getContractAt(
-        'TapiocaOptionLiquidityProvision',
-        tOLPAdress,
+
+    const tOLP = TapiocaOptionLiquidityProvision__factory.connect(
+        tOLPAddress,
+        signer,
     );
 
     const yieldBox = YieldBox__factory.connect(await tOLP.yieldBox(), signer);
@@ -75,6 +84,7 @@ export const setTOLPRegisterSingularity__task = async (
         yieldBox.address,
         taskArgs.sglAddress,
     );
+    await strategy.deployed();
 
     await (
         await yieldBox.registerAsset(
@@ -88,20 +98,22 @@ export const setTOLPRegisterSingularity__task = async (
     const assetID = await yieldBox.ids(
         1,
         taskArgs.sglAddress,
-        (
-            await strategy
-        ).address,
+        strategy.address,
         0,
     );
-    console.log('assetID', assetID);
 
-    await (
-        await tOLP.registerSingularity(
-            taskArgs.sglAddress,
-            assetID,
-            taskArgs.weight,
-        )
-    ).wait();
+    const VM = await loadVM(hre, taskArgs.tag);
+    await VM.executeMulticall([
+        {
+            target: tOLP.address,
+            allowFailure: false,
+            callData: tOLP.interface.encodeFunctionData('registerSingularity', [
+                taskArgs.sglAddress,
+                assetID,
+                taskArgs.weight,
+            ]),
+        },
+    ]);
 };
 
 export const setTOLPUnregisterSingularity__task = async (
