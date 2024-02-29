@@ -18,6 +18,7 @@ export const DEPLOYMENT_NAMES = {
     AIRDROP_BROKER: 'AIRDROP_BROKER',
     TAP_WETH_UNI_V3_POOL: 'TAP_WETH_UNI_V3_POOL',
     USDC_SEER_CL_ORACLE: 'USDC_SEER_CL_ORACLE',
+    EXT_EXEC: 'EXT_EXEC',
     // Final
     TAPIOCA_OPTION_LIQUIDITY_PROVISION: 'TAPIOCA_OPTION_LIQUIDITY_PROVISION',
     TAPIOCA_OPTION_BROKER: 'TAPIOCA_OPTION_BROKER',
@@ -28,6 +29,8 @@ export const DEPLOYMENT_NAMES = {
     // TO MOVE
     ARBITRUM_SGL_GLP: 'ARBITRUM_SGL_GLP', // TODO move to tapioca bar repo name config
     MAINNET_SGL_DAI: 'MAINNET_SGL_DAI', // TODO move to tapioca bar repo name config
+    PEARLMIT: 'PEARLMIT', // TODO move to tapioca periph repo name config
+    CLUSTER: 'CLUSTER', // TODO move to tapioca periph repo name config
 };
 
 type TPostLbp = {

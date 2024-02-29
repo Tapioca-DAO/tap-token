@@ -13,6 +13,9 @@ import { buildTapTokenSenderModule } from '../deployBuilds/postLbpStack/tapToken
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
 import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
+import { temp__buildPearlmit } from 'tasks/deployBuilds/postLbpStack/pearlmit/temp__buildPearlmit';
+import { temp__buildCluster } from 'tasks/deployBuilds/postLbpStack/cluster/temp__buildCluster';
+import { buildExtExec } from 'tasks/deployBuilds/postLbpStack/tapToken/buildExtExec';
 
 export const deployPostLbpStack__task = async (
     taskArgs: { tag?: string; load?: boolean; verify: boolean },
@@ -40,10 +43,19 @@ export const deployPostLbpStack__task = async (
     } else {
         // Build contracts
         VM.add(
-            await buildAOTAP(hre, DEPLOYMENT_NAMES.AOTAP, [
+            await temp__buildCluster(hre, DEPLOYMENT_NAMES.CLUSTER, [
+                chainInfo.lzChainId,
                 tapiocaMulticall.address,
             ]),
         )
+            .add(
+                await temp__buildPearlmit(hre, DEPLOYMENT_NAMES.PEARLMIT, [
+                    'Pearlmit',
+                    '1',
+                ]),
+            )
+            .add(await getExtExec(hre, tapiocaMulticall.address))
+            .add(await getAOTAP(hre, tapiocaMulticall.address))
             .add(await getVestingContributors(hre, tapiocaMulticall.address))
             .add(await getVestingEarlySupporters(hre, tapiocaMulticall.address))
             .add(await getVestingSupporters(hre, tapiocaMulticall.address))
@@ -106,6 +118,40 @@ export const deployPostLbpStack__task = async (
     console.log('[+] Post LBP Stack deployed! 🎉');
 };
 
+async function getExtExec(hre: HardhatRuntimeEnvironment, owner: string) {
+    return await buildExtExec(
+        hre,
+        DEPLOYMENT_NAMES.EXT_EXEC,
+        [
+            hre.ethers.constants.AddressZero, // cluster
+            owner,
+        ],
+        [
+            {
+                argPosition: 0,
+                deploymentName: DEPLOYMENT_NAMES.CLUSTER,
+            },
+        ],
+    );
+}
+
+async function getAOTAP(hre: HardhatRuntimeEnvironment, owner: string) {
+    return await buildAOTAP(
+        hre,
+        DEPLOYMENT_NAMES.AOTAP,
+        [
+            hre.ethers.constants.AddressZero, // Pearlmit
+            owner,
+        ],
+        [
+            {
+                argPosition: 0,
+                deploymentName: DEPLOYMENT_NAMES.PEARLMIT,
+            },
+        ],
+    );
+}
+
 async function getVestingContributors(
     hre: HardhatRuntimeEnvironment,
     owner: string,
@@ -150,12 +196,17 @@ async function getAdb(hre: HardhatRuntimeEnvironment, owner: string) {
             DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.PCNFT.ADDRESS, // PCNFT
             DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.ADB
                 .PAYMENT_TOKEN_BENEFICIARY, // Payment token beneficiary
+            hre.ethers.constants.AddressZero, // Pearlmit
             owner, // Owner
         ],
         [
             {
                 argPosition: 0,
                 deploymentName: DEPLOYMENT_NAMES.AOTAP,
+            },
+            {
+                argPosition: 3,
+                deploymentName: DEPLOYMENT_NAMES.PEARLMIT,
             },
         ],
     );
@@ -174,6 +225,7 @@ async function getTapTokenSenderModule(
             '', // Symbol
             lzEndpointAddress, // Endpoint address
             owner, // Owner
+            hre.ethers.constants.AddressZero, // ExtExec
         ],
     );
 }
@@ -191,6 +243,7 @@ async function getTapTokenReceiverModule(
             '', // Symbol
             lzEndpointAddress, // Endpoint address
             owner, // Owner
+            hre.ethers.constants.AddressZero, // ExtExec
         ],
     );
 }
@@ -202,53 +255,75 @@ async function getTapToken(
     owner: string,
     lzEndpointAddress: string,
 ) {
-    const ltap = hre.SDK.db.findLocalDeployment(
+    const aoTap = hre.SDK.db.findLocalDeployment(
         hre.SDK.eChainId,
-        DEPLOYMENT_NAMES.LTAP,
+        DEPLOYMENT_NAMES.AOTAP,
         tag,
     );
-    if (!ltap) throw new Error('[-] LTAP not found');
+    if (!aoTap) throw new Error('[-] aoTap not found');
 
     return await buildTapToken(
         hre,
         DEPLOYMENT_NAMES.TAP_TOKEN,
         [
-            lzEndpointAddress, // Endpoint address
-            hre.ethers.constants.AddressZero, //contributors address
-            hre.ethers.constants.AddressZero, // early supporters address
-            hre.ethers.constants.AddressZero, // supporters address
-            ltap.address, // LTap address
-            DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS, // DAO address
-            hre.ethers.constants.AddressZero, // AirdropBroker address,
-            isTestnet ? ELZChainID.ARBITRUM_SEPOLIA : ELZChainID.ARBITRUM, // Governance LZ ChainID
-            owner, // Owner
-            hre.ethers.constants.AddressZero, // TapTokenSenderModule
-            hre.ethers.constants.AddressZero, // TapTokenReceiverModule
+            {
+                endpoint: lzEndpointAddress, // Endpoint address
+                contributors: hre.ethers.constants.AddressZero, //contributors address
+                earlySupporters: hre.ethers.constants.AddressZero, // early supporters address
+                supporters: hre.ethers.constants.AddressZero, // supporters address
+                aoTap: aoTap.address, // aoTap address
+                dao: DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS, // DAO address
+                airdrop: hre.ethers.constants.AddressZero, // AirdropBroker address,
+                governanceEid: isTestnet
+                    ? ELZChainID.ARBITRUM_SEPOLIA
+                    : ELZChainID.ARBITRUM, // Governance LZ ChainID
+                owner: owner, // Owner
+                tapTokenSenderModule: hre.ethers.constants.AddressZero, // TapTokenSenderModule
+                tapTokenReceiverModule: hre.ethers.constants.AddressZero, // TapTokenReceiverModule
+                extExec: hre.ethers.constants.AddressZero, // ExtExec
+                pearlmit: hre.ethers.constants.AddressZero, // Pearlmit
+            },
         ],
         [
             {
-                argPosition: 1,
+                argPosition: 0,
                 deploymentName: DEPLOYMENT_NAMES.VESTING_CONTRIBUTORS,
+                keyName: 'contributors',
             },
             {
-                argPosition: 2,
+                argPosition: 0,
                 deploymentName: DEPLOYMENT_NAMES.VESTING_EARLY_SUPPORTERS,
+                keyName: 'earlySupporters',
             },
             {
-                argPosition: 3,
+                argPosition: 0,
                 deploymentName: DEPLOYMENT_NAMES.VESTING_SUPPORTERS,
+                keyName: 'supporters',
             },
             {
-                argPosition: 6,
+                argPosition: 0,
                 deploymentName: DEPLOYMENT_NAMES.AIRDROP_BROKER,
+                keyName: 'airdrop',
             },
             {
-                argPosition: 9,
+                argPosition: 0,
                 deploymentName: DEPLOYMENT_NAMES.TAP_TOKEN_SENDER_MODULE,
+                keyName: 'tapTokenSenderModule',
             },
             {
-                argPosition: 10,
+                argPosition: 0,
                 deploymentName: DEPLOYMENT_NAMES.TAP_TOKEN_RECEIVER_MODULE,
+                keyName: 'tapTokenReceiverModule',
+            },
+            {
+                argPosition: 0,
+                deploymentName: DEPLOYMENT_NAMES.EXT_EXEC,
+                keyName: 'extExec',
+            },
+            {
+                argPosition: 0,
+                deploymentName: DEPLOYMENT_NAMES.PEARLMIT,
+                keyName: 'pearlmit',
             },
         ],
     );
