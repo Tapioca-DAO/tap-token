@@ -51,7 +51,7 @@ interface ITapToken is ITapiocaOmnichainEngine {
         address contributors;
         address earlySupporters;
         address supporters;
-        address aoTap;
+        address lTap;
         address dao;
         address airdrop;
         uint256 governanceEid;

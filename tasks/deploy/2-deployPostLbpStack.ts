@@ -255,12 +255,12 @@ async function getTapToken(
     owner: string,
     lzEndpointAddress: string,
 ) {
-    const aoTap = hre.SDK.db.findLocalDeployment(
+    const lTap = hre.SDK.db.findLocalDeployment(
         hre.SDK.eChainId,
-        DEPLOYMENT_NAMES.AOTAP,
+        DEPLOYMENT_NAMES.LTAP,
         tag,
     );
-    if (!aoTap) throw new Error('[-] aoTap not found');
+    if (!lTap) throw new Error('[-] lTap not found');
 
     return await buildTapToken(
         hre,
@@ -271,7 +271,7 @@ async function getTapToken(
                 contributors: hre.ethers.constants.AddressZero, //contributors address
                 earlySupporters: hre.ethers.constants.AddressZero, // early supporters address
                 supporters: hre.ethers.constants.AddressZero, // supporters address
-                aoTap: aoTap.address, // aoTap address
+                lTap: lTap.address, // lTap address
                 dao: DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS, // DAO address
                 airdrop: hre.ethers.constants.AddressZero, // AirdropBroker address,
                 governanceEid: isTestnet

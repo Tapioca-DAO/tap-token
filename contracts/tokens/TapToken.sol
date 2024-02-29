@@ -123,7 +123,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      * @param _data.contributors Address of the  contributors. 15m TAP.
      * @param _data.earlySupporters Address of early supporters. 3,686,595 TAP.
      * @param _data.supporters Address of supporters. 12.5m TAP.
-     * @param _data.aoTap Address of the LBP redemption token, aoTap. 5m TAP.
+     * @param _data.lTap Address of the LBP redemption token, lTap. 5m TAP.
      * @param _data.dao Address of the DAO. 8m TAP.
      * @param _data.airdrop Address of the airdrop contract. 2.5m TAP.
      * @param _data.governanceEid Governance chain endpoint ID. Should be EID of the twTAP chain.
@@ -146,7 +146,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
             _mint(_data.contributors, 1e18 * 15_000_000);
             _mint(_data.earlySupporters, 1e18 * 3_686_595);
             _mint(_data.supporters, 1e18 * 12_500_000);
-            _mint(_data.aoTap, 1e18 * 5_000_000);
+            _mint(_data.lTap, 1e18 * 5_000_000);
             _mint(_data.dao, 1e18 * 8_000_000);
             _mint(_data.airdrop, 1e18 * 2_500_000);
             if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
