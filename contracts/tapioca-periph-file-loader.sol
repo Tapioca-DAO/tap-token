@@ -6,3 +6,4 @@ pragma solidity 0.8.22;
 /// Comment the imports for faster compilation
 
 import {Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
+import {Cluster} from "tapioca-periph/Cluster/Cluster.sol";
