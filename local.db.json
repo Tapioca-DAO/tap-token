@@ -148,57 +148,62 @@
             "contracts": [
                 {
                     "name": "TAPIOCA_OPTION_LIQUIDITY_PROVISION",
-                    "address": "0x295cEeeb5Ff75005949E8918283a67F8Cbab3058",
+                    "address": "0xe34015Aa01170c7a220643de97B3fF787a0e094c",
                     "meta": {
                         "args": [
                             "0xc8A3602A81A4c77Cbf067B606c1734eB0eBd7b63",
                             604800,
+                            "0x0F123db79b5115d95a016c3a5B416D6Fe3936413",
                             "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
                         ],
-                        "salt": "0x33c967451f36cc56040aad8b942fb8671741cec185413e0099ce2714be4fa228",
+                        "salt": "0x0731357d705f82540facbbb537d845c452e1b2aa67a4aedc5f989606e76c2ccf",
                         "create2": true
                     }
                 },
                 {
                     "name": "OTAP",
-                    "address": "0x7fc6a8fd4DE792922169A5146D7273926F2f0890",
+                    "address": "0x7505B65100be45e09e87F5DB60d41527456D7371",
                     "meta": {
-                        "args": [],
-                        "salt": "0x239af2b5a746014943e06e013841f1d03b4c77b6d0fe8c5857798d02cf0a7ac6",
+                        "args": [
+                            "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
+                        ],
+                        "salt": "0x32ee3710f53e6ae02c25073687a244e545fec9e0d88161e0dbd0f793554d98ad",
                         "create2": true
                     }
                 },
                 {
                     "name": "TAPIOCA_OPTION_BROKER",
-                    "address": "0xb7055449859C5ee25D7f2691bb33299ccd64e586",
+                    "address": "0x7De418e5dE1996887b4a46dFa866bB1682564900",
                     "meta": {
                         "args": [
-                            "0x295cEeeb5Ff75005949E8918283a67F8Cbab3058",
-                            "0x7fc6a8fd4DE792922169A5146D7273926F2f0890",
-                            "0x1Ff791A03F0C26a7bEa6734059a0793902D53E45",
+                            "0xe34015Aa01170c7a220643de97B3fF787a0e094c",
+                            "0x7505B65100be45e09e87F5DB60d41527456D7371",
+                            "0x456460379c1a0dfbdEf2257Ea98B2e8DD970617E",
                             "0x464570adA09869d8741132183721B4f0769a0287",
                             604800,
+                            "0x0F123db79b5115d95a016c3a5B416D6Fe3936413",
                             "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
                         ],
-                        "salt": "0xbf3785e7ecdf19b61739c2438cf01b2fb06f967bf2d36a9e043c7a2e04ae2689",
+                        "salt": "0xc23eb9a900d19d0db3f7801a948ce50526d2cf231113d10da96c7d381b91dba1",
                         "create2": true
                     }
                 },
                 {
                     "name": "TWTAP",
-                    "address": "0xe9AeB737b468E0b3C0E76d9276C2f022dF343097",
+                    "address": "0xeae94495b8A4865D5B7427443b16ce80Bf786283",
                     "meta": {
                         "args": [
-                            "0x1Ff791A03F0C26a7bEa6734059a0793902D53E45",
+                            "0x456460379c1a0dfbdEf2257Ea98B2e8DD970617E",
+                            "0x0F123db79b5115d95a016c3a5B416D6Fe3936413",
                             "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
                         ],
-                        "salt": "0x46d72cbe2226530e11acf7ddd335a1b4c3c606663b105fbaeb1d8fe21337ec51",
+                        "salt": "0x47e464f6b3292e9b9cb620dce7d0b8262176305a04df3ef7acc299a7e4f3cf6b",
                         "create2": true
                     }
                 },
                 {
                     "name": "MOCK_USDC",
-                    "address": "0x1dF9f5b134a105Bc4B0f29599575403b5d2C0684",
+                    "address": "0x96c772c7512db8eaD661cCDeB28DA7cEEF1A78E6",
                     "meta": {
                         "args": [
                             "MOCK_USDC",
@@ -207,157 +212,201 @@
                             6,
                             "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
                         ],
-                        "salt": "0x0344e26997d6bbbf183cae8aaef4ea19ee61d16fc8244807aa549a47b3e76663",
+                        "salt": "0xb60b2efab2ed4b02612d001f17a8756ae6c7fb972e835275ce1276d1b37fe18a",
                         "create2": true
                     }
                 },
                 {
                     "name": "USDC_SEER_CL_ORACLE",
-                    "address": "0xF62804d3D2eCfFDdAd3C64c6095107dEE0E3Bd6a",
+                    "address": "0x9e10C49DF5E5724f431f3D54E285622eeB079925",
                     "meta": {
                         "args": [
                             "MOCK_USDC_ORACLE",
                             "MOCK_USDC_ORACLE",
                             "1000000000000000000"
                         ],
-                        "salt": "0xf6ea495d34eeff2d681a444a03983eacaf4d3f5cb2840fd83fb212ce6601dad3",
+                        "salt": "0xc7524c16dd16870a8ed0d4589c827bf596091ef57a8e2ee3d55f92b2d93c787a",
                         "create2": true
                     }
                 },
                 {
                     "name": "TAP_ORACLE",
-                    "address": "0x94C0200285D135251831a35fA94F8bAd2293e31F",
+                    "address": "0x786e5be0216a95CA01E26cc61971d1E59e6d790C",
                     "meta": {
                         "args": [
                             "MOCK_TAP_ORACLE",
                             "MOCK_TAP_ORACLE",
                             "3300000000000000000"
                         ],
-                        "salt": "0x933534dbada4e71caddbc3de1dc85fd8db9b641799d019199c69f99aade2cef4",
+                        "salt": "0xbcbd934a5be8c9fd8e10665e11a57ab0a58f456d9682c33a0b3fa0b94b975ef9",
+                        "create2": true
+                    }
+                },
+                {
+                    "name": "CLUSTER",
+                    "address": "0xe845e959B63dF099Dd4F972705e2c0290DBAd906",
+                    "meta": {
+                        "args": [
+                            "40231",
+                            "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
+                        ],
+                        "salt": "0x5e0c7739b9b42c3ba8872a20cb444fbfc46bc448c69eeed30fb2fafc8a901785",
+                        "create2": true
+                    }
+                },
+                {
+                    "name": "PEARLMIT",
+                    "address": "0x0F123db79b5115d95a016c3a5B416D6Fe3936413",
+                    "meta": {
+                        "args": [
+                            "Pearlmit",
+                            "1"
+                        ],
+                        "salt": "0xe0dae475511d4d6a68fe98096c6ee30bb40166d5ae80b1100fe24d89d678f9c5",
+                        "create2": true
+                    }
+                },
+                {
+                    "name": "EXT_EXEC",
+                    "address": "0xb4F9b5Ab885a3602D041591e1e396e3CFE54550a",
+                    "meta": {
+                        "args": [
+                            "0xe845e959B63dF099Dd4F972705e2c0290DBAd906",
+                            "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
+                        ],
+                        "salt": "0x02d957099fab68a97d05f692fcaf82d595da3810c6de35b20eef43baa4185831",
                         "create2": true
                     }
                 },
                 {
                     "name": "AOTAP",
-                    "address": "0x99A1D909e6b85eD01946A07DA8b12F3Fdc1E7299",
+                    "address": "0xdB71a5Afb7F0C0dc0e1DF9bf98Db49Ad5DA96F64",
                     "meta": {
                         "args": [
+                            "0x0F123db79b5115d95a016c3a5B416D6Fe3936413",
                             "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
                         ],
-                        "salt": "0xbe1cadd6c230f1e58453b66a555971ae096a3de7447c339c1c02b80d2a89265c",
+                        "salt": "0x33fa0049c3b673bf856c0bd347f6ce6c5b511e7fb896d8263f114d220e5d8099",
                         "create2": true
                     }
                 },
                 {
                     "name": "VESTING_CONTRIBUTORS",
-                    "address": "0xB58C3C524404c44c804757F983ca337d7c9B349B",
+                    "address": "0x4DF9456e828C6Ea9DcceEa66357fa5FC504a16b0",
                     "meta": {
                         "args": [
                             31104000,
                             93312000,
                             "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
                         ],
-                        "salt": "0x1fee82a74bb4f4cf2922ec0d529d597f0899ba8fa9bdeac25bca24435165bfaa",
+                        "salt": "0xe877e41bbee283c4d391ef3540c55c13c2884dc77cbaf290a7c19d99af53b77a",
                         "create2": true
                     }
                 },
                 {
                     "name": "VESTING_EARLY_SUPPORTERS",
-                    "address": "0xC03bD86BB9ACE0D5cC1A36b45A1D9a969FFCb4D1",
+                    "address": "0x2B7eabF9a608e103E0e1d64D88E93ad13673c8Ff",
                     "meta": {
                         "args": [
                             0,
                             62208000,
                             "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
                         ],
-                        "salt": "0xa712c0e3b243a34fe5e5e1136ced90fec389f74afb19fd3b75287ebf42009064",
+                        "salt": "0xd8e81ffa8f66f0a20f535b2730c9e867c73ab17efb69ce0606a0d31c777c4c78",
                         "create2": true
                     }
                 },
                 {
                     "name": "VESTING_SUPPORTERS",
-                    "address": "0xBcC31b6A69bAcD60805F29F1A4CB3BAF22b07242",
+                    "address": "0x5a3a4f64F80137a55fDdf9CdE8e8c0196532A875",
                     "meta": {
                         "args": [
                             0,
                             46656000,
                             "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
                         ],
-                        "salt": "0x261ab2e58c8b3b85130d2c906dede5d83a251a3a7993cbd67ee84687e543dc21",
+                        "salt": "0x673c4ca447c999184c554f66bbf8800d73a4b27f48122b15cfe1ad45517a6c4b",
                         "create2": true
                     }
                 },
                 {
                     "name": "AIRDROP_BROKER",
-                    "address": "0xb72fA90841850DdB84105E85D1428a77516A8e65",
+                    "address": "0x8CDF1c22B646682F2E513f7a425eC8763dEf75Ad",
                     "meta": {
                         "args": [
-                            "0x99A1D909e6b85eD01946A07DA8b12F3Fdc1E7299",
+                            "0xdB71a5Afb7F0C0dc0e1DF9bf98Db49Ad5DA96F64",
                             "0x464570adA09869d8741132183721B4f0769a0287",
                             "0x464570adA09869d8741132183721B4f0769a0287",
+                            "0x0F123db79b5115d95a016c3a5B416D6Fe3936413",
                             "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
                         ],
-                        "salt": "0x78116d29425c5bd2a08c4e8b1772d3821ca6f359f7bf85995a586990dec2cb0e",
+                        "salt": "0xeabed62162b32a5c0b7608ee1cc5ec47e8891069989219fc41d384725d9b1f54",
                         "create2": true
                     }
                 },
                 {
                     "name": "TAP_TOKEN_SENDER_MODULE",
-                    "address": "0x2DC29B5e8C8BA319b7867c462738870277844f7f",
+                    "address": "0x49d2Ad43a824366fe76bF9D96F99b2BF88C8632d",
                     "meta": {
                         "args": [
                             "",
                             "",
                             "0x464570adA09869d8741132183721B4f0769a0287",
-                            "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
+                            "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268",
+                            "0x0000000000000000000000000000000000000000"
                         ],
-                        "salt": "0x14cbba5838c802897dc2cfd78198d4d5c17236dae67e85fb49686831a76bf467",
+                        "salt": "0x434cdc2d17c0a454f44b882d617e9aa8cb081a2b723db25a9306eb02261ab597",
                         "create2": true
                     }
                 },
                 {
                     "name": "TAP_TOKEN_RECEIVER_MODULE",
-                    "address": "0xc0894eb20fb1Cbc77072C2167aED93C68De4377D",
+                    "address": "0xB08710F369752597E080c45b2703f9d91c92B8Be",
                     "meta": {
                         "args": [
                             "",
                             "",
                             "0x464570adA09869d8741132183721B4f0769a0287",
-                            "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
+                            "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268",
+                            "0x0000000000000000000000000000000000000000"
                         ],
-                        "salt": "0xbe64632124ea9e322f63dedb01a3fb391171f882d73d15a23003409df5f9cd6d",
+                        "salt": "0x81072dae663016705ca11e788dd0db059e136914d424b4ea8306d45c7e949578",
                         "create2": true
                     }
                 },
                 {
                     "name": "TAP_TOKEN",
-                    "address": "0x1Ff791A03F0C26a7bEa6734059a0793902D53E45",
+                    "address": "0x456460379c1a0dfbdEf2257Ea98B2e8DD970617E",
                     "meta": {
                         "args": [
-                            "0x464570adA09869d8741132183721B4f0769a0287",
-                            "0xB58C3C524404c44c804757F983ca337d7c9B349B",
-                            "0xC03bD86BB9ACE0D5cC1A36b45A1D9a969FFCb4D1",
-                            "0xBcC31b6A69bAcD60805F29F1A4CB3BAF22b07242",
-                            "0x16A876bFb97CC61D86557E0FdbC5851D27590709",
-                            "0x464570adA09869d8741132183721B4f0769a0287",
-                            "0xb72fA90841850DdB84105E85D1428a77516A8e65",
-                            "40231",
-                            "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268",
-                            "0x2DC29B5e8C8BA319b7867c462738870277844f7f",
-                            "0xc0894eb20fb1Cbc77072C2167aED93C68De4377D"
+                            {
+                                "endpoint": "0x464570adA09869d8741132183721B4f0769a0287",
+                                "contributors": "0x4DF9456e828C6Ea9DcceEa66357fa5FC504a16b0",
+                                "earlySupporters": "0x2B7eabF9a608e103E0e1d64D88E93ad13673c8Ff",
+                                "supporters": "0x5a3a4f64F80137a55fDdf9CdE8e8c0196532A875",
+                                "aoTap": "0xf0366535C1503c6c478Ba8dd5718F551A6330F0e",
+                                "dao": "0x464570adA09869d8741132183721B4f0769a0287",
+                                "airdrop": "0x8CDF1c22B646682F2E513f7a425eC8763dEf75Ad",
+                                "governanceEid": "40231",
+                                "owner": "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268",
+                                "tapTokenSenderModule": "0x49d2Ad43a824366fe76bF9D96F99b2BF88C8632d",
+                                "tapTokenReceiverModule": "0xB08710F369752597E080c45b2703f9d91c92B8Be",
+                                "extExec": "0xb4F9b5Ab885a3602D041591e1e396e3CFE54550a",
+                                "pearlmit": "0x0F123db79b5115d95a016c3a5B416D6Fe3936413"
+                            }
                         ],
-                        "salt": "0x5a549aab7fc123b91ace043185a4caed177dfdad040c7a90660f78226b4d5c0c",
+                        "salt": "0x0f9a8bef8580f1f5635334c68e4edc0a905c7afa894d187d9737902d74baef8d",
                         "create2": true
                     }
                 },
                 {
                     "name": "LTAP",
-                    "address": "0x16A876bFb97CC61D86557E0FdbC5851D27590709",
+                    "address": "0xe1bDFEF8Aaf370525aE6722B76291f52B5157933",
                     "meta": {
                         "args": [
                             "0xaC39b311DCEb2A4b2f5d8461c1cdaF756F4F7Ae9"
                         ],
-                        "salt": "0xab8c5392011f12c616c62f97cacf603e3abcdf226a4cda51bf7d45d80051e558",
+                        "salt": "0x95e6b347095768cca0ddaf775c4323b22445f10c17ad81137d29ac7626b1c408",
                         "create2": true
                     }
                 }
