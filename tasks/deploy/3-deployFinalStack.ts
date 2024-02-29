@@ -44,7 +44,7 @@ export const deployFinalStack__task = async (
                 pearlmit.address,
             ),
         )
-            .add(await buildOTAP(hre, DEPLOYMENT_NAMES.OTAP))
+            .add(await getOtap(hre, tapiocaMulticall.address))
             .add(
                 await getTob(
                     hre,
@@ -140,6 +140,10 @@ async function getTolp(
             owner, // Owner
         ],
     );
+}
+
+async function getOtap(hre: HardhatRuntimeEnvironment, owner: string) {
+    return await buildOTAP(hre, DEPLOYMENT_NAMES.OTAP, [owner]);
 }
 
 async function getTob(

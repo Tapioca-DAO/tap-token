@@ -8,7 +8,9 @@ export const buildTapTokenReceiverModule = async (
     args: Parameters<TapTokenReceiver__factory['deploy']>,
 ): Promise<IDeployerVMAdd<TapTokenReceiver__factory>> => {
     return {
-        contract: await hre.ethers.getContractFactory('TapTokenReceiver'),
+        contract: new TapTokenReceiver__factory(
+            hre.ethers.provider.getSigner(),
+        ),
         deploymentName,
         args,
         dependsOn: [],

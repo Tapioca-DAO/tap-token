@@ -10,9 +10,7 @@ export const buildTwTap = async (
     dependsOn: IDependentOn[],
 ): Promise<IDeployerVMAdd<TwTAP__factory>> => {
     return {
-        contract: (await hre.ethers.getContractFactory(
-            'TwTAP',
-        )) as TwTAP__factory,
+        contract: new TwTAP__factory(hre.ethers.provider.getSigner()),
         deploymentName,
         args,
         dependsOn,

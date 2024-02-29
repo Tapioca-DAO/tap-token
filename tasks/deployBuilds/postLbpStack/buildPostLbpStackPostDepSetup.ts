@@ -4,6 +4,11 @@ import {
     SeerUniSolo__factory,
     TapiocaMulticall,
 } from '@tapioca-sdk/typechain/tapioca-periphery';
+import {
+    AOTAP__factory,
+    AirdropBroker__factory,
+    TapToken__factory,
+} from '@typechain/index';
 import { Token } from '@uniswap/sdk-core';
 import { FeeAmount, computePoolAddress } from '@uniswap/v3-sdk';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -280,17 +285,17 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         'ERC20',
         DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.WETH,
     );
-    const tapToken = await hre.ethers.getContractAt(
-        'TapToken',
+    const tapToken = await TapToken__factory.connect(
         getContract(hre, tag, DEPLOYMENT_NAMES.TAP_TOKEN).address,
+        hre.ethers.provider.getSigner(),
     );
-    const adb = await hre.ethers.getContractAt(
-        'AirdropBroker',
+    const adb = AirdropBroker__factory.connect(
         getContract(hre, tag, DEPLOYMENT_NAMES.AIRDROP_BROKER).address,
+        hre.ethers.provider.getSigner(),
     );
-    const aoTap = await hre.ethers.getContractAt(
-        'AOTAP',
+    const aoTap = AOTAP__factory.connect(
         getContract(hre, tag, DEPLOYMENT_NAMES.AOTAP).address,
+        hre.ethers.provider.getSigner(),
     );
     const uniV3Factory = await hre.ethers.getContractAt(
         'IUniswapV3Factory',

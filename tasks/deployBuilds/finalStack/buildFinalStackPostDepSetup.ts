@@ -1,7 +1,14 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { EChainID, TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import { TContract } from '@tapioca-sdk/shared';
-import { IYieldBox } from '@typechain/index';
+import {
+    IYieldBox,
+    OTAP__factory,
+    TapToken__factory,
+    TapiocaOptionBroker__factory,
+    TapiocaOptionLiquidityProvision__factory,
+    TwTAP__factory,
+} from '@typechain/index';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { TapiocaMulticall } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from 'tasks/deploy/DEPLOY_CONFIG';
@@ -285,29 +292,29 @@ export const buildFinalStackPostDepSetup_2 = async (
 };
 
 async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
-    const tapToken = await hre.ethers.getContractAt(
-        'TapToken',
+    const tapToken = TapToken__factory.connect(
         getContract(hre, tag, DEPLOYMENT_NAMES.TAP_TOKEN).address,
+        hre.ethers.provider.getSigner(),
     );
-    const twTap = await hre.ethers.getContractAt(
-        'TwTAP',
+    const twTap = TwTAP__factory.connect(
         getContract(hre, tag, DEPLOYMENT_NAMES.TWTAP).address,
+        hre.ethers.provider.getSigner(),
     );
-    const tob = await hre.ethers.getContractAt(
-        'TapiocaOptionBroker',
+    const tob = TapiocaOptionBroker__factory.connect(
         getContract(hre, tag, DEPLOYMENT_NAMES.TAPIOCA_OPTION_BROKER).address,
+        hre.ethers.provider.getSigner(),
     );
-    const oTap = await hre.ethers.getContractAt(
-        'OTAP',
+    const oTap = OTAP__factory.connect(
         getContract(hre, tag, DEPLOYMENT_NAMES.OTAP).address,
+        hre.ethers.provider.getSigner(),
     );
-    const tOlp = await hre.ethers.getContractAt(
-        'TapiocaOptionLiquidityProvision',
+    const tOlp = TapiocaOptionLiquidityProvision__factory.connect(
         getContract(
             hre,
             tag,
             DEPLOYMENT_NAMES.TAPIOCA_OPTION_LIQUIDITY_PROVISION,
         ).address,
+        hre.ethers.provider.getSigner(),
     );
     const yieldbox = await hre.ethers.getContractAt(
         'IYieldBox',
