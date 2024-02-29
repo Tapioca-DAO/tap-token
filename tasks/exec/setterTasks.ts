@@ -4,6 +4,7 @@ import {
 } from '@tapioca-sdk/typechain/YieldBox';
 import {
     TapiocaOptionBroker,
+    TapiocaOptionBroker__factory,
     TapiocaOptionLiquidityProvision__factory,
 } from '@typechain/index';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -31,27 +32,30 @@ export const setTOBPaymentToken__task = async (
     },
     hre: HardhatRuntimeEnvironment,
 ) => {
-    const contractName = !!hre.network.tags['testnet']
-        ? 'TapiocaOptionBrokerMock'
-        : 'TapiocaOptionBroker';
-    const tOBAddress = SDK.API.db.getLocalDeployment(
-        await hre.getChainId(),
-        contractName,
+    const tOBAddress = SDK.API.db.findLocalDeployment(
+        hre.SDK.eChainId,
+        DEPLOYMENT_NAMES.TAPIOCA_OPTION_BROKER,
         taskArgs.tag,
     )?.address;
     if (!tOBAddress) throw new Error('TapiocaOptionBroker not found');
-    const tOB = (await hre.ethers.getContractAt(
-        contractName,
-        tOBAddress,
-    )) as TapiocaOptionBroker;
 
-    await (
-        await tOB.setPaymentToken(
-            taskArgs.tknAddress,
-            taskArgs.oracleAddress,
-            taskArgs.oracleData,
-        )
-    ).wait();
+    const tOB = TapiocaOptionBroker__factory.connect(
+        tOBAddress,
+        hre.ethers.provider,
+    );
+
+    const VM = await loadVM(hre, taskArgs.tag);
+    await VM.executeMulticall([
+        {
+            target: tOB.address,
+            allowFailure: false,
+            callData: tOB.interface.encodeFunctionData('setPaymentToken', [
+                taskArgs.tknAddress,
+                taskArgs.oracleAddress,
+                taskArgs.oracleData,
+            ]),
+        },
+    ]);
 };
 
 export const setTOLPRegisterSingularity__task = async (
