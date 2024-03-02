@@ -10,9 +10,7 @@ export const buildLTap = async (
     dependsOn: IDependentOn[],
 ): Promise<IDeployerVMAdd<LTap__factory>> => {
     return {
-        contract: (await hre.ethers.getContractFactory(
-            'LTap',
-        )) as LTap__factory,
+        contract: await hre.ethers.getContractFactory('LTap'),
         deploymentName,
         args,
         dependsOn,
