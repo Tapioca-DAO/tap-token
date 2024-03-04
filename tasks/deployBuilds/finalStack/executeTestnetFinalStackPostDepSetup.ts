@@ -29,6 +29,20 @@ export const executeTestnetFinalStackPostDepSetup = async (
             ]),
         )
             .add(
+                await buildOracleMock(hre, DEPLOYMENT_NAMES.TOB_TAP_ORACLE, [
+                    'MOCK_TOB_TAP_ORACLE',
+                    'MOCK_TOB_TAP_ORACLE',
+                    (33e17).toString(), // 1 TAP = 3.3 USD
+                ]),
+            )
+            .add(
+                await buildOracleMock(hre, 'USDO_SEER_UNI_ORACLE', [
+                    'MOCK_USDO_ORACLE',
+                    'MOCK_USDO_ORACLE',
+                    (1e18).toString(), // 1 USDC = 1 USD
+                ]),
+            )
+            .add(
                 await buildOracleMock(hre, 'USDO_SEER_UNI_ORACLE', [
                     'MOCK_USDO_ORACLE',
                     'MOCK_USDO_ORACLE',

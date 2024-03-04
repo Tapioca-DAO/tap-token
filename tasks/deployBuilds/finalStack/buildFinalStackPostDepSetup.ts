@@ -81,6 +81,7 @@ export const buildFinalStackPostDepSetup_2 = async (
         tOlp,
         yieldbox,
         usdoDeployment,
+        tapOracleTobDeployment,
         usdoOracleDeployment,
         usdcOracleDeployment,
         arbSglGlpDeployment,
@@ -192,6 +193,24 @@ export const buildFinalStackPostDepSetup_2 = async (
             target: tob.address,
             allowFailure: false,
             callData: tob.interface.encodeFunctionData('oTAPBrokerClaim'),
+        });
+    }
+
+    /**
+     * Set TAP Oracle in tOB
+     */
+    if (
+        (await tob.tapOracle()).toLocaleLowerCase() !==
+        tapOracleTobDeployment.address.toLocaleLowerCase()
+    ) {
+        console.log('[+] +Call queue: set TapToken in TapiocaOptionBroker');
+        calls.push({
+            target: tob.address,
+            allowFailure: false,
+            callData: tob.interface.encodeFunctionData('setTapOracle', [
+                tapOracleTobDeployment.address,
+                '0x00',
+            ]),
         });
     }
 
@@ -327,6 +346,12 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         ).address,
     );
 
+    const tapOracleTobDeployment = getContract(
+        hre,
+        tag,
+        DEPLOYMENT_NAMES.TOB_TAP_ORACLE,
+    );
+
     const usdcOracleDeployment = getContract(
         hre,
         tag,
@@ -388,6 +413,7 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         tOlp,
         yieldbox,
         usdoDeployment,
+        tapOracleTobDeployment,
         usdoOracleDeployment,
         usdcOracleDeployment,
         arbSglGlpDeployment,
