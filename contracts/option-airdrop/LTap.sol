@@ -22,7 +22,6 @@ contract LTap is Ownable, ERC20Permit {
     using SafeERC20 for IERC20;
 
     IERC20 tapToken;
-    address immutable lbp;
     bool openRedemption;
 
     error TapNotSet();
