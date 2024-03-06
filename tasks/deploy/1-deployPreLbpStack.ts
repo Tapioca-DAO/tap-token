@@ -52,12 +52,21 @@ export const deployPreLbpStack__task = async (
         throw '[-] LBP not found';
     }
 
-    // Build contracts
-    VM.add(await buildLTap(hre, DEPLOYMENT_NAMES.LTAP, [lbpDep.address], []));
+    if (taskArgs.load) {
+        VM.load(
+            hre.SDK.db.loadLocalDeployment(tag, hre.SDK.eChainId)?.contracts ??
+                [],
+        );
+    } else {
+        // Build contracts
+        VM.add(
+            await buildLTap(hre, DEPLOYMENT_NAMES.LTAP, [lbpDep.address], []),
+        );
+        // Add and execute
+        await VM.execute();
+        await VM.save();
+    }
 
-    // Add and execute
-    await VM.execute();
-    await VM.save();
     if (taskArgs.verify) {
         await VM.verify();
     }
