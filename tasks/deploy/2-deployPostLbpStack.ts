@@ -267,6 +267,8 @@ async function getTapToken(
         DEPLOYMENT_NAMES.TAP_TOKEN,
         [
             {
+                epochDuration:
+                    DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
                 endpoint: lzEndpointAddress, // Endpoint address
                 contributors: hre.ethers.constants.AddressZero, //contributors address
                 earlySupporters: hre.ethers.constants.AddressZero, // early supporters address
