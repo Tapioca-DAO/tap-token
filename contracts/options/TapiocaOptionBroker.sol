@@ -124,7 +124,6 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         tapOFT = TapToken(_tapOFT);
         oTAP = OTAP(_oTAP);
         EPOCH_DURATION = _epochDuration;
-        emissionsStartTime = block.timestamp;
 
         _transferOwnership(_owner);
     }
@@ -424,10 +423,12 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         emit NewEpoch(epoch, epochTAP, epochTAPValuation);
     }
 
-    /// @notice Claim the Broker role of the oTAP contract. Init emissions on TapToken
+    /// @notice Claim the Broker role of the oTAP contract. Init emissions on TOB and TapToken.
     /// @dev Can only be called once. External calls should revert if already called.
     function init() external {
         oTAP.brokerClaim();
+
+        emissionsStartTime = block.timestamp;
         tapOFT.initEmissions();
     }
 
