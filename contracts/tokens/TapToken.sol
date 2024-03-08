@@ -48,7 +48,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
 
     /// @notice starts time for emissions
     /// @dev initialized in the constructor with block.timestamp
-    uint256 public immutable emissionsStartTime;
+    uint256 public emissionsStartTime;
 
     /// @notice returns the amount of emitted TAP for a specific week
     /// @dev week is computed using (timestamp - emissionStartTime) / WEEK
@@ -90,6 +90,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     error OnlyMinter();
     error TwTapAlreadySet();
     error InitStarted();
+    error InitNotStarted();
     error InsufficientEmissions();
 
     // ===========
@@ -160,7 +161,6 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
             _mint(_data.airdrop, 1e18 * 2_500_000);
             if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
         }
-        emissionsStartTime = block.timestamp;
 
         _transferOwnership(_data.owner);
     }
@@ -348,6 +348,15 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     /// =====================
 
     /**
+     * @notice Initializes the emissions.
+     * @dev Can be called only once. By Minter.
+     */
+    function initEmissions() external onlyMinter {
+        if (emissionsStartTime != 0) revert InitStarted();
+        emissionsStartTime = block.timestamp;
+    }
+
+    /**
      * @notice Mint TAP for the current week. Follow the emission function.
      *
      * @param _to Address to send the minted TAP to
@@ -385,8 +394,8 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      *
      * @return the emitted amount.
      */
-    function emitForWeek() external onlyMinter returns (uint256) {
-        if (_getChainId() != governanceEid) revert NotValid();
+    function emitForWeek() external onlyMinter onlyHostChain returns (uint256) {
+        if (emissionsStartTime == 0) revert InitNotStarted();
 
         uint256 week = _timestampToWeek(block.timestamp);
         if (emissionForWeek[week] > 0) return 0;

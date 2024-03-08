@@ -182,17 +182,19 @@ export const buildFinalStackPostDepSetup_2 = async (
     }
 
     /**
-     * Set tOB Broker role for tOB on oTAP
+     * Set tOB Broker role for tOB on oTAP and init TapToken emissions
      */
     if (
         (await oTap.broker()).toLocaleLowerCase() !==
         tob.address.toLocaleLowerCase()
     ) {
-        console.log('[+] +Call queue: oTAP broker claim');
+        console.log(
+            '[+] +Call queue: tOB init(): oTAP broker claim and TapToken emission',
+        );
         calls.push({
             target: tob.address,
             allowFailure: false,
-            callData: tob.interface.encodeFunctionData('oTAPBrokerClaim'),
+            callData: tob.interface.encodeFunctionData('init'),
         });
     }
 
