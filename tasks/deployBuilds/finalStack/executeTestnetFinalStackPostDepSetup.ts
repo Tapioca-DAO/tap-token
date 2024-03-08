@@ -18,6 +18,7 @@ export const executeTestnetFinalStackPostDepSetup = async (
     const VM = await loadVM(hre, tag);
     const multicall = await VM.getMulticall();
 
+    // Tapioca Bar mocks
     if (!load) {
         VM.add(
             await buildERC20Mock(hre, 'USDO', [
@@ -28,13 +29,6 @@ export const executeTestnetFinalStackPostDepSetup = async (
                 multicall.address,
             ]),
         )
-            .add(
-                await buildOracleMock(hre, DEPLOYMENT_NAMES.TOB_TAP_ORACLE, [
-                    'MOCK_TOB_TAP_ORACLE',
-                    'MOCK_TOB_TAP_ORACLE',
-                    (33e17).toString(), // 1 TAP = 3.3 USD
-                ]),
-            )
             .add(
                 await buildOracleMock(hre, 'USDO_SEER_UNI_ORACLE', [
                     'MOCK_USDO_ORACLE',
@@ -125,46 +119,62 @@ export const executeTestnetFinalStackPostDepSetup = async (
             TAPIOCA_PROJECTS_NAME.TapiocaBar,
             tag,
         );
+
+        const { mockUsdc, mockArbSglGlp, mockToftMainnetSglDai } =
+            await loadContract(hre, tag);
+        DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.USDC = mockUsdc.address; // Inject previously created Mock USDC address (from postLbpStack)
+
+        // Mint both SGL to perform a YB deposit in the subsequent Deps
+        const calls: TapiocaMulticall.CallStruct[] = [];
+        calls.push({
+            target: mockArbSglGlp.address,
+            allowFailure: false,
+            callData: mockArbSglGlp.interface.encodeFunctionData('freeMint', [
+                (1e18).toString(),
+            ]),
+        });
+        calls.push({
+            target: mockArbSglGlp.address,
+            allowFailure: false,
+            callData: mockArbSglGlp.interface.encodeFunctionData('approve', [
+                yieldbox.address,
+                (1e18).toString(),
+            ]),
+        });
+        calls.push({
+            target: mockToftMainnetSglDai.address,
+            allowFailure: false,
+            callData: mockArbSglGlp.interface.encodeFunctionData('freeMint', [
+                (1e18).toString(),
+            ]),
+        });
+        calls.push({
+            target: mockToftMainnetSglDai.address,
+            allowFailure: false,
+            callData: mockArbSglGlp.interface.encodeFunctionData('approve', [
+                yieldbox.address,
+                (1e18).toString(),
+            ]),
+        });
+
+        await VM.executeMulticall(calls);
     }
 
-    const { mockUsdc, mockArbSglGlp, mockToftMainnetSglDai } =
-        await loadContract(hre, tag);
-    DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.USDC = mockUsdc.address; // Inject previously created Mock USDC address (from postLbpStack)
+    if (!load) {
+        VM.flush().add(
+            await buildOracleMock(hre, DEPLOYMENT_NAMES.TOB_TAP_ORACLE, [
+                'MOCK_TOB_TAP_ORACLE',
+                'MOCK_TOB_TAP_ORACLE',
+                (33e17).toString(), // 1 TAP = 3.3 USD
+            ]),
+        );
 
-    // Mint both SGL to perform a YB deposit in the subsequent Deps
-    const calls: TapiocaMulticall.CallStruct[] = [];
-    calls.push({
-        target: mockArbSglGlp.address,
-        allowFailure: false,
-        callData: mockArbSglGlp.interface.encodeFunctionData('freeMint', [
-            (1e18).toString(),
-        ]),
-    });
-    calls.push({
-        target: mockArbSglGlp.address,
-        allowFailure: false,
-        callData: mockArbSglGlp.interface.encodeFunctionData('approve', [
-            yieldbox.address,
-            (1e18).toString(),
-        ]),
-    });
-    calls.push({
-        target: mockToftMainnetSglDai.address,
-        allowFailure: false,
-        callData: mockArbSglGlp.interface.encodeFunctionData('freeMint', [
-            (1e18).toString(),
-        ]),
-    });
-    calls.push({
-        target: mockToftMainnetSglDai.address,
-        allowFailure: false,
-        callData: mockArbSglGlp.interface.encodeFunctionData('approve', [
-            yieldbox.address,
-            (1e18).toString(),
-        ]),
-    });
-
-    await VM.executeMulticall(calls);
+        await VM.execute();
+        await VM.save();
+        if (verify) {
+            await VM.verify();
+        }
+    }
 };
 
 async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {

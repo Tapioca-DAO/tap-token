@@ -47,6 +47,7 @@ interface ITapToken is ITapiocaOmnichainEngine {
     }
 
     struct TapTokenConstructorData {
+        uint256 epochDuration;
         address endpoint;
         address contributors;
         address earlySupporters;

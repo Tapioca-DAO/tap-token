@@ -44,11 +44,11 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     uint256 constant DECAY_RATE_DECIMAL = 1e18;
 
     /// @notice seconds in a week
-    uint256 public constant EPOCH_DURATION = 1 weeks; // 604800
+    uint256 public immutable EPOCH_DURATION;
 
     /// @notice starts time for emissions
     /// @dev initialized in the constructor with block.timestamp
-    uint256 public immutable emissionsStartTime;
+    uint256 public emissionsStartTime;
 
     /// @notice returns the amount of emitted TAP for a specific week
     /// @dev week is computed using (timestamp - emissionStartTime) / WEEK
@@ -89,6 +89,8 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     error AllowanceNotValid();
     error OnlyMinter();
     error TwTapAlreadySet();
+    error InitStarted();
+    error InitNotStarted();
     error InsufficientEmissions();
 
     // ===========
@@ -136,10 +138,18 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         BaseTapToken("TapToken", "TAP", _data.endpoint, _data.owner, _data.extExec, _data.pearlmit)
         ERC20Permit("TAP")
     {
-        _transferOwnership(_data.owner);
-
         if (_data.endpoint == address(0)) revert AddressWrong();
         governanceEid = _data.governanceEid;
+
+        // Initialize modules
+        if (_data.tapTokenSenderModule == address(0)) revert NotValid();
+        if (_data.tapTokenReceiverModule == address(0)) revert NotValid();
+
+        _setModule(uint8(ITapToken.Module.TapTokenSender), _data.tapTokenSenderModule);
+        _setModule(uint8(ITapToken.Module.TapTokenReceiver), _data.tapTokenReceiverModule);
+
+        if (_data.epochDuration == 0) revert NotValid();
+        EPOCH_DURATION = _data.epochDuration;
 
         // Mint only on the governance chain
         if (_getChainId() == _data.governanceEid) {
@@ -151,14 +161,8 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
             _mint(_data.airdrop, 1e18 * 2_500_000);
             if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
         }
-        emissionsStartTime = block.timestamp;
 
-        // Initialize modules
-        if (_data.tapTokenSenderModule == address(0)) revert NotValid();
-        if (_data.tapTokenReceiverModule == address(0)) revert NotValid();
-
-        _setModule(uint8(ITapToken.Module.TapTokenSender), _data.tapTokenSenderModule);
-        _setModule(uint8(ITapToken.Module.TapTokenReceiver), _data.tapTokenReceiverModule);
+        _transferOwnership(_data.owner);
     }
 
     /**
@@ -344,6 +348,15 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     /// =====================
 
     /**
+     * @notice Initializes the emissions.
+     * @dev Can be called only once. By Minter.
+     */
+    function initEmissions() external onlyMinter {
+        if (emissionsStartTime != 0) revert InitStarted();
+        emissionsStartTime = block.timestamp;
+    }
+
+    /**
      * @notice Mint TAP for the current week. Follow the emission function.
      *
      * @param _to Address to send the minted TAP to
@@ -381,8 +394,8 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      *
      * @return the emitted amount.
      */
-    function emitForWeek() external onlyMinter returns (uint256) {
-        if (_getChainId() != governanceEid) revert NotValid();
+    function emitForWeek() external onlyMinter onlyHostChain returns (uint256) {
+        if (emissionsStartTime == 0) revert InitNotStarted();
 
         uint256 week = _timestampToWeek(block.timestamp);
         if (emissionForWeek[week] > 0) return 0;

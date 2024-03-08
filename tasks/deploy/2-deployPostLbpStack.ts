@@ -1,21 +1,22 @@
-import { ELZChainID, TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
+import { ELZChainID } from '@tapioca-sdk/api/config';
+import { BigNumberish } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { buildTapToken } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapToken';
 import { buildADB } from 'tasks/deployBuilds/postLbpStack/airdrop/buildADB';
 import { buildAOTAP } from 'tasks/deployBuilds/postLbpStack/airdrop/buildAOTAP';
 import {
     buildPostLbpStackPostDepSetup_1,
     buildPostLbpStackPostDepSetup_2,
 } from 'tasks/deployBuilds/postLbpStack/buildPostLbpStackPostDepSetup';
+import { temp__buildCluster } from 'tasks/deployBuilds/postLbpStack/cluster/temp__buildCluster';
 import { executeTestnetPostLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/executeTestnetPostLbpStackPostDepSetup';
+import { temp__buildPearlmit } from 'tasks/deployBuilds/postLbpStack/pearlmit/temp__buildPearlmit';
+import { buildExtExec } from 'tasks/deployBuilds/postLbpStack/tapToken/buildExtExec';
+import { buildTapToken } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapToken';
 import { buildTapTokenReceiverModule } from '../deployBuilds/postLbpStack/tapToken/buildTapTokenReceiverModule';
 import { buildTapTokenSenderModule } from '../deployBuilds/postLbpStack/tapToken/buildTapTokenSenderModule';
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
 import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
-import { temp__buildPearlmit } from 'tasks/deployBuilds/postLbpStack/pearlmit/temp__buildPearlmit';
-import { temp__buildCluster } from 'tasks/deployBuilds/postLbpStack/cluster/temp__buildCluster';
-import { buildExtExec } from 'tasks/deployBuilds/postLbpStack/tapToken/buildExtExec';
 
 export const deployPostLbpStack__task = async (
     taskArgs: { tag?: string; load?: boolean; verify: boolean },
@@ -81,6 +82,9 @@ export const deployPostLbpStack__task = async (
                     !!isTestnet,
                     tapiocaMulticall.address,
                     chainInfo.address,
+                    isTestnet
+                        ? ELZChainID.ARBITRUM_SEPOLIA
+                        : ELZChainID.ARBITRUM, // Governance LZ ChainID
                 ),
             );
 
@@ -254,6 +258,7 @@ async function getTapToken(
     isTestnet: boolean,
     owner: string,
     lzEndpointAddress: string,
+    governanceEid: BigNumberish,
 ) {
     const lTap = hre.SDK.db.findLocalDeployment(
         hre.SDK.eChainId,
@@ -267,6 +272,8 @@ async function getTapToken(
         DEPLOYMENT_NAMES.TAP_TOKEN,
         [
             {
+                epochDuration:
+                    DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
                 endpoint: lzEndpointAddress, // Endpoint address
                 contributors: hre.ethers.constants.AddressZero, //contributors address
                 earlySupporters: hre.ethers.constants.AddressZero, // early supporters address
@@ -274,9 +281,7 @@ async function getTapToken(
                 lTap: lTap.address, // lTap address
                 dao: DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS, // DAO address
                 airdrop: hre.ethers.constants.AddressZero, // AirdropBroker address,
-                governanceEid: isTestnet
-                    ? ELZChainID.ARBITRUM_SEPOLIA
-                    : ELZChainID.ARBITRUM, // Governance LZ ChainID
+                governanceEid: governanceEid,
                 owner: owner, // Owner
                 tapTokenSenderModule: hre.ethers.constants.AddressZero, // TapTokenSenderModule
                 tapTokenReceiverModule: hre.ethers.constants.AddressZero, // TapTokenReceiverModule
