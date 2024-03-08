@@ -106,6 +106,7 @@ const POST_LBP: TPostLbp = {
 };
 POST_LBP[EChainID.ARBITRUM_SEPOLIA] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
 POST_LBP[EChainID.SEPOLIA] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
+POST_LBP[EChainID.OPTIMISM_SEPOLIA] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
 POST_LBP['31337' as EChainID] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
 
 type TFinal = {
@@ -131,6 +132,7 @@ const FINAL: TFinal = {
 };
 FINAL[EChainID.ARBITRUM_SEPOLIA] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
 FINAL[EChainID.SEPOLIA] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
+FINAL[EChainID.OPTIMISM_SEPOLIA] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
 FINAL['31337' as EChainID] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
 
 type TMisc = {
@@ -149,6 +151,7 @@ const MISC: TMisc = {
 };
 MISC[EChainID.ARBITRUM_SEPOLIA] = MISC[EChainID.ARBITRUM]; // Copy from Arbitrum
 MISC[EChainID.SEPOLIA] = MISC[EChainID.ARBITRUM]; // Copy from Arbitrum
+MISC[EChainID.OPTIMISM_SEPOLIA] = MISC[EChainID.ARBITRUM]; // Copy from Arbitrum
 
 const UNISWAP = {
     NONFUNGIBLE_POSITION_MANAGER: '0xc36442b4a4522e871399cd717abdd847ab11fe88',
