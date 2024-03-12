@@ -464,7 +464,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
     /// @notice Activate or deactivate a payment token
     /// @dev set the oracle to address(0) to deactivate, expect the same decimal precision as TAP oracle
-        function setPaymentToken(ERC20 _paymentToken, ITapiocaOracle _oracle, bytes calldata _oracleData)
+    function setPaymentToken(ERC20 _paymentToken, ITapiocaOracle _oracle, bytes calldata _oracleData)
         external
         onlyOwner
     {
@@ -541,7 +541,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /// @param _paymentTokenOracle The oracle of the payment token
     /// @param tapAmount The amount of TAP that the user has to receive
     /// @param discount The discount that the user has to apply to the OTC deal
-        function _processOTCDeal(
+    function _processOTCDeal(
         ERC20 _paymentToken,
         PaymentTokenOracle memory _paymentTokenOracle,
         uint256 tapAmount,
