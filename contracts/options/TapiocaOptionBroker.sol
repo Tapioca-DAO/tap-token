@@ -555,13 +555,13 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (!success) revert Failed();
 
         // Calculate payment amount and initiate the transfers
-         uint256 discountedPaymentAmount =
+        uint256 discountedPaymentAmount =
             _getDiscountedPaymentAmount(otcAmountInUSD, paymentTokenValuation, discount, _paymentToken.decimals());
 
         uint256 balBefore = _paymentToken.balanceOf(address(this));
         // IERC20(address(_paymentToken)).safeTransferFrom(msg.sender, address(this), discountedPaymentAmount);
         {
-             bool isErr =
+            bool isErr =
                 pearlmit.transferFromERC20(msg.sender, address(this), address(_paymentToken), discountedPaymentAmount);
             if (isErr) revert TransferFailed();
         }
