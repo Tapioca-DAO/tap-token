@@ -132,16 +132,16 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     //   EVENTS
     // ==========
     event Participate(
-        uint256 indexed epoch, uint256 indexed sglAssetID, uint256 totalDeposited, uint256 tokenId, uint256 discount
+        uint256 indexed epoch, uint256 indexed sglAssetId, uint256 totalDeposited, uint256 otapTokenId, uint256 tolpTokenId, uint256 discount
     );
     event AMLDivergence(uint256 indexed epoch, uint256 cumulative, uint256 averageMagnitude, uint256 totalParticipants);
     event ExerciseOption(
-        uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 oTapTokenID, uint256 amount
+        uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 otapTokenId, uint256 tapAmount
     );
-    event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValuation);
-    event ExitPosition(uint256 indexed epoch, uint256 tolpTokenId, uint256 amount);
+    event NewEpoch(uint256 indexed epoch, uint256 extractedTap, uint256 epochTapValuation);
+    event ExitPosition(uint256 indexed epoch, uint256 indexed otapTokenId, uint256 tolpTokenId);
     event SetPaymentToken(ERC20 indexed paymentToken, ITapiocaOracle oracle, bytes oracleData);
-    event SetTapOracle(ITapiocaOracle indexed oracle, bytes indexed oracleData);
+    event SetTapOracle(ITapiocaOracle oracle, bytes oracleData);
 
     // ==========
     //    READ
@@ -298,7 +298,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
         // Mint oTAP position
         oTAPTokenID = oTAP.mint(msg.sender, lockExpiry, uint128(target), _tOLPTokenID);
-        emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, oTAPTokenID, target);
+        emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, oTAPTokenID, _tOLPTokenID, target);
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
@@ -354,7 +354,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         // Transfer position back to oTAP owner
         tOLP.transferFrom(address(this), otapOwner, oTAPPosition.tOLP);
 
-        emit ExitPosition(epoch, oTAPPosition.tOLP, lock.ybShares);
+        emit ExitPosition(epoch, _oTAPTokenID, oTAPPosition.tOLP);
     }
 
     /// @notice Exercise an oTAP position
@@ -464,7 +464,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
     /// @notice Activate or deactivate a payment token
     /// @dev set the oracle to address(0) to deactivate, expect the same decimal precision as TAP oracle
-    function setPaymentToken(ERC20 _paymentToken, ITapiocaOracle _oracle, bytes calldata _oracleData)
+        function setPaymentToken(ERC20 _paymentToken, ITapiocaOracle _oracle, bytes calldata _oracleData)
         external
         onlyOwner
     {
@@ -541,7 +541,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /// @param _paymentTokenOracle The oracle of the payment token
     /// @param tapAmount The amount of TAP that the user has to receive
     /// @param discount The discount that the user has to apply to the OTC deal
-    function _processOTCDeal(
+        function _processOTCDeal(
         ERC20 _paymentToken,
         PaymentTokenOracle memory _paymentTokenOracle,
         uint256 tapAmount,
@@ -555,13 +555,13 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (!success) revert Failed();
 
         // Calculate payment amount and initiate the transfers
-        uint256 discountedPaymentAmount =
+         uint256 discountedPaymentAmount =
             _getDiscountedPaymentAmount(otcAmountInUSD, paymentTokenValuation, discount, _paymentToken.decimals());
 
         uint256 balBefore = _paymentToken.balanceOf(address(this));
         // IERC20(address(_paymentToken)).safeTransferFrom(msg.sender, address(this), discountedPaymentAmount);
         {
-            bool isErr =
+             bool isErr =
                 pearlmit.transferFromERC20(msg.sender, address(this), address(_paymentToken), discountedPaymentAmount);
             if (isErr) revert TransferFailed();
         }
