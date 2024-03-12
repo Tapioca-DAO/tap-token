@@ -185,7 +185,7 @@ contract TapiocaOptionLiquidityProvision is
     /// @param _lockDuration Duration of the lock
     /// @param _ybShares Amount of YieldBox shares to lock
     /// @return tokenId The ID of the minted NFT
-        function lock(address _to, IERC20 _singularity, uint128 _lockDuration, uint128 _ybShares)
+    function lock(address _to, IERC20 _singularity, uint128 _lockDuration, uint128 _ybShares)
         external
         nonReentrant
         returns (uint256 tokenId)
@@ -309,7 +309,7 @@ contract TapiocaOptionLiquidityProvision is
     /// @param singularity Singularity market address
     /// @param assetID YieldBox asset ID of the singularity market
     /// @param weight Weight of the pool
-        function registerSingularity(IERC20 singularity, uint256 assetID, uint256 weight)
+    function registerSingularity(IERC20 singularity, uint256 assetID, uint256 weight)
         external
         onlyOwner
         updateTotalSGLPoolWeights
