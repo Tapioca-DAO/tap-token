@@ -240,7 +240,7 @@ export const buildFinalStackPostDepSetup_2 = async (
         (
             await tob.paymentTokens(usdoDeployment.address)
         ).oracle.toLocaleLowerCase() !==
-        usdoDeployment.address.toLocaleLowerCase()
+        usdoOracleDeployment.address.toLocaleLowerCase()
     ) {
         console.log('[+] +Call queue: set USDO as payment token in tOB');
         calls.push({
@@ -283,9 +283,9 @@ export const buildFinalStackPostDepSetup_2 = async (
         });
         console.log(
             '\t- Parameters',
-            'USDO',
+            'USDC',
             usdcAddr,
-            'USDO Oracle',
+            'USDC Oracle',
             usdcOracleDeployment.address,
             'Data',
             '0x00',
