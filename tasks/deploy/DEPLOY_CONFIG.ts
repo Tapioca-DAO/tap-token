@@ -140,6 +140,8 @@ type TMisc = {
         CL_SEQUENCER: string;
         WETH: string;
         USDC: string;
+        NONFUNGIBLE_POSITION_MANAGER: string;
+        V3_FACTORY: string;
     };
 };
 const MISC: TMisc = {
@@ -147,20 +149,22 @@ const MISC: TMisc = {
         CL_SEQUENCER: '0xFdB631F5EE196F0ed6FAa767959853A9F217697D', // Arbitrum mainnet ChainLink sequencer uptime feed
         WETH: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
         USDC: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+        NONFUNGIBLE_POSITION_MANAGER:
+            '0xc36442b4a4522e871399cd717abdd847ab11fe88',
+        V3_FACTORY: '0x1F98431c8aD98523631AE4a59f267346ea31F984',
     },
-};
-MISC[EChainID.ARBITRUM_SEPOLIA] = MISC[EChainID.ARBITRUM]; // Copy from Arbitrum
-MISC[EChainID.SEPOLIA] = MISC[EChainID.ARBITRUM]; // Copy from Arbitrum
-MISC[EChainID.OPTIMISM_SEPOLIA] = MISC[EChainID.ARBITRUM]; // Copy from Arbitrum
-
-const UNISWAP = {
-    NONFUNGIBLE_POSITION_MANAGER: '0xc36442b4a4522e871399cd717abdd847ab11fe88',
-    V3_FACTORY: '0x1F98431c8aD98523631AE4a59f267346ea31F984',
+    [EChainID.ARBITRUM_SEPOLIA]: {
+        CL_SEQUENCER: '0x',
+        WETH: '0x997FE31Adda5c969691768Ad1140273290952333', // Locally deployed WETH9 Mock
+        USDC: '0x6D6a13AbE7935b2cf6d67e49bc17F5035362C705', // Locally deployed USDC Mock
+        NONFUNGIBLE_POSITION_MANAGER:
+            '0xFd1a7CA61e49703da3618999B2EEdc0E79476759',
+        V3_FACTORY: '0x76D8F1D83716bcd0f811449a76Fc2B3E3ef98454',
+    },
 };
 
 export const DEPLOY_CONFIG = {
     POST_LBP,
     FINAL,
     MISC,
-    UNISWAP,
 };

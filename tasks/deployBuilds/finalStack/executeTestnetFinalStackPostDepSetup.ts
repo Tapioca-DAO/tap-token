@@ -122,6 +122,7 @@ export const executeTestnetFinalStackPostDepSetup = async (
 
         const { mockUsdc, mockArbSglGlp, mockToftMainnetSglDai } =
             await loadContract(hre, tag);
+        // TODO: Deploy mock USDC beforehand
         DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.USDC = mockUsdc.address; // Inject previously created Mock USDC address (from postLbpStack)
 
         // Mint both SGL to perform a YB deposit in the subsequent Deps
