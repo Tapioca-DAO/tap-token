@@ -6124,10 +6124,10 @@ table@^6.0.9, table@^6.8.0, table@^6.8.1:
     string-width "^4.2.3"
     strip-ansi "^6.0.1"
 
-tapioca-sdk@^1.6.17:
-  version "1.6.17"
-  resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.6.17.tgz#fd9238de835307fe984d2861ab8ef152b25fa888"
-  integrity sha512-HFk6yPER8R1USjPjTz/GjMT4BZKisLGRjEYCoyh1Fb4eVYdZ7GsCgud9qjVIaq+pfZamd65FqC83YE1EaSAUqQ==
+tapioca-sdk@^1.7.12:
+  version "1.7.12"
+  resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.7.12.tgz#afc6733d387dd38095e0ae59371eebfb8b8aa30e"
+  integrity sha512-ftYuqkbnCbwLorGuJ5aVvjAKkZy5NRjp6NXKe6A8bmzjmp+/q0SzSEpxFiIqiwXhfNlScYNDEgNuiEHQNRnL7w==
   dependencies:
     deepmerge "^4.3.1"
     dotenv "^16.3.2"
