@@ -1,20 +1,29 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { buildLTap } from 'tasks/deployBuilds/preLbpStack/buildLTap';
-import { loadVM } from 'tasks/utils';
-import { DEPLOYMENT_NAMES } from './DEPLOY_CONFIG';
 import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import {
+    TTapiocaDeployTaskArgs,
+    TTapiocaDeployerVmPass,
+} from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
+import { buildLTap } from 'tasks/deployBuilds/preLbpStack/buildLTap';
+import { DEPLOYMENT_NAMES } from './DEPLOY_CONFIG';
 
 export const deployPreLbpStack__task = async (
-    taskArgs: { tag?: string; load?: boolean; verify: boolean },
+    _taskArgs: TTapiocaDeployTaskArgs,
     hre: HardhatRuntimeEnvironment,
 ) => {
-    // Settings
-    const tag = taskArgs.tag ?? 'default';
-    const VM = await loadVM(hre, tag);
-    const chainInfo = hre.SDK.utils.getChainBy('chainId', hre.SDK.eChainId)!;
+    await hre.SDK.DeployerVM.tapiocaDeployTask(
+        _taskArgs,
+        { hre },
+        tapiocaDeployTask,
+    );
+};
 
-    // Set a fake LBP if testnet
-    const isTestnet = chainInfo.tags.find((tag) => tag === 'testnet');
+async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
+    const { hre, VM, tapiocaMulticallAddr, taskArgs, isTestnet } = params;
+    const { tag } = taskArgs;
+    const owner = tapiocaMulticallAddr;
+
+    // Set a fake LBP address if testnet
     if (isTestnet) {
         const lbpReceiver = hre.ethers.Wallet.fromMnemonic(
             'radar blur cabbage chef fix engine embark joy scheme fiction master release',
@@ -52,24 +61,5 @@ export const deployPreLbpStack__task = async (
         throw '[-] LBP not found';
     }
 
-    if (taskArgs.load) {
-        VM.load(
-            hre.SDK.db.loadLocalDeployment(tag, hre.SDK.eChainId)?.contracts ??
-                [],
-        );
-    } else {
-        // Build contracts
-        VM.add(
-            await buildLTap(hre, DEPLOYMENT_NAMES.LTAP, [lbpDep.address], []),
-        );
-        // Add and execute
-        await VM.execute();
-        await VM.save();
-    }
-
-    if (taskArgs.verify) {
-        await VM.verify();
-    }
-
-    console.log('[+] Pre LBP Stack deployed! 🎉');
-};
+    VM.add(await buildLTap(hre, DEPLOYMENT_NAMES.LTAP, [lbpDep.address], []));
+}
