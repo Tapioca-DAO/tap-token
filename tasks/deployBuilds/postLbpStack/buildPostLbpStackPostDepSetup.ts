@@ -12,6 +12,8 @@ import {
 import { Token } from '@uniswap/sdk-core';
 import { FeeAmount, computePoolAddress } from '@uniswap/v3-sdk';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { loadGlobalContract, loadLocalContract } from 'tapioca-sdk';
+import { TAPIOCA_PROJECTS_NAME } from 'tapioca-sdk/dist/api/config';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from 'tasks/deploy/DEPLOY_CONFIG';
 import { loadVM } from 'tasks/utils';
 
@@ -136,7 +138,13 @@ export const buildPostLbpStackPostDepSetup_1 = async (
      * Deploy USDC oracle if not deployed
      */
     try {
-        getContract(hre, tag, DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE);
+        loadGlobalContract(
+            hre,
+            TAPIOCA_PROJECTS_NAME.TapiocaBar,
+            hre.SDK.eChainId,
+            DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE,
+            tag,
+        );
     } catch (err) {
         const usdcOracle = await new SeerCLSolo__factory(signer).deploy(
             'USDC/USD',
@@ -269,37 +277,40 @@ export const buildPostLbpStackPostDepSetup_2 = async (
 };
 
 async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
-    const tapOracleDeployment = getContract(
+    const tapOracleDeployment = loadTapTokenLocalContract(
         hre,
         tag,
-        DEPLOYMENT_NAMES.TAP_ORACLE,
+        TAPIOCA_PROJECTS_NAME.TapToken,
     );
 
-    const usdcOracleDeployment = getContract(
+    const usdcOracleDeployment = loadGlobalContract(
         hre,
-        tag,
+        TAPIOCA_PROJECTS_NAME.TapiocaBar,
+        hre.SDK.eChainId,
         DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE,
+        tag,
     );
 
     const weth = await hre.ethers.getContractAt(
         'ERC20',
         DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.WETH,
     );
-    const tapToken = await TapToken__factory.connect(
-        getContract(hre, tag, DEPLOYMENT_NAMES.TAP_TOKEN).address,
+    const tapToken = TapToken__factory.connect(
+        loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.TAP_TOKEN).address,
         hre.ethers.provider.getSigner(),
     );
     const adb = AirdropBroker__factory.connect(
-        getContract(hre, tag, DEPLOYMENT_NAMES.AIRDROP_BROKER).address,
+        loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.AIRDROP_BROKER)
+            .address,
         hre.ethers.provider.getSigner(),
     );
     const aoTap = AOTAP__factory.connect(
-        getContract(hre, tag, DEPLOYMENT_NAMES.AOTAP).address,
+        loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.AOTAP).address,
         hre.ethers.provider.getSigner(),
     );
     const uniV3Factory = await hre.ethers.getContractAt(
         'IUniswapV3Factory',
-        DEPLOY_CONFIG.UNISWAP.V3_FACTORY,
+        DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.V3_FACTORY,
     );
 
     return {
@@ -313,20 +324,16 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
     };
 }
 
-function getContract(
+function loadTapTokenLocalContract(
     hre: HardhatRuntimeEnvironment,
     tag: string,
     contractName: string,
 ) {
-    const contract = hre.SDK.db.findLocalDeployment(
+    return loadLocalContract(
+        hre,
+        TAPIOCA_PROJECTS_NAME.TapToken,
         hre.SDK.eChainId,
         contractName,
         tag,
-    )!;
-    if (!contract) {
-        throw new Error(
-            `[-] ${contractName} not found on chain ${hre.network.name} tag ${tag}`,
-        );
-    }
-    return contract;
+    );
 }
