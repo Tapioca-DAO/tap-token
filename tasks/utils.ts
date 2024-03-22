@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import _ from 'lodash';
+import { loadLocalContract } from 'tapioca-sdk';
 
 export const loadVM = async (hre: HardhatRuntimeEnvironment, tag?: string) => {
     const VM = new hre.SDK.DeployerVM(hre, {
@@ -11,3 +11,11 @@ export const loadVM = async (hre: HardhatRuntimeEnvironment, tag?: string) => {
     });
     return VM;
 };
+
+export function loadTapTokenLocalContract(
+    hre: HardhatRuntimeEnvironment,
+    tag: string,
+    contractName: string,
+) {
+    return loadLocalContract(hre, hre.SDK.eChainId, contractName, tag);
+}
