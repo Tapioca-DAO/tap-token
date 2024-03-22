@@ -2,8 +2,9 @@ import '@nomiclabs/hardhat-ethers';
 import { scope } from 'hardhat/config';
 import { deployFinalStack__task } from '../deploy/3-deployFinalStack';
 import { deployPreLbpStack__task } from 'tasks/deploy/1-deployPreLbpStack';
-import { deployPostLbpStack__task } from 'tasks/deploy/2-deployPostLbpStack';
 import { TAP_TASK } from 'tapioca-sdk';
+import { deployPostLbpStack_1__task } from 'tasks/deploy/2-1-deployPostLbpStack';
+import { deployPostLbpStack_2__task } from 'tasks/deploy/2-2-deployPostLbpStack';
 
 const deployScope = scope('deploys', 'Deployment tasks');
 
@@ -17,9 +18,16 @@ TAP_TASK(
 
 TAP_TASK(
     deployScope.task(
-        'postLbp',
-        'Deploy and init the Post LBP stack of the tap-token repo. Includes AOTAP, ADB, Vesting, TapToken.',
-        deployPostLbpStack__task,
+        'postLbp1',
+        'Deploy the Post LBP stack of the tap-token repo. Includes AOTAP, ADB, Vesting, TapToken. Call postLbp2 after this task.',
+        deployPostLbpStack_1__task,
+    ),
+);
+TAP_TASK(
+    deployScope.task(
+        'postLbp2',
+        'Setup the contracts of the Post LBP stack of the tap-token repo. Should be called after `postLbp1` and tapioca-periph `postLbp` tasks',
+        deployPostLbpStack_2__task,
     ),
 );
 

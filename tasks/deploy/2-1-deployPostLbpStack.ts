@@ -1,126 +1,69 @@
 import { ELZChainID } from '@tapioca-sdk/api/config';
+import { TTapiocaDeployTaskArgs } from '@tapioca-sdk/ethers/hardhat/DeployerVM';
 import { BigNumberish } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { TTapiocaDeployerVmPass } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { buildADB } from 'tasks/deployBuilds/postLbpStack/airdrop/buildADB';
 import { buildAOTAP } from 'tasks/deployBuilds/postLbpStack/airdrop/buildAOTAP';
-import {
-    buildPostLbpStackPostDepSetup_1,
-    buildPostLbpStackPostDepSetup_2,
-} from 'tasks/deployBuilds/postLbpStack/buildPostLbpStackPostDepSetup';
 import { temp__buildCluster } from 'tasks/deployBuilds/postLbpStack/cluster/temp__buildCluster';
-import { executeTestnetPostLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/executeTestnetPostLbpStackPostDepSetup';
 import { temp__buildPearlmit } from 'tasks/deployBuilds/postLbpStack/pearlmit/temp__buildPearlmit';
 import { buildExtExec } from 'tasks/deployBuilds/postLbpStack/tapToken/buildExtExec';
 import { buildTapToken } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapToken';
 import { buildTapTokenReceiverModule } from '../deployBuilds/postLbpStack/tapToken/buildTapTokenReceiverModule';
 import { buildTapTokenSenderModule } from '../deployBuilds/postLbpStack/tapToken/buildTapTokenSenderModule';
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
-import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
 
-export const deployPostLbpStack__task = async (
-    taskArgs: { tag?: string; load?: boolean; verify: boolean },
+export const deployPostLbpStack_1__task = async (
+    _taskArgs: TTapiocaDeployTaskArgs,
     hre: HardhatRuntimeEnvironment,
 ) => {
+    await hre.SDK.DeployerVM.tapiocaDeployTask(
+        _taskArgs,
+        { hre },
+        tapiocaDeployTask,
+    );
+};
+
+async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     // Settings
-    const tag = taskArgs.tag ?? 'default';
-    const chainInfo = hre.SDK.utils.getChainBy(
-        'chainId',
-        Number(hre.network.config.chainId),
-    )!;
+    const { hre, VM, tapiocaMulticallAddr, taskArgs, isTestnet, chainInfo } =
+        params;
+    const { tag } = taskArgs;
+    const owner = tapiocaMulticallAddr;
 
-    const VM = await loadVM(hre, tag);
-    const tapiocaMulticall = await VM.getMulticall();
-    const isTestnet = chainInfo.tags.find((tag) => tag === 'testnet');
-
-    if (taskArgs.load) {
-        console.log(
-            hre.SDK.db.loadLocalDeployment(tag, hre.SDK.eChainId)?.contracts,
-        );
-        VM.load(
-            hre.SDK.db.loadLocalDeployment(tag, hre.SDK.eChainId)?.contracts ??
-                [],
-        );
-    } else {
-        // Build contracts
-        VM.add(
-            await temp__buildCluster(hre, DEPLOYMENT_NAMES.CLUSTER, [
-                chainInfo.lzChainId,
-                tapiocaMulticall.address,
+    // Build contracts
+    VM.add(
+        await temp__buildCluster(hre, DEPLOYMENT_NAMES.CLUSTER, [
+            chainInfo.lzChainId,
+            owner,
+        ]),
+    )
+        .add(
+            await temp__buildPearlmit(hre, DEPLOYMENT_NAMES.PEARLMIT, [
+                'Pearlmit',
+                '1',
             ]),
         )
-            .add(
-                await temp__buildPearlmit(hre, DEPLOYMENT_NAMES.PEARLMIT, [
-                    'Pearlmit',
-                    '1',
-                ]),
-            )
-            .add(await getExtExec(hre, tapiocaMulticall.address))
-            .add(await getAOTAP(hre, tapiocaMulticall.address))
-            .add(await getVestingContributors(hre, tapiocaMulticall.address))
-            .add(await getVestingEarlySupporters(hre, tapiocaMulticall.address))
-            .add(await getVestingSupporters(hre, tapiocaMulticall.address))
-            .add(await getAdb(hre, tapiocaMulticall.address))
-            .add(
-                await getTapTokenSenderModule(
-                    hre,
-                    tapiocaMulticall.address,
-                    chainInfo.address,
-                ),
-            )
-            .add(
-                await getTapTokenReceiverModule(
-                    hre,
-                    tapiocaMulticall.address,
-                    chainInfo.address,
-                ),
-            )
-            .add(
-                await getTapToken(
-                    hre,
-                    tag,
-                    !!isTestnet,
-                    tapiocaMulticall.address,
-                    chainInfo.address,
-                    isTestnet
-                        ? ELZChainID.ARBITRUM_SEPOLIA
-                        : ELZChainID.ARBITRUM, // Governance LZ ChainID
-                ),
-            );
-
-        // Add and execute
-        await VM.execute();
-        await VM.save();
-    }
-    if (taskArgs.verify) {
-        await VM.verify();
-    }
-
-    // After deployment setup
-    console.log('[+] After deployment setup');
-
-    // Create UniV3 Tap/WETH pool, TapOracle, USDCOracle
-    if (!isTestnet) {
-        await VM.executeMulticall(
-            await buildPostLbpStackPostDepSetup_1(hre, tag),
-        );
-    } else {
-        // Deploying testnet mock payment oracles
-        // This'll also inject newly created USDC mock in DEPLOY_CONFIG
-        if (!taskArgs.load) {
-            // Since it's deployments, if load is true, we don't need to deploy again
-            await executeTestnetPostLbpStackPostDepSetup(
+        .add(await getExtExec(hre, owner))
+        .add(await getAOTAP(hre, owner))
+        .add(await getVestingContributors(hre, owner))
+        .add(await getVestingEarlySupporters(hre, owner))
+        .add(await getVestingSupporters(hre, owner))
+        .add(await getAdb(hre, owner))
+        .add(await getTapTokenSenderModule(hre, owner, chainInfo.address))
+        .add(await getTapTokenReceiverModule(hre, owner, chainInfo.address))
+        .add(
+            await getTapToken(
                 hre,
                 tag,
-                taskArgs.verify,
-            );
-        }
-    }
-    // Setup contracts
-    await VM.executeMulticall(await buildPostLbpStackPostDepSetup_2(hre, tag));
-
-    console.log('[+] Post LBP Stack deployed! 🎉');
-};
+                !!isTestnet,
+                owner,
+                chainInfo.address,
+                isTestnet ? ELZChainID.ARBITRUM_SEPOLIA : ELZChainID.ARBITRUM, // Governance LZ ChainID
+            ),
+        );
+}
 
 async function getExtExec(hre: HardhatRuntimeEnvironment, owner: string) {
     return await buildExtExec(
