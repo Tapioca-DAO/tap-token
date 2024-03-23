@@ -1,14 +1,15 @@
-import { ELZChainID } from '@tapioca-sdk/api/config';
+import * as PERIPH_DEPLOY_CONFIG from '@tapioca-periph/config';
+import { ELZChainID, TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import { TTapiocaDeployTaskArgs } from '@tapioca-sdk/ethers/hardhat/DeployerVM';
 import { BigNumberish } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { loadGlobalContract } from 'tapioca-sdk';
 import { TTapiocaDeployerVmPass } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { buildADB } from 'tasks/deployBuilds/postLbpStack/airdrop/buildADB';
 import { buildAOTAP } from 'tasks/deployBuilds/postLbpStack/airdrop/buildAOTAP';
-import { temp__buildCluster } from 'tasks/deployBuilds/postLbpStack/cluster/temp__buildCluster';
-import { temp__buildPearlmit } from 'tasks/deployBuilds/postLbpStack/pearlmit/temp__buildPearlmit';
 import { buildExtExec } from 'tasks/deployBuilds/postLbpStack/tapToken/buildExtExec';
 import { buildTapToken } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapToken';
+import { loadTapTokenLocalContract } from 'tasks/utils';
 import { buildTapTokenReceiverModule } from '../deployBuilds/postLbpStack/tapToken/buildTapTokenReceiverModule';
 import { buildTapTokenSenderModule } from '../deployBuilds/postLbpStack/tapToken/buildTapTokenSenderModule';
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
@@ -33,76 +34,75 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     const owner = tapiocaMulticallAddr;
 
     // Build contracts
-    VM.add(
-        await temp__buildCluster(hre, DEPLOYMENT_NAMES.CLUSTER, [
-            chainInfo.lzChainId,
-            owner,
-        ]),
-    )
+    VM.add(await getExtExec({ hre, owner, tag }))
+        .add(await getAOTAP({ hre, owner, tag }))
+        .add(await getVestingContributors({ hre, owner }))
+        .add(await getVestingEarlySupporters({ hre, owner }))
+        .add(await getVestingSupporters({ hre, owner }))
+        .add(await getAdb({ hre, owner }))
         .add(
-            await temp__buildPearlmit(hre, DEPLOYMENT_NAMES.PEARLMIT, [
-                'Pearlmit',
-                '1',
-            ]),
+            await getTapTokenSenderModule({
+                hre,
+                owner,
+                lzEndpointAddress: chainInfo.address,
+            }),
         )
-        .add(await getExtExec(hre, owner))
-        .add(await getAOTAP(hre, owner))
-        .add(await getVestingContributors(hre, owner))
-        .add(await getVestingEarlySupporters(hre, owner))
-        .add(await getVestingSupporters(hre, owner))
-        .add(await getAdb(hre, owner))
-        .add(await getTapTokenSenderModule(hre, owner, chainInfo.address))
-        .add(await getTapTokenReceiverModule(hre, owner, chainInfo.address))
         .add(
-            await getTapToken(
+            await getTapTokenReceiverModule({
+                hre,
+                owner,
+                lzEndpointAddress: chainInfo.address,
+            }),
+        )
+        .add(
+            await getTapToken({
                 hre,
                 tag,
-                !!isTestnet,
+                isTestnet: !!isTestnet,
                 owner,
-                chainInfo.address,
-                isTestnet ? ELZChainID.ARBITRUM_SEPOLIA : ELZChainID.ARBITRUM, // Governance LZ ChainID
-            ),
+                lzEndpointAddress: chainInfo.address,
+                governanceEid: isTestnet
+                    ? ELZChainID.ARBITRUM_SEPOLIA
+                    : ELZChainID.ARBITRUM, // Governance LZ ChainID
+            }),
         );
 }
 
-async function getExtExec(hre: HardhatRuntimeEnvironment, owner: string) {
+async function getExtExec(params: {
+    hre: HardhatRuntimeEnvironment;
+    owner: string;
+    tag: string;
+}) {
+    const { hre, owner, tag } = params;
+    const { cluster } = loadCOntracts({ hre, tag });
     return await buildExtExec(
         hre,
         DEPLOYMENT_NAMES.EXT_EXEC,
-        [
-            hre.ethers.constants.AddressZero, // cluster
-            owner,
-        ],
-        [
-            {
-                argPosition: 0,
-                deploymentName: DEPLOYMENT_NAMES.CLUSTER,
-            },
-        ],
+        [cluster.address, owner],
+        [],
     );
 }
 
-async function getAOTAP(hre: HardhatRuntimeEnvironment, owner: string) {
+async function getAOTAP(params: {
+    hre: HardhatRuntimeEnvironment;
+    owner: string;
+    tag: string;
+}) {
+    const { hre, owner, tag } = params;
+    const { pearlmit } = loadCOntracts({ hre, tag });
     return await buildAOTAP(
         hre,
         DEPLOYMENT_NAMES.AOTAP,
-        [
-            hre.ethers.constants.AddressZero, // Pearlmit
-            owner,
-        ],
-        [
-            {
-                argPosition: 0,
-                deploymentName: DEPLOYMENT_NAMES.PEARLMIT,
-            },
-        ],
+        [pearlmit.address, owner],
+        [],
     );
 }
 
-async function getVestingContributors(
-    hre: HardhatRuntimeEnvironment,
-    owner: string,
-) {
+async function getVestingContributors(params: {
+    hre: HardhatRuntimeEnvironment;
+    owner: string;
+}) {
+    const { hre, owner } = params;
     return await buildVesting(hre, DEPLOYMENT_NAMES.VESTING_CONTRIBUTORS, [
         DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING.CONTRIBUTORS_CLIFF, // 12 months cliff
         DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING.CONTRIBUTORS_PERIOD, // 36 months vesting
@@ -110,10 +110,11 @@ async function getVestingContributors(
     ]);
 }
 
-async function getVestingEarlySupporters(
-    hre: HardhatRuntimeEnvironment,
-    owner: string,
-) {
+async function getVestingEarlySupporters(params: {
+    hre: HardhatRuntimeEnvironment;
+    owner: string;
+}) {
+    const { hre, owner } = params;
     return await buildVesting(hre, DEPLOYMENT_NAMES.VESTING_EARLY_SUPPORTERS, [
         DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING
             .EARLY_SUPPORTERS_CLIFF, // 0 months cliff
@@ -123,10 +124,11 @@ async function getVestingEarlySupporters(
     ]);
 }
 
-async function getVestingSupporters(
-    hre: HardhatRuntimeEnvironment,
-    owner: string,
-) {
+async function getVestingSupporters(params: {
+    hre: HardhatRuntimeEnvironment;
+    owner: string;
+}) {
+    const { hre, owner } = params;
     return await buildVesting(hre, DEPLOYMENT_NAMES.VESTING_SUPPORTERS, [
         DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING.SUPPORTERS_CLIFF, // 0 months cliff
         DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.VESTING.SUPPORTERS_PERIOD, // 18 months vesting
@@ -134,7 +136,11 @@ async function getVestingSupporters(
     ]);
 }
 
-async function getAdb(hre: HardhatRuntimeEnvironment, owner: string) {
+async function getAdb(params: {
+    hre: HardhatRuntimeEnvironment;
+    owner: string;
+}) {
+    const { hre, owner } = params;
     return await buildADB(
         hre,
         DEPLOYMENT_NAMES.AIRDROP_BROKER,
@@ -151,19 +157,16 @@ async function getAdb(hre: HardhatRuntimeEnvironment, owner: string) {
                 argPosition: 0,
                 deploymentName: DEPLOYMENT_NAMES.AOTAP,
             },
-            {
-                argPosition: 3,
-                deploymentName: DEPLOYMENT_NAMES.PEARLMIT,
-            },
         ],
     );
 }
 
-async function getTapTokenSenderModule(
-    hre: HardhatRuntimeEnvironment,
-    owner: string,
-    lzEndpointAddress: string,
-) {
+async function getTapTokenSenderModule(params: {
+    hre: HardhatRuntimeEnvironment;
+    owner: string;
+    lzEndpointAddress: string;
+}) {
+    const { hre, owner, lzEndpointAddress } = params;
     return await buildTapTokenSenderModule(
         hre,
         DEPLOYMENT_NAMES.TAP_TOKEN_SENDER_MODULE,
@@ -177,11 +180,12 @@ async function getTapTokenSenderModule(
     );
 }
 
-async function getTapTokenReceiverModule(
-    hre: HardhatRuntimeEnvironment,
-    owner: string,
-    lzEndpointAddress: string,
-) {
+async function getTapTokenReceiverModule(params: {
+    hre: HardhatRuntimeEnvironment;
+    owner: string;
+    lzEndpointAddress: string;
+}) {
+    const { hre, owner, lzEndpointAddress } = params;
     return await buildTapTokenReceiverModule(
         hre,
         DEPLOYMENT_NAMES.TAP_TOKEN_RECEIVER_MODULE,
@@ -195,21 +199,18 @@ async function getTapTokenReceiverModule(
     );
 }
 
-async function getTapToken(
-    hre: HardhatRuntimeEnvironment,
-    tag: string,
-    isTestnet: boolean,
-    owner: string,
-    lzEndpointAddress: string,
-    governanceEid: BigNumberish,
-) {
-    const lTap = hre.SDK.db.findLocalDeployment(
-        hre.SDK.eChainId,
-        DEPLOYMENT_NAMES.LTAP,
-        tag,
-    );
-    if (!lTap) throw new Error('[-] lTap not found');
-
+async function getTapToken(params: {
+    hre: HardhatRuntimeEnvironment;
+    tag: string;
+    isTestnet: boolean;
+    owner: string;
+    lzEndpointAddress: string;
+    governanceEid: BigNumberish;
+}) {
+    const { hre, owner, tag, governanceEid, isTestnet, lzEndpointAddress } =
+        params;
+    const lTap = loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.LTAP);
+    const { pearlmit } = loadCOntracts({ hre, tag });
     return await buildTapToken(
         hre,
         DEPLOYMENT_NAMES.TAP_TOKEN,
@@ -218,7 +219,7 @@ async function getTapToken(
                 epochDuration:
                     DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
                 endpoint: lzEndpointAddress, // Endpoint address
-                contributors: hre.ethers.constants.AddressZero, //contributors address
+                contributors: isTestnet ? owner : '0x', //contributors address
                 earlySupporters: hre.ethers.constants.AddressZero, // early supporters address
                 supporters: hre.ethers.constants.AddressZero, // supporters address
                 lTap: lTap.address, // lTap address
@@ -229,15 +230,20 @@ async function getTapToken(
                 tapTokenSenderModule: hre.ethers.constants.AddressZero, // TapTokenSenderModule
                 tapTokenReceiverModule: hre.ethers.constants.AddressZero, // TapTokenReceiverModule
                 extExec: hre.ethers.constants.AddressZero, // ExtExec
-                pearlmit: hre.ethers.constants.AddressZero, // Pearlmit
+                pearlmit: pearlmit.address,
             },
         ],
         [
-            {
-                argPosition: 0,
-                deploymentName: DEPLOYMENT_NAMES.VESTING_CONTRIBUTORS,
-                keyName: 'contributors',
-            },
+            // Inject multicall address as contributors if testnet
+            ...(isTestnet
+                ? []
+                : [
+                      {
+                          argPosition: 0,
+                          deploymentName: DEPLOYMENT_NAMES.VESTING_CONTRIBUTORS,
+                          keyName: 'contributors',
+                      },
+                  ]),
             {
                 argPosition: 0,
                 deploymentName: DEPLOYMENT_NAMES.VESTING_EARLY_SUPPORTERS,
@@ -268,11 +274,30 @@ async function getTapToken(
                 deploymentName: DEPLOYMENT_NAMES.EXT_EXEC,
                 keyName: 'extExec',
             },
-            {
-                argPosition: 0,
-                deploymentName: DEPLOYMENT_NAMES.PEARLMIT,
-                keyName: 'pearlmit',
-            },
         ],
     );
+}
+
+function loadCOntracts(params: {
+    hre: HardhatRuntimeEnvironment;
+    tag: string;
+}) {
+    const { hre, tag } = params;
+    const pearlmit = loadGlobalContract(
+        hre,
+        TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
+        hre.SDK.eChainId,
+        PERIPH_DEPLOY_CONFIG.DEPLOYMENT_NAMES.PEARLMIT,
+        tag,
+    );
+
+    const cluster = loadGlobalContract(
+        hre,
+        TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
+        hre.SDK.eChainId,
+        PERIPH_DEPLOY_CONFIG.DEPLOYMENT_NAMES.CLUSTER,
+        tag,
+    );
+
+    return { pearlmit, cluster };
 }

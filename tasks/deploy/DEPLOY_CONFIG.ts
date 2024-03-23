@@ -30,8 +30,6 @@ export const DEPLOYMENT_NAMES = {
     // TO MOVE
     ARBITRUM_SGL_GLP: 'ARBITRUM_SGL_GLP', // TODO move to tapioca bar repo name config
     MAINNET_SGL_DAI: 'MAINNET_SGL_DAI', // TODO move to tapioca bar repo name config
-    PEARLMIT: 'PEARLMIT', // TODO move to tapioca periph repo name config
-    CLUSTER: 'CLUSTER', // TODO move to tapioca periph repo name config
 };
 
 type TPostLbp = {
@@ -155,7 +153,7 @@ const MISC: TMisc = {
     },
     [EChainID.ARBITRUM_SEPOLIA]: {
         CL_SEQUENCER: '0x',
-        WETH: '0x997FE31Adda5c969691768Ad1140273290952333', // Locally deployed WETH9 Mock
+        WETH: '0x2EAe4fbc552fE35C1D3Df2B546032409bb0E431E', // Locally deployed WETH9 Mock
         USDC: '0x6D6a13AbE7935b2cf6d67e49bc17F5035362C705', // Locally deployed USDC Mock
         NONFUNGIBLE_POSITION_MANAGER:
             '0xFd1a7CA61e49703da3618999B2EEdc0E79476759',

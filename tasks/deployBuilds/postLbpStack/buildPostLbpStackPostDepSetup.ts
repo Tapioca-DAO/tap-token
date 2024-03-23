@@ -1,3 +1,4 @@
+import * as PERIPH_DEPLOY_CONFIG from '@tapioca-periph/config';
 import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import { TapiocaMulticall } from '@tapioca-sdk/typechain/tapioca-periphery';
 import {
@@ -6,9 +7,8 @@ import {
     TapToken__factory,
 } from '@typechain/index';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { loadGlobalContract, loadLocalContract } from 'tapioca-sdk';
+import { loadGlobalContract } from 'tapioca-sdk';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from 'tasks/deploy/DEPLOY_CONFIG';
-import * as PERIPH_DEPLOY_CONFIG from '@tapioca-periph/config';
 import { loadTapTokenLocalContract } from 'tasks/utils';
 
 export const buildPostLbpStackPostDepSetup = async (
@@ -68,7 +68,7 @@ export const buildPostLbpStackPostDepSetup = async (
             allowFailure: false,
             callData: adb.interface.encodeFunctionData('setTapOracle', [
                 tapAdbOptionOracle.address,
-                '0x00',
+                '0x',
             ]),
         });
     }
@@ -90,7 +90,7 @@ export const buildPostLbpStackPostDepSetup = async (
             callData: adb.interface.encodeFunctionData('setPaymentToken', [
                 usdcAddr,
                 usdcOracleDeployment.address,
-                '0x00',
+                '0x',
             ]),
         });
         console.log(
@@ -100,7 +100,7 @@ export const buildPostLbpStackPostDepSetup = async (
             'USDC Oracle',
             usdcOracleDeployment.address,
             'Oracle Data',
-            '0x00',
+            '0x',
         );
     }
 
@@ -118,16 +118,12 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
 
     const usdcOracleDeployment = loadGlobalContract(
         hre,
-        TAPIOCA_PROJECTS_NAME.TapiocaBar,
+        TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
         hre.SDK.eChainId,
-        DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE,
+        PERIPH_DEPLOY_CONFIG.DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE,
         tag,
     );
 
-    const weth = await hre.ethers.getContractAt(
-        'ERC20',
-        DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.WETH,
-    );
     const tapToken = TapToken__factory.connect(
         loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.TAP_TOKEN).address,
         hre.ethers.provider.getSigner(),
@@ -141,10 +137,6 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.AOTAP).address,
         hre.ethers.provider.getSigner(),
     );
-    const uniV3Factory = await hre.ethers.getContractAt(
-        'IUniswapV3Factory',
-        DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.V3_FACTORY,
-    );
 
     return {
         tapToken,
@@ -152,7 +144,5 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
         tapAdbOptionOracle,
         usdcOracleDeployment,
         aoTap,
-        weth,
-        uniV3Factory,
     };
 }
