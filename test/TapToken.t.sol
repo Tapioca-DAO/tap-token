@@ -72,6 +72,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
     address public userA = vm.addr(userAPKey);
     address public userB = vm.addr(userBPKey);
     uint256 public initialBalance = 100 ether;
+    uint256 EPOCH_DURATION = 1 weeks;
 
     /**
      * DEPLOY setup addresses
@@ -120,6 +121,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         aTapOFT = new TapTokenMock(
             ITapToken.TapTokenConstructorData(
+                EPOCH_DURATION,
                 address(endpoints[aEid]),
                 __contributors,
                 __earlySupporters,
@@ -139,6 +141,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         bTapOFT = new TapTokenMock(
             ITapToken.TapTokenConstructorData(
+                EPOCH_DURATION,
                 address(endpoints[bEid]),
                 __contributors,
                 __earlySupporters,
@@ -1012,6 +1015,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
     {
         newToken_ = new TapTokenMock(
             ITapToken.TapTokenConstructorData(
+                EPOCH_DURATION,
                 _endpoint,
                 __contributors,
                 __earlySupporters,
