@@ -121,6 +121,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      * Airdrop: 2.5m
      * == 100M ==
      *
+     * @param _data.epochDuration The duration of an epoch in seconds.
      * @param _data.endpoint The layer zero address endpoint deployed on the current chain.
      * @param _data.contributors Address of the  contributors. 15m TAP.
      * @param _data.earlySupporters Address of early supporters. 3,686,595 TAP.
