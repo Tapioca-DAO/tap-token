@@ -40,12 +40,6 @@ type TPostLbp = {
         ADB: {
             PAYMENT_TOKEN_BENEFICIARY: string;
         };
-        TAP_ORACLE: {
-            NAME: string;
-            DESCRIPTION: string;
-            ETH_USD_CHAINLINK: string;
-            WETH_USDC_UNI_POOL: string;
-        };
         PCNFT: {
             ADDRESS: string;
         };
@@ -56,11 +50,6 @@ type TPostLbp = {
             EARLY_SUPPORTERS_PERIOD: number;
             SUPPORTERS_CLIFF: number;
             SUPPORTERS_PERIOD: number;
-        };
-        UNISWAP_POOL: {
-            TAP_AMOUNT: number;
-            WETH_AMOUNT: number;
-            FEE_AMOUNT: FeeAmount;
         };
     };
 };
@@ -74,13 +63,7 @@ const POST_LBP: TPostLbp = {
             PAYMENT_TOKEN_BENEFICIARY:
                 '0x464570adA09869d8741132183721B4f0769a0287', // TODO replace by real address
         },
-        TAP_ORACLE: {
-            NAME: 'TAP/USD',
-            DESCRIPTION:
-                'TAP/USD price feed. Using TAP/WETH UNI, WETH/USD Chainlink and TAP/USD Chainlink.',
-            ETH_USD_CHAINLINK: '0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612',
-            WETH_USDC_UNI_POOL: '0xC6962004f452bE9203591991D15f6b388e09E8D0', // 500 FeeAmount
-        },
+
         PCNFT: {
             ADDRESS: '0x464570adA09869d8741132183721B4f0769a0287', // TODO replace by real address
         },
@@ -95,13 +78,9 @@ const POST_LBP: TPostLbp = {
             SUPPORTERS_CLIFF: 0,
             SUPPORTERS_PERIOD: 46656000, // 18 months vesting
         },
-        UNISWAP_POOL: {
-            TAP_AMOUNT: 0,
-            WETH_AMOUNT: 0,
-            FEE_AMOUNT: FeeAmount.MEDIUM,
-        },
     },
 };
+// TESTNET ONLY
 POST_LBP[EChainID.ARBITRUM_SEPOLIA] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
 POST_LBP[EChainID.SEPOLIA] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
 POST_LBP[EChainID.OPTIMISM_SEPOLIA] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum

@@ -5,6 +5,7 @@ import { deployPreLbpStack__task } from 'tasks/deploy/1-deployPreLbpStack';
 import { TAP_TASK } from 'tapioca-sdk';
 import { deployPostLbpStack_1__task } from 'tasks/deploy/2-1-deployPostLbpStack';
 import { deployPostLbpStack_2__task } from 'tasks/deploy/2-2-deployPostLbpStack';
+import { deploySideChainPostLbpStack_1__task } from 'tasks/deploy/2-1-sideChain-deployPostLbpStack';
 
 const deployScope = scope('deploys', 'Deployment tasks');
 
@@ -21,6 +22,13 @@ TAP_TASK(
         'postLbp1',
         'Deploy the Post LBP stack of the tap-token repo. Includes AOTAP, ADB, Vesting, TapToken. Call postLbp2 after this task.',
         deployPostLbpStack_1__task,
+    ),
+);
+TAP_TASK(
+    deployScope.task(
+        'postLbp1-sideChain',
+        'Deploy tap-token on side chain, different than the governance chain. Should be called after `postLbp1`.\n periph `preLbp` should be deployed on the said side chain',
+        deploySideChainPostLbpStack_1__task,
     ),
 );
 TAP_TASK(
