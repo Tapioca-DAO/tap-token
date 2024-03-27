@@ -101,8 +101,8 @@ contract TapiocaOptionLiquidityProvision is
     // ==========
     //   EVENTS
     // ==========
-    event Mint(address indexed to, uint256 indexed sglAssetId, uint256 tolpTokenId, uint128 lockDuration, uint128 ybShares);
-    event Burn(address indexed to, uint256 indexed sglAssetId, uint256 tolpTokenId);
+    event Mint(address indexed to, uint256 indexed sglAssetId, address sglAddress, uint256 tolpTokenId, uint128 lockDuration, uint128 ybShares);
+    event Burn(address indexed to, uint256 indexed sglAssetId, address sglAddress, uint256 tolpTokenId);
     event UpdateTotalSingularityPoolWeights(uint256 totalSingularityPoolWeights);
     event SetSGLPoolWeight(uint256 indexed sglAssetId, address sglAddress, uint256 poolWeight);
     event RequestSglPoolRescue(uint256 indexed sglAssetId, uint256 timestamp);
@@ -223,7 +223,7 @@ contract TapiocaOptionLiquidityProvision is
         // Mint the tOLP NFT position
         _safeMint(_to, tokenId);
 
-        emit Mint(_to, sglAssetID, tokenId, _lockDuration, _ybShares);
+        emit Mint(_to, sglAssetID, address(_singularity), tokenId, _lockDuration, _ybShares);
     }
 
     /// @notice Unlocks tOLP tokens
@@ -254,7 +254,7 @@ contract TapiocaOptionLiquidityProvision is
         yieldBox.transfer(address(this), _to, lockPosition.sglAssetID, lockPosition.ybShares);
         activeSingularities[_singularity].totalDeposited -= lockPosition.ybShares;
 
-        emit Burn(_to, lockPosition.sglAssetID, _tokenId);
+        emit Burn(_to, lockPosition.sglAssetID, address(_singularity), _tokenId);
     }
 
     // =========
