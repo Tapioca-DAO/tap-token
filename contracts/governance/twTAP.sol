@@ -317,7 +317,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
     {
         if (_duration < EPOCH_DURATION) revert LockNotAWeek();
         if (_duration > MAX_LOCK_DURATION) revert LockTooLong();
-        if (_timestampToWeek(block.timestamp) > lastProcessedWeek) revert AdvanceEpochFirst();
+        if (_timestampToWeek(block.timestamp) > currentWeek()) revert AdvanceEpochFirst();
 
         // Transfer TAP to this contract
         {
