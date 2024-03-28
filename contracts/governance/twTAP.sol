@@ -144,19 +144,29 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
     // ==========
     //   EVENTS
     // ==========
-    
+
     event AMLDivergence(
         uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 indexed totalParticipants
     );
 
     event AddRewardToken(address indexed rewardTokenAddress, uint256 rewardTokenIndex);
-    event DistributeReward(address indexed rewardTokenAddress, address indexed from, uint256 amount, uint256 rewardTokenIndex);
+    event DistributeReward(
+        address indexed rewardTokenAddress, address indexed from, uint256 amount, uint256 rewardTokenIndex
+    );
     event AdvanceEpoch(uint256 indexed newEpoch, uint256 lastEpoch);
 
-    event ClaimReward(address indexed rewardTokenAddress, address indexed to, uint256 indexed twTapTokenId, uint256 amount, uint256 rewardTokenIndex);
-    event Participate(address indexed participant, uint256 mintedTokenId, uint256 tapAmount, uint256 multiplier, uint256 lockDuration);
+    event ClaimReward(
+        address indexed rewardTokenAddress,
+        address indexed to,
+        uint256 indexed twTapTokenId,
+        uint256 amount,
+        uint256 rewardTokenIndex
+    );
+    event Participate(
+        address indexed participant, uint256 mintedTokenId, uint256 tapAmount, uint256 multiplier, uint256 lockDuration
+    );
     event ExitPosition(uint256 indexed twTapTokenId, address indexed releasedTo, uint256 amount);
-    
+
     event LogMaxRewardsLength(uint256 _oldLength, uint256 _newLength, uint256 _currentLength);
     event SetMinWeightFactor(uint256 newMinWeightFactor, uint256 oldMinWeightFactor);
     event SetVirtualTotalAmount(uint256 newVirtualTotalAmount, uint256 oldVirtualTotalAmount);
@@ -485,7 +495,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
         totals.totalDistPerVote[_rewardTokenId] += (_amount * DIST_PRECISION) / uint256(totals.netActiveVotes);
 
         rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
-    
+
         emit DistributeReward(address(rewardToken), msg.sender, _amount, _rewardTokenId);
     }
 
