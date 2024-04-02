@@ -2,6 +2,7 @@
 pragma solidity 0.8.22;
 
 // External
+import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -66,7 +67,17 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721NftLoader, ReentrancyGuard, Pausable {
+contract TwTAP is
+    TWAML,
+    ERC721,
+    ERC721Permit,
+    ERC721Enumerable,
+    Ownable,
+    PearlmitHandler,
+    ERC721NftLoader,
+    ReentrancyGuard,
+    Pausable
+{
     using SafeERC20 for IERC20;
 
     TapToken public immutable tapOFT;
@@ -667,10 +678,20 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
         return block.chainid;
     }
 
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721Enumerable, ERC721)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        override(ERC721, ERC721Enumerable)
+    {
+        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
 }
