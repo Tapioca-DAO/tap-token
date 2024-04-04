@@ -87,6 +87,7 @@ contract TapiocaOptionLiquidityProvision is
     error NotActive();
     error RescueCooldownNotReached();
     error TransferFailed();
+    error HasDeposits();
 
     constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
@@ -344,6 +345,9 @@ contract TapiocaOptionLiquidityProvision is
 
             for (uint256 i; i < sglLength; i++) {
                 if (_singularities[i] == sglAssetID) {
+                    //check totalDeposited
+                    if(activeSingularities[singularity].totalDeposited > 0) revert HasDeposits();
+
                     // If in the middle, copy last element on deleted element, then pop
                     delete activeSingularities[singularity];
                     delete sglAssetIDToAddress[sglAssetID];
