@@ -249,7 +249,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         // Transfer tOLP position to this contract
         // tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
         {
-            bool isErr = pearlmit.transferFromERC721(msg.sender, address(this), address(tOLP), _tOLPTokenID);
+            bool isErr = pearlmit.transferFromERC721(tOLP.ownerOf(_tOLPTokenID), address(this), address(tOLP), _tOLPTokenID);
             if (isErr) revert TransferFailed();
         }
 
