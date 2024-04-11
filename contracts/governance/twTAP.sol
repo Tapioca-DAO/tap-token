@@ -44,6 +44,7 @@ struct Participation {
     bool divergenceForce; // 0 negative, 1 positive
     bool tapReleased; // allow restaking while rewards may still accumulate
     uint56 expiry; // expiry timestamp. Big enough for over 2 billion years..
+    uint56 lockedAt; // timestamp when lock was created. Big enough for over 2 billion years..
     uint88 tapAmount; // amount of TAP locked
     uint24 multiplier; // Votes = multiplier * tapAmount
     uint40 lastInactive; // One week BEFORE the staker gets a share of rewards
@@ -88,9 +89,9 @@ contract TwTAP is
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
     /// @dev Virtual total amount to add to the total when computing twAML participation right. Default 10_000 * 1e18.
-    uint256 private VIRTUAL_TOTAL_AMOUNT = 10_000 ether;
+    uint256 public VIRTUAL_TOTAL_AMOUNT = 10_000 ether;
 
-    uint256 MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
+    uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
     uint256 constant dMAX = 1_000_000; // 100 * 1e4; 0% - 100% voting power multiplier
     uint256 constant dMIN = 0;
     uint256 public constant EPOCH_DURATION = 7 days;
@@ -295,6 +296,15 @@ contract TwTAP is
         return result;
     }
 
+    /// @notice Return the Participation of a token and the claimable amounts.
+    /// @param _tokenId The tokenId of the twTAP position.
+    /// @return position The Participation of the token.
+    /// @return claimables The claimable amounts of each reward token.
+    function getPosition(uint256 _tokenId) external view returns (Participation memory position, uint256[] memory claimables) {
+        position = participants[_tokenId];
+        claimables = claimable(_tokenId);
+    }
+
     /**
      * @dev Returns the hash of the struct used by the permit function.
      * @param _permitData Struct containing permit data.
@@ -395,6 +405,7 @@ contract TwTAP is
             divergenceForce: divergenceForce,
             tapReleased: false,
             expiry: uint56(expiry),
+            lockedAt: uint56(block.timestamp),
             tapAmount: uint88(_amount),
             multiplier: uint24(multiplier),
             lastInactive: uint40(w0),
