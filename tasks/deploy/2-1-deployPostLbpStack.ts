@@ -263,7 +263,7 @@ export async function getTapToken(params: {
                 epochDuration:
                     DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
                 endpoint: lzEndpointAddress, // Endpoint address
-                contributors: isTestnet ? owner : '0x', //contributors address
+                contributors: isTestnet ? owner : '0x', //contributors address, we use owner for testnet
                 earlySupporters: hre.ethers.constants.AddressZero, // early supporters address
                 supporters: hre.ethers.constants.AddressZero, // supporters address
                 lTap: lTap.address, // lTap address
@@ -309,7 +309,7 @@ function getTapTokenDependencies(params: {
 
     if (isGovernanceChain) {
         // Inject multicall address as contributors if testnet
-        if (isTestnet) {
+        if (!isTestnet) {
             dependencies = [
                 ...dependencies,
                 {

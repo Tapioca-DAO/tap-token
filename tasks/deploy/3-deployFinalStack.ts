@@ -109,9 +109,10 @@ async function getContracts(
     }
 
     // Get pearlmit
-    const pearlmit = hre.SDK.db.findLocalDeployment(
+    const pearlmit = hre.SDK.db.findGlobalDeployment(
+        TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
         hre.SDK.eChainId,
-        DEPLOYMENT_NAMES.PEARLMIT,
+        'PEARLMIT',
         tag,
     );
     if (!pearlmit) {
