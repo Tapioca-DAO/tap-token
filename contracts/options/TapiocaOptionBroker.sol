@@ -242,10 +242,6 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
             pool.cumulative = EPOCH_DURATION;
         }
 
-        if (!tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID)) {
-            revert NotAuthorized();
-        }
-
         // Transfer tOLP position to this contract
         // tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
         {
