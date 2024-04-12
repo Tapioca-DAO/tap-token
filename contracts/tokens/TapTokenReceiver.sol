@@ -54,7 +54,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
     /// @dev twTAP lock operation received.
     event LockTwTapReceived(address indexed user, uint96 duration, uint256 amount);
     /// @dev twTAP unlock operation received.
-    event UnlockTwTapReceived(address indexed user, uint256 tokenId, uint256 amount);
+    event UnlockTwTapReceived(uint256 tokenId, uint256 amount);
     event ClaimRewardReceived(address indexed token, address indexed to, uint256 amount);
 
     // See `this._claimTwpTapRewardsReceiver()`. Triggered if the length of the claimed rewards are not equal to the length of the lzSendParam array.
@@ -138,9 +138,9 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
         UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_ = TapTokenCodec.decodeUnlockTwTapPositionMsg(_data);
 
         // Send TAP to the user address.
-        uint256 tapAmount_ = twTap.exitPosition(unlockTwTapPositionMsg_.tokenId, unlockTwTapPositionMsg_.user);
+        uint256 tapAmount_ = twTap.exitPosition(unlockTwTapPositionMsg_.tokenId);
 
-        emit UnlockTwTapReceived(unlockTwTapPositionMsg_.user, unlockTwTapPositionMsg_.tokenId, tapAmount_);
+        emit UnlockTwTapReceived(unlockTwTapPositionMsg_.tokenId, tapAmount_);
     }
 
     /**

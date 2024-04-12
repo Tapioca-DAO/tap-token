@@ -436,23 +436,12 @@ contract TwTAP is
      * @notice Exit a twAML participation, delete the voting power if existing and send the TAP to `_to`.
      *
      * @param _tokenId The tokenId of the twTAP position.
-     * @param _to address to receive the TAP.
      *
      * @return tapAmount_ The amount of TAP released.
      */
-    function exitPosition(uint256 _tokenId, address _to)
-        external
-        nonReentrant
-        whenNotPaused
-        returns (uint256 tapAmount_)
-    {
-        {
-            address owner_ = ownerOf(_tokenId);
-            if (_to != owner_) {
-                _requireClaimPermission(_to, _tokenId);
-            }
-        }
-        tapAmount_ = _releaseTap(_tokenId, _to);
+    function exitPosition(uint256 _tokenId) external nonReentrant whenNotPaused returns (uint256 tapAmount_) {
+        address owner_ = ownerOf(_tokenId);
+        tapAmount_ = _releaseTap(_tokenId, owner_);
     }
 
     /// @notice Indicate that (a) week(s) have passed and update running totals

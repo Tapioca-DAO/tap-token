@@ -85,7 +85,7 @@ library TapTokenCodec {
      *
      */
     function buildUnlockTwTapPositionMsg(UnlockTwTapPositionMsg memory _msg) internal pure returns (bytes memory) {
-        return abi.encodePacked(_msg.user, _msg.tokenId);
+        return abi.encodePacked(_msg.tokenId);
     }
 
     /**
@@ -101,16 +101,8 @@ library TapTokenCodec {
         pure
         returns (UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_)
     {
-        // Offsets
-        uint8 userOffset_ = 20;
-
-        // Decoded data
-        address user_ = BytesLib.toAddress(BytesLib.slice(_msg, 0, userOffset_), 0);
-
-        uint256 tokenId_ = BytesLib.toUint256(BytesLib.slice(_msg, userOffset_, 32), 0);
-
         // Return structured data
-        unlockTwTapPositionMsg_ = UnlockTwTapPositionMsg(user_, tokenId_);
+        unlockTwTapPositionMsg_ = UnlockTwTapPositionMsg(abi.decode(_msg, (uint256)));
     }
 
     /**

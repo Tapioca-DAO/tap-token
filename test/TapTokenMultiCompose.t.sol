@@ -443,8 +443,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         view
         returns (SetupUnlockTwTapPositionMsgReturn memory unlockTwTapPositionMsgReturn_)
     {
-        UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_ =
-            UnlockTwTapPositionMsg({user: _data.user, tokenId: _data.tokenId});
+        UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_ = UnlockTwTapPositionMsg({tokenId: _data.tokenId});
 
         bytes memory unlockPosition_ = TapTokenCodec.buildUnlockTwTapPositionMsg(unlockTwTapPositionMsg_);
 
