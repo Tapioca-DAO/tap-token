@@ -264,7 +264,8 @@ contract Vesting is Ownable, ReentrancyGuard {
         if (_start == 0) return 0; // Not started
 
         if (_cliff > 0) {
-            if (block.timestamp < _start + _cliff) return 0; // Cliff not reached
+            _start = _start + _cliff; // Apply cliff offset
+            if (block.timestamp < _start) return 0; // Cliff not reached
         }
 
         if (block.timestamp >= _start + _duration) return _totalAmount; // Fully vested
