@@ -308,7 +308,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 1_000_000,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             })
         );
         bytes memory composeMsg_ = prepareLzCallReturn_.composeMsg;
@@ -406,7 +407,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 1_000_000,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             })
         );
         bytes memory composeMsg_ = prepareLzCallReturn_.composeMsg;
@@ -474,7 +476,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 1_000_000,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             })
         );
         bytes memory composeMsg_ = prepareLzCallReturn_.composeMsg;
@@ -562,7 +565,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 1_000_000,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             })
         );
         bytes memory composeMsg_ = prepareLzCallReturn_.composeMsg;
@@ -624,7 +628,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         prevOptionsData: bytes("")
                     }),
                     lzReceiveGas: 500_000,
-                    lzReceiveValue: 0
+                    lzReceiveValue: 0,
+                refundAddress: address(this)
                 })
             );
             remoteLzSendParam_ = prepareLzCallReturn1_.lzSendParam;
@@ -655,7 +660,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 500_000,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             })
         );
         bytes memory composeMsg_ = prepareLzCallReturn2_.composeMsg;
@@ -803,7 +809,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         prevOptionsData: bytes("")
                     }),
                     lzReceiveGas: 500_000,
-                    lzReceiveValue: 0
+                    lzReceiveValue: 0,
+                refundAddress: address(this)
                 })
             );
             testData_.remoteMsgFee1 = prepareLzCallReturn1_.msgFee;
@@ -827,7 +834,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         prevOptionsData: bytes("")
                     }),
                     lzReceiveGas: 500_000,
-                    lzReceiveValue: 0
+                    lzReceiveValue: 0,
+                refundAddress: address(this)
                 })
             );
             testData_.remoteMsgFee2 = prepareLzCallReturn2_.msgFee;
@@ -869,7 +877,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         prevOptionsData: bytes("")
                     }),
                     lzReceiveGas: 500_000,
-                    lzReceiveValue: 0
+                    lzReceiveValue: 0,
+                refundAddress: address(this)
                 })
             );
             composeMsg_ = prepareLzCallReturn_.composeMsg;

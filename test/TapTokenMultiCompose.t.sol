@@ -70,7 +70,8 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     prevOptionsData: new bytes(0)
                 }),
                 lzReceiveGas: 1,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             }),
             approvalOn: ITapToken(address(bTapOFT)),
             userPrivateKey: userAPKey,
@@ -105,7 +106,8 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                         prevOptionsData: erc20ApprovalsReturn_.prepareLzCallReturn.composeOptions
                     }),
                     lzReceiveGas: 1_000_000,
-                    lzReceiveValue: 0
+                    lzReceiveValue: 0,
+                    refundAddress: address(this)
                 }),
                 user: userA,
                 amountToSend: amountToSendLD,
@@ -185,7 +187,8 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     prevOptionsData: new bytes(0)
                 }),
                 lzReceiveGas: 1,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             }),
             approvalOn: address(twTap),
             userPrivateKey: userAPKey,
@@ -219,7 +222,8 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                         prevOptionsData: erc721ApprovalsReturn_.prepareLzCallReturn.composeOptions
                     }),
                     lzReceiveGas: 1,
-                    lzReceiveValue: 0
+                    lzReceiveValue: 0,
+                    refundAddress: address(this)
                 }),
                 user: userA,
                 tokenId: tokenId_
@@ -244,7 +248,8 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     prevOptionsData: unlockTwTapPositionMsgReturn_.prepareLzCallReturn.composeOptions
                 }),
                 lzReceiveGas: 1,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             }),
             approvalOn: ITapToken(address(bTapOFT)),
             userPrivateKey: userAPKey,
@@ -279,7 +284,8 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                         prevOptionsData: erc20ApprovalsReturn_.prepareLzCallReturn.composeOptions
                     }),
                     lzReceiveGas: 1_000_000,
-                    lzReceiveValue: 0
+                    lzReceiveValue: 0,
+                    refundAddress: address(this)
                 }),
                 dstToken: ITapToken(address(bTapOFT)),
                 targetEid: aEid,
@@ -506,7 +512,8 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                         prevOptionsData: new bytes(0)
                     }),
                     lzReceiveGas: 1_000_000,
-                    lzReceiveValue: 0
+                    lzReceiveValue: 0,
+                    refundAddress: address(this)
                 })
             );
             remoteTransferMsg_ = RemoteTransferMsg({
