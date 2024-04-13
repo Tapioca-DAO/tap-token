@@ -542,8 +542,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         /**
          * Actions
          */
-        UnlockTwTapPositionMsg memory unlockTwTapPosition_ =
-            UnlockTwTapPositionMsg({user: address(this), tokenId: tokenId_});
+        UnlockTwTapPositionMsg memory unlockTwTapPosition_ = UnlockTwTapPositionMsg({tokenId: tokenId_});
         bytes memory unlockTwTapPositionMsg_ = tapTokenHelper.buildUnlockTwpTapPositionMsg(unlockTwTapPosition_);
 
         PrepareLzCallReturn memory prepareLzCallReturn_ = tapTokenHelper.prepareLzCall(
@@ -576,7 +575,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         verifyPackets(uint32(bEid), address(bTapOFT));
 
         vm.expectEmit(true, true, true, false);
-        emit ITapToken.UnlockTwTapReceived(unlockTwTapPosition_.user, unlockTwTapPosition_.tokenId, lockAmount_);
+        emit ITapToken.UnlockTwTapReceived(unlockTwTapPosition_.tokenId, lockAmount_);
 
         __callLzCompose(
             LzOFTComposedData(

@@ -12,6 +12,7 @@ import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
 // External
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Tapioca
 import {
@@ -43,6 +44,7 @@ import {BaseTapToken} from "./BaseTapToken.sol";
 contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
+    using SafeERC20 for IERC20;
 
     /**
      * @dev Used as a module for `TapToken`. Only delegate calls with `TapToken` state are used.
@@ -54,7 +56,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
     /// @dev twTAP lock operation received.
     event LockTwTapReceived(address indexed user, uint96 duration, uint256 amount);
     /// @dev twTAP unlock operation received.
-    event UnlockTwTapReceived(address indexed user, uint256 tokenId, uint256 amount);
+    event UnlockTwTapReceived(uint256 tokenId, uint256 amount);
     event ClaimRewardReceived(address indexed token, address indexed to, uint256 amount);
 
     // See `this._claimTwpTapRewardsReceiver()`. Triggered if the length of the claimed rewards are not equal to the length of the lzSendParam array.
@@ -138,9 +140,9 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
         UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_ = TapTokenCodec.decodeUnlockTwTapPositionMsg(_data);
 
         // Send TAP to the user address.
-        uint256 tapAmount_ = twTap.exitPosition(unlockTwTapPositionMsg_.tokenId, unlockTwTapPositionMsg_.user);
+        uint256 tapAmount_ = twTap.exitPosition(unlockTwTapPositionMsg_.tokenId);
 
-        emit UnlockTwTapReceived(unlockTwTapPositionMsg_.user, unlockTwTapPositionMsg_.tokenId, tapAmount_);
+        emit UnlockTwTapReceived(unlockTwTapPositionMsg_.tokenId, tapAmount_);
     }
 
     /**
@@ -182,8 +184,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
 
             // Send the dust back to the user locally
             if (dust > 0) {
-                // TODO Use SafeTransfer
-                IERC20(rewardToken_).transfer(sendTo_, dust);
+                IERC20(rewardToken_).safeTransfer(sendTo_, dust);
             }
 
             // Add 1 to `claimedAmount_` index because the first index is reserved.

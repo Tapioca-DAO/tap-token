@@ -188,6 +188,7 @@ contract TapiocaOptionLiquidityProvision is
     function lock(address _to, IERC20 _singularity, uint128 _lockDuration, uint128 _ybShares)
         external
         nonReentrant
+        whenNotPaused
         returns (uint256 tokenId)
     {
         if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
@@ -229,8 +230,7 @@ contract TapiocaOptionLiquidityProvision is
     /// @notice Unlocks tOLP tokens
     /// @param _tokenId ID of the position to unlock
     /// @param _singularity Singularity market address
-    /// @param _to Address to send the tokens to
-    function unlock(uint256 _tokenId, IERC20 _singularity, address _to) external {
+    function unlock(uint256 _tokenId, IERC20 _singularity) external whenNotPaused {
         if (!_exists(_tokenId)) revert PositionExpired();
 
         LockPosition memory lockPosition = lockPositions[_tokenId];
@@ -245,16 +245,16 @@ contract TapiocaOptionLiquidityProvision is
             revert InvalidSingularity();
         }
 
-        if (!_isApprovedOrOwner(msg.sender, _tokenId)) revert NotAuthorized();
+        address tokenOwner = _ownerOf(_tokenId);
 
         _burn(_tokenId);
         delete lockPositions[_tokenId];
 
         // Transfer the YieldBox position back to the owner
-        yieldBox.transfer(address(this), _to, lockPosition.sglAssetID, lockPosition.ybShares);
+        yieldBox.transfer(address(this), tokenOwner, lockPosition.sglAssetID, lockPosition.ybShares);
         activeSingularities[_singularity].totalDeposited -= lockPosition.ybShares;
 
-        emit Burn(_to, lockPosition.sglAssetID, _tokenId);
+        emit Burn(tokenOwner, lockPosition.sglAssetID, _tokenId);
     }
 
     // =========
