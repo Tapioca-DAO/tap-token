@@ -230,7 +230,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     {
         // Load data
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(_aoTAPTokenID);
-        if (aoTapOption.expiry < block.timestamp) revert OptionExpired();
+        if (aoTapOption.expiry <= block.timestamp) revert OptionExpired();
 
         uint256 cachedEpoch = epoch;
 
