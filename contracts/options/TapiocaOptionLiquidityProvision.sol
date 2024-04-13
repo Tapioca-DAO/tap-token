@@ -188,6 +188,7 @@ contract TapiocaOptionLiquidityProvision is
     function lock(address _to, IERC20 _singularity, uint128 _lockDuration, uint128 _ybShares)
         external
         nonReentrant
+        whenNotPaused
         returns (uint256 tokenId)
     {
         if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
@@ -229,7 +230,7 @@ contract TapiocaOptionLiquidityProvision is
     /// @notice Unlocks tOLP tokens
     /// @param _tokenId ID of the position to unlock
     /// @param _singularity Singularity market address
-    function unlock(uint256 _tokenId, IERC20 _singularity) external {
+    function unlock(uint256 _tokenId, IERC20 _singularity) external whenNotPaused {
         if (!_exists(_tokenId)) revert PositionExpired();
 
         LockPosition memory lockPosition = lockPositions[_tokenId];
