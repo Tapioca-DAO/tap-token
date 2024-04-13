@@ -378,6 +378,9 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (!oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID)) {
             revert NotAuthorized();
         }
+
+        if (_timestampToWeek(block.timestamp) > epoch) revert AdvanceEpochFirst();
+
         if (block.timestamp < oTAPPosition.entry + EPOCH_DURATION) {
             revert OneEpochCooldown();
         } // Can only exercise after 1 epoch duration

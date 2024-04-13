@@ -331,7 +331,7 @@ contract TwTAP is
         if (_duration < EPOCH_DURATION) revert LockNotAWeek();
         if (_duration > MAX_LOCK_DURATION) revert LockTooLong();
         if (_duration % EPOCH_DURATION != 0) revert DurationNotMultiple();
-        if (_timestampToWeek(block.timestamp) > currentWeek()) revert AdvanceEpochFirst();
+        if (lastProcessedWeek != currentWeek()) revert AdvanceWeekFirst();
 
         // Transfer TAP to this contract
         {
