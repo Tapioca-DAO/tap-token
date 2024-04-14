@@ -115,7 +115,7 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, BaseBo
     /// @notice burns an OTAP
     /// @param _tokenId tokenId to burn
     function burn(uint256 _tokenId) external {
-        if (!_isApprovedOrOwner(msg.sender, _tokenId)) revert NotAuthorized();
+        if (msg.sender != broker) revert OnlyBroker();
         _burn(_tokenId);
 
         emit Burn(msg.sender, _tokenId, options[_tokenId]);
