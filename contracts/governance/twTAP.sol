@@ -431,6 +431,10 @@ contract TwTAP is
         whenNotPaused
         returns (uint256[] memory amounts_)
     {
+        // Either the owner or a delegate can claim the rewards
+        // In this case it's `TapToken` to claim the rewards on behalf of the user and send them xChain.
+        if (_to != _ownerOf(_tokenId) && _to != msg.sender) revert NotAuthorized();
+
         _requireClaimPermission(_to, _tokenId);
         amounts_ = _claimRewards(_tokenId, _to);
     }
