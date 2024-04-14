@@ -367,6 +367,9 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         unchecked {
             for (uint256 i; i < len; ++i) {
                 IERC20 paymentToken = IERC20(_paymentTokens[i]);
+                if (address(paymentToken) == address(tapToken)) {
+                    revert PaymentTokenNotValid();
+                }
                 paymentToken.safeTransfer(paymentTokenBeneficiary, paymentToken.balanceOf(address(this)));
             }
         }
