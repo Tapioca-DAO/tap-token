@@ -421,22 +421,15 @@ contract TwTAP is
      * @dev Should be safe to claim even after position exit.
      *
      * @param _tokenId tokenId whose rewards to claim
-     * @param _to address to receive the rewards
      *
      * @return amounts_ Claimed amount of each reward token.
      */
-    function claimRewards(uint256 _tokenId, address _to)
-        external
-        nonReentrant
-        whenNotPaused
-        returns (uint256[] memory amounts_)
-    {
-        _requireClaimPermission(_to, _tokenId);
-        amounts_ = _claimRewards(_tokenId, _to);
+    function claimRewards(uint256 _tokenId) external nonReentrant whenNotPaused returns (uint256[] memory amounts_) {
+        amounts_ = _claimRewards(_tokenId, ownerOf(_tokenId));
     }
 
     /**
-     * @notice Exit a twAML participation, delete the voting power if existing and send the TAP to `_to`.
+     * @notice Exit a twAML participation, delete the voting power if existing and send the TAP to owner.
      *
      * @param _tokenId The tokenId of the twTAP position.
      *
