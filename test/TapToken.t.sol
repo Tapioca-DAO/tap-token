@@ -43,6 +43,7 @@ import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
 import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
 import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
 import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
+import {Cluster} from "tapioca-periph/Cluster/Cluster.sol";
 
 // Tapioca Tests
 import {TapTestHelper} from "./TapTestHelper.t.sol";
@@ -88,6 +89,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
     uint256 __governanceEid = bEid;
     address __owner = address(this);
     Pearlmit pearlmit;
+    Cluster cluster;
+
     /**
      * DEPLOY setup addresses
      */
@@ -116,8 +119,9 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
-        extExec = new TapiocaOmnichainExtExec(ICluster(address(0)), __owner);
+        extExec = new TapiocaOmnichainExtExec();
         pearlmit = new Pearlmit("Pearlmit", "1");
+        cluster = new Cluster(aEid, __owner);
 
         aTapOFT = new TapTokenMock(
             ITapToken.TapTokenConstructorData(
@@ -134,7 +138,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                 address(new TapTokenSender("", "", address(endpoints[aEid]), address(this), address(0))),
                 address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this), address(0))),
                 address(extExec),
-                IPearlmit(address(pearlmit))
+                IPearlmit(address(pearlmit)),
+                ICluster(address(cluster))
             )
         );
         vm.label(address(aTapOFT), "aTapOFT");
@@ -154,7 +159,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                 address(new TapTokenSender("", "", address(endpoints[bEid]), address(this), address(0))),
                 address(new TapTokenReceiver("", "", address(endpoints[bEid]), address(this), address(0))),
                 address(extExec),
-                IPearlmit(address(pearlmit))
+                IPearlmit(address(pearlmit)),
+                ICluster(address(cluster))
             )
         );
         vm.label(address(bTapOFT), "bTapOFT");
@@ -629,7 +635,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     }),
                     lzReceiveGas: 500_000,
                     lzReceiveValue: 0,
-                refundAddress: address(this)
+                    refundAddress: address(this)
                 })
             );
             remoteLzSendParam_ = prepareLzCallReturn1_.lzSendParam;
@@ -810,7 +816,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     }),
                     lzReceiveGas: 500_000,
                     lzReceiveValue: 0,
-                refundAddress: address(this)
+                    refundAddress: address(this)
                 })
             );
             testData_.remoteMsgFee1 = prepareLzCallReturn1_.msgFee;
@@ -835,7 +841,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     }),
                     lzReceiveGas: 500_000,
                     lzReceiveValue: 0,
-                refundAddress: address(this)
+                    refundAddress: address(this)
                 })
             );
             testData_.remoteMsgFee2 = prepareLzCallReturn2_.msgFee;
@@ -878,7 +884,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     }),
                     lzReceiveGas: 500_000,
                     lzReceiveValue: 0,
-                refundAddress: address(this)
+                    refundAddress: address(this)
                 })
             );
             composeMsg_ = prepareLzCallReturn_.composeMsg;
@@ -1036,7 +1042,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                 address(new TapTokenSender("", "", _endpoint, address(this), address(extExec))),
                 address(new TapTokenReceiver("", "", _endpoint, address(this), address(extExec))),
                 address(extExec),
-                IPearlmit(address(pearlmit))
+                IPearlmit(address(pearlmit)),
+                ICluster(address(cluster))
             )
         );
         vm.label(address(newToken_), _tokenLabel);

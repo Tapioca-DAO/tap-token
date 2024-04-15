@@ -14,6 +14,7 @@ import {
     RemoteTransferMsg
 } from "tapioca-periph/interfaces/periph/ITapiocaOmnichainEngine.sol";
 import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
 
 /*
 
@@ -61,6 +62,7 @@ interface ITapToken is ITapiocaOmnichainEngine {
         address tapTokenReceiverModule;
         address extExec;
         IPearlmit pearlmit;
+        ICluster cluster;
     }
 }
 

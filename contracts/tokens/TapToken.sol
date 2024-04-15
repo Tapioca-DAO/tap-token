@@ -134,7 +134,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      * @param _data.extExec Address of the external executor.
      */
     constructor(ITapToken.TapTokenConstructorData memory _data)
-        BaseTapToken("TapToken", "TAP", _data.endpoint, _data.owner, _data.extExec, _data.pearlmit)
+        BaseTapToken("TapToken", "TAP", _data.endpoint, _data.owner, _data.extExec, _data.pearlmit, _data.cluster)
         ERC20Permit("TAP")
     {
         if (_data.endpoint == address(0)) revert AddressWrong();

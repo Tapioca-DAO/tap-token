@@ -26,6 +26,7 @@ import {
 } from "./ITapToken.sol";
 import {TapiocaOmnichainReceiver} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainReceiver.sol";
 import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
 import {ITOFT} from "tapioca-periph/interfaces/oft/ITOFT.sol";
 import {TapTokenSender} from "./TapTokenSender.sol";
 import {TapTokenCodec} from "./TapTokenCodec.sol";
@@ -49,9 +50,10 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
 
     /**
      * @dev Used as a module for `TapToken`. Only delegate calls with `TapToken` state are used.
+     * Set the Pearlmit and Cluster to address(0) because they are not used in this contract.
      */
     constructor(string memory _name, string memory _symbol, address _endpoint, address _delegate, address _extExec)
-        BaseTapToken(_name, _symbol, _endpoint, _delegate, _extExec, IPearlmit(address(0)))
+        BaseTapToken(_name, _symbol, _endpoint, _delegate, _extExec, IPearlmit(address(0)), ICluster(address(0)))
     {}
 
     /// @dev twTAP lock operation received.
