@@ -126,4 +126,12 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, BaseBo
         if (broker != address(0)) revert OnlyOnce();
         broker = msg.sender;
     }
+
+    function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        virtual
+        override(ERC721, ERC721Permit)
+    {
+        super._afterTokenTransfer(from, to, firstTokenId, batchSize);
+    }
 }
