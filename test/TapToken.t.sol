@@ -258,7 +258,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             permit_.spender, permit_.tokenId, permit_.deadline, permitApproval_.v, permitApproval_.r, permitApproval_.s
         );
         assertEq(erc721Mock.getApproved(1), userB);
-        assertEq(erc721Mock.nonces(userA), 1);
+        assertEq(erc721Mock.nonces(permit_.tokenId), 1);
     }
 
     /**
@@ -447,8 +447,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         assertEq(twTap.getApproved(1), userB);
         assertEq(twTap.getApproved(2), userC_);
-        assertEq(twTap.nonces(userA), 1);
-        assertEq(twTap.nonces(userB), 1);
+        assertEq(twTap.nonces(permitApprovalB_.tokenId), 1);
+        assertEq(twTap.nonces(permitApprovalC_.tokenId), 1);
     }
 
     /**
