@@ -131,12 +131,12 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     // ==========
     //   EVENTS
     // ==========
-    event Participate(uint256 indexed epoch, uint256 aoTAPTokenID);
+    event Participate(uint256 indexed epoch, uint256 indexed aoTapTokenId);
     event ExerciseOption(
-        uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 aoTapTokenID, uint256 amount
+        uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 aoTapTokenId, uint256 tapAmount
     );
-    event NewEpoch(uint256 indexed epoch, uint256 epochTAPValuation);
-    event SetPaymentToken(ERC20 paymentToken, ITapiocaOracle oracle, bytes oracleData);
+    event NewEpoch(uint256 indexed epoch, uint256 epochTapValuation, uint256 epochDuration);
+    event SetPaymentToken(ERC20 indexed paymentToken, ITapiocaOracle oracle, bytes oracleData);
     event SetTapOracle(ITapiocaOracle oracle, bytes oracleData);
     event Phase2MerkleRootsUpdated();
 
@@ -192,6 +192,19 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         paymentTokenAmount = _getDiscountedPaymentAmount(
             otcAmountInUSD, paymentTokenValuation, aoTapOption.discount, _paymentToken.decimals()
         );
+    }
+
+    /// @notice Returns the details of an aoTAP position in its epoch
+    /// @param _aoTAPTokenId The aoTAP token ID
+    /// @return aoTAPPosition The details of the aoTAP position
+    /// @return claimedTapInEpoch The amount of TAP claimed in aoTAP position's epoch
+    function getOptionPosition(uint256 _aoTAPTokenId) 
+        external 
+        view 
+        returns (AirdropTapOption memory aoTAPPosition, uint256 claimedTapInEpoch)
+    {
+        (, aoTAPPosition) = aoTAP.attributes(_aoTAPTokenId);
+        claimedTapInEpoch = aoTAPCalls[_aoTAPTokenId][aoTAPPosition.phase];
     }
 
     // ===========
@@ -279,7 +292,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         (bool success, uint256 _epochTAPValuation) = tapOracle.get(tapOracleData);
         if (!success) revert Failed();
         epochTAPValuation = uint128(_epochTAPValuation);
-        emit NewEpoch(epoch, epochTAPValuation);
+        emit NewEpoch(epoch, epochTAPValuation, EPOCH_DURATION);
     }
 
     /// @notice Claim the Broker role of the aoTAP contract
@@ -405,7 +418,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
 
         // Mint aoTAP
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
-        oTAPTokenID = aoTAP.mint(msg.sender, expiry, uint128(PHASE_1_DISCOUNT), _eligibleAmount);
+        oTAPTokenID = aoTAP.mint(msg.sender, expiry, uint128(PHASE_1_DISCOUNT), _eligibleAmount, epoch);
     }
 
     /// @notice Participate in phase 2 of the Airdrop. Guild members will receive pre-defined discounts and TAP, based on role.
@@ -430,7 +443,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
         uint256 eligibleAmount = uint256(PHASE_2_AMOUNT_PER_USER[_role]) * 1e18;
         uint128 discount = uint128(PHASE_2_DISCOUNT_PER_USER[_role]);
-        oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
+        oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount, epoch);
     }
 
     /// @notice Participate in phase 3 of the Airdrop. PCNFT holder will receive pre-defined discount and TAP.
@@ -462,7 +475,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
         uint256 eligibleAmount = arrLen * PHASE_3_AMOUNT_PER_USER * 1e18; // Phase 3 amount multiplied the number of PCNFTs
         uint128 discount = uint128(PHASE_3_DISCOUNT);
-        oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount);
+        oTAPTokenID = aoTAP.mint(msg.sender, expiry, discount, eligibleAmount, epoch);
     }
 
     /// @notice Participate in phase 4 of the Airdrop. twTAP and Cassava guild's role are given TAP pro-rata.
@@ -475,7 +488,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
 
         // Mint aoTAP
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
-        oTAPTokenID = aoTAP.mint(msg.sender, expiry, uint128(PHASE_4_DISCOUNT), _eligibleAmount);
+        oTAPTokenID = aoTAP.mint(msg.sender, expiry, uint128(PHASE_4_DISCOUNT), _eligibleAmount, epoch);
     }
 
     /// @notice Process the OTC deal, transfer the payment token to the broker and the TAP amount to the user

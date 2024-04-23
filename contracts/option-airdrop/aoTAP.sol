@@ -5,6 +5,7 @@ pragma solidity 0.8.22;
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
 // Tapioca
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
@@ -25,9 +26,10 @@ struct AirdropTapOption {
     uint128 expiry; // timestamp, as once one wise man said, the sun will go dark before this overflows
     uint128 discount; // discount in basis points
     uint256 amount; // amount of eligible TAP
+    uint64 phase; // phase of the option
 }
 
-contract AOTAP is Ownable, PearlmitHandler, ERC721, ERC721Permit, BaseBoringBatchable {
+contract AOTAP is Ownable, PearlmitHandler, ERC721, ERC721Permit, ERC721Enumerable,  BaseBoringBatchable {
     uint256 public mintedAOTAP; // total number of AOTAP minted
     address public broker; // address of the onlyBroker
 
@@ -88,7 +90,7 @@ contract AOTAP is Ownable, PearlmitHandler, ERC721, ERC721Permit, BaseBoringBatc
     /// @param _to address to mint to
     /// @param _expiry timestamp
     /// @param _discount TAP discount in basis points
-    function mint(address _to, uint128 _expiry, uint128 _discount, uint256 _amount)
+    function mint(address _to, uint128 _expiry, uint128 _discount, uint256 _amount, uint64 _phase)
         external
         returns (uint256 tokenId)
     {
@@ -99,6 +101,7 @@ contract AOTAP is Ownable, PearlmitHandler, ERC721, ERC721Permit, BaseBoringBatc
         option.expiry = _expiry;
         option.discount = _discount;
         option.amount = _amount;
+        option.phase = _phase;
 
         _safeMint(_to, tokenId);
         emit Mint(_to, tokenId, option);
@@ -117,5 +120,22 @@ contract AOTAP is Ownable, PearlmitHandler, ERC721, ERC721Permit, BaseBoringBatc
     function brokerClaim() external {
         if (broker != address(0)) revert OnlyOnce();
         broker = msg.sender;
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721Enumerable, ERC721)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+    
+    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        override(ERC721, ERC721Enumerable)
+    {
+        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
 }
