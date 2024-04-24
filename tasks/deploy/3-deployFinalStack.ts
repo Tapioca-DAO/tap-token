@@ -12,6 +12,7 @@ import { buildTolp } from '../deployBuilds/finalStack/options/buildTOLP';
 import { buildTwTap } from '../deployBuilds/finalStack/options/deployTwTap';
 import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
+import * as TAPIOCA_PERIPH_DEPLOY_CONFIG from '@tapioca-periph/config';
 
 export const deployFinalStack__task = async (
     taskArgs: { tag?: string; load?: boolean; verify?: boolean },
@@ -112,7 +113,7 @@ async function getContracts(
     const pearlmit = hre.SDK.db.findGlobalDeployment(
         TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
         hre.SDK.eChainId,
-        'PEARLMIT',
+        TAPIOCA_PERIPH_DEPLOY_CONFIG.DEPLOYMENT_NAMES.PEARLMIT,
         tag,
     );
     if (!pearlmit) {
