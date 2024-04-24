@@ -39,12 +39,15 @@ import {TWAML} from "tap-token/options/twAML.sol";
 //   counting at the (Unix) epoch, we will run out of `expiry` before we
 //   saturate the week fields.
 struct Participation {
-    uint256 averageMagnitude;
+    // 1 slot
+    uint256 averageMagnitude; // average magnitude of the pool at the time of locking.
+    // 1 slot
     bool hasVotingPower;
     bool divergenceForce; // 0 negative, 1 positive
     bool tapReleased; // allow restaking while rewards may still accumulate
+    uint56 lockedAt; // timestamp when lock was created. Since it's locked at block.timestamp, it's safe to say 56 bits will suffice
+    // 1 slot
     uint56 expiry; // expiry timestamp. Big enough for over 2 billion years..
-    uint56 lockedAt; // timestamp when lock was created. Big enough for over 2 billion years..
     uint88 tapAmount; // amount of TAP locked
     uint24 multiplier; // Votes = multiplier * tapAmount
     uint40 lastInactive; // One week BEFORE the staker gets a share of rewards
@@ -300,7 +303,11 @@ contract TwTAP is
     /// @param _tokenId The tokenId of the twTAP position.
     /// @return position The Participation of the token.
     /// @return claimables The claimable amounts of each reward token.
-    function getPosition(uint256 _tokenId) external view returns (Participation memory position, uint256[] memory claimables) {
+    function getPosition(uint256 _tokenId)
+        external
+        view
+        returns (Participation memory position, uint256[] memory claimables)
+    {
         position = participants[_tokenId];
         claimables = claimable(_tokenId);
     }
@@ -404,8 +411,8 @@ contract TwTAP is
             hasVotingPower: hasVotingPower,
             divergenceForce: divergenceForce,
             tapReleased: false,
-            expiry: uint56(expiry),
             lockedAt: uint56(block.timestamp),
+            expiry: uint56(expiry),
             tapAmount: uint88(_amount),
             multiplier: uint24(multiplier),
             lastInactive: uint40(w0),
