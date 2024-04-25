@@ -134,6 +134,7 @@ contract TwTAP is
     error LockNotAWeek();
     error LockTooLong();
     error AdvanceEpochFirst();
+    error DurationNotMultiple(); // Lock duration should be a multiple of 1 EPOCH
 
     /// =====-------======
     constructor(address payable _tapOFT, IPearlmit _pearlmit, address _owner)
@@ -315,6 +316,7 @@ contract TwTAP is
     // ===========
 
     /// @notice Participate in twAML voting and mint an twTap position
+    ///         Lock duration should be a multiple of 1 EPOCH, and have a minimum of 1 EPOCH.
     /// @dev Requires a Pearlmit approval for the TAP amount
     ///
     /// @param _participant The address of the participant
@@ -328,7 +330,8 @@ contract TwTAP is
     {
         if (_duration < EPOCH_DURATION) revert LockNotAWeek();
         if (_duration > MAX_LOCK_DURATION) revert LockTooLong();
-        if (_timestampToWeek(block.timestamp) > currentWeek()) revert AdvanceEpochFirst();
+        if (_duration % EPOCH_DURATION != 0) revert DurationNotMultiple();
+        if (lastProcessedWeek != currentWeek()) revert AdvanceWeekFirst();
 
         // Transfer TAP to this contract
         {
@@ -428,6 +431,10 @@ contract TwTAP is
         whenNotPaused
         returns (uint256[] memory amounts_)
     {
+        // Either the owner or a delegate can claim the rewards
+        // In this case it's `TapToken` to claim the rewards on behalf of the user and send them xChain.
+        if (_to != _ownerOf(_tokenId) && _to != msg.sender) revert NotAuthorized();
+
         _requireClaimPermission(_to, _tokenId);
         amounts_ = _claimRewards(_tokenId, _to);
     }
@@ -436,23 +443,12 @@ contract TwTAP is
      * @notice Exit a twAML participation, delete the voting power if existing and send the TAP to `_to`.
      *
      * @param _tokenId The tokenId of the twTAP position.
-     * @param _to address to receive the TAP.
      *
      * @return tapAmount_ The amount of TAP released.
      */
-    function exitPosition(uint256 _tokenId, address _to)
-        external
-        nonReentrant
-        whenNotPaused
-        returns (uint256 tapAmount_)
-    {
-        {
-            address owner_ = ownerOf(_tokenId);
-            if (_to != owner_) {
-                _requireClaimPermission(_to, _tokenId);
-            }
-        }
-        tapAmount_ = _releaseTap(_tokenId, _to);
+    function exitPosition(uint256 _tokenId) external nonReentrant whenNotPaused returns (uint256 tapAmount_) {
+        address owner_ = ownerOf(_tokenId);
+        tapAmount_ = _releaseTap(_tokenId, owner_);
     }
 
     /// @notice Indicate that (a) week(s) have passed and update running totals
@@ -693,5 +689,13 @@ contract TwTAP is
         override(ERC721, ERC721Enumerable)
     {
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+    }
+
+    function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        virtual
+        override(ERC721, ERC721Permit)
+    {
+        super._afterTokenTransfer(from, to, firstTokenId, batchSize);
     }
 }

@@ -4,6 +4,7 @@ pragma solidity 0.8.22;
 // Tapioca
 import {BaseTapiocaOmnichainEngine} from "tapioca-periph/tapiocaOmnichainEngine/BaseTapiocaOmnichainEngine.sol";
 import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
 import {BaseTapTokenMsgType} from "./BaseTapTokenMsgType.sol";
 import {TwTAP} from "tap-token/governance/twTAP.sol";
 
@@ -32,8 +33,9 @@ abstract contract BaseTapToken is BaseTapiocaOmnichainEngine, BaseTapTokenMsgTyp
         address _endpoint,
         address _delegate,
         address _extExec,
-        IPearlmit _pearlmit
-    ) BaseTapiocaOmnichainEngine(_name, _symbol, _endpoint, _delegate, _extExec, _pearlmit) {}
+        IPearlmit _pearlmit,
+        ICluster _cluster
+    ) BaseTapiocaOmnichainEngine(_name, _symbol, _endpoint, _delegate, _extExec, _pearlmit, _cluster) {}
 
     error twTapNotSet();
 

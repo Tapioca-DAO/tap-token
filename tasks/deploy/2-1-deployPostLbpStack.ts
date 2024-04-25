@@ -108,7 +108,7 @@ async function getAOTAP(params: {
     tag: string;
 }) {
     const { hre, owner, tag } = params;
-    const { pearlmit } = loadCOntracts({ hre, tag });
+    const { pearlmit } = loadContracts({ hre, tag });
     return await buildAOTAP(
         hre,
         DEPLOYMENT_NAMES.AOTAP,
@@ -186,13 +186,7 @@ export async function getExtExec(params: {
     tag: string;
 }) {
     const { hre, owner, tag } = params;
-    const { cluster } = loadCOntracts({ hre, tag });
-    return await buildExtExec(
-        hre,
-        DEPLOYMENT_NAMES.EXT_EXEC,
-        [cluster.address, owner],
-        [],
-    );
+    return await buildExtExec(hre, DEPLOYMENT_NAMES.EXT_EXEC, [], []);
 }
 
 export async function getTapTokenSenderModule(params: {
@@ -252,7 +246,7 @@ export async function getTapToken(params: {
         chainInfo,
     } = params;
     const lTap = loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.LTAP);
-    const { pearlmit } = loadCOntracts({ hre, tag });
+    const { pearlmit, cluster } = loadContracts({ hre, tag });
 
     const isGovernanceChain = chainInfo.lzChainId == governanceEid;
     return await buildTapToken(
@@ -275,6 +269,7 @@ export async function getTapToken(params: {
                 tapTokenReceiverModule: hre.ethers.constants.AddressZero, // TapTokenReceiverModule
                 extExec: hre.ethers.constants.AddressZero, // ExtExec
                 pearlmit: pearlmit.address,
+                cluster: cluster.address,
             },
         ],
         getTapTokenDependencies({ isTestnet, isGovernanceChain }),
@@ -343,7 +338,7 @@ function getTapTokenDependencies(params: {
     return dependencies;
 }
 
-function loadCOntracts(params: {
+function loadContracts(params: {
     hre: HardhatRuntimeEnvironment;
     tag: string;
 }) {

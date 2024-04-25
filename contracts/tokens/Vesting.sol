@@ -268,7 +268,7 @@ contract Vesting is Ownable, ReentrancyGuard {
             if (block.timestamp < _start) return 0; // Cliff not reached
         }
 
-        if (block.timestamp >= _start + _duration) return _totalAmount; // Fully vested
+        if (block.timestamp >= _start - __initialUnlockTimeOffset + _duration) return _totalAmount; // Fully vested
 
         _start = _start - __initialUnlockTimeOffset; // Offset initial unlock so it's claimable immediately
         return (_totalAmount * (block.timestamp - _start)) / _duration; // Partially vested

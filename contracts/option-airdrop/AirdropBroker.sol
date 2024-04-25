@@ -230,7 +230,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     {
         // Load data
         (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(_aoTAPTokenID);
-        if (aoTapOption.expiry < block.timestamp) revert OptionExpired();
+        if (aoTapOption.expiry <= block.timestamp) revert OptionExpired();
 
         uint256 cachedEpoch = epoch;
 
@@ -261,7 +261,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     }
 
     /// @notice Start a new epoch, extract TAP from the tapToken contract,
-    function newEpoch() external tapExists {
+    function newEpoch() external tapExists onlyOwner {
         if (block.timestamp < lastEpochUpdate + EPOCH_DURATION) {
             revert TooSoon();
         }
@@ -367,6 +367,9 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         unchecked {
             for (uint256 i; i < len; ++i) {
                 IERC20 paymentToken = IERC20(_paymentTokens[i]);
+                if (address(paymentToken) == address(tapToken)) {
+                    revert PaymentTokenNotValid();
+                }
                 paymentToken.safeTransfer(paymentTokenBeneficiary, paymentToken.balanceOf(address(this)));
             }
         }
