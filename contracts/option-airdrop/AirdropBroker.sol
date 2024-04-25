@@ -94,7 +94,8 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     mapping(address => uint256) public phase4Users;
     uint256 public constant PHASE_4_DISCOUNT = 330_000; //33 * 1e4;
 
-    uint256 public EPOCH_DURATION = 2 days; // Becomes 7 days at the start of the phase 4
+    uint256 public EPOCH_DURATION = 2 days; // Becomes FROM_EPOCH_4_DURATION at the start of the phase 4
+    uint256 public constant FROM_EPOCH_4_DURATION = 7 days;
     uint256 public constant LAST_EPOCH = 8; // 8 epochs, 41 days long
 
     /// =====-------======
@@ -285,7 +286,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
 
         // At epoch 4, change the epoch duration to 7 days
         if (epoch == 4) {
-            EPOCH_DURATION = 7 days;
+            EPOCH_DURATION = FROM_EPOCH_4_DURATION;
         }
 
         // Get epoch TAP valuation
