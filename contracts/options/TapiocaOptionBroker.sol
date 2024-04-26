@@ -162,6 +162,49 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         return _timestampToWeek(block.timestamp);
     }
 
+    /// @notice Returns the details of an oTAP position including its tOLP lock position
+    /// @param _oTAPTokenID The oTAP token ID
+    /// @param epochId The epoch id of which to get the claimed TAP for - if 0, current epoch will be used
+    /// @return tOLPLockPosition The tOLP lock position of the oTAP position
+    /// @return oTAPPosition The details of the oTAP position
+    /// @return claimedTapInEpoch The amount of TAP claimed in specified epoch
+    function getOptionPosition(uint256 _oTAPTokenID, uint256 epochId) 
+        external 
+        view 
+        returns (LockPosition memory tOLPLockPosition, TapOption memory oTAPPosition, uint256 claimedTapInEpoch)
+    {
+        if (epochId == 0) {
+            epochId = epoch;
+        }
+
+        (, oTAPPosition) = oTAP.attributes(_oTAPTokenID);
+        tOLPLockPosition = tOLPLockPosition = tOLP.getLock(oTAPPosition.tOLP);
+        claimedTapInEpoch = oTAPCalls[_oTAPTokenID][epochId];
+    }
+
+    /// @notice Returns the details of TOLP Singularity Pool, twAML pool and gauge for a given sglAssetId
+    /// @param _singularity The singularity address
+    /// @param epochId The epoch id of which to get the tap emitted for the pool - if 0, current epoch will be used
+    /// @return assetId The Singularity asset id = YB asset id
+    /// @return totalDeposited The total deposited amount in the pool
+    /// @return weight The weight of the pool
+    /// @return isInRescue True if the singularity is in rescue mode
+    /// @return tapEmittedInCurrentEpoch The amount of TAP emitted in the current epoch
+    /// @return twAMLPool The twAML Pool details
+    function getSingularityPoolInfo(IERC20 _singularity, uint256 epochId) 
+        external 
+        view 
+        returns (uint256 assetId, uint256 totalDeposited, uint256 weight, bool isInRescue, uint256 tapEmittedInCurrentEpoch, TWAMLPool memory twAMLPool)
+    {
+        if (epochId == 0) {
+            epochId = epoch;
+        }
+
+        (assetId, totalDeposited, weight, isInRescue) = tOLP.activeSingularities(_singularity);
+        twAMLPool = twAML[assetId];
+        tapEmittedInCurrentEpoch = singularityGauges[epochId][assetId];
+    }
+
     /// @notice Returns the details of an OTC deal for a given oTAP token ID and a payment token.
     ///         The oracle uses the last peeked value, and not the latest one, so the payment amount may be different.
     /// @param _oTAPTokenID The oTAP token ID
