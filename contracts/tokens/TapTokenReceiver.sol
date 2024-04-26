@@ -26,6 +26,7 @@ import {
 } from "./ITapToken.sol";
 import {TapiocaOmnichainReceiver} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainReceiver.sol";
 import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
+import {ITOFT} from "tapioca-periph/interfaces/oft/ITOFT.sol";
 import {TapTokenSender} from "./TapTokenSender.sol";
 import {TapTokenCodec} from "./TapTokenCodec.sol";
 import {BaseTapToken} from "./BaseTapToken.sol";
@@ -179,7 +180,8 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
             address rewardToken_ = address(rewardTokens_[i]);
 
             // Sanitize the amount to send
-            uint256 amountWithoutDust = _removeDust(claimedAmount_[i]);
+            uint256 tokenDecimalConversionRate = ITOFT(rewardToken_).decimalConversionRate();
+            uint256 amountWithoutDust = (claimedAmount_[i] / tokenDecimalConversionRate) * tokenDecimalConversionRate;
             uint256 dust = claimedAmount_[i] - amountWithoutDust;
 
             // Send the dust back to the user locally
