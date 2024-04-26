@@ -12,6 +12,7 @@ import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
 // External
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Tapioca
 import {
@@ -25,6 +26,8 @@ import {
 } from "./ITapToken.sol";
 import {TapiocaOmnichainReceiver} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainReceiver.sol";
 import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {ITOFT} from "tapioca-periph/interfaces/oft/ITOFT.sol";
 import {TapTokenSender} from "./TapTokenSender.sol";
 import {TapTokenCodec} from "./TapTokenCodec.sol";
 import {BaseTapToken} from "./BaseTapToken.sol";
@@ -43,18 +46,20 @@ import {BaseTapToken} from "./BaseTapToken.sol";
 contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
+    using SafeERC20 for IERC20;
 
     /**
      * @dev Used as a module for `TapToken`. Only delegate calls with `TapToken` state are used.
+     * Set the Pearlmit and Cluster to address(0) because they are not used in this contract.
      */
     constructor(string memory _name, string memory _symbol, address _endpoint, address _delegate, address _extExec)
-        BaseTapToken(_name, _symbol, _endpoint, _delegate, _extExec, IPearlmit(address(0)))
+        BaseTapToken(_name, _symbol, _endpoint, _delegate, _extExec, IPearlmit(address(0)), ICluster(address(0)))
     {}
 
     /// @dev twTAP lock operation received.
     event LockTwTapReceived(address indexed user, uint96 duration, uint256 amount);
     /// @dev twTAP unlock operation received.
-    event UnlockTwTapReceived(address indexed user, uint256 tokenId, uint256 amount);
+    event UnlockTwTapReceived(uint256 tokenId, uint256 amount);
     event ClaimRewardReceived(address indexed token, address indexed to, uint256 amount);
 
     // See `this._claimTwpTapRewardsReceiver()`. Triggered if the length of the claimed rewards are not equal to the length of the lzSendParam array.
@@ -138,9 +143,9 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
         UnlockTwTapPositionMsg memory unlockTwTapPositionMsg_ = TapTokenCodec.decodeUnlockTwTapPositionMsg(_data);
 
         // Send TAP to the user address.
-        uint256 tapAmount_ = twTap.exitPosition(unlockTwTapPositionMsg_.tokenId, unlockTwTapPositionMsg_.user);
+        uint256 tapAmount_ = twTap.exitPosition(unlockTwTapPositionMsg_.tokenId);
 
-        emit UnlockTwTapReceived(unlockTwTapPositionMsg_.user, unlockTwTapPositionMsg_.tokenId, tapAmount_);
+        emit UnlockTwTapReceived(unlockTwTapPositionMsg_.tokenId, tapAmount_);
     }
 
     /**
@@ -177,13 +182,13 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
             address rewardToken_ = address(rewardTokens_[i]);
 
             // Sanitize the amount to send
-            uint256 amountWithoutDust = _removeDust(claimedAmount_[i]);
+            uint256 tokenDecimalConversionRate = ITOFT(rewardToken_).decimalConversionRate();
+            uint256 amountWithoutDust = (claimedAmount_[i] / tokenDecimalConversionRate) * tokenDecimalConversionRate;
             uint256 dust = claimedAmount_[i] - amountWithoutDust;
 
             // Send the dust back to the user locally
             if (dust > 0) {
-                // TODO Use SafeTransfer
-                IERC20(rewardToken_).transfer(sendTo_, dust);
+                IERC20(rewardToken_).safeTransfer(sendTo_, dust);
             }
 
             // Add 1 to `claimedAmount_` index because the first index is reserved.

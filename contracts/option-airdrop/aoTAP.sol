@@ -29,7 +29,7 @@ struct AirdropTapOption {
     uint64 phase; // phase of the option
 }
 
-contract AOTAP is Ownable, PearlmitHandler, ERC721, ERC721Permit, ERC721Enumerable,  BaseBoringBatchable {
+contract AOTAP is Ownable, PearlmitHandler, ERC721, ERC721Permit, ERC721Enumerable, BaseBoringBatchable {
     uint256 public mintedAOTAP; // total number of AOTAP minted
     address public broker; // address of the onlyBroker
 
@@ -131,11 +131,19 @@ contract AOTAP is Ownable, PearlmitHandler, ERC721, ERC721Permit, ERC721Enumerab
     {
         return super.supportsInterface(interfaceId);
     }
-    
+
     function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
         internal
         override(ERC721, ERC721Enumerable)
     {
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+    }
+
+    function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        virtual
+        override(ERC721, ERC721Permit)
+    {
+        super._afterTokenTransfer(from, to, firstTokenId, batchSize);
     }
 }

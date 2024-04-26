@@ -1,6 +1,5 @@
 import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { buildEmptyYbStrategy } from 'tasks/deployBuilds/finalStack/buildEmptyYbStrategy';
 import { executeTestnetFinalStackPostDepSetup } from 'tasks/deployBuilds/finalStack/executeTestnetFinalStackPostDepSetup';
 import {
     buildFinalStackPostDepSetup_1,
@@ -12,6 +11,7 @@ import { buildTolp } from '../deployBuilds/finalStack/options/buildTOLP';
 import { buildTwTap } from '../deployBuilds/finalStack/options/deployTwTap';
 import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
+import * as TAPIOCA_PERIPH_DEPLOY_CONFIG from '@tapioca-periph/config';
 
 export const deployFinalStack__task = async (
     taskArgs: { tag?: string; load?: boolean; verify?: boolean },
@@ -109,9 +109,10 @@ async function getContracts(
     }
 
     // Get pearlmit
-    const pearlmit = hre.SDK.db.findLocalDeployment(
+    const pearlmit = hre.SDK.db.findGlobalDeployment(
+        TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
         hre.SDK.eChainId,
-        DEPLOYMENT_NAMES.PEARLMIT,
+        TAPIOCA_PERIPH_DEPLOY_CONFIG.DEPLOYMENT_NAMES.PEARLMIT,
         tag,
     );
     if (!pearlmit) {

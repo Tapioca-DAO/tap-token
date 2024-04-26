@@ -8,6 +8,7 @@ import {
 // Tapioca
 import {TapiocaOmnichainSender} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainSender.sol";
 import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
 import {BaseTapToken} from "./BaseTapToken.sol";
 
 /*
@@ -24,8 +25,9 @@ import {BaseTapToken} from "./BaseTapToken.sol";
 contract TapTokenSender is BaseTapToken, TapiocaOmnichainSender {
     /**
      * @dev Used as a module for `TapToken`. Only delegate calls with `TapToken` state are used.
+     * Set the Pearlmit and Cluster to address(0) because they are not used in this contract.
      */
     constructor(string memory _name, string memory _symbol, address _endpoint, address _delegate, address _extExec)
-        BaseTapToken(_name, _symbol, _endpoint, _delegate, _extExec, IPearlmit(address(0)))
+        BaseTapToken(_name, _symbol, _endpoint, _delegate, _extExec, IPearlmit(address(0)), ICluster(address(0)))
     {}
 }
