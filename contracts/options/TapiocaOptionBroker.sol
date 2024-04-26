@@ -133,16 +133,16 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     //   EVENTS
     // ==========
     event Participate(
-        uint256 indexed epoch, uint256 indexed sglAssetID, uint256 totalDeposited, uint256 tokenId, uint256 discount
+        uint256 indexed epoch, uint256 indexed sglAssetId, uint256 totalDeposited, uint256 otapTokenId, uint256 tolpTokenId, uint256 discount
     );
     event AMLDivergence(uint256 indexed epoch, uint256 cumulative, uint256 averageMagnitude, uint256 totalParticipants);
     event ExerciseOption(
-        uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 oTapTokenID, uint256 amount
+        uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 otapTokenId, uint256 tapAmount
     );
-    event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValuation);
-    event ExitPosition(uint256 indexed epoch, uint256 tolpTokenId, uint256 amount);
+    event NewEpoch(uint256 indexed epoch, uint256 extractedTap, uint256 epochTapValuation);
+    event ExitPosition(uint256 indexed epoch, uint256 indexed otapTokenId, uint256 tolpTokenId);
     event SetPaymentToken(ERC20 indexed paymentToken, ITapiocaOracle oracle, bytes oracleData);
-    event SetTapOracle(ITapiocaOracle indexed oracle, bytes indexed oracleData);
+    event SetTapOracle(ITapiocaOracle oracle, bytes oracleData);
 
     // ==========
     //    READ
@@ -297,7 +297,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
         // Mint oTAP position
         oTAPTokenID = oTAP.mint(msg.sender, lockExpiry, uint128(target), _tOLPTokenID);
-        emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, oTAPTokenID, target);
+        emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, oTAPTokenID, _tOLPTokenID, target);
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
@@ -353,7 +353,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         // Transfer position back to oTAP owner
         tOLP.transferFrom(address(this), otapOwner, oTAPPosition.tOLP);
 
-        emit ExitPosition(epoch, oTAPPosition.tOLP, lock.ybShares);
+        emit ExitPosition(epoch, _oTAPTokenID, oTAPPosition.tOLP);
     }
 
     /// @notice Exercise an oTAP position
