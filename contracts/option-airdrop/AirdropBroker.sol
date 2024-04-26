@@ -261,7 +261,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     }
 
     /// @notice Start a new epoch, extract TAP from the tapToken contract,
-    function newEpoch() external tapExists {
+    function newEpoch() external tapExists onlyOwner {
         if (block.timestamp < lastEpochUpdate + EPOCH_DURATION) {
             revert TooSoon();
         }
