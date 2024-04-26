@@ -382,7 +382,7 @@ contract TwTAP is
                 if (pool.cumulative > pool.averageMagnitude) {
                     pool.cumulative -= pool.averageMagnitude;
                 } else {
-                    pool.cumulative = 0;
+                    pool.cumulative = EPOCH_DURATION;
                 }
             }
 
@@ -652,7 +652,7 @@ contract TwTAP is
                 if (pool.cumulative > position.averageMagnitude) {
                     pool.cumulative -= position.averageMagnitude;
                 } else {
-                    pool.cumulative = 0;
+                    pool.cumulative = EPOCH_DURATION;
                 }
             } else {
                 pool.cumulative += position.averageMagnitude;

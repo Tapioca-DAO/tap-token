@@ -284,9 +284,6 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (lock.lockDuration % EPOCH_DURATION != 0) revert DurationNotMultiple();
 
         TWAMLPool memory pool = twAML[lock.sglAssetID];
-        if (pool.cumulative == 0) {
-            pool.cumulative = EPOCH_DURATION;
-        }
 
         // Transfer tOLP position to this contract
         // tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
@@ -317,7 +314,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
                 if (pool.cumulative > pool.averageMagnitude) {
                     pool.cumulative -= pool.averageMagnitude;
                 } else {
-                    pool.cumulative = 0;
+                    pool.cumulative = EPOCH_DURATION;
                 }
             }
 
@@ -372,7 +369,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
                 if (pool.cumulative > participation.averageMagnitude) {
                     pool.cumulative -= participation.averageMagnitude;
                 } else {
-                    pool.cumulative = 0;
+                    pool.cumulative = EPOCH_DURATION;
                 }
             } else {
                 pool.cumulative += participation.averageMagnitude;
