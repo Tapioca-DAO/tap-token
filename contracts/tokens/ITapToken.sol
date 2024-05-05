@@ -14,6 +14,7 @@ import {
     RemoteTransferMsg
 } from "tapioca-periph/interfaces/periph/ITapiocaOmnichainEngine.sol";
 import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
 
 /*
 
@@ -32,7 +33,7 @@ interface ITapToken is ITapiocaOmnichainEngine {
      */
     event LockTwTapReceived(address indexed user, uint96 duration, uint256 amount);
     /// @dev twTAP unlock operation received.
-    event UnlockTwTapReceived(address indexed user, uint256 tokenId, uint256 amount);
+    event UnlockTwTapReceived(uint256 tokenId, uint256 amount);
 
     /**
      * ERRORS
@@ -61,6 +62,7 @@ interface ITapToken is ITapiocaOmnichainEngine {
         address tapTokenReceiverModule;
         address extExec;
         IPearlmit pearlmit;
+        ICluster cluster;
     }
 }
 
@@ -84,7 +86,6 @@ struct LockTwTapPositionMsg {
  * @param tokenId The tokenId of the TwTap position to unlock.
  */
 struct UnlockTwTapPositionMsg {
-    address user;
     uint256 tokenId;
 }
 

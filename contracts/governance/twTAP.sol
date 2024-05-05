@@ -39,10 +39,14 @@ import {TWAML} from "tap-token/options/twAML.sol";
 //   counting at the (Unix) epoch, we will run out of `expiry` before we
 //   saturate the week fields.
 struct Participation {
-    uint256 averageMagnitude;
+    // 1 slot
+    uint256 averageMagnitude; // average magnitude of the pool at the time of locking.
+    // 1 slot
     bool hasVotingPower;
     bool divergenceForce; // 0 negative, 1 positive
     bool tapReleased; // allow restaking while rewards may still accumulate
+    uint56 lockedAt; // timestamp when lock was created. Since it's locked at block.timestamp, it's safe to say 56 bits will suffice
+    // 1 slot
     uint56 expiry; // expiry timestamp. Big enough for over 2 billion years..
     uint88 tapAmount; // amount of TAP locked
     uint24 multiplier; // Votes = multiplier * tapAmount
@@ -88,9 +92,9 @@ contract TwTAP is
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
     /// @dev Virtual total amount to add to the total when computing twAML participation right. Default 10_000 * 1e18.
-    uint256 private VIRTUAL_TOTAL_AMOUNT = 10_000 ether;
+    uint256 public VIRTUAL_TOTAL_AMOUNT = 10_000 ether;
 
-    uint256 MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
+    uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
     uint256 constant dMAX = 1_000_000; // 100 * 1e4; 0% - 100% voting power multiplier
     uint256 constant dMIN = 0;
     uint256 public constant EPOCH_DURATION = 7 days;
@@ -134,6 +138,7 @@ contract TwTAP is
     error LockNotAWeek();
     error LockTooLong();
     error AdvanceEpochFirst();
+    error DurationNotMultiple(); // Lock duration should be a multiple of 1 EPOCH
 
     /// =====-------======
     constructor(address payable _tapOFT, IPearlmit _pearlmit, address _owner)
@@ -295,6 +300,19 @@ contract TwTAP is
         return result;
     }
 
+    /// @notice Return the Participation of a token and the claimable amounts.
+    /// @param _tokenId The tokenId of the twTAP position.
+    /// @return position The Participation of the token.
+    /// @return claimables The claimable amounts of each reward token.
+    function getPosition(uint256 _tokenId)
+        external
+        view
+        returns (Participation memory position, uint256[] memory claimables)
+    {
+        position = participants[_tokenId];
+        claimables = claimable(_tokenId);
+    }
+
     /**
      * @dev Returns the hash of the struct used by the permit function.
      * @param _permitData Struct containing permit data.
@@ -315,6 +333,7 @@ contract TwTAP is
     // ===========
 
     /// @notice Participate in twAML voting and mint an twTap position
+    ///         Lock duration should be a multiple of 1 EPOCH, and have a minimum of 1 EPOCH.
     /// @dev Requires a Pearlmit approval for the TAP amount
     ///
     /// @param _participant The address of the participant
@@ -328,7 +347,8 @@ contract TwTAP is
     {
         if (_duration < EPOCH_DURATION) revert LockNotAWeek();
         if (_duration > MAX_LOCK_DURATION) revert LockTooLong();
-        if (_timestampToWeek(block.timestamp) > currentWeek()) revert AdvanceEpochFirst();
+        if (_duration % EPOCH_DURATION != 0) revert DurationNotMultiple();
+        if (lastProcessedWeek != currentWeek()) revert AdvanceWeekFirst();
 
         // Transfer TAP to this contract
         {
@@ -362,7 +382,7 @@ contract TwTAP is
                 if (pool.cumulative > pool.averageMagnitude) {
                     pool.cumulative -= pool.averageMagnitude;
                 } else {
-                    pool.cumulative = 0;
+                    pool.cumulative = EPOCH_DURATION;
                 }
             }
 
@@ -394,6 +414,7 @@ contract TwTAP is
             hasVotingPower: hasVotingPower,
             divergenceForce: divergenceForce,
             tapReleased: false,
+            lockedAt: uint56(block.timestamp),
             expiry: uint56(expiry),
             tapAmount: uint88(_amount),
             multiplier: uint24(multiplier),
@@ -428,6 +449,10 @@ contract TwTAP is
         whenNotPaused
         returns (uint256[] memory amounts_)
     {
+        // Either the owner or a delegate can claim the rewards
+        // In this case it's `TapToken` to claim the rewards on behalf of the user and send them xChain.
+        if (_to != _ownerOf(_tokenId) && _to != msg.sender) revert NotAuthorized();
+
         _requireClaimPermission(_to, _tokenId);
         amounts_ = _claimRewards(_tokenId, _to);
     }
@@ -436,23 +461,12 @@ contract TwTAP is
      * @notice Exit a twAML participation, delete the voting power if existing and send the TAP to `_to`.
      *
      * @param _tokenId The tokenId of the twTAP position.
-     * @param _to address to receive the TAP.
      *
      * @return tapAmount_ The amount of TAP released.
      */
-    function exitPosition(uint256 _tokenId, address _to)
-        external
-        nonReentrant
-        whenNotPaused
-        returns (uint256 tapAmount_)
-    {
-        {
-            address owner_ = ownerOf(_tokenId);
-            if (_to != owner_) {
-                _requireClaimPermission(_to, _tokenId);
-            }
-        }
-        tapAmount_ = _releaseTap(_tokenId, _to);
+    function exitPosition(uint256 _tokenId) external nonReentrant whenNotPaused returns (uint256 tapAmount_) {
+        address owner_ = ownerOf(_tokenId);
+        tapAmount_ = _releaseTap(_tokenId, owner_);
     }
 
     /// @notice Indicate that (a) week(s) have passed and update running totals
@@ -638,7 +652,7 @@ contract TwTAP is
                 if (pool.cumulative > position.averageMagnitude) {
                     pool.cumulative -= position.averageMagnitude;
                 } else {
-                    pool.cumulative = 0;
+                    pool.cumulative = EPOCH_DURATION;
                 }
             } else {
                 pool.cumulative += position.averageMagnitude;
@@ -693,5 +707,13 @@ contract TwTAP is
         override(ERC721, ERC721Enumerable)
     {
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+    }
+
+    function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        virtual
+        override(ERC721, ERC721Permit)
+    {
+        super._afterTokenTransfer(from, to, firstTokenId, batchSize);
     }
 }

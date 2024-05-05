@@ -147,6 +147,17 @@
             "lastBlockHeight": 11103473,
             "contracts": [
                 {
+                    "name": "LTAP",
+                    "address": "0xE05121418B03361664411d6bFEC0257D1a0BD494",
+                    "meta": {
+                        "args": [
+                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88"
+                        ],
+                        "salt": "0xf922d58fc79916451aa32f891c780e9253a04b93f4ca41d73363717dbfc74fcf",
+                        "create2": true
+                    }
+                },
+                {
                     "name": "EXT_EXEC",
                     "address": "0x9aF6C823242B0B38417b53676663eb033e10a77c",
                     "meta": {
@@ -301,17 +312,6 @@
                             "1"
                         ],
                         "salt": "0x782fcb6a46e58e5601d16f54237b6c60972dee6a12b4cd1a0f4280aca07cca66",
-                        "create2": true
-                    }
-                },
-                {
-                    "name": "LTAP",
-                    "address": "0xBe4dBBD824d22438a61b4977B226275030AEA5b4",
-                    "meta": {
-                        "args": [
-                            "0xaC39b311DCEb2A4b2f5d8461c1cdaF756F4F7Ae9"
-                        ],
-                        "salt": "0x02a2419ccd41fb132893700953b6fc8b1ad8a5bae83b8f6909bf29f4146a18cf",
                         "create2": true
                     }
                 },

@@ -43,6 +43,7 @@ import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
 import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
 import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
 import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
+import {Cluster} from "tapioca-periph/Cluster/Cluster.sol";
 
 // Tapioca Tests
 import {TapTestHelper} from "./TapTestHelper.t.sol";
@@ -88,6 +89,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
     uint256 __governanceEid = bEid;
     address __owner = address(this);
     Pearlmit pearlmit;
+    Cluster cluster;
+
     /**
      * DEPLOY setup addresses
      */
@@ -116,8 +119,9 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
-        extExec = new TapiocaOmnichainExtExec(ICluster(address(0)), __owner);
+        extExec = new TapiocaOmnichainExtExec();
         pearlmit = new Pearlmit("Pearlmit", "1");
+        cluster = new Cluster(aEid, __owner);
 
         aTapOFT = new TapTokenMock(
             ITapToken.TapTokenConstructorData(
@@ -134,7 +138,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                 address(new TapTokenSender("", "", address(endpoints[aEid]), address(this), address(0))),
                 address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this), address(0))),
                 address(extExec),
-                IPearlmit(address(pearlmit))
+                IPearlmit(address(pearlmit)),
+                ICluster(address(cluster))
             )
         );
         vm.label(address(aTapOFT), "aTapOFT");
@@ -154,7 +159,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                 address(new TapTokenSender("", "", address(endpoints[bEid]), address(this), address(0))),
                 address(new TapTokenReceiver("", "", address(endpoints[bEid]), address(this), address(0))),
                 address(extExec),
-                IPearlmit(address(pearlmit))
+                IPearlmit(address(pearlmit)),
+                ICluster(address(cluster))
             )
         );
         vm.label(address(bTapOFT), "bTapOFT");
@@ -252,7 +258,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             permit_.spender, permit_.tokenId, permit_.deadline, permitApproval_.v, permitApproval_.r, permitApproval_.s
         );
         assertEq(erc721Mock.getApproved(1), userB);
-        assertEq(erc721Mock.nonces(userA), 1);
+        assertEq(erc721Mock.nonces(permit_.tokenId), 1);
     }
 
     /**
@@ -308,7 +314,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 1_000_000,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             })
         );
         bytes memory composeMsg_ = prepareLzCallReturn_.composeMsg;
@@ -406,7 +413,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 1_000_000,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             })
         );
         bytes memory composeMsg_ = prepareLzCallReturn_.composeMsg;
@@ -439,8 +447,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         assertEq(twTap.getApproved(1), userB);
         assertEq(twTap.getApproved(2), userC_);
-        assertEq(twTap.nonces(userA), 1);
-        assertEq(twTap.nonces(userB), 1);
+        assertEq(twTap.nonces(permitApprovalB_.tokenId), 1);
+        assertEq(twTap.nonces(permitApprovalC_.tokenId), 1);
     }
 
     /**
@@ -474,7 +482,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 1_000_000,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             })
         );
         bytes memory composeMsg_ = prepareLzCallReturn_.composeMsg;
@@ -542,8 +551,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         /**
          * Actions
          */
-        UnlockTwTapPositionMsg memory unlockTwTapPosition_ =
-            UnlockTwTapPositionMsg({user: address(this), tokenId: tokenId_});
+        UnlockTwTapPositionMsg memory unlockTwTapPosition_ = UnlockTwTapPositionMsg({tokenId: tokenId_});
         bytes memory unlockTwTapPositionMsg_ = tapTokenHelper.buildUnlockTwpTapPositionMsg(unlockTwTapPosition_);
 
         PrepareLzCallReturn memory prepareLzCallReturn_ = tapTokenHelper.prepareLzCall(
@@ -563,7 +571,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 1_000_000,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             })
         );
         bytes memory composeMsg_ = prepareLzCallReturn_.composeMsg;
@@ -576,7 +585,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         verifyPackets(uint32(bEid), address(bTapOFT));
 
         vm.expectEmit(true, true, true, false);
-        emit ITapToken.UnlockTwTapReceived(unlockTwTapPosition_.user, unlockTwTapPosition_.tokenId, lockAmount_);
+        emit ITapToken.UnlockTwTapReceived(unlockTwTapPosition_.tokenId, lockAmount_);
 
         __callLzCompose(
             LzOFTComposedData(
@@ -625,7 +634,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         prevOptionsData: bytes("")
                     }),
                     lzReceiveGas: 500_000,
-                    lzReceiveValue: 0
+                    lzReceiveValue: 0,
+                    refundAddress: address(this)
                 })
             );
             remoteLzSendParam_ = prepareLzCallReturn1_.lzSendParam;
@@ -656,7 +666,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     prevOptionsData: bytes("")
                 }),
                 lzReceiveGas: 500_000,
-                lzReceiveValue: 0
+                lzReceiveValue: 0,
+                refundAddress: address(this)
             })
         );
         bytes memory composeMsg_ = prepareLzCallReturn2_.composeMsg;
@@ -804,7 +815,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         prevOptionsData: bytes("")
                     }),
                     lzReceiveGas: 500_000,
-                    lzReceiveValue: 0
+                    lzReceiveValue: 0,
+                    refundAddress: address(this)
                 })
             );
             testData_.remoteMsgFee1 = prepareLzCallReturn1_.msgFee;
@@ -828,7 +840,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         prevOptionsData: bytes("")
                     }),
                     lzReceiveGas: 500_000,
-                    lzReceiveValue: 0
+                    lzReceiveValue: 0,
+                    refundAddress: address(this)
                 })
             );
             testData_.remoteMsgFee2 = prepareLzCallReturn2_.msgFee;
@@ -870,7 +883,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         prevOptionsData: bytes("")
                     }),
                     lzReceiveGas: 500_000,
-                    lzReceiveValue: 0
+                    lzReceiveValue: 0,
+                    refundAddress: address(this)
                 })
             );
             composeMsg_ = prepareLzCallReturn_.composeMsg;
@@ -1028,7 +1042,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                 address(new TapTokenSender("", "", _endpoint, address(this), address(extExec))),
                 address(new TapTokenReceiver("", "", _endpoint, address(this), address(extExec))),
                 address(extExec),
-                IPearlmit(address(pearlmit))
+                IPearlmit(address(pearlmit)),
+                ICluster(address(cluster))
             )
         );
         vm.label(address(newToken_), _tokenLabel);

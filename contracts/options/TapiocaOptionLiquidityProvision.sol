@@ -1,4 +1,4 @@
-    // SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
 // External
@@ -101,14 +101,21 @@ contract TapiocaOptionLiquidityProvision is
     // ==========
     //   EVENTS
     // ==========
-    event Mint(address indexed to, uint128 indexed sglAssetID, uint256 tokenId);
-    event Burn(address indexed to, uint128 indexed sglAssetID, uint256 tokenId);
+    event Mint(
+        address indexed to,
+        uint256 indexed sglAssetId,
+        address sglAddress,
+        uint256 tolpTokenId,
+        uint128 lockDuration,
+        uint128 ybShares
+    );
+    event Burn(address indexed from, uint256 indexed sglAssetId, address sglAddress, uint256 tolpTokenId);
     event UpdateTotalSingularityPoolWeights(uint256 totalSingularityPoolWeights);
-    event SetSGLPoolWeight(address indexed sgl, uint256 poolWeight);
-    event RequestSglPoolRescue(uint256 sglAssetId, uint256 timestamp);
-    event ActivateSGLPoolRescue(address sgl);
-    event RegisterSingularity(address sgl, uint256 assetID);
-    event UnregisterSingularity(address sgl, uint256 assetID);
+    event SetSGLPoolWeight(uint256 indexed sglAssetId, address sglAddress, uint256 poolWeight);
+    event RequestSglPoolRescue(uint256 indexed sglAssetId, uint256 timestamp);
+    event ActivateSGLPoolRescue(uint256 indexed sglAssetId, address sglAddress);
+    event RegisterSingularity(uint256 indexed sglAssetId, address sglAddress, uint256 poolWeight);
+    event UnregisterSingularity(uint256 indexed sglAssetId, address sglAddress);
 
     // ===============
     //    MODIFIERS
@@ -188,6 +195,7 @@ contract TapiocaOptionLiquidityProvision is
     function lock(address _to, IERC20 _singularity, uint128 _lockDuration, uint128 _ybShares)
         external
         nonReentrant
+        whenNotPaused
         returns (uint256 tokenId)
     {
         if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
@@ -223,14 +231,13 @@ contract TapiocaOptionLiquidityProvision is
         // Mint the tOLP NFT position
         _safeMint(_to, tokenId);
 
-        emit Mint(_to, uint128(sglAssetID), tokenId);
+        emit Mint(_to, sglAssetID, address(_singularity), tokenId, _lockDuration, _ybShares);
     }
 
     /// @notice Unlocks tOLP tokens
     /// @param _tokenId ID of the position to unlock
     /// @param _singularity Singularity market address
-    /// @param _to Address to send the tokens to
-    function unlock(uint256 _tokenId, IERC20 _singularity, address _to) external {
+    function unlock(uint256 _tokenId, IERC20 _singularity) external whenNotPaused {
         if (!_exists(_tokenId)) revert PositionExpired();
 
         LockPosition memory lockPosition = lockPositions[_tokenId];
@@ -245,16 +252,16 @@ contract TapiocaOptionLiquidityProvision is
             revert InvalidSingularity();
         }
 
-        if (!_isApprovedOrOwner(msg.sender, _tokenId)) revert NotAuthorized();
+        address tokenOwner = _ownerOf(_tokenId);
 
         _burn(_tokenId);
         delete lockPositions[_tokenId];
 
         // Transfer the YieldBox position back to the owner
-        yieldBox.transfer(address(this), _to, lockPosition.sglAssetID, lockPosition.ybShares);
+        yieldBox.transfer(address(this), tokenOwner, lockPosition.sglAssetID, lockPosition.ybShares);
         activeSingularities[_singularity].totalDeposited -= lockPosition.ybShares;
 
-        emit Burn(_to, lockPosition.sglAssetID, _tokenId);
+        emit Burn(tokenOwner, lockPosition.sglAssetID, address(_singularity), _tokenId);
     }
 
     // =========
@@ -270,7 +277,7 @@ contract TapiocaOptionLiquidityProvision is
         }
         activeSingularities[singularity].poolWeight = weight;
 
-        emit SetSGLPoolWeight(address(singularity), weight);
+        emit SetSGLPoolWeight(activeSingularities[singularity].sglAssetID, address(singularity), weight);
     }
 
     function setRescueCooldown(uint256 _rescueCooldown) external onlyOwner {
@@ -302,7 +309,7 @@ contract TapiocaOptionLiquidityProvision is
 
         activeSingularities[singularity].rescue = true;
 
-        emit ActivateSGLPoolRescue(address(singularity));
+        emit ActivateSGLPoolRescue(sgl.sglAssetID, address(singularity));
     }
 
     /// @notice Registers a new singularity market
@@ -327,7 +334,7 @@ contract TapiocaOptionLiquidityProvision is
         sglAssetIDToAddress[assetID] = singularity;
         singularities.push(assetID);
 
-        emit RegisterSingularity(address(singularity), assetID);
+        emit RegisterSingularity(assetID, address(singularity), activeSingularities[singularity].poolWeight);
     }
 
     /// @notice Un-registers a singularity market
@@ -352,13 +359,13 @@ contract TapiocaOptionLiquidityProvision is
                         singularities[i] = _singularities[sglLastIndex];
                     }
                     singularities.pop();
-                    emit UnregisterSingularity(address(singularity), sglAssetID);
+                    emit UnregisterSingularity(uint256(sglAssetID), address(singularity));
                     break;
                 }
             }
         }
 
-        emit UnregisterSingularity(address(singularity), sglAssetID);
+        emit UnregisterSingularity(uint256(sglAssetID), address(singularity));
     }
 
     /**
@@ -419,5 +426,13 @@ contract TapiocaOptionLiquidityProvision is
         returns (bytes4)
     {
         return bytes4(0);
+    }
+
+    function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        virtual
+        override(ERC721, ERC721Permit)
+    {
+        super._afterTokenTransfer(from, to, firstTokenId, batchSize);
     }
 }

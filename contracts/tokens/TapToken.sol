@@ -76,8 +76,6 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     /// @notice event emitted when new TAP is burned
     event Burned(address indexed _from, uint256 _amount);
 
-    event BoostedTAP(uint256 _amount);
-
     error OnlyHostChain();
 
     // ==========
@@ -136,7 +134,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      * @param _data.extExec Address of the external executor.
      */
     constructor(ITapToken.TapTokenConstructorData memory _data)
-        BaseTapToken("TapToken", "TAP", _data.endpoint, _data.owner, _data.extExec, _data.pearlmit)
+        BaseTapToken("TapToken", "TAP", _data.endpoint, _data.owner, _data.extExec, _data.pearlmit, _data.cluster)
         ERC20Permit("TAP")
     {
         if (_data.endpoint == address(0)) revert AddressWrong();
@@ -365,11 +363,32 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      */
     function extractTAP(address _to, uint256 _amount) external onlyMinter whenNotPaused {
         if (_amount == 0) revert NotValid();
-
         uint256 week = _timestampToWeek(block.timestamp);
-        if (emissionForWeek[week] < mintedInWeek[week] + _amount) {
-            revert InsufficientEmissions();
+
+        uint256 boostedTAP = balanceOf(address(this));
+        uint256 availableTap = emissionForWeek[week] - mintedInWeek[week];
+
+        // Check if there are enough emissions for the current week for the requested amount.
+        if (availableTap < _amount) {
+            // If there are not enough emissions, check if the boosted TAP can cover the difference.
+            if (availableTap + boostedTAP < _amount) {
+                revert InsufficientEmissions();
+            } else {
+                // If the boosted TAP can cover the difference, mint the available TAP.
+                if (availableTap > 0) {
+                    _mint(_to, availableTap);
+                    mintedInWeek[week] += availableTap;
+                    _amount -= availableTap;
+                }
+
+                // And transfer from the boosted TAP.
+                _transfer(address(this), _to, _amount);
+                emit Minted(msg.sender, _to, _amount);
+                return;
+            }
         }
+
+        // Mint the requested amount if there are enough emissions.
         _mint(_to, _amount);
         mintedInWeek[week] += _amount;
         emit Minted(msg.sender, _to, _amount);
@@ -412,14 +431,6 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         }
         uint256 emission = _computeEmission();
         emission += unclaimed;
-
-        // Boosted TAP is burned and added to the emission to be minted on demand later on in `extractTAP()`
-        uint256 boostedTAP = balanceOf(address(this));
-        if (boostedTAP > 0) {
-            _burn(address(this), boostedTAP);
-            emission += boostedTAP; // Add TAP in the contract as boosted TAP
-            emit BoostedTAP(boostedTAP);
-        }
 
         emissionForWeek[week] = emission;
         emit Emitted(week, emission);
