@@ -1215,5 +1215,24 @@
                 }
             ]
         }
+    },
+    "testnet-lbp": {
+        "421614": {
+            "name": "arbitrum_sepolia",
+            "lastBlockHeight": 41323960,
+            "contracts": [
+                {
+                    "name": "LTAP",
+                    "address": "0x2C16ca2324659E05A0F280782a321Bd3a8831d33",
+                    "meta": {
+                        "args": [
+                            "0x4b7964f7bC6edC0CfDB8e15A85214AE24D804101"
+                        ],
+                        "salt": "0xab0db37c258aa639f8eaca70fa6b272e64733f6ffdb82b231c028646250b7156",
+                        "create2": true
+                    }
+                }
+            ]
+        }
     }
 }
