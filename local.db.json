@@ -1223,12 +1223,12 @@
             "contracts": [
                 {
                     "name": "LTAP",
-                    "address": "0x2C16ca2324659E05A0F280782a321Bd3a8831d33",
+                    "address": "0xE32BFb8A2849E945465784fa998eD13d5fcB29a9",
                     "meta": {
                         "args": [
                             "0x4b7964f7bC6edC0CfDB8e15A85214AE24D804101"
                         ],
-                        "salt": "0xab0db37c258aa639f8eaca70fa6b272e64733f6ffdb82b231c028646250b7156",
+                        "salt": "0x24c9f5b6de5731568a35c6f8a9d0071a8abc73df7c2ec97ca6652b94d6a1633f",
                         "create2": true
                     }
                 }
