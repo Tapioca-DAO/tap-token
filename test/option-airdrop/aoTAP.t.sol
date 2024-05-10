@@ -33,6 +33,7 @@ import "forge-std/console.sol";
 contract aoTapTest is TapTestHelper, Errors {
     using stdStorage for StdStorage;
 
+    IPearlmit pearlmit;
     AOTAP public aotap; //instance of AOTAP
 
     uint256 internal userAPKey = 0x1;
@@ -49,7 +50,8 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.label(owner, "owner"); //label address for test traces
         vm.label(tokenBeneficiary, "tokenBeneficiary"); //label address for test traces
 
-        aotap = new AOTAP(,address(owner)); //deploy AOTAP and set address to owner
+        pearlmit = IPearlmit(address(new Pearlmit())); //deploy Pearlmit
+        aotap = new AOTAP(pearlmit, address(owner)); //deploy AOTAP and set address to owner
 
         super.setUp();
     }
