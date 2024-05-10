@@ -5,10 +5,11 @@ import { OTAP__factory } from '@typechain/index';
 export const buildOTAP = async (
     hre: HardhatRuntimeEnvironment,
     deploymentName: string,
+    args: IDeployerVMAdd<OTAP__factory>['args'],
 ): Promise<IDeployerVMAdd<OTAP__factory>> => {
     return {
-        contract: await hre.ethers.getContractFactory('OTAP'),
+        contract: new OTAP__factory(hre.ethers.provider.getSigner()),
         deploymentName,
-        args: [],
+        args,
     };
 };

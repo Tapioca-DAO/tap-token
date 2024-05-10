@@ -1,6 +1,5 @@
 import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { buildEmptyYbStrategy } from 'tasks/deployBuilds/finalStack/buildEmptyYbStrategy';
 import { executeTestnetFinalStackPostDepSetup } from 'tasks/deployBuilds/finalStack/executeTestnetFinalStackPostDepSetup';
 import {
     buildFinalStackPostDepSetup_1,
@@ -12,6 +11,7 @@ import { buildTolp } from '../deployBuilds/finalStack/options/buildTOLP';
 import { buildTwTap } from '../deployBuilds/finalStack/options/deployTwTap';
 import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
+import * as TAPIOCA_PERIPH_DEPLOY_CONFIG from '@tapioca-periph/config';
 
 export const deployFinalStack__task = async (
     taskArgs: { tag?: string; load?: boolean; verify?: boolean },
@@ -28,16 +28,7 @@ export const deployFinalStack__task = async (
     const VM = await loadVM(hre, tag);
     const tapiocaMulticall = await VM.getMulticall();
 
-    const yieldBox = hre.SDK.db.findGlobalDeployment(
-        TAPIOCA_PROJECTS_NAME.YieldBox,
-        chainInfo!.chainId,
-        'YieldBox',
-        tag,
-    );
-
-    if (!yieldBox) {
-        throw '[-] YieldBox not found';
-    }
+    const { pearlmit, yieldBox } = await getContracts(hre, chainInfo, tag);
 
     if (taskArgs.load) {
         VM.load(
@@ -45,10 +36,31 @@ export const deployFinalStack__task = async (
                 [],
         );
     } else {
-        VM.add(await getTolp(hre, tapiocaMulticall.address, yieldBox.address))
-            .add(await buildOTAP(hre, DEPLOYMENT_NAMES.OTAP))
-            .add(await getTob(hre, tag, tapiocaMulticall.address))
-            .add(await getTwTap(hre, tag, tapiocaMulticall.address));
+        VM.add(
+            await getTolp(
+                hre,
+                tapiocaMulticall.address,
+                yieldBox.address,
+                pearlmit.address,
+            ),
+        )
+            .add(await getOtap(hre, tapiocaMulticall.address))
+            .add(
+                await getTob(
+                    hre,
+                    tag,
+                    tapiocaMulticall.address,
+                    pearlmit.address,
+                ),
+            )
+            .add(
+                await getTwTap(
+                    hre,
+                    tag,
+                    tapiocaMulticall.address,
+                    pearlmit.address,
+                ),
+            );
 
         // Add and execute
         await VM.execute();
@@ -80,10 +92,44 @@ export const deployFinalStack__task = async (
     console.log('[+] Final Stack deployed! 🎉');
 };
 
+async function getContracts(
+    hre: HardhatRuntimeEnvironment,
+    chainInfo: ReturnType<typeof hre.SDK.utils.getChainBy>,
+    tag: string,
+) {
+    const yieldBox = hre.SDK.db.findGlobalDeployment(
+        TAPIOCA_PROJECTS_NAME.YieldBox,
+        hre.SDK.eChainId,
+        'YieldBox',
+        tag,
+    );
+
+    if (!yieldBox) {
+        throw '[-] YieldBox not found';
+    }
+
+    // Get pearlmit
+    const pearlmit = hre.SDK.db.findGlobalDeployment(
+        TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
+        hre.SDK.eChainId,
+        TAPIOCA_PERIPH_DEPLOY_CONFIG.DEPLOYMENT_NAMES.PEARLMIT,
+        tag,
+    );
+    if (!pearlmit) {
+        throw '[-] Pearlmit not found';
+    }
+
+    return {
+        yieldBox,
+        pearlmit,
+    };
+}
+
 async function getTolp(
     hre: HardhatRuntimeEnvironment,
     owner: string,
     yieldBoxAddress: string,
+    pearlmit: string,
 ) {
     return await buildTolp(
         hre,
@@ -91,15 +137,21 @@ async function getTolp(
         [
             yieldBoxAddress, // Yieldbox
             DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
+            pearlmit,
             owner, // Owner
         ],
     );
+}
+
+async function getOtap(hre: HardhatRuntimeEnvironment, owner: string) {
+    return await buildOTAP(hre, DEPLOYMENT_NAMES.OTAP, [owner]);
 }
 
 async function getTob(
     hre: HardhatRuntimeEnvironment,
     tag: string,
     owner: string,
+    pearlmit: string,
 ) {
     const tapToken = hre.SDK.db.findLocalDeployment(
         hre.SDK.eChainId,
@@ -117,6 +169,7 @@ async function getTob(
             tapToken.address, // TapOFT
             DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOB.PAYMENT_TOKEN_ADDRESS, // Payment token address
             DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
+            pearlmit,
             owner, // Owner
         ],
         [
@@ -134,6 +187,7 @@ async function getTwTap(
     hre: HardhatRuntimeEnvironment,
     tag: string,
     owner: string,
+    pearlmit: string,
 ) {
     const tapToken = hre.SDK.db.findLocalDeployment(
         hre.SDK.eChainId,
@@ -147,6 +201,7 @@ async function getTwTap(
         DEPLOYMENT_NAMES.TWTAP,
         [
             tapToken.address, // TapOFT
+            pearlmit,
             owner, // Owner
         ],
         [],

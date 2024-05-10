@@ -7,8 +7,8 @@ export const buildTolp = async (
     deploymentName: string,
     args: Parameters<TapiocaOptionLiquidityProvision__factory['deploy']>,
 ): Promise<IDeployerVMAdd<TapiocaOptionLiquidityProvision__factory>> => ({
-    contract: await hre.ethers.getContractFactory(
-        'TapiocaOptionLiquidityProvision',
+    contract: new TapiocaOptionLiquidityProvision__factory(
+        hre.ethers.provider.getSigner(),
     ),
     deploymentName,
     args,

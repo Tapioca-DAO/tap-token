@@ -2,6 +2,7 @@
 pragma solidity 0.8.22;
 
 // External
+import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
@@ -28,7 +29,7 @@ struct TapOption {
     uint256 tOLP; // tOLP token ID
 }
 
-contract OTAP is ERC721, ERC721Permit, ERC721NftLoader, BaseBoringBatchable {
+contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, BaseBoringBatchable {
     uint256 public mintedOTAP; // total number of OTAP minted
     address public broker; // address of the onlyBroker
 
@@ -71,6 +72,23 @@ contract OTAP is ERC721, ERC721Permit, ERC721NftLoader, BaseBoringBatchable {
         return _exists(_tokenId);
     }
 
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721Enumerable, ERC721)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        override(ERC721, ERC721Enumerable)
+    {
+        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+    }
+
     // ==========
     //    WRITE
     // ==========
@@ -97,7 +115,7 @@ contract OTAP is ERC721, ERC721Permit, ERC721NftLoader, BaseBoringBatchable {
     /// @notice burns an OTAP
     /// @param _tokenId tokenId to burn
     function burn(uint256 _tokenId) external {
-        if (!_isApprovedOrOwner(msg.sender, _tokenId)) revert NotAuthorized();
+        if (msg.sender != broker) revert OnlyBroker();
         _burn(_tokenId);
 
         emit Burn(msg.sender, _tokenId, options[_tokenId]);
@@ -107,5 +125,13 @@ contract OTAP is ERC721, ERC721Permit, ERC721NftLoader, BaseBoringBatchable {
     function brokerClaim() external {
         if (broker != address(0)) revert OnlyOnce();
         broker = msg.sender;
+    }
+
+    function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        virtual
+        override(ERC721, ERC721Permit)
+    {
+        super._afterTokenTransfer(from, to, firstTokenId, batchSize);
     }
 }

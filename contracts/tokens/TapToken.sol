@@ -44,11 +44,11 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     uint256 constant DECAY_RATE_DECIMAL = 1e18;
 
     /// @notice seconds in a week
-    uint256 public constant EPOCH_DURATION = 1 weeks; // 604800
+    uint256 public immutable EPOCH_DURATION;
 
     /// @notice starts time for emissions
     /// @dev initialized in the constructor with block.timestamp
-    uint256 public immutable emissionsStartTime;
+    uint256 public emissionsStartTime;
 
     /// @notice returns the amount of emitted TAP for a specific week
     /// @dev week is computed using (timestamp - emissionStartTime) / WEEK
@@ -76,8 +76,6 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     /// @notice event emitted when new TAP is burned
     event Burned(address indexed _from, uint256 _amount);
 
-    event BoostedTAP(uint256 _amount);
-
     error OnlyHostChain();
 
     // ==========
@@ -89,6 +87,8 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     error AllowanceNotValid();
     error OnlyMinter();
     error TwTapAlreadySet();
+    error InitStarted();
+    error InitNotStarted();
     error InsufficientEmissions();
 
     // ===========
@@ -119,11 +119,12 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      * Airdrop: 2.5m
      * == 100M ==
      *
+     * @param _data.epochDuration The duration of an epoch in seconds.
      * @param _data.endpoint The layer zero address endpoint deployed on the current chain.
      * @param _data.contributors Address of the  contributors. 15m TAP.
      * @param _data.earlySupporters Address of early supporters. 3,686,595 TAP.
      * @param _data.supporters Address of supporters. 12.5m TAP.
-     * @param _data.aoTap Address of the LBP redemption token, aoTap. 5m TAP.
+     * @param _data.lTap Address of the LBP redemption token, lTap. 5m TAP.
      * @param _data.dao Address of the DAO. 8m TAP.
      * @param _data.airdrop Address of the airdrop contract. 2.5m TAP.
      * @param _data.governanceEid Governance chain endpoint ID. Should be EID of the twTAP chain.
@@ -133,25 +134,11 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      * @param _data.extExec Address of the external executor.
      */
     constructor(ITapToken.TapTokenConstructorData memory _data)
-        BaseTapToken("TapToken", "TAP", _data.endpoint, _data.owner, _data.extExec, _data.pearlmit)
+        BaseTapToken("TapToken", "TAP", _data.endpoint, _data.owner, _data.extExec, _data.pearlmit, _data.cluster)
         ERC20Permit("TAP")
     {
-        _transferOwnership(_data.owner);
-
         if (_data.endpoint == address(0)) revert AddressWrong();
         governanceEid = _data.governanceEid;
-
-        // Mint only on the governance chain
-        if (_getChainId() == _data.governanceEid) {
-            _mint(_data.contributors, 1e18 * 15_000_000);
-            _mint(_data.earlySupporters, 1e18 * 3_686_595);
-            _mint(_data.supporters, 1e18 * 12_500_000);
-            _mint(_data.aoTap, 1e18 * 5_000_000);
-            _mint(_data.dao, 1e18 * 8_000_000);
-            _mint(_data.airdrop, 1e18 * 2_500_000);
-            if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
-        }
-        emissionsStartTime = block.timestamp;
 
         // Initialize modules
         if (_data.tapTokenSenderModule == address(0)) revert NotValid();
@@ -159,6 +146,22 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
 
         _setModule(uint8(ITapToken.Module.TapTokenSender), _data.tapTokenSenderModule);
         _setModule(uint8(ITapToken.Module.TapTokenReceiver), _data.tapTokenReceiverModule);
+
+        if (_data.epochDuration == 0) revert NotValid();
+        EPOCH_DURATION = _data.epochDuration;
+
+        // Mint only on the governance chain
+        if (_getChainId() == _data.governanceEid) {
+            _mint(_data.contributors, 1e18 * 15_000_000);
+            _mint(_data.earlySupporters, 1e18 * 3_686_595);
+            _mint(_data.supporters, 1e18 * 12_500_000);
+            _mint(_data.lTap, 1e18 * 5_000_000);
+            _mint(_data.dao, 1e18 * 8_000_000);
+            _mint(_data.airdrop, 1e18 * 2_500_000);
+            if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
+        }
+
+        _transferOwnership(_data.owner);
     }
 
     /**
@@ -344,6 +347,15 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     /// =====================
 
     /**
+     * @notice Initializes the emissions.
+     * @dev Can be called only once. By Minter.
+     */
+    function initEmissions() external onlyMinter {
+        if (emissionsStartTime != 0) revert InitStarted();
+        emissionsStartTime = block.timestamp;
+    }
+
+    /**
      * @notice Mint TAP for the current week. Follow the emission function.
      *
      * @param _to Address to send the minted TAP to
@@ -351,11 +363,32 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      */
     function extractTAP(address _to, uint256 _amount) external onlyMinter whenNotPaused {
         if (_amount == 0) revert NotValid();
-
         uint256 week = _timestampToWeek(block.timestamp);
-        if (emissionForWeek[week] < mintedInWeek[week] + _amount) {
-            revert InsufficientEmissions();
+
+        uint256 boostedTAP = balanceOf(address(this));
+        uint256 availableTap = emissionForWeek[week] - mintedInWeek[week];
+
+        // Check if there are enough emissions for the current week for the requested amount.
+        if (availableTap < _amount) {
+            // If there are not enough emissions, check if the boosted TAP can cover the difference.
+            if (availableTap + boostedTAP < _amount) {
+                revert InsufficientEmissions();
+            } else {
+                // If the boosted TAP can cover the difference, mint the available TAP.
+                if (availableTap > 0) {
+                    _mint(_to, availableTap);
+                    mintedInWeek[week] += availableTap;
+                    _amount -= availableTap;
+                }
+
+                // And transfer from the boosted TAP.
+                _transfer(address(this), _to, _amount);
+                emit Minted(msg.sender, _to, _amount);
+                return;
+            }
         }
+
+        // Mint the requested amount if there are enough emissions.
         _mint(_to, _amount);
         mintedInWeek[week] += _amount;
         emit Minted(msg.sender, _to, _amount);
@@ -381,8 +414,8 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      *
      * @return the emitted amount.
      */
-    function emitForWeek() external onlyMinter returns (uint256) {
-        if (_getChainId() != governanceEid) revert NotValid();
+    function emitForWeek() external onlyMinter onlyHostChain returns (uint256) {
+        if (emissionsStartTime == 0) revert InitNotStarted();
 
         uint256 week = _timestampToWeek(block.timestamp);
         if (emissionForWeek[week] > 0) return 0;
@@ -398,14 +431,6 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         }
         uint256 emission = _computeEmission();
         emission += unclaimed;
-
-        // Boosted TAP is burned and added to the emission to be minted on demand later on in `extractTAP()`
-        uint256 boostedTAP = balanceOf(address(this));
-        if (boostedTAP > 0) {
-            _burn(address(this), boostedTAP);
-            emission += boostedTAP; // Add TAP in the contract as boosted TAP
-            emit BoostedTAP(boostedTAP);
-        }
 
         emissionForWeek[week] = emission;
         emit Emitted(week, emission);

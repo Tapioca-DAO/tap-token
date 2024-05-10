@@ -80,7 +80,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
     /// @notice starts time for emissions
     /// @dev initialized in the constructor with block.timestamp
-    uint256 public immutable emissionsStartTime;
+    uint256 public emissionsStartTime;
 
     /// @notice Total amount of participation per epoch
     mapping(uint256 epoch => mapping(uint256 sglAssetID => int256 netAmount)) public netDepositedForEpoch;
@@ -106,6 +106,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     error PaymentTokenValuationNotValid();
     error LockExpired();
     error AdvanceEpochFirst();
+    error DurationNotMultiple();
 
     constructor(
         address _tOLP,
@@ -124,7 +125,6 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         tapOFT = TapToken(_tapOFT);
         oTAP = OTAP(_oTAP);
         EPOCH_DURATION = _epochDuration;
-        emissionsStartTime = block.timestamp;
 
         _transferOwnership(_owner);
     }
@@ -133,16 +133,16 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     //   EVENTS
     // ==========
     event Participate(
-        uint256 indexed epoch, uint256 indexed sglAssetID, uint256 totalDeposited, uint256 tokenId, uint256 discount
+        uint256 indexed epoch, uint256 indexed sglAssetId, uint256 totalDeposited, uint256 otapTokenId, uint256 tolpTokenId, uint256 discount
     );
     event AMLDivergence(uint256 indexed epoch, uint256 cumulative, uint256 averageMagnitude, uint256 totalParticipants);
     event ExerciseOption(
-        uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 oTapTokenID, uint256 amount
+        uint256 indexed epoch, address indexed to, ERC20 indexed paymentToken, uint256 otapTokenId, uint256 tapAmount
     );
-    event NewEpoch(uint256 indexed epoch, uint256 extractedTAP, uint256 epochTAPValuation);
-    event ExitPosition(uint256 indexed epoch, uint256 tolpTokenId, uint256 amount);
+    event NewEpoch(uint256 indexed epoch, uint256 extractedTap, uint256 epochTapValuation);
+    event ExitPosition(uint256 indexed epoch, uint256 indexed otapTokenId, uint256 tolpTokenId);
     event SetPaymentToken(ERC20 indexed paymentToken, ITapiocaOracle oracle, bytes oracleData);
-    event SetTapOracle(ITapiocaOracle indexed oracle, bytes indexed oracleData);
+    event SetTapOracle(ITapiocaOracle oracle, bytes oracleData);
 
     // ==========
     //    READ
@@ -160,6 +160,49 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /// @notice Returns the current week
     function getCurrentWeek() external view returns (uint256) {
         return _timestampToWeek(block.timestamp);
+    }
+
+    /// @notice Returns the details of an oTAP position including its tOLP lock position
+    /// @param _oTAPTokenID The oTAP token ID
+    /// @param epochId The epoch id of which to get the claimed TAP for - if 0, current epoch will be used
+    /// @return tOLPLockPosition The tOLP lock position of the oTAP position
+    /// @return oTAPPosition The details of the oTAP position
+    /// @return claimedTapInEpoch The amount of TAP claimed in specified epoch
+    function getOptionPosition(uint256 _oTAPTokenID, uint256 epochId) 
+        external 
+        view 
+        returns (LockPosition memory tOLPLockPosition, TapOption memory oTAPPosition, uint256 claimedTapInEpoch)
+    {
+        if (epochId == 0) {
+            epochId = epoch;
+        }
+
+        (, oTAPPosition) = oTAP.attributes(_oTAPTokenID);
+        tOLPLockPosition = tOLPLockPosition = tOLP.getLock(oTAPPosition.tOLP);
+        claimedTapInEpoch = oTAPCalls[_oTAPTokenID][epochId];
+    }
+
+    /// @notice Returns the details of TOLP Singularity Pool, twAML pool and gauge for a given sglAssetId
+    /// @param _singularity The singularity address
+    /// @param epochId The epoch id of which to get the tap emitted for the pool - if 0, current epoch will be used
+    /// @return assetId The Singularity asset id = YB asset id
+    /// @return totalDeposited The total deposited amount in the pool
+    /// @return weight The weight of the pool
+    /// @return isInRescue True if the singularity is in rescue mode
+    /// @return tapEmittedInCurrentEpoch The amount of TAP emitted in the current epoch
+    /// @return twAMLPool The twAML Pool details
+    function getSingularityPoolInfo(IERC20 _singularity, uint256 epochId) 
+        external 
+        view 
+        returns (uint256 assetId, uint256 totalDeposited, uint256 weight, bool isInRescue, uint256 tapEmittedInCurrentEpoch, TWAMLPool memory twAMLPool)
+    {
+        if (epochId == 0) {
+            epochId = epoch;
+        }
+
+        (assetId, totalDeposited, weight, isInRescue) = tOLP.activeSingularities(_singularity);
+        twAMLPool = twAML[assetId];
+        tapEmittedInCurrentEpoch = singularityGauges[epochId][assetId];
     }
 
     /// @notice Returns the details of an OTC deal for a given oTAP token ID and a payment token.
@@ -224,6 +267,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
     /// @notice Participate in twAMl voting and mint an oTAP position.
     ///         Exercising the option is not possible on participation week.
+    ///         Lock duration should be a multiple of 1 EPOCH, and have a minimum of 1 EPOCH.
     /// @param _tOLPTokenID The tokenId of the tOLP position
     function participate(uint256 _tOLPTokenID) external whenNotPaused nonReentrant returns (uint256 oTAPTokenID) {
         // Compute option parameters
@@ -237,15 +281,9 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (!isPositionActive) revert OptionExpired();
 
         if (lock.lockDuration < EPOCH_DURATION) revert DurationTooShort();
+        if (lock.lockDuration % EPOCH_DURATION != 0) revert DurationNotMultiple();
 
         TWAMLPool memory pool = twAML[lock.sglAssetID];
-        if (pool.cumulative == 0) {
-            pool.cumulative = EPOCH_DURATION;
-        }
-
-        if (!tOLP.isApprovedOrOwner(msg.sender, _tOLPTokenID)) {
-            revert NotAuthorized();
-        }
 
         // Transfer tOLP position to this contract
         // tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
@@ -276,7 +314,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
                 if (pool.cumulative > pool.averageMagnitude) {
                     pool.cumulative -= pool.averageMagnitude;
                 } else {
-                    pool.cumulative = 0;
+                    pool.cumulative = EPOCH_DURATION;
                 }
             }
 
@@ -299,7 +337,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
         // Mint oTAP position
         oTAPTokenID = oTAP.mint(msg.sender, lockExpiry, uint128(target), _tOLPTokenID);
-        emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, oTAPTokenID, target);
+        emit Participate(epoch, lock.sglAssetID, pool.totalDeposited, oTAPTokenID, _tOLPTokenID, target);
     }
 
     /// @notice Exit a twAML participation and delete the voting power if existing
@@ -331,7 +369,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
                 if (pool.cumulative > participation.averageMagnitude) {
                     pool.cumulative -= participation.averageMagnitude;
                 } else {
-                    pool.cumulative = 0;
+                    pool.cumulative = EPOCH_DURATION;
                 }
             } else {
                 pool.cumulative += participation.averageMagnitude;
@@ -355,7 +393,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         // Transfer position back to oTAP owner
         tOLP.transferFrom(address(this), otapOwner, oTAPPosition.tOLP);
 
-        emit ExitPosition(epoch, oTAPPosition.tOLP, lock.ybShares);
+        emit ExitPosition(epoch, _oTAPTokenID, oTAPPosition.tOLP);
     }
 
     /// @notice Exercise an oTAP position
@@ -380,6 +418,9 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (!oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID)) {
             revert NotAuthorized();
         }
+
+        if (_timestampToWeek(block.timestamp) > epoch) revert AdvanceEpochFirst();
+
         if (block.timestamp < oTAPPosition.entry + EPOCH_DURATION) {
             revert OneEpochCooldown();
         } // Can only exercise after 1 epoch duration
@@ -424,9 +465,13 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         emit NewEpoch(epoch, epochTAP, epochTAPValuation);
     }
 
-    /// @notice Claim the Broker role of the oTAP contract
-    function oTAPBrokerClaim() external {
+    /// @notice Claim the Broker role of the oTAP contract. Init emissions on TOB and TapToken.
+    /// @dev Can only be called once. External calls should revert if already called.
+    function init() external {
         oTAP.brokerClaim();
+
+        emissionsStartTime = block.timestamp;
+        tapOFT.initEmissions();
     }
 
     // =========
@@ -623,10 +668,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         }
     }
 
-    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
-        external
-        returns (bytes4)
-    {
+    function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
         return this.onERC721Received.selector;
     }
 }

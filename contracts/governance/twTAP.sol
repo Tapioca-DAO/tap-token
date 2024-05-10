@@ -2,6 +2,7 @@
 pragma solidity 0.8.22;
 
 // External
+import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -10,7 +11,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
-import {IPearlmit, PearlmitHandler} from "tapioca-periph/Pearlmit/PearlmitHandler.sol";
+import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
 import {ERC721NftLoader} from "tap-token/erc721NftLoader/ERC721NftLoader.sol";
 import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol";
 import {ERC721PermitStruct} from "tap-token/tokens/ITapToken.sol";
@@ -38,10 +39,14 @@ import {TWAML} from "tap-token/options/twAML.sol";
 //   counting at the (Unix) epoch, we will run out of `expiry` before we
 //   saturate the week fields.
 struct Participation {
-    uint256 averageMagnitude;
+    // 1 slot
+    uint256 averageMagnitude; // average magnitude of the pool at the time of locking.
+    // 1 slot
     bool hasVotingPower;
     bool divergenceForce; // 0 negative, 1 positive
     bool tapReleased; // allow restaking while rewards may still accumulate
+    uint56 lockedAt; // timestamp when lock was created. Since it's locked at block.timestamp, it's safe to say 56 bits will suffice
+    // 1 slot
     uint56 expiry; // expiry timestamp. Big enough for over 2 billion years..
     uint88 tapAmount; // amount of TAP locked
     uint24 multiplier; // Votes = multiplier * tapAmount
@@ -66,7 +71,17 @@ struct WeekTotals {
     mapping(uint256 => uint256) totalDistPerVote;
 }
 
-contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721NftLoader, ReentrancyGuard, Pausable {
+contract TwTAP is
+    TWAML,
+    ERC721,
+    ERC721Permit,
+    ERC721Enumerable,
+    Ownable,
+    PearlmitHandler,
+    ERC721NftLoader,
+    ReentrancyGuard,
+    Pausable
+{
     using SafeERC20 for IERC20;
 
     TapToken public immutable tapOFT;
@@ -77,9 +92,9 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
     /// @dev Virtual total amount to add to the total when computing twAML participation right. Default 10_000 * 1e18.
-    uint256 private VIRTUAL_TOTAL_AMOUNT = 10_000 ether;
+    uint256 public VIRTUAL_TOTAL_AMOUNT = 10_000 ether;
 
-    uint256 MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
+    uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
     uint256 constant dMAX = 1_000_000; // 100 * 1e4; 0% - 100% voting power multiplier
     uint256 constant dMIN = 0;
     uint256 public constant EPOCH_DURATION = 7 days;
@@ -112,8 +127,6 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
     uint256 public lastProcessedWeek;
     mapping(uint256 => WeekTotals) public weekTotals;
 
-    event LogMaxRewardsLength(uint256 indexed _oldLength, uint256 indexed _newLength, uint256 indexed _currentLength);
-
     error NotAuthorized();
     error AdvanceWeekFirst();
     error NotValid();
@@ -125,6 +138,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
     error LockNotAWeek();
     error LockTooLong();
     error AdvanceEpochFirst();
+    error DurationNotMultiple(); // Lock duration should be a multiple of 1 EPOCH
 
     /// =====-------======
     constructor(address payable _tapOFT, IPearlmit _pearlmit, address _owner)
@@ -146,11 +160,32 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
     // ==========
     //   EVENTS
     // ==========
-    event Participate(address indexed participant, uint256 indexed tapAmount, uint256 indexed multiplier);
+
     event AMLDivergence(
         uint256 indexed cumulative, uint256 indexed averageMagnitude, uint256 indexed totalParticipants
     );
-    event ExitPosition(uint256 indexed tokenId, uint256 indexed amount);
+
+    event AddRewardToken(address indexed rewardTokenAddress, uint256 rewardTokenIndex);
+    event DistributeReward(
+        address indexed rewardTokenAddress, address indexed from, uint256 amount, uint256 rewardTokenIndex
+    );
+    event AdvanceEpoch(uint256 indexed newEpoch, uint256 lastEpoch);
+
+    event ClaimReward(
+        address indexed rewardTokenAddress,
+        address indexed to,
+        uint256 indexed twTapTokenId,
+        uint256 amount,
+        uint256 rewardTokenIndex
+    );
+    event Participate(
+        address indexed participant, uint256 mintedTokenId, uint256 tapAmount, uint256 multiplier, uint256 lockDuration
+    );
+    event ExitPosition(uint256 indexed twTapTokenId, address indexed releasedTo, uint256 amount);
+
+    event LogMaxRewardsLength(uint256 _oldLength, uint256 _newLength, uint256 _currentLength);
+    event SetMinWeightFactor(uint256 newMinWeightFactor, uint256 oldMinWeightFactor);
+    event SetVirtualTotalAmount(uint256 newVirtualTotalAmount, uint256 oldVirtualTotalAmount);
 
     // ==========
     //    READ
@@ -265,6 +300,19 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
         return result;
     }
 
+    /// @notice Return the Participation of a token and the claimable amounts.
+    /// @param _tokenId The tokenId of the twTAP position.
+    /// @return position The Participation of the token.
+    /// @return claimables The claimable amounts of each reward token.
+    function getPosition(uint256 _tokenId)
+        external
+        view
+        returns (Participation memory position, uint256[] memory claimables)
+    {
+        position = participants[_tokenId];
+        claimables = claimable(_tokenId);
+    }
+
     /**
      * @dev Returns the hash of the struct used by the permit function.
      * @param _permitData Struct containing permit data.
@@ -285,6 +333,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
     // ===========
 
     /// @notice Participate in twAML voting and mint an twTap position
+    ///         Lock duration should be a multiple of 1 EPOCH, and have a minimum of 1 EPOCH.
     /// @dev Requires a Pearlmit approval for the TAP amount
     ///
     /// @param _participant The address of the participant
@@ -298,7 +347,8 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
     {
         if (_duration < EPOCH_DURATION) revert LockNotAWeek();
         if (_duration > MAX_LOCK_DURATION) revert LockTooLong();
-        if (_timestampToWeek(block.timestamp) > currentWeek()) revert AdvanceEpochFirst();
+        if (_duration % EPOCH_DURATION != 0) revert DurationNotMultiple();
+        if (lastProcessedWeek != currentWeek()) revert AdvanceWeekFirst();
 
         // Transfer TAP to this contract
         {
@@ -332,7 +382,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
                 if (pool.cumulative > pool.averageMagnitude) {
                     pool.cumulative -= pool.averageMagnitude;
                 } else {
-                    pool.cumulative = 0;
+                    pool.cumulative = EPOCH_DURATION;
                 }
             }
 
@@ -364,6 +414,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
             hasVotingPower: hasVotingPower,
             divergenceForce: divergenceForce,
             tapReleased: false,
+            lockedAt: uint56(block.timestamp),
             expiry: uint56(expiry),
             tapAmount: uint88(_amount),
             multiplier: uint24(multiplier),
@@ -380,8 +431,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
         // Mint twTAP position
         _safeMint(_participant, tokenId);
 
-        emit Participate(_participant, _amount, multiplier);
-        // TODO: Mint event?
+        emit Participate(_participant, tokenId, _amount, multiplier, _duration);
     }
 
     /**
@@ -399,6 +449,10 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
         whenNotPaused
         returns (uint256[] memory amounts_)
     {
+        // Either the owner or a delegate can claim the rewards
+        // In this case it's `TapToken` to claim the rewards on behalf of the user and send them xChain.
+        if (_to != _ownerOf(_tokenId) && _to != msg.sender) revert NotAuthorized();
+
         _requireClaimPermission(_to, _tokenId);
         amounts_ = _claimRewards(_tokenId, _to);
     }
@@ -407,23 +461,12 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
      * @notice Exit a twAML participation, delete the voting power if existing and send the TAP to `_to`.
      *
      * @param _tokenId The tokenId of the twTAP position.
-     * @param _to address to receive the TAP.
      *
      * @return tapAmount_ The amount of TAP released.
      */
-    function exitPosition(uint256 _tokenId, address _to)
-        external
-        nonReentrant
-        whenNotPaused
-        returns (uint256 tapAmount_)
-    {
-        {
-            address owner_ = ownerOf(_tokenId);
-            if (_to != owner_) {
-                _requireClaimPermission(_to, _tokenId);
-            }
-        }
-        tapAmount_ = _releaseTap(_tokenId, _to);
+    function exitPosition(uint256 _tokenId) external nonReentrant whenNotPaused returns (uint256 tapAmount_) {
+        address owner_ = ownerOf(_tokenId);
+        tapAmount_ = _releaseTap(_tokenId, owner_);
     }
 
     /// @notice Indicate that (a) week(s) have passed and update running totals
@@ -451,6 +494,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
                 }
             }
         }
+        emit AdvanceEpoch(goal, lastProcessedWeek);
         lastProcessedWeek = goal;
     }
 
@@ -476,6 +520,8 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
         totals.totalDistPerVote[_rewardTokenId] += (_amount * DIST_PRECISION) / uint256(totals.netActiveVotes);
 
         rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
+
+        emit DistributeReward(address(rewardToken), msg.sender, _amount, _rewardTokenId);
     }
 
     // =========
@@ -487,6 +533,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
      * @param _virtualTotalAmount The new state variable value.
      */
     function setVirtualTotalAmount(uint256 _virtualTotalAmount) external onlyOwner {
+        emit SetVirtualTotalAmount(_virtualTotalAmount, VIRTUAL_TOTAL_AMOUNT);
         VIRTUAL_TOTAL_AMOUNT = _virtualTotalAmount;
     }
 
@@ -495,6 +542,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
      * @param _minWeightFactor The new minimum weight factor.
      */
     function setMinWeightFactor(uint256 _minWeightFactor) external onlyOwner {
+        emit SetMinWeightFactor(_minWeightFactor, MIN_WEIGHT_FACTOR);
         MIN_WEIGHT_FACTOR = _minWeightFactor;
     }
 
@@ -517,6 +565,8 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
 
         uint256 newTokenIndex = rewardTokens.length - 1;
         rewardTokenIndex[_token] = newTokenIndex;
+
+        emit AddRewardToken(address(_token), newTokenIndex);
 
         return newTokenIndex;
     }
@@ -564,6 +614,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
                     // Math is safe: `amount` calculated safely in `claimable()`
                     claimed[_tokenId][i] += amount;
                     rewardTokens[i].safeTransfer(_to, amount);
+                    emit ClaimReward(address(rewardTokens[i]), _to, _tokenId, amount, i);
                 }
             }
         }
@@ -601,7 +652,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
                 if (pool.cumulative > position.averageMagnitude) {
                     pool.cumulative -= position.averageMagnitude;
                 } else {
-                    pool.cumulative = 0;
+                    pool.cumulative = EPOCH_DURATION;
                 }
             } else {
                 pool.cumulative += position.averageMagnitude;
@@ -617,7 +668,7 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
         participants[_tokenId].tapReleased = true;
         tapOFT.transfer(_to, releasedAmount);
 
-        emit ExitPosition(_tokenId, releasedAmount);
+        emit ExitPosition(_tokenId, _to, releasedAmount);
     }
 
     /// @notice Checks if an element is in an array
@@ -641,10 +692,28 @@ contract TwTAP is TWAML, ERC721, ERC721Permit, Ownable, PearlmitHandler, ERC721N
         return block.chainid;
     }
 
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721Enumerable, ERC721)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        override(ERC721, ERC721Enumerable)
+    {
+        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+    }
+
+    function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        virtual
+        override(ERC721, ERC721Permit)
+    {
+        super._afterTokenTransfer(from, to, firstTokenId, batchSize);
     }
 }

@@ -16,7 +16,8 @@ tOBScope
     )
     .addParam('tknAddress', 'Address of the payment token')
     .addParam('oracleAddress', 'Address of the oracle')
-    .addParam('oracleData', 'Oracle data');
+    .addParam('oracleData', 'Oracle data')
+    .addOptionalParam('tag', 'Tag of the deployment');
 
 tOBScope.task(
     'setPaymentTokenOnTOB',
