@@ -245,7 +245,14 @@ export async function getTapToken(params: {
         lzEndpointAddress,
         chainInfo,
     } = params;
-    const lTap = loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.LTAP);
+    let lTap = { address: hre.ethers.constants.AddressZero };
+    if (
+        chainInfo.name === 'arbitrum' ||
+        chainInfo.name === 'arbitrum_sepolia'
+    ) {
+        lTap = loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.LTAP);
+    }
+
     const { pearlmit, cluster } = loadContracts({ hre, tag });
 
     const isGovernanceChain = chainInfo.lzChainId == governanceEid;

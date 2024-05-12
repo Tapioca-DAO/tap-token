@@ -1365,6 +1365,78 @@
                     }
                 }
             ]
+        },
+        "11155420": {
+            "name": "optimism_sepolia",
+            "lastBlockHeight": 11865429,
+            "contracts": [
+                {
+                    "name": "EXT_EXEC",
+                    "address": "0xE3142F47E69537A6AFf73be2b7424C85ab0c1280",
+                    "meta": {
+                        "args": [],
+                        "salt": "0xf3690efccfded2e7c4c4c0421f2c4cbf997dd265ac45fa3ee0fd8d60433c777e",
+                        "create2": true
+                    }
+                },
+                {
+                    "name": "TAP_TOKEN_SENDER_MODULE",
+                    "address": "0xfa2B523AA9c6dF83ea017F0f967CD39558d34d4C",
+                    "meta": {
+                        "args": [
+                            "",
+                            "",
+                            "0x464570adA09869d8741132183721B4f0769a0287",
+                            "0xD830E6D303b30fd0160371e7052c8B1205Ae2C98",
+                            "0x0000000000000000000000000000000000000000"
+                        ],
+                        "salt": "0x933fe5d823826c8f876d61b74efa7e060f11f53018c253708e6a20d1f9b69a5c",
+                        "create2": true
+                    }
+                },
+                {
+                    "name": "TAP_TOKEN_RECEIVER_MODULE",
+                    "address": "0xced513494A7B8BD5F4cf7b6F2F8f174e2d4aFfB1",
+                    "meta": {
+                        "args": [
+                            "",
+                            "",
+                            "0x464570adA09869d8741132183721B4f0769a0287",
+                            "0xD830E6D303b30fd0160371e7052c8B1205Ae2C98",
+                            "0x0000000000000000000000000000000000000000"
+                        ],
+                        "salt": "0x74997b82ff2b4038e917b383e9009f91c2370678c3edc0c78b1ccfd65091733b",
+                        "create2": true
+                    }
+                },
+                {
+                    "name": "TAP_TOKEN",
+                    "address": "0x2E0D8523C4e9A56d3437DaF0AbE8FA82BD0261c2",
+                    "meta": {
+                        "args": [
+                            {
+                                "epochDuration": 604800,
+                                "endpoint": "0x464570adA09869d8741132183721B4f0769a0287",
+                                "contributors": "0xD830E6D303b30fd0160371e7052c8B1205Ae2C98",
+                                "earlySupporters": "0x0000000000000000000000000000000000000000",
+                                "supporters": "0x0000000000000000000000000000000000000000",
+                                "lTap": "0x0000000000000000000000000000000000000000",
+                                "dao": "0x464570adA09869d8741132183721B4f0769a0287",
+                                "airdrop": "0x0000000000000000000000000000000000000000",
+                                "governanceEid": "40231",
+                                "owner": "0xD830E6D303b30fd0160371e7052c8B1205Ae2C98",
+                                "tapTokenSenderModule": "0xfa2B523AA9c6dF83ea017F0f967CD39558d34d4C",
+                                "tapTokenReceiverModule": "0xced513494A7B8BD5F4cf7b6F2F8f174e2d4aFfB1",
+                                "extExec": "0xE3142F47E69537A6AFf73be2b7424C85ab0c1280",
+                                "pearlmit": "0xB051001D0264008288b50771020480E05971cc8D",
+                                "cluster": "0x44E86Ae4cF16A1ae3a20bDA023C3A8f659B48f03"
+                            }
+                        ],
+                        "salt": "0xbff1efa5e6db5a5f70b92a107301cca08636671b0e851ae27a94e01848d5d3d3",
+                        "create2": true
+                    }
+                }
+            ]
         }
     }
 }
