@@ -29,8 +29,9 @@ contract LTap is Ownable, ERC20Permit {
 
     /// @notice Creates a new LTAP token
     /// @dev LTAP tokens are minted by depositing TAP
-    constructor(address _lbp) ERC20("LTAP", "LTAP") ERC20Permit("LTAP") {
+    constructor(address _lbp, address _owner) ERC20("LTAP", "LTAP") ERC20Permit("LTAP") {
         _mint(_lbp, 5_000_000 * 1e18); // 5M LTAP for LBP
+        _transferOwnership(_owner);
     }
 
     modifier tapExists() {

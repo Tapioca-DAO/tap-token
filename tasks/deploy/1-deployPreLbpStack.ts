@@ -22,5 +22,5 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
-    VM.add(await buildLTap(hre, DEPLOYMENT_NAMES.LTAP, [owner], []));
+    VM.add(await buildLTap(hre, DEPLOYMENT_NAMES.LTAP, [owner, owner], []));
 }
