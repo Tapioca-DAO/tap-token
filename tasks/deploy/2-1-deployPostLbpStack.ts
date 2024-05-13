@@ -45,7 +45,7 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
         .add(await getVestingContributors({ hre, owner }))
         .add(await getVestingEarlySupporters({ hre, owner }))
         .add(await getVestingSupporters({ hre, owner }))
-        .add(await getAdb({ hre, owner }));
+        .add(await getAdb({ hre, owner, tag }));
 
     await addTapTokenContractsVM({
         hre,
@@ -158,8 +158,10 @@ async function getVestingSupporters(params: {
 async function getAdb(params: {
     hre: HardhatRuntimeEnvironment;
     owner: string;
+    tag: string;
 }) {
-    const { hre, owner } = params;
+    const { hre, owner, tag } = params;
+    const { pearlmit } = loadContracts({ hre, tag });
 
     let paymentTokenBeneficiary: string =
         DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.ADB.PAYMENT_TOKEN_BENEFICIARY;
@@ -175,7 +177,7 @@ async function getAdb(params: {
             hre.ethers.constants.AddressZero, // aoTAP
             DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.PCNFT.ADDRESS, // PCNFT
             paymentTokenBeneficiary, // Payment token beneficiary
-            hre.ethers.constants.AddressZero, // Pearlmit
+            pearlmit.address, // Pearlmit
             owner, // Owner
         ],
         [
