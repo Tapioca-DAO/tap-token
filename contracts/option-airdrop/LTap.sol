@@ -45,7 +45,7 @@ contract LTap is Ownable, ERC20Permit {
         tapToken = IERC20(_tapToken);
     }
 
-    function setOpenRedemption() external onlyOwner {
+    function setOpenRedemption() external onlyOwner tapExists {
         openRedemption = true;
     }
 
