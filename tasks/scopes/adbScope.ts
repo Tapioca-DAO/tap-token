@@ -7,6 +7,7 @@ import { setPaymentTokenOnAB__task } from 'tasks/exec/adb/10-ab-setPaymentToken'
 import { setPaymentTokenBeneficiaryAB__task } from 'tasks/exec/adb/11-ab-setPaymentTokenBeneficiary';
 import { collectPaymentTokensOnAB__task } from 'tasks/exec/adb/12-ab-collectPaymentTokens';
 import { daoRecoverTAPFromAB__task } from 'tasks/exec/adb/13-ab-daoRecoverTAP';
+import { adb_addPaymentToken__task } from 'tasks/exec/adb/adb_addPaymentToken';
 import { adb_setPhase2Roots__task } from 'tasks/exec/adb/adb_registerUserForPhase';
 
 const adbScope = scope('adb', 'AirdropBroker setter tasks');
@@ -20,6 +21,17 @@ TAP_TASK(
         )
         .addParam('phase', 'Phase number')
         .addParam('userFile', 'Path to the JSON file with users and amounts'),
+);
+
+TAP_TASK(
+    adbScope
+        .task(
+            'addPaymentToken',
+            'Add a payment token to AirdropBroker. Requires the token address and the oracle address.',
+            adb_addPaymentToken__task,
+        )
+        .addParam('paymentToken', 'Address of the payment token')
+        .addParam('oracle', 'Address of the oracle contract'),
 );
 
 adbScope.task(
