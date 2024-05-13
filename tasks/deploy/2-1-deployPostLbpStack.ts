@@ -160,14 +160,21 @@ async function getAdb(params: {
     owner: string;
 }) {
     const { hre, owner } = params;
+
+    let paymentTokenBeneficiary: string =
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.ADB.PAYMENT_TOKEN_BENEFICIARY;
+
+    if (hre.SDK.chainInfo.name === 'arbitrum_sepolia') {
+        paymentTokenBeneficiary = owner;
+    }
+
     return await buildADB(
         hre,
         DEPLOYMENT_NAMES.AIRDROP_BROKER,
         [
             hre.ethers.constants.AddressZero, // aoTAP
             DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.PCNFT.ADDRESS, // PCNFT
-            DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.ADB
-                .PAYMENT_TOKEN_BENEFICIARY, // Payment token beneficiary
+            paymentTokenBeneficiary, // Payment token beneficiary
             hre.ethers.constants.AddressZero, // Pearlmit
             owner, // Owner
         ],
@@ -255,6 +262,11 @@ export async function getTapToken(params: {
 
     const { pearlmit, cluster } = loadContracts({ hre, tag });
 
+    let dao = DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS;
+    if (chainInfo.name === 'arbitrum_sepolia') {
+        dao = owner;
+    }
+
     const isGovernanceChain = chainInfo.lzChainId == governanceEid;
     return await buildTapToken(
         hre,
@@ -268,7 +280,7 @@ export async function getTapToken(params: {
                 earlySupporters: hre.ethers.constants.AddressZero, // early supporters address
                 supporters: hre.ethers.constants.AddressZero, // supporters address
                 lTap: lTap.address, // lTap address
-                dao: DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS, // DAO address
+                dao, // DAO address
                 airdrop: hre.ethers.constants.AddressZero, // AirdropBroker address,
                 governanceEid: governanceEid,
                 owner: owner, // Owner
