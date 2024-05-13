@@ -14,5 +14,9 @@ export const buildLTapMock = async (
         deploymentName,
         args,
         dependsOn,
+        meta: {
+            isMock: true,
+            onlyTestnet: true,
+        },
     };
 };

@@ -35,8 +35,10 @@ contract LTapMock is Ownable, ERC20Permit {
     }
 
     // TESTNET only
-    function mint(address _to, uint256 _amount) external onlyOwner {
-        _mint(_to, _amount);
+    function mint(address[] calldata _to, uint256[] calldata _amount) external onlyOwner {
+        for (uint256 i = 0; i < _to.length; i++) {
+            _mint(_to[i], _amount[i]);
+        }
     }
 
     /// @notice Sets the TAP token address
