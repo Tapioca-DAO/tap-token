@@ -28,8 +28,21 @@ async function tapiocaTask(params: TTapiocaDeployerVmPass<object>) {
         loadLocalContract(hre, chainInfo.chainId, DEPLOYMENT_NAMES.LTAP, tag)
             .address,
     );
+    const tapToken = loadLocalContract(
+        hre,
+        chainInfo.chainId,
+        DEPLOYMENT_NAMES.TAP_TOKEN,
+        tag,
+    );
 
     await VM.executeMulticall([
+        {
+            target: ltap.address,
+            allowFailure: false,
+            callData: ltap.interface.encodeFunctionData('setTapToken', [
+                tapToken.address,
+            ]),
+        },
         {
             target: ltap.address,
             allowFailure: false,
