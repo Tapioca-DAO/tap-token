@@ -85,7 +85,7 @@ const POST_LBP: TPostLbp = {
             PAYMENT_TOKEN_BENEFICIARY: '',
         },
         PCNFT: {
-            ADDRESS: '0xD4c80D14dAaD45ad788e1EbE59e1891f688F3F3e',
+            ADDRESS: '0x52b4B758d0dC4039747a2BD52F87e4448511158d',
         },
         VESTING: {
             // Contributors
