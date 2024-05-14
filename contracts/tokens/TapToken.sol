@@ -414,7 +414,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      *
      * @return the emitted amount.
      */
-    function emitForWeek() external onlyMinter onlyHostChain returns (uint256) {
+    function emitForWeek() external onlyMinter onlyHostChain whenNotPaused returns (uint256) {
         if (emissionsStartTime == 0) revert InitNotStarted();
 
         uint256 week = _timestampToWeek(block.timestamp);
