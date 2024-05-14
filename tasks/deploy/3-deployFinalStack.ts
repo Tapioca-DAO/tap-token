@@ -1,3 +1,4 @@
+import * as TAPIOCA_PERIPH_DEPLOY_CONFIG from '@tapioca-periph/config';
 import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { executeTestnetFinalStackPostDepSetup } from 'tasks/deployBuilds/finalStack/executeTestnetFinalStackPostDepSetup';
@@ -9,69 +10,31 @@ import { buildOTAP } from '../deployBuilds/finalStack/options/buildOTAP';
 import { buildTOB } from '../deployBuilds/finalStack/options/buildTOB';
 import { buildTolp } from '../deployBuilds/finalStack/options/buildTOLP';
 import { buildTwTap } from '../deployBuilds/finalStack/options/deployTwTap';
-import { loadVM } from '../utils';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
-import * as TAPIOCA_PERIPH_DEPLOY_CONFIG from '@tapioca-periph/config';
+import {
+    TTapiocaDeployTaskArgs,
+    TTapiocaDeployerVmPass,
+} from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 
 export const deployFinalStack__task = async (
-    taskArgs: { tag?: string; load?: boolean; verify?: boolean },
+    _taskArgs: TTapiocaDeployTaskArgs,
     hre: HardhatRuntimeEnvironment,
 ) => {
-    // Settings
-    const tag = taskArgs.tag ?? 'default';
-    const chainInfo = hre.SDK.utils.getChainBy(
-        'chainId',
-        Number(hre.network.config.chainId),
-    )!;
-    const isTestnet = chainInfo.tags.find((tag) => tag === 'testnet');
+    await hre.SDK.DeployerVM.tapiocaDeployTask(
+        _taskArgs,
+        { hre },
+        tapiocaDeployTask,
+        tapiocaPostDepSetup,
+    );
+};
 
-    const VM = await loadVM(hre, tag);
-    const tapiocaMulticall = await VM.getMulticall();
+async function tapiocaPostDepSetup(params: TTapiocaDeployerVmPass<object>) {
+    const { hre, VM, tapiocaMulticallAddr, taskArgs, isTestnet, chainInfo } =
+        params;
+    const { tag } = taskArgs;
+    const owner = tapiocaMulticallAddr;
 
-    const { pearlmit, yieldBox } = await getContracts(hre, chainInfo, tag);
-
-    if (taskArgs.load) {
-        VM.load(
-            hre.SDK.db.loadLocalDeployment(tag, hre.SDK.eChainId)?.contracts ??
-                [],
-        );
-    } else {
-        VM.add(
-            await getTolp(
-                hre,
-                tapiocaMulticall.address,
-                yieldBox.address,
-                pearlmit.address,
-            ),
-        )
-            .add(await getOtap(hre, tapiocaMulticall.address))
-            .add(
-                await getTob(
-                    hre,
-                    tag,
-                    tapiocaMulticall.address,
-                    pearlmit.address,
-                ),
-            )
-            .add(
-                await getTwTap(
-                    hre,
-                    tag,
-                    tapiocaMulticall.address,
-                    pearlmit.address,
-                ),
-            );
-
-        // Add and execute
-        await VM.execute();
-        await VM.save();
-    }
-    if (taskArgs.verify) {
-        await VM.verify();
-    }
-
-    // After deployment setup
-    console.log('[+] After deployment setup');
+    const { yieldBox } = await getContracts(hre, chainInfo, tag);
 
     // Execute testnet setup. Deploy mocks and other testnet specific contracts that comes from tapioca-bar
     if (isTestnet) {
@@ -85,12 +48,23 @@ export const deployFinalStack__task = async (
     }
 
     await VM.executeMulticall(
-        await buildFinalStackPostDepSetup_1(hre, tag, tapiocaMulticall.address),
+        await buildFinalStackPostDepSetup_1(hre, tag, owner),
     );
     await VM.executeMulticall(await buildFinalStackPostDepSetup_2(hre, tag));
+}
 
-    console.log('[+] Final Stack deployed! 🎉');
-};
+async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
+    const { hre, VM, tapiocaMulticallAddr, taskArgs, chainInfo } = params;
+    const { tag } = taskArgs;
+    const owner = tapiocaMulticallAddr;
+
+    const { pearlmit, yieldBox } = await getContracts(hre, chainInfo, tag);
+
+    VM.add(await getTolp(hre, owner, yieldBox.address, pearlmit.address))
+        .add(await getOtap(hre, owner))
+        .add(await getTob(hre, tag, owner, pearlmit.address))
+        .add(await getTwTap(hre, tag, owner, pearlmit.address));
+}
 
 async function getContracts(
     hre: HardhatRuntimeEnvironment,
