@@ -118,10 +118,15 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     error PaymentTokenValuationNotValid();
     error TapNotSet();
     error TapOracleNotSet();
+    error AddressZero();
 
     constructor(address _aoTAP, address _pcnft, address _paymentTokenBeneficiary, IPearlmit _pearlmit, address _owner)
         PearlmitHandler(_pearlmit)
     {
+        if (_aoTAP == address(0)) revert AddressZero();
+        if (_pcnft == address(0)) revert AddressZero();
+        if (address(pearlmit) == address(0)) revert AddressZero();
+
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         aoTAP = AOTAP(_aoTAP);
         PCNFT = IERC721(_pcnft);
@@ -199,9 +204,9 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     /// @param _aoTAPTokenId The aoTAP token ID
     /// @return aoTAPPosition The details of the aoTAP position
     /// @return claimedTapInEpoch The amount of TAP claimed in aoTAP position's epoch
-    function getOptionPosition(uint256 _aoTAPTokenId) 
-        external 
-        view 
+    function getOptionPosition(uint256 _aoTAPTokenId)
+        external
+        view
         returns (AirdropTapOption memory aoTAPPosition, uint256 claimedTapInEpoch)
     {
         (, aoTAPPosition) = aoTAP.attributes(_aoTAPTokenId);

@@ -16,9 +16,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
    
 */
 
-/// @title LTAP
-/// @notice Locked TAP
-contract LTap is Ownable, ERC20Permit {
+contract LTapMock is Ownable, ERC20Permit {
     using SafeERC20 for IERC20;
 
     IERC20 public tapToken;
@@ -27,10 +25,7 @@ contract LTap is Ownable, ERC20Permit {
     error TapNotSet();
     error RedemptionNotOpen();
 
-    /// @notice Creates a new LTAP token
-    /// @dev LTAP tokens are minted by depositing TAP
-    constructor(address _lbp, address _owner) ERC20("LTAP", "LTAP") ERC20Permit("LTAP") {
-        _mint(_lbp, 5_000_000 * 1e18); // 5M LTAP for LBP
+    constructor(address _lbp, address _owner) ERC20("LTAPMock", "LTAPMock") ERC20Permit("LTAPMock") {
         _transferOwnership(_owner);
     }
 
@@ -38,9 +33,16 @@ contract LTap is Ownable, ERC20Permit {
         if (address(tapToken) == address(0)) revert TapNotSet();
         _;
     }
+
+    // TESTNET only
+    function mint(address[] calldata _to, uint256[] calldata _amount) external onlyOwner {
+        for (uint256 i = 0; i < _to.length; i++) {
+            _mint(_to[i], _amount[i]);
+        }
+    }
+
     /// @notice Sets the TAP token address
     /// @param _tapToken The TAP token address
-
     function setTapToken(address _tapToken) external onlyOwner {
         tapToken = IERC20(_tapToken);
     }

@@ -65,6 +65,28 @@ const config: HardhatUserConfig & { dodoc: any } = {
                 },
             },
         ],
+        overrides: {
+            'contracts/tokens/TapToken.sol': {
+                version: '0.8.22',
+                settings: {
+                    evmVersion: 'paris', // Latest before Shanghai
+                    optimizer: {
+                        enabled: true,
+                        runs: 5000,
+                    },
+                },
+            },
+            'contracts/tokens/TapTokenReceiver.sol': {
+                version: '0.8.22',
+                settings: {
+                    evmVersion: 'paris', // Latest before Shanghai
+                    optimizer: {
+                        enabled: true,
+                        runs: 800,
+                    },
+                },
+            },
+        },
     },
     paths: {
         artifacts: './gen/artifacts',

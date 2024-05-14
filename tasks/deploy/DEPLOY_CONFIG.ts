@@ -57,15 +57,35 @@ type TPostLbp = {
 const POST_LBP: TPostLbp = {
     [EChainID.ARBITRUM]: {
         TAP: {
-            DAO_ADDRESS: '0x464570adA09869d8741132183721B4f0769a0287', // TODO replace by real address
+            DAO_ADDRESS: '',
         },
         ADB: {
-            PAYMENT_TOKEN_BENEFICIARY:
-                '0x464570adA09869d8741132183721B4f0769a0287', // TODO replace by real address
+            PAYMENT_TOKEN_BENEFICIARY: '',
         },
-
         PCNFT: {
-            ADDRESS: '0x464570adA09869d8741132183721B4f0769a0287', // TODO replace by real address
+            ADDRESS: '0xA805E1b42590be85D2c74E09c0e1c1B6063Ea1A7',
+        },
+        VESTING: {
+            // Contributors
+            CONTRIBUTORS_CLIFF: 31104000, // 12 months cliff
+            CONTRIBUTORS_PERIOD: 93312000, // 36 months vesting
+            // Early supporters
+            EARLY_SUPPORTERS_CLIFF: 0,
+            EARLY_SUPPORTERS_PERIOD: 62208000, // 24 months vesting
+            // Supporters
+            SUPPORTERS_CLIFF: 0,
+            SUPPORTERS_PERIOD: 46656000, // 18 months vesting
+        },
+    },
+    [EChainID.ARBITRUM_SEPOLIA]: {
+        TAP: {
+            DAO_ADDRESS: '',
+        },
+        ADB: {
+            PAYMENT_TOKEN_BENEFICIARY: '',
+        },
+        PCNFT: {
+            ADDRESS: '0x52b4B758d0dC4039747a2BD52F87e4448511158d',
         },
         VESTING: {
             // Contributors
@@ -81,7 +101,6 @@ const POST_LBP: TPostLbp = {
     },
 };
 // TESTNET ONLY
-POST_LBP[EChainID.ARBITRUM_SEPOLIA] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
 POST_LBP[EChainID.SEPOLIA] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
 POST_LBP[EChainID.OPTIMISM_SEPOLIA] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
 POST_LBP['31337' as EChainID] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
