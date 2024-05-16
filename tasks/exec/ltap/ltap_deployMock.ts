@@ -4,7 +4,7 @@ import {
     TTapiocaDeployerVmPass,
 } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { DEPLOYMENT_NAMES } from 'tasks/deploy/DEPLOY_CONFIG';
-import { buildLTapMock } from 'tasks/deployBuilds/mocks/buildLtapMock';
+import { buildLTapMock } from 'tasks/deployBuilds/mocks/buildLTapMock';
 
 export const ltap__deployMock__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
