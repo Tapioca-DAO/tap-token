@@ -119,6 +119,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     error TapNotSet();
     error TapOracleNotSet();
     error AddressZero();
+    error WaitForNewEpoch();
 
     constructor(address _aoTAP, address _pcnft, address _paymentTokenBeneficiary, IPearlmit _pearlmit, address _owner)
         PearlmitHandler(_pearlmit)
@@ -223,6 +224,10 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         uint256 cachedEpoch = epoch;
         if (cachedEpoch == 0) revert NotStarted();
         if (cachedEpoch > LAST_EPOCH) revert Ended();
+
+        if (block.timestamp > lastEpochUpdate + EPOCH_DURATION) {
+            revert WaitForNewEpoch();
+        }
 
         // Phase 1
         if (cachedEpoch == 1) {
