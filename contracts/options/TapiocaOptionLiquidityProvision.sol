@@ -56,6 +56,7 @@ contract TapiocaOptionLiquidityProvision is
     mapping(uint256 => LockPosition) public lockPositions; // TokenID => LockPosition
 
     IYieldBox public immutable yieldBox;
+    address public immutable tapiocaOptionBroker;
 
     // Singularity market address => SingularityPool (YieldBox Asset ID is 0 if not active)
     mapping(IERC20 => SingularityPool) public activeSingularities;
@@ -87,14 +88,16 @@ contract TapiocaOptionLiquidityProvision is
     error NotActive();
     error RescueCooldownNotReached();
     error TransferFailed();
+    error TobIsHolder();
 
-    constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
+    constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner, address _tob)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
         ERC721Permit("TapiocaOptionLiquidityProvision")
         PearlmitHandler(_pearlmit)
     {
         yieldBox = IYieldBox(_yieldBox);
         EPOCH_DURATION = _epochDuration;
+        tapiocaOptionBroker = _tob;
         _transferOwnership(_owner);
     }
 
@@ -239,6 +242,8 @@ contract TapiocaOptionLiquidityProvision is
     /// @param _singularity Singularity market address
     function unlock(uint256 _tokenId, IERC20 _singularity) external whenNotPaused {
         if (!_exists(_tokenId)) revert PositionExpired();
+        address tokenOwner = _ownerOf(_tokenId);
+        if (tokenOwner == tapiocaOptionBroker) revert TobIsHolder(); // First unlock from broker
 
         LockPosition memory lockPosition = lockPositions[_tokenId];
         SingularityPool memory sgl = activeSingularities[_singularity];
@@ -251,8 +256,6 @@ contract TapiocaOptionLiquidityProvision is
         if (sgl.sglAssetID != lockPosition.sglAssetID) {
             revert InvalidSingularity();
         }
-
-        address tokenOwner = _ownerOf(_tokenId);
 
         _burn(_tokenId);
         delete lockPositions[_tokenId];
