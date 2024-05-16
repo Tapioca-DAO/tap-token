@@ -357,6 +357,7 @@ contract TapiocaOptionLiquidityProvision is
                     // If in the middle, copy last element on deleted element, then pop
                     delete activeSingularities[singularity];
                     delete sglAssetIDToAddress[sglAssetID];
+                    delete sglRescueRequest[sglAssetID];
 
                     if (i != sglLastIndex) {
                         singularities[i] = _singularities[sglLastIndex];
