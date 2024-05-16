@@ -2,10 +2,11 @@
 pragma solidity 0.8.22;
 
 // External
+import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
 // Tapioca
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
@@ -29,7 +30,15 @@ struct AirdropTapOption {
     uint64 phase; // phase of the option
 }
 
-contract AOTAP is Ownable, PearlmitHandler, ERC721, ERC721Permit, ERC721Enumerable, BaseBoringBatchable {
+contract AOTAP is
+    Ownable,
+    PearlmitHandler,
+    ERC721,
+    ERC721Permit,
+    ERC721Enumerable,
+    BaseBoringBatchable,
+    ReentrancyGuard
+{
     uint256 public mintedAOTAP; // total number of AOTAP minted
     address public broker; // address of the onlyBroker
 
@@ -92,6 +101,7 @@ contract AOTAP is Ownable, PearlmitHandler, ERC721, ERC721Permit, ERC721Enumerab
     /// @param _discount TAP discount in basis points
     function mint(address _to, uint128 _expiry, uint128 _discount, uint256 _amount, uint64 _phase)
         external
+        nonReentrant
         returns (uint256 tokenId)
     {
         if (msg.sender != broker) revert OnlyBroker();
