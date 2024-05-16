@@ -467,6 +467,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         uint256[] memory _tokenIDs = abi.decode(_data, (uint256[]));
 
         uint256 arrLen = _tokenIDs.length;
+        if (arrLen == 0) revert NotValid();
         address tokenIDToAddress;
         for (uint256 i; i < arrLen;) {
             if (_tokenIDs[i] == 0 || _tokenIDs[i] > 700) revert NotValid();
