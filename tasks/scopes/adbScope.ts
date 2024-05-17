@@ -10,6 +10,7 @@ import { daoRecoverTAPFromAB__task } from 'tasks/exec/adb/13-ab-daoRecoverTAP';
 import { adb_addPaymentToken__task } from 'tasks/exec/adb/adb_addPaymentToken';
 import { adb_newEpoch__task } from 'tasks/exec/adb/adb_newEpoch';
 import { adb_setPhase2Roots__task } from 'tasks/exec/adb/adb_registerUserForPhase';
+import { adb_setMerkleRoots__task } from 'tasks/exec/adb/adb_setMerkleRoots';
 
 const adbScope = scope('adb', 'AirdropBroker setter tasks');
 
@@ -41,6 +42,16 @@ TAP_TASK(
         'Starts a new epoch on AirdropBroker',
         adb_newEpoch__task,
     ),
+);
+
+TAP_TASK(
+    adbScope
+        .task(
+            'setMerkleRoots',
+            'Sets merkle roots on AirdropBroker',
+            adb_setMerkleRoots__task,
+        )
+        .addVariadicPositionalParam('roots', 'Merkle roots'),
 );
 
 adbScope.task(
