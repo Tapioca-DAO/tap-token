@@ -91,7 +91,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     /// =====-------======
 
     /// @notice user address => eligible TAP amount, 0 means no eligibility
-    mapping(address => uint256) public phase4Users;
+    mapping(address user => mapping(uint256 epoch => uint256 amount)) public phase4Users;
     uint256 public constant PHASE_4_DISCOUNT = 330_000; //33 * 1e4;
 
     uint256 public EPOCH_DURATION = 2 days; // Becomes FROM_EPOCH_4_DURATION at the start of the phase 4
@@ -355,9 +355,9 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
             }
         }
         /// @dev We want to be able to set phase 4 users in the future on subsequent epochs
-        else if (_phase == 4) {
+        else if (_phase >= 4) {
             for (uint256 i; i < _users.length; i++) {
-                phase4Users[_users[i]] = _amounts[i];
+                phase4Users[_users[i]][_phase] = _amounts[i];
             }
         }
     }
@@ -496,11 +496,11 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
 
     /// @notice Participate in phase 4 of the Airdrop. twTAP and Cassava guild's role are given TAP pro-rata.
     function _participatePhase4() internal returns (uint256 oTAPTokenID) {
-        uint256 _eligibleAmount = phase4Users[msg.sender];
+        uint256 _eligibleAmount = phase4Users[msg.sender][epoch];
         if (_eligibleAmount == 0) revert NotEligible();
 
         // Close eligibility
-        phase4Users[msg.sender] = 0;
+        phase4Users[msg.sender][epoch] = 0;
 
         // Mint aoTAP
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
