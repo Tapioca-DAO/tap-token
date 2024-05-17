@@ -595,7 +595,7 @@ contract TwTAP is
      * @dev Use `_isApprovedOrOwner()` internally.
      */
     function _requireClaimPermission(address _to, uint256 _tokenId) internal view {
-        if (!_isApprovedOrOwner(_to, _tokenId) && !isERC721Approved(_ownerOf(_tokenId), _to, address(this), _tokenId)) {
+        if (!isERC721Approved(_ownerOf(_tokenId), _to, address(this), _tokenId)) {
             revert NotApproved(_tokenId, msg.sender);
         }
     }
