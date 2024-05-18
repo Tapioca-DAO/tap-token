@@ -427,8 +427,14 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (paymentTokenOracle.oracle == ITapiocaOracle(address(0))) {
             revert PaymentTokenNotSupported();
         }
-        if (!oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID)) {
-            revert NotAuthorized();
+
+        // Check allowance. Make sure to consume it post call
+        {
+            address owner = oTAP.ownerOf(_oTAPTokenID);
+            // oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID)
+            if (owner != msg.sender && !isERC721Approved(owner, msg.sender, address(oTAP), _oTAPTokenID)) {
+                revert NotAuthorized();
+            }
         }
 
         if (_timestampToWeek(block.timestamp) > epoch) revert AdvanceEpochFirst();
