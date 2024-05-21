@@ -4,9 +4,10 @@ import { setTwTapOnTap__task } from 'tasks/exec/tap/25-tap-setTwTap';
 import { setGovernanceChainIdentifierOnTap__task } from 'tasks/exec/tap/26-tap-setGovernanceChainIdentifier';
 import { updatePauseOnTap__task } from 'tasks/exec/tap/27-tap-updatePause';
 import { setMinterOnTap__task } from 'tasks/exec/tap/28-tap-setMinter';
-import { sendTokens__task } from 'tasks/exec/sendTokens';
 import { setOFTPeers__task } from 'tasks/exec/setToePeers';
 import { setOracleMockRate__task } from 'tasks/exec/setterTasks';
+import { TAP_TASK } from 'tapioca-sdk';
+import { exec__sendToken__task } from 'tasks/exec/exec__sendToken__task';
 
 const tapOFTScope = scope('tapoft', 'TapOFT setter tasks');
 
@@ -48,10 +49,15 @@ tapOFTScope
         'Name of the target contract, as deployed in local__db.',
     );
 
-tapOFTScope
-    .task('sendTokens', 'Set OFT tokens', sendTokens__task)
-    .addParam(
-        'target',
-        'Name of the target contract, as deployed in local__db.',
-    )
-    .addParam('dst', 'Name of the destination chain. As in hardhat.config.ts');
+TAP_TASK(
+    tapOFTScope
+        .task(
+            'sendToken',
+            'Send tokens to a destination contract crosschain',
+            exec__sendToken__task,
+        )
+        .addParam('amount', 'Amount of tokens to send')
+        .addParam('targetNetwork', 'Name of the target network')
+        .addParam('targetAddress', 'Address of the target contract')
+        .addFlag('isMulticall', 'Whether to use multicall or not'),
+);
