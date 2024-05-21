@@ -13,6 +13,7 @@ export const DEPLOYMENT_NAMES = {
     TAP_TOKEN_SENDER_MODULE: 'TAP_TOKEN_SENDER_MODULE',
     TAP_TOKEN_RECEIVER_MODULE: 'TAP_TOKEN_RECEIVER_MODULE',
     TAP_TOKEN: 'TAP_TOKEN',
+    TAP_TOKEN_HELPER: 'TAP_TOKEN_HELPER',
     TAP_ORACLE: 'TAP_ORACLE',
     TOB_TAP_ORACLE: 'TOB_TAP_ORACLE',
     AOTAP: 'AOTAP',
@@ -99,6 +100,25 @@ const POST_LBP: TPostLbp = {
             SUPPORTERS_PERIOD: 46656000, // 18 months vesting
         },
     },
+    [EChainID.FUJI_AVALANCHE]: {
+        PCNFT: {
+            ADDRESS: '',
+        },
+        TAP: {
+            DAO_ADDRESS: '',
+        },
+        ADB: {
+            PAYMENT_TOKEN_BENEFICIARY: '',
+        },
+        VESTING: {
+            CONTRIBUTORS_CLIFF: 0,
+            CONTRIBUTORS_PERIOD: 0,
+            EARLY_SUPPORTERS_CLIFF: 0,
+            EARLY_SUPPORTERS_PERIOD: 0,
+            SUPPORTERS_CLIFF: 0,
+            SUPPORTERS_PERIOD: 0,
+        },
+    },
 };
 // TESTNET ONLY
 POST_LBP[EChainID.SEPOLIA] = POST_LBP[EChainID.ARBITRUM]; // Copy from Arbitrum
@@ -127,6 +147,7 @@ const FINAL: TFinal = {
     },
 };
 FINAL[EChainID.ARBITRUM_SEPOLIA] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
+FINAL[EChainID.FUJI_AVALANCHE] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
 FINAL[EChainID.SEPOLIA] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
 FINAL[EChainID.OPTIMISM_SEPOLIA] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
 FINAL['31337' as EChainID] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
