@@ -6,6 +6,7 @@ import {
     MessagingReceipt, OFTReceipt, SendParam
 } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {OFTCore} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
@@ -43,7 +44,7 @@ import {BaseTapToken} from "./BaseTapToken.sol";
    
 */
 
-contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
+contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver, ReentrancyGuard {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
     using SafeERC20 for IERC20;
@@ -88,6 +89,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
     function _toeComposeReceiver(uint16 _msgType, address _srcChainSender, bytes memory _toeComposeMsg)
         internal
         override
+        nonReentrant
         returns (bool success)
     {
         if (_msgType == MSG_LOCK_TWTAP) {
