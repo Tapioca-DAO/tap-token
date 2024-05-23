@@ -23,15 +23,18 @@ contract LTap is Ownable, ERC20Permit {
 
     IERC20 public tapToken;
     bool public openRedemption;
+    mapping(address operator => bool permitted) public transferAllowList;
 
     error TapNotSet();
     error RedemptionNotOpen();
+    error TransferNotAllowed();
 
     /// @notice Creates a new LTAP token
     /// @dev LTAP tokens are minted by depositing TAP
     constructor(address _lbp, address _owner) ERC20("LTAP", "LTAP") ERC20Permit("LTAP") {
         _mint(_lbp, 5_000_000 * 1e18); // 5M LTAP for LBP
         _transferOwnership(_owner);
+        transferAllowList[_lbp] = true;
     }
 
     modifier tapExists() {
@@ -45,6 +48,10 @@ contract LTap is Ownable, ERC20Permit {
         tapToken = IERC20(_tapToken);
     }
 
+    function setTransferAllowList(address _operator, bool _permitted) external onlyOwner {
+        transferAllowList[_operator] = _permitted;
+    }
+
     function setOpenRedemption() external onlyOwner tapExists {
         openRedemption = true;
     }
@@ -54,5 +61,10 @@ contract LTap is Ownable, ERC20Permit {
         uint256 amount = balanceOf(msg.sender);
         _burn(msg.sender, amount);
         tapToken.safeTransfer(msg.sender, amount);
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal override {
+        if (!transferAllowList[from]) revert TransferNotAllowed();
+        super._transfer(from, to, amount);
     }
 }
