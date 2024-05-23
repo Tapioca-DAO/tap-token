@@ -158,7 +158,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
         ClaimTwTapRewardsMsg memory claimTwTapRewardsMsg_ = TapTokenCodec.decodeClaimTwTapRewardsMsg(_data);
 
         // Claim rewards, make sure to have approved this contract on TwTap.
-        uint256[] memory claimedAmount_ = twTap.claimRewards(claimTwTapRewardsMsg_.tokenId, address(this));
+        uint256[] memory claimedAmount_ = twTap.claimRewards(claimTwTapRewardsMsg_.tokenId);
         address owner = twTap.ownerOf(claimTwTapRewardsMsg_.tokenId);
         // Clear the allowance, claimRewards only does an allowance check.
         pearlmit.clearAllowance(owner, address(twTap), claimTwTapRewardsMsg_.tokenId);
