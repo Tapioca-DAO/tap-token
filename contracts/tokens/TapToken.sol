@@ -164,17 +164,6 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         _transferOwnership(_data.owner);
     }
 
-    /**
-     * @inheritdoc BaseTapiocaOmnichainEngine
-     */
-    function transferFrom(address from, address to, uint256 value)
-        public
-        override(BaseTapiocaOmnichainEngine, ERC20)
-        returns (bool)
-    {
-        return BaseTapiocaOmnichainEngine.transferFrom(from, to, value);
-    }
-
     /// =====================
     /// Module setup
     /// =====================
