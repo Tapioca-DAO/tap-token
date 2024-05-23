@@ -133,7 +133,12 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     //   EVENTS
     // ==========
     event Participate(
-        uint256 indexed epoch, uint256 indexed sglAssetId, uint256 totalDeposited, uint256 otapTokenId, uint256 tolpTokenId, uint256 discount
+        uint256 indexed epoch,
+        uint256 indexed sglAssetId,
+        uint256 totalDeposited,
+        uint256 otapTokenId,
+        uint256 tolpTokenId,
+        uint256 discount
     );
     event AMLDivergence(uint256 indexed epoch, uint256 cumulative, uint256 averageMagnitude, uint256 totalParticipants);
     event ExerciseOption(
@@ -168,9 +173,9 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /// @return tOLPLockPosition The tOLP lock position of the oTAP position
     /// @return oTAPPosition The details of the oTAP position
     /// @return claimedTapInEpoch The amount of TAP claimed in specified epoch
-    function getOptionPosition(uint256 _oTAPTokenID, uint256 epochId) 
-        external 
-        view 
+    function getOptionPosition(uint256 _oTAPTokenID, uint256 epochId)
+        external
+        view
         returns (LockPosition memory tOLPLockPosition, TapOption memory oTAPPosition, uint256 claimedTapInEpoch)
     {
         if (epochId == 0) {
@@ -178,7 +183,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         }
 
         (, oTAPPosition) = oTAP.attributes(_oTAPTokenID);
-        tOLPLockPosition = tOLPLockPosition = tOLP.getLock(oTAPPosition.tOLP);
+        tOLPLockPosition = tOLP.getLock(oTAPPosition.tOLP);
         claimedTapInEpoch = oTAPCalls[_oTAPTokenID][epochId];
     }
 
@@ -191,10 +196,17 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /// @return isInRescue True if the singularity is in rescue mode
     /// @return tapEmittedInCurrentEpoch The amount of TAP emitted in the current epoch
     /// @return twAMLPool The twAML Pool details
-    function getSingularityPoolInfo(IERC20 _singularity, uint256 epochId) 
-        external 
-        view 
-        returns (uint256 assetId, uint256 totalDeposited, uint256 weight, bool isInRescue, uint256 tapEmittedInCurrentEpoch, TWAMLPool memory twAMLPool)
+    function getSingularityPoolInfo(IERC20 _singularity, uint256 epochId)
+        external
+        view
+        returns (
+            uint256 assetId,
+            uint256 totalDeposited,
+            uint256 weight,
+            bool isInRescue,
+            uint256 tapEmittedInCurrentEpoch,
+            TWAMLPool memory twAMLPool
+        )
     {
         if (epochId == 0) {
             epochId = epoch;

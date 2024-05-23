@@ -119,6 +119,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     error TapNotSet();
     error TapOracleNotSet();
     error AddressZero();
+    error WaitForNewEpoch();
 
     constructor(address _aoTAP, address _pcnft, address _paymentTokenBeneficiary, IPearlmit _pearlmit, address _owner)
         PearlmitHandler(_pearlmit)
@@ -223,6 +224,10 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         uint256 cachedEpoch = epoch;
         if (cachedEpoch == 0) revert NotStarted();
         if (cachedEpoch > LAST_EPOCH) revert Ended();
+
+        if (block.timestamp > lastEpochUpdate + EPOCH_DURATION) {
+            revert WaitForNewEpoch();
+        }
 
         // Phase 1
         if (cachedEpoch == 1) {
@@ -462,6 +467,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         uint256[] memory _tokenIDs = abi.decode(_data, (uint256[]));
 
         uint256 arrLen = _tokenIDs.length;
+        if (arrLen == 0) revert NotValid();
         address tokenIDToAddress;
         for (uint256 i; i < arrLen;) {
             if (_tokenIDs[i] == 0 || _tokenIDs[i] > 700) revert NotValid();
@@ -556,6 +562,10 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         uint256 rawPaymentAmount = _otcAmountInUSD / _paymentTokenValuation;
         paymentAmount = rawPaymentAmount - muldiv(rawPaymentAmount, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
 
-        paymentAmount = paymentAmount / (10 ** (18 - _paymentTokenDecimals));
+        if (_paymentTokenDecimals <= 18) {
+            paymentAmount = paymentAmount / (10 ** (18 - _paymentTokenDecimals));
+        } else {
+            paymentAmount = paymentAmount * (10 ** (_paymentTokenDecimals - 18));
+        }
     }
 }
