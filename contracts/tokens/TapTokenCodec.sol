@@ -71,10 +71,8 @@ library TapTokenCodec {
 
         // Decoded data
         address user = BytesLib.toAddress(BytesLib.slice(_msg, 0, userOffset_), 0);
-
-        uint96 duration = BytesLib.toUint96(BytesLib.slice(_msg, userOffset_, durationOffset_), 0);
-
-        uint256 amount = BytesLib.toUint256(BytesLib.slice(_msg, durationOffset_, _msg.length - durationOffset_), 0);
+        uint96 duration = BytesLib.toUint96(BytesLib.slice(_msg, userOffset_, 12), 0);
+        uint256 amount = BytesLib.toUint256(BytesLib.slice(_msg, durationOffset_, 32), 0);
 
         // Return structured data
         lockTwTapPositionMsg_ = LockTwTapPositionMsg(user, duration, amount);
