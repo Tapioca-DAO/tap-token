@@ -113,6 +113,13 @@ async function getTolp(
             DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
             pearlmit,
             owner, // Owner
+            '', // TOB
+        ],
+        [
+            {
+                argPosition: 4,
+                deploymentName: DEPLOYMENT_NAMES.TAPIOCA_OPTION_BROKER,
+            },
         ],
     );
 }
