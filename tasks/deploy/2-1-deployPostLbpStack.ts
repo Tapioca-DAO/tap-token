@@ -21,6 +21,7 @@ import { buildTapTokenSenderModule } from '../deployBuilds/postLbpStack/tapToken
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
 import SUPPORTED_CHAINS from '@tapioca-sdk/SUPPORTED_CHAINS';
+import { buildTapTokenHelper } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapTokenHelper';
 
 export const deployPostLbpStack_1__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
@@ -41,11 +42,16 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     const owner = tapiocaMulticallAddr;
 
     // Build contracts
-    VM.add(await getAOTAP({ hre, owner, tag }))
-        .add(await getVestingContributors({ hre, owner }))
-        .add(await getVestingEarlySupporters({ hre, owner }))
-        .add(await getVestingSupporters({ hre, owner }))
-        .add(await getAdb({ hre, owner, tag }));
+    if (
+        chainInfo.name === 'arbitrum' ||
+        chainInfo.name === 'arbitrum_sepolia'
+    ) {
+        VM.add(await getAOTAP({ hre, owner, tag }))
+            .add(await getVestingContributors({ hre, owner }))
+            .add(await getVestingEarlySupporters({ hre, owner }))
+            .add(await getVestingSupporters({ hre, owner }))
+            .add(await getAdb({ hre, owner, tag }));
+    }
 
     await addTapTokenContractsVM({
         hre,
@@ -99,7 +105,8 @@ export async function addTapTokenContractsVM(params: {
                     ? ELZChainID.ARBITRUM_SEPOLIA
                     : ELZChainID.ARBITRUM, // Governance LZ ChainID
             }),
-        );
+        )
+        .add(await buildTapTokenHelper(hre));
 }
 
 async function getAOTAP(params: {
@@ -265,9 +272,7 @@ export async function getTapToken(params: {
     const { pearlmit, cluster } = loadContracts({ hre, tag });
 
     let dao = DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS;
-    if (chainInfo.name === 'arbitrum_sepolia') {
-        dao = owner;
-    }
+    dao = isTestnet ? owner : dao;
 
     const isGovernanceChain = chainInfo.lzChainId == governanceEid;
     return await buildTapToken(
