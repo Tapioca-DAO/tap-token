@@ -69,7 +69,7 @@
     "write-json-file": "^4.3.0"
   },
   "dependencies": {
-    "@layerzerolabs/lz-v2-utilities": "2.3.6",
+    "@layerzerolabs/lz-v2-utilities": "^2.3.16",
     "@prb/math": "^2.5.0",
     "@types/inquirer": "^9.0.3",
     "@uniswap/sdk-core": "^4.0.10",
