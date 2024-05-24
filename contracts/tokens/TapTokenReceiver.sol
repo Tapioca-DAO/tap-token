@@ -126,7 +126,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver, ReentrancyG
         // _approve(address(this), address(twTap), lockTwTapPositionMsg_.amount);
         _approve(address(this), address(pearlmit), lockTwTapPositionMsg_.amount);
         pearlmit.approve(
-            address(this), 0, address(twTap), uint200(lockTwTapPositionMsg_.amount), uint48(block.timestamp + 1)
+            20, address(this), 0, address(twTap), uint200(lockTwTapPositionMsg_.amount), uint48(block.timestamp + 1)
         );
         twTap.participate(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.amount, lockTwTapPositionMsg_.duration);
         _approve(address(this), address(pearlmit), 0);
@@ -163,7 +163,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver, ReentrancyG
         uint256[] memory claimedAmount_ = twTap.claimRewards(claimTwTapRewardsMsg_.tokenId);
         address owner = twTap.ownerOf(claimTwTapRewardsMsg_.tokenId);
         // Clear the allowance, claimRewards only does an allowance check.
-        pearlmit.clearAllowance(owner, address(twTap), claimTwTapRewardsMsg_.tokenId);
+        pearlmit.clearAllowance(owner, 721, address(twTap), claimTwTapRewardsMsg_.tokenId);
 
         // Check if the claimed amount is equal to the amount of sendParam
         if (
