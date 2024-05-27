@@ -164,7 +164,9 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         {
             deal(address(bTapOFT), userA, amountToSendLD_);
             bTapOFT.approve(address(pearlmit), amountToSendLD_);
-            pearlmit.approve(address(bTapOFT), 0, address(twTap), uint200(amountToSendLD_), uint48(block.timestamp + 1));
+            pearlmit.approve(
+                20, address(bTapOFT), 0, address(twTap), uint200(amountToSendLD_), uint48(block.timestamp + 1)
+            );
             twTap.participate(userA, amountToSendLD_, lockDuration_);
             skip(lockDuration_);
         }
