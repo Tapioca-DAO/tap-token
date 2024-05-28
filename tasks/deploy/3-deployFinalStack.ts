@@ -34,7 +34,7 @@ async function tapiocaPostDepSetup(params: TTapiocaDeployerVmPass<object>) {
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
-    const { yieldBox } = await getContracts(hre, chainInfo, tag);
+    const { yieldBox } = await getContracts(hre, tag);
 
     // Execute testnet setup. Deploy mocks and other testnet specific contracts that comes from tapioca-bar
     if (isTestnet) {
@@ -58,7 +58,7 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
-    const { pearlmit, yieldBox } = await getContracts(hre, chainInfo, tag);
+    const { pearlmit, yieldBox } = await getContracts(hre, tag);
 
     VM.add(await getTolp(hre, owner, yieldBox.address, pearlmit.address))
         .add(await getOtap(hre, owner))
@@ -66,11 +66,7 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
         .add(await getTwTap(hre, tag, owner, pearlmit.address));
 }
 
-async function getContracts(
-    hre: HardhatRuntimeEnvironment,
-    chainInfo: ReturnType<typeof hre.SDK.utils.getChainBy>,
-    tag: string,
-) {
+async function getContracts(hre: HardhatRuntimeEnvironment, tag: string) {
     const yieldBox = hre.SDK.db.findGlobalDeployment(
         TAPIOCA_PROJECTS_NAME.YieldBox,
         hre.SDK.eChainId,
