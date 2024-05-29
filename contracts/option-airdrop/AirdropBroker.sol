@@ -253,7 +253,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         tapExists
     {
         // Load data
-        (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(_aoTAPTokenID);
+        (address owner, AirdropTapOption memory aoTapOption) = aoTAP.attributes(_aoTAPTokenID);
         if (aoTapOption.expiry <= block.timestamp) revert OptionExpired();
 
         uint256 cachedEpoch = epoch;
@@ -264,8 +264,13 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         if (paymentTokenOracle.oracle == ITapiocaOracle(address(0))) {
             revert PaymentTokenNotValid();
         }
-        if (!aoTAP.isApprovedOrOwner(msg.sender, _aoTAPTokenID)) {
-            revert NotAuthorized();
+
+        // Check allowance. Make sure to consume it post call
+        {
+            // aoTAP.isApprovedOrOwner(msg.sender, _aoTAPTokenID)
+            if (owner != msg.sender && !isERC721Approved(owner, msg.sender, address(aoTAP), _aoTAPTokenID)) {
+                revert NotAuthorized();
+            }
         }
 
         // Get eligible OTC amount
