@@ -272,6 +272,24 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         );
     }
 
+    /**
+     * @dev see `TapiocaOmniChainSender.sendPacketFrom`
+     */
+    function sendPacketFrom(address _from, LZSendParam calldata _lzSendParam, bytes calldata _composeMsg)
+        public
+        payable
+        returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
+    {
+        (msgReceipt, oftReceipt) = abi.decode(
+            _executeModule(
+                uint8(ITapToken.Module.TapTokenSender),
+                abi.encodeCall(TapiocaOmnichainSender.sendPacketFrom, (_from, _lzSendParam, _composeMsg)),
+                false
+            ),
+            (MessagingReceipt, OFTReceipt)
+        );
+    }
+
     /// =====================
     /// View
     /// =====================
