@@ -1,20 +1,16 @@
 import * as TAPIOCA_PERIPH_DEPLOY_CONFIG from '@tapioca-periph/config';
 import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { executeTestnetFinalStackPostDepSetup } from 'tasks/deployBuilds/finalStack/executeTestnetFinalStackPostDepSetup';
 import {
-    buildFinalStackPostDepSetup_1,
-    buildFinalStackPostDepSetup_2,
-} from '../deployBuilds/finalStack/buildFinalStackPostDepSetup';
+    TTapiocaDeployTaskArgs,
+    TTapiocaDeployerVmPass,
+} from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
+import { buildFinalStackPostDepSetup_2 } from '../deployBuilds/finalStack/buildFinalStackPostDepSetup';
 import { buildOTAP } from '../deployBuilds/finalStack/options/buildOTAP';
 import { buildTOB } from '../deployBuilds/finalStack/options/buildTOB';
 import { buildTolp } from '../deployBuilds/finalStack/options/buildTOLP';
 import { buildTwTap } from '../deployBuilds/finalStack/options/deployTwTap';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
-import {
-    TTapiocaDeployTaskArgs,
-    TTapiocaDeployerVmPass,
-} from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 
 export const deployFinalStack__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
@@ -34,22 +30,6 @@ async function tapiocaPostDepSetup(params: TTapiocaDeployerVmPass<object>) {
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
-    const { yieldBox } = await getContracts(hre, tag);
-
-    // Execute testnet setup. Deploy mocks and other testnet specific contracts that comes from tapioca-bar
-    if (isTestnet) {
-        await executeTestnetFinalStackPostDepSetup(
-            hre,
-            tag,
-            yieldBox,
-            taskArgs.load,
-            taskArgs.verify,
-        );
-    }
-
-    await VM.executeMulticall(
-        await buildFinalStackPostDepSetup_1(hre, tag, owner),
-    );
     await VM.executeMulticall(await buildFinalStackPostDepSetup_2(hre, tag));
 }
 
@@ -141,8 +121,8 @@ async function getTob(
         hre,
         DEPLOYMENT_NAMES.TAPIOCA_OPTION_BROKER,
         [
-            hre.ethers.constants.AddressZero, // tOLP
-            hre.ethers.constants.AddressZero, // oTAP
+            '', // tOLP
+            '', // oTAP
             tapToken.address, // TapOFT
             DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOB.PAYMENT_TOKEN_ADDRESS, // Payment token address
             DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
