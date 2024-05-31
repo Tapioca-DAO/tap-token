@@ -1,5 +1,7 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { EChainID, TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
+import {
+    TAPIOCA_PROJECTS,
+    TAPIOCA_PROJECTS_NAME,
+} from '@tapioca-sdk/api/config';
 import { TContract } from '@tapioca-sdk/shared';
 import {
     IYieldBox,
@@ -10,59 +12,11 @@ import {
     TwTAP__factory,
 } from '@typechain/index';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { loadGlobalContract, loadLocalContract } from 'tapioca-sdk';
 import { TapiocaMulticall } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from 'tasks/deploy/DEPLOY_CONFIG';
-
-export const buildFinalStackPostDepSetup_1 = async (
-    hre: HardhatRuntimeEnvironment,
-    tag: string,
-    signer: string,
-): Promise<TapiocaMulticall.CallStruct[]> => {
-    let calls: TapiocaMulticall.CallStruct[] = [];
-
-    /**
-     * Load addresses
-     */
-    const {
-        yieldbox,
-        arbSglGlpDeployment,
-        ybStrategyArbSglGlpDeployment,
-        ybStrategyMainnetSglDaiDeployment,
-        mainnetSglDaiDeployment,
-    } = await loadContract(hre, tag);
-
-    /**
-     * Register Arb SGL GLP in YieldBox
-     */
-    calls = [
-        ...calls,
-        ...(await registerAssetInYieldbox(
-            hre,
-            arbSglGlpDeployment,
-            ybStrategyArbSglGlpDeployment,
-            yieldbox,
-        )),
-    ];
-
-    /**
-     * Register Mainnet SGL DAI in YieldBox
-     */
-    calls = [
-        ...calls,
-        ...(await registerAssetInYieldbox(
-            hre,
-            mainnetSglDaiDeployment,
-            ybStrategyMainnetSglDaiDeployment,
-            yieldbox,
-        )),
-    ];
-
-    /**
-     * Deploy TapTokenOptionOracle
-     */
-
-    return calls;
-};
+import * as TAPIOCA_PERIPH_CONFIG from '@tapioca-periph/config';
+import * as TAPIOCA_BAR_CONFIG from '@tapioca-bar/config';
 
 export const buildFinalStackPostDepSetup_2 = async (
     hre: HardhatRuntimeEnvironment,
@@ -312,100 +266,113 @@ export const buildFinalStackPostDepSetup_2 = async (
     return calls;
 };
 
-async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
+async function loadContract__generic(
+    hre: HardhatRuntimeEnvironment,
+    tag: string,
+) {}
+
+async function loadContract__arb(
+    hre: HardhatRuntimeEnvironment,
+    tag: string,
+    isTestnet: boolean,
+) {
     const tapToken = TapToken__factory.connect(
-        getContract(hre, tag, DEPLOYMENT_NAMES.TAP_TOKEN).address,
+        loadLocalContract(
+            hre,
+            hre.SDK.eChainId,
+            DEPLOYMENT_NAMES.TAP_TOKEN,
+            tag,
+        ).address,
         hre.ethers.provider.getSigner(),
     );
     const twTap = TwTAP__factory.connect(
-        getContract(hre, tag, DEPLOYMENT_NAMES.TWTAP).address,
+        loadLocalContract(hre, hre.SDK.eChainId, DEPLOYMENT_NAMES.TWTAP, tag)
+            .address,
         hre.ethers.provider.getSigner(),
     );
     const tob = TapiocaOptionBroker__factory.connect(
-        getContract(hre, tag, DEPLOYMENT_NAMES.TAPIOCA_OPTION_BROKER).address,
+        loadLocalContract(
+            hre,
+            hre.SDK.eChainId,
+            DEPLOYMENT_NAMES.TAPIOCA_OPTION_BROKER,
+            tag,
+        ).address,
         hre.ethers.provider.getSigner(),
     );
     const oTap = OTAP__factory.connect(
-        getContract(hre, tag, DEPLOYMENT_NAMES.OTAP).address,
+        loadLocalContract(hre, hre.SDK.eChainId, DEPLOYMENT_NAMES.OTAP, tag)
+            .address,
         hre.ethers.provider.getSigner(),
     );
     const tOlp = TapiocaOptionLiquidityProvision__factory.connect(
-        getContract(
+        loadLocalContract(
             hre,
-            tag,
+            hre.SDK.eChainId,
             DEPLOYMENT_NAMES.TAPIOCA_OPTION_LIQUIDITY_PROVISION,
+            tag,
         ).address,
         hre.ethers.provider.getSigner(),
     );
     const yieldbox = await hre.ethers.getContractAt(
         'IYieldBox',
-        getGlobalDeployment(
+        loadGlobalContract(
             hre,
-            tag,
-            TAPIOCA_PROJECTS_NAME.YieldBox,
+            TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
             hre.SDK.eChainId,
-            'YieldBox', // TODO replace by YB NAME CONFIG
+            TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.YIELDBOX,
+            tag,
         ).address,
     );
 
-    const tapOracleTobDeployment = getContract(
+    const tapOracleTobDeployment = loadGlobalContract(
         hre,
+        TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
+        hre.SDK.eChainId,
+        TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.TOB_TAP_OPTION_ORACLE,
         tag,
-        DEPLOYMENT_NAMES.TOB_TAP_ORACLE,
-    );
+    ).address;
 
-    const usdcOracleDeployment = getContract(
+    const usdcOracleDeployment = loadGlobalContract(
         hre,
+        TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
+        hre.SDK.eChainId,
+        TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE,
         tag,
-        DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE,
-    );
+    ).address;
 
-    const usdoDeployment = getGlobalDeployment(
+    const usdoDeployment = loadGlobalContract(
         hre,
-        tag,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
         hre.SDK.eChainId,
-        'USDO', // TODO replace by BAR NAME CONFIG
-    );
-    const usdoOracleDeployment = getGlobalDeployment(
-        hre,
+        TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.USDO,
         tag,
-        TAPIOCA_PROJECTS_NAME.TapiocaBar,
+    ).address;
+
+    const usdoOracleDeployment = loadGlobalContract(
+        hre,
+        TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
         hre.SDK.eChainId,
-        'USDO_SEER_UNI_ORACLE', // TODO replace by BAR NAME CONFIG
-    );
+        TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.USDO_USDC_UNI_V3_ORACLE,
+        tag,
+    ).address;
 
     // Arbitrum SGL-GLP
-    const arbSglGlpDeployment = getGlobalDeployment(
+    const arbSglGlpDeployment = loadGlobalContract(
         hre,
-        tag,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
         hre.SDK.eChainId,
-        DEPLOYMENT_NAMES.ARBITRUM_SGL_GLP, // TODO replace by BAR NAME CONFIG
-    );
-    const ybStrategyArbSglGlpDeployment = getGlobalDeployment(
-        hre,
+        TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.SGL_S_GLP_MARKET,
         tag,
+    ).address;
+    const ybStrategyArbSglGlpDeployment = loadGlobalContract(
+        hre,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
         hre.SDK.eChainId,
-        DEPLOYMENT_NAMES.YB_SGL_ARB_GLP_STRATEGY,
-    );
-
-    // Mainnet SGL-DAI
-    const mainnetSglDaiDeployment = getGlobalDeployment(
-        hre,
+        isTestnet
+            ? TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SGLP_ASSET_WITHOUT_STRATEGY
+            : TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SGLP_ASSET_WITH_STRATEGY,
         tag,
-        TAPIOCA_PROJECTS_NAME.TapiocaBar,
-        hre.SDK.eChainId,
-        DEPLOYMENT_NAMES.MAINNET_SGL_DAI, // TODO replace by TapiocaZ NAME CONFIG
-    );
-    const ybStrategyMainnetSglDaiDeployment = getGlobalDeployment(
-        hre,
-        tag,
-        TAPIOCA_PROJECTS_NAME.TapiocaBar,
-        hre.SDK.eChainId,
-        DEPLOYMENT_NAMES.YB_SGL_MAINNET_DAI_STRATEGY,
-    );
+    ).address;
 
     return {
         tapToken,
@@ -425,84 +392,26 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
     };
 }
 
-function getContract(
+async function loadContract__eth(
     hre: HardhatRuntimeEnvironment,
     tag: string,
-    contractName: string,
+    isTestnet: boolean,
 ) {
-    const contract = hre.SDK.db.findLocalDeployment(
+    // Mainnet SGL-DAI
+    const mainnetSglDaiDeployment = loadGlobalContract(
+        hre,
+        TAPIOCA_PROJECTS_NAME.TapiocaBar,
         hre.SDK.eChainId,
-        contractName,
+        TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.SGL_S_DAI_MARKET,
         tag,
-    )!;
-    if (!contract) {
-        throw new Error(
-            `[-] ${contractName} not found on chain ${hre.network.name} tag ${tag}`,
-        );
-    }
-    return contract;
-}
-
-function getGlobalDeployment(
-    hre: HardhatRuntimeEnvironment,
-    tag: string,
-    project: TAPIOCA_PROJECTS_NAME,
-    chainId: string,
-    contractName: string,
-) {
-    const contract = hre.SDK.db.findGlobalDeployment(
-        project,
-        chainId,
-        contractName,
+    ).address;
+    const ybStrategyMainnetSglDaiDeployment = loadGlobalContract(
+        hre,
+        TAPIOCA_PROJECTS_NAME.TapiocaBar,
+        hre.SDK.eChainId,
+        isTestnet
+            ? TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SDAI_ASSET_WITHOUT_STRATEGY
+            : TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SDAI_ASSET_WITH_STRATEGY,
         tag,
-    )!;
-    if (!contract) {
-        throw new Error(
-            `[-] ${contractName} not found on project ${project} chain ${hre.network.name} tag ${tag}`,
-        );
-    }
-    return contract;
-}
-
-async function registerAssetInYieldbox(
-    hre: HardhatRuntimeEnvironment,
-    sglDeployment: TContract,
-    ybStrategy: TContract,
-    yieldbox: IYieldBox,
-) {
-    const calls: TapiocaMulticall.CallStruct[] = [];
-
-    // Check if SGL is registered
-    const ybAsset = await yieldbox.ids(
-        1,
-        sglDeployment.address,
-        ybStrategy.address,
-        0,
-    );
-    // Check if SGL is registered in YieldBox
-    if (ybAsset.toNumber() === 0) {
-        console.log(`[+] Register ${sglDeployment.name} in YieldBox`);
-        calls.push({
-            target: yieldbox.address,
-            allowFailure: false,
-            callData: yieldbox.interface.encodeFunctionData('registerAsset', [
-                1,
-                sglDeployment.address,
-                ybStrategy.address,
-                0,
-            ]),
-        });
-        console.log(
-            '\t- Parameters',
-            'Token type',
-            'signer',
-            'Token address',
-            sglDeployment.address,
-            'Strategy address',
-            ybStrategy.address,
-            'Token ID',
-            0,
-        );
-    }
-    return calls;
+    ).address;
 }
