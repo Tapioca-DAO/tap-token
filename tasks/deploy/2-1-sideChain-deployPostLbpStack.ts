@@ -5,6 +5,15 @@ import { addTapTokenContractsVM } from './2-1-deployPostLbpStack';
 import { setLzPeer__task } from 'tapioca-sdk';
 import { DEPLOYMENT_NAMES } from './DEPLOY_CONFIG';
 
+/**
+ * @notice Meant to be called AFTER deployPostLbpStack_1__task
+ *
+ * Deploys: Eth
+ * - TapToken
+ *
+ * Post deploy: Arb, Eth
+ * - Set LZ peer
+ */
 export const deploySideChainPostLbpStack_1__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
     hre: HardhatRuntimeEnvironment,

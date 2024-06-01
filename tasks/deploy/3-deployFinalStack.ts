@@ -12,6 +12,26 @@ import { buildTolp } from '../deployBuilds/finalStack/options/buildTOLP';
 import { buildTwTap } from '../deployBuilds/finalStack/options/deployTwTap';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
 
+/**
+ * @notice Called after deployPostLbpStack_2__task & tapioca-periph final task & tapioca-bar final task
+ *
+ * Deploys: Arb
+ * - TOLP
+ * - OTAP
+ * - TOB
+ * - TWTAP
+ *
+ * Post deploy: Arb
+ * - Register Arb SGL GLP in TOLP
+ * - Register T SGL DAI in TOLP
+ * - Set tOB as minter for TapOFT
+ * - Set tOB Broker role for tOB on oTAP and init TapToken emissions
+ * - Set TAP Oracle in tOB
+ * - Set twTAP in TapOFT
+ * - Set USDO as payment token in tOB if not set
+ * - Set USDC as payment token in tOB if not set
+ * - Set USDO as reward token in TwTap if not set
+ */
 export const deployFinalStack__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
     hre: HardhatRuntimeEnvironment,
@@ -48,7 +68,7 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
 
 async function getContracts(hre: HardhatRuntimeEnvironment, tag: string) {
     const yieldBox = hre.SDK.db.findGlobalDeployment(
-        TAPIOCA_PROJECTS_NAME.YieldBox,
+        TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
         hre.SDK.eChainId,
         'YieldBox',
         tag,

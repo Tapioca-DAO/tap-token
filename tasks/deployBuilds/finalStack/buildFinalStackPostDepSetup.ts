@@ -374,29 +374,6 @@ async function loadContract__arb(
         tag,
     ).address;
 
-    return {
-        tapToken,
-        twTap,
-        tob,
-        oTap,
-        tOlp,
-        yieldbox,
-        usdoDeployment,
-        tapOracleTobDeployment,
-        usdoOracleDeployment,
-        usdcOracleDeployment,
-        arbSglGlpDeployment,
-        ybStrategyArbSglGlpDeployment,
-        mainnetSglDaiDeployment,
-        ybStrategyMainnetSglDaiDeployment,
-    };
-}
-
-async function loadContract__eth(
-    hre: HardhatRuntimeEnvironment,
-    tag: string,
-    isTestnet: boolean,
-) {
     // Mainnet SGL-DAI
     const mainnetSglDaiDeployment = loadGlobalContract(
         hre,
@@ -414,4 +391,21 @@ async function loadContract__eth(
             : TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SDAI_ASSET_WITH_STRATEGY,
         tag,
     ).address;
+
+    return {
+        tapToken,
+        twTap,
+        tob,
+        oTap,
+        tOlp,
+        yieldbox,
+        usdoDeployment,
+        tapOracleTobDeployment,
+        usdoOracleDeployment,
+        usdcOracleDeployment,
+        arbSglGlpDeployment,
+        ybStrategyArbSglGlpDeployment,
+        mainnetSglDaiDeployment,
+        ybStrategyMainnetSglDaiDeployment,
+    };
 }

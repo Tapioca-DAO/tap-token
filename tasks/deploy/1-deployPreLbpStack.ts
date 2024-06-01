@@ -6,6 +6,12 @@ import {
 import { buildLTap } from 'tasks/deployBuilds/preLbpStack/buildLTap';
 import { DEPLOYMENT_NAMES } from './DEPLOY_CONFIG';
 
+/**
+ * @notice Called after periph perLbp task
+ *
+ * Deploys: Arb
+ * - LTAP
+ */
 export const deployPreLbpStack__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
     hre: HardhatRuntimeEnvironment,
