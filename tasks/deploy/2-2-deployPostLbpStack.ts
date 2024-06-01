@@ -5,7 +5,12 @@ import { buildPostLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/b
 
 /**
  * @notice Meant to be called AFTER deployPostLbpStack_1__task AND `tapioca-periph` postLbp task
- * Will load the contracts from the previous deployment and setup the contracts.
+ *
+ * Scripts: Arb
+ * - Broker claim on AOTAP
+ * - Set tapToken in ADB
+ * - Set Tap Option oracle in ADB
+ * - Set USDC as payment token in ADB
  */
 export const deployPostLbpStack_2__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,

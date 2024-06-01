@@ -23,6 +23,22 @@ import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
 import SUPPORTED_CHAINS from '@tapioca-sdk/SUPPORTED_CHAINS';
 import { buildTapTokenHelper } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapTokenHelper';
 
+/**
+ * @notice Called after periph `lbp` task, before periph `postLbp` task
+ * @notice Has a another task linked `deploySideChainPostLbpStack_1__task` that should be called after this task on sidechains
+ *
+ * Deploys: Arb
+ * - AOTAP
+ * - VestingContributors
+ * - VestingEarlySupporters
+ * - VestingSupporters
+ * - ADB
+ * - TapTokenSenderModule
+ * - TapTokenReceiverModule
+ * - TapToken
+ * - TapTokenHelper
+ *
+ */
 export const deployPostLbpStack_1__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
     hre: HardhatRuntimeEnvironment,
