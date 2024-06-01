@@ -21,7 +21,24 @@ import { buildTapTokenSenderModule } from '../deployBuilds/postLbpStack/tapToken
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
 import SUPPORTED_CHAINS from '@tapioca-sdk/SUPPORTED_CHAINS';
+import { buildTapTokenHelper } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapTokenHelper';
 
+/**
+ * @notice Called after periph `lbp` task, before periph `postLbp` task
+ * @notice Has a another task linked `deploySideChainPostLbpStack_1__task` that should be called after this task on sidechains
+ *
+ * Deploys: Arb
+ * - AOTAP
+ * - VestingContributors
+ * - VestingEarlySupporters
+ * - VestingSupporters
+ * - ADB
+ * - TapTokenSenderModule
+ * - TapTokenReceiverModule
+ * - TapToken
+ * - TapTokenHelper
+ *
+ */
 export const deployPostLbpStack_1__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
     hre: HardhatRuntimeEnvironment,
@@ -41,11 +58,16 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     const owner = tapiocaMulticallAddr;
 
     // Build contracts
-    VM.add(await getAOTAP({ hre, owner, tag }))
-        .add(await getVestingContributors({ hre, owner }))
-        .add(await getVestingEarlySupporters({ hre, owner }))
-        .add(await getVestingSupporters({ hre, owner }))
-        .add(await getAdb({ hre, owner }));
+    if (
+        chainInfo.name === 'arbitrum' ||
+        chainInfo.name === 'arbitrum_sepolia'
+    ) {
+        VM.add(await getAOTAP({ hre, owner, tag }))
+            .add(await getVestingContributors({ hre, owner }))
+            .add(await getVestingEarlySupporters({ hre, owner }))
+            .add(await getVestingSupporters({ hre, owner }))
+            .add(await getAdb({ hre, owner, tag }));
+    }
 
     await addTapTokenContractsVM({
         hre,
@@ -99,7 +121,8 @@ export async function addTapTokenContractsVM(params: {
                     ? ELZChainID.ARBITRUM_SEPOLIA
                     : ELZChainID.ARBITRUM, // Governance LZ ChainID
             }),
-        );
+        )
+        .add(await buildTapTokenHelper(hre));
 }
 
 async function getAOTAP(params: {
@@ -158,17 +181,26 @@ async function getVestingSupporters(params: {
 async function getAdb(params: {
     hre: HardhatRuntimeEnvironment;
     owner: string;
+    tag: string;
 }) {
-    const { hre, owner } = params;
+    const { hre, owner, tag } = params;
+    const { pearlmit } = loadContracts({ hre, tag });
+
+    let paymentTokenBeneficiary: string =
+        DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.ADB.PAYMENT_TOKEN_BENEFICIARY;
+
+    if (hre.SDK.chainInfo.name === 'arbitrum_sepolia') {
+        paymentTokenBeneficiary = owner;
+    }
+
     return await buildADB(
         hre,
         DEPLOYMENT_NAMES.AIRDROP_BROKER,
         [
             hre.ethers.constants.AddressZero, // aoTAP
             DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.PCNFT.ADDRESS, // PCNFT
-            DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.ADB
-                .PAYMENT_TOKEN_BENEFICIARY, // Payment token beneficiary
-            hre.ethers.constants.AddressZero, // Pearlmit
+            paymentTokenBeneficiary, // Payment token beneficiary
+            pearlmit.address, // Pearlmit
             owner, // Owner
         ],
         [
@@ -245,8 +277,18 @@ export async function getTapToken(params: {
         lzEndpointAddress,
         chainInfo,
     } = params;
-    const lTap = loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.LTAP);
+    let lTap = { address: hre.ethers.constants.AddressZero };
+    if (
+        chainInfo.name === 'arbitrum' ||
+        chainInfo.name === 'arbitrum_sepolia'
+    ) {
+        lTap = loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.LTAP);
+    }
+
     const { pearlmit, cluster } = loadContracts({ hre, tag });
+
+    let dao = DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS;
+    dao = isTestnet ? owner : dao;
 
     const isGovernanceChain = chainInfo.lzChainId == governanceEid;
     return await buildTapToken(
@@ -261,7 +303,7 @@ export async function getTapToken(params: {
                 earlySupporters: hre.ethers.constants.AddressZero, // early supporters address
                 supporters: hre.ethers.constants.AddressZero, // supporters address
                 lTap: lTap.address, // lTap address
-                dao: DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS, // DAO address
+                dao, // DAO address
                 airdrop: hre.ethers.constants.AddressZero, // AirdropBroker address,
                 governanceEid: governanceEid,
                 owner: owner, // Owner

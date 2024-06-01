@@ -16,41 +16,35 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
    
 */
 
-/// @title LTAP
-/// @notice Locked TAP
-contract LTap is Ownable, ERC20Permit {
+contract LTapMock is Ownable, ERC20Permit {
     using SafeERC20 for IERC20;
 
     IERC20 public tapToken;
-    address public immutable lbp;
     bool public openRedemption;
-    mapping(address operator => bool permitted) public transferAllowList;
 
     error TapNotSet();
     error RedemptionNotOpen();
-    error TransferNotAllowed();
 
-    /// @notice Creates a new LTAP token
-    /// @dev LTAP tokens are minted by depositing TAP
-    constructor(address _lbp, address _owner) ERC20("LTAP", "LTAP") ERC20Permit("LTAP") {
-        _mint(_lbp, 5_000_000 * 1e18); // 5M LTAP for LBP
+    constructor(address _lbp, address _owner) ERC20("LTAPMock", "LTAPMock") ERC20Permit("LTAPMock") {
         _transferOwnership(_owner);
-        transferAllowList[_lbp] = true;
     }
 
     modifier tapExists() {
         if (address(tapToken) == address(0)) revert TapNotSet();
         _;
     }
-    /// @notice Sets the TAP token address
-    /// @param _tapToken The TAP token address
 
-    function setTapToken(address _tapToken) external onlyOwner {
-        tapToken = IERC20(_tapToken);
+    // TESTNET only
+    function mint(address[] calldata _to, uint256[] calldata _amount) external onlyOwner {
+        for (uint256 i = 0; i < _to.length; i++) {
+            _mint(_to[i], _amount[i]);
+        }
     }
 
-    function setTransferAllowList(address _operator, bool _permitted) external onlyOwner {
-        transferAllowList[_operator] = _permitted;
+    /// @notice Sets the TAP token address
+    /// @param _tapToken The TAP token address
+    function setTapToken(address _tapToken) external onlyOwner {
+        tapToken = IERC20(_tapToken);
     }
 
     function setOpenRedemption() external onlyOwner tapExists {
@@ -62,10 +56,5 @@ contract LTap is Ownable, ERC20Permit {
         uint256 amount = balanceOf(msg.sender);
         _burn(msg.sender, amount);
         tapToken.safeTransfer(msg.sender, amount);
-    }
-
-    function _transfer(address from, address to, uint256 amount) internal override {
-        if (!transferAllowList[from]) revert TransferNotAllowed();
-        super._transfer(from, to, amount);
     }
 }

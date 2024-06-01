@@ -3,8 +3,8 @@ import inquirer from 'inquirer';
 import { TContract, TLocalDeployment } from 'tapioca-sdk/dist/shared';
 import { EChainID } from '@tapioca-sdk/api/config';
 import { loadVM } from '../utils';
-import { Multicall3 } from '@tapioca-sdk/typechain/tapioca-periphery';
 import { TapToken__factory } from '@typechain/index';
+import { TapiocaMulticall } from '@tapioca-sdk/typechain/tapioca-periphery';
 
 // hh deployTapOFT -network goerli
 export const setToePeers__task = async (
@@ -18,7 +18,7 @@ export const setToePeers__task = async (
     const signer = (await hre.ethers.getSigners())[0];
 
     const VM = await loadVM(hre, tag);
-    const multicall: Multicall3 = await VM.getMulticall();
+    const multicall = await VM.getMulticall();
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const chainInfo = hre.SDK.utils.getChainBy(
@@ -48,7 +48,7 @@ export const setToePeers__task = async (
     await (await tapToken.transferOwnership(multicall.address)).wait(3);
 
     // Prepare calls
-    const calls: Multicall3.CallStruct[] = [];
+    const calls: TapiocaMulticall.CallStruct[] = [];
     for (const link of links) {
         calls.push({
             target: localContract.address,

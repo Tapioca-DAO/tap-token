@@ -439,22 +439,19 @@ contract TwTAP is
      * @dev Should be safe to claim even after position exit.
      *
      * @param _tokenId tokenId whose rewards to claim
-     * @param _to address to receive the rewards
      *
      * @return amounts_ Claimed amount of each reward token.
      */
-    function claimRewards(uint256 _tokenId, address _to)
-        external
-        nonReentrant
-        whenNotPaused
-        returns (uint256[] memory amounts_)
-    {
+    function claimRewards(uint256 _tokenId) external nonReentrant whenNotPaused returns (uint256[] memory amounts_) {
         // Either the owner or a delegate can claim the rewards
         // In this case it's `TapToken` to claim the rewards on behalf of the user and send them xChain.
-        if (_to != _ownerOf(_tokenId) && _to != msg.sender) revert NotAuthorized();
+        address owner = _ownerOf(_tokenId);
 
-        _requireClaimPermission(_to, _tokenId);
-        amounts_ = _claimRewards(_tokenId, _to);
+        if (owner != msg.sender && !isERC721Approved(owner, msg.sender, address(this), _tokenId)) {
+            revert NotApproved(_tokenId, msg.sender);
+        }
+
+        amounts_ = _claimRewards(_tokenId, msg.sender);
     }
 
     /**
@@ -589,15 +586,6 @@ contract TwTAP is
     /// @notice returns week for timestamp
     function _timestampToWeek(uint256 timestamp) internal view returns (uint256) {
         return ((timestamp - creation) / EPOCH_DURATION);
-    }
-
-    /**
-     * @dev Use `_isApprovedOrOwner()` internally.
-     */
-    function _requireClaimPermission(address _to, uint256 _tokenId) internal view {
-        if (!_isApprovedOrOwner(_to, _tokenId) && !isERC721Approved(_ownerOf(_tokenId), _to, address(this), _tokenId)) {
-            revert NotApproved(_tokenId, msg.sender);
-        }
     }
 
     /**

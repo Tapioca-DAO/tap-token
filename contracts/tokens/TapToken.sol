@@ -164,17 +164,6 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         _transferOwnership(_data.owner);
     }
 
-    /**
-     * @inheritdoc BaseTapiocaOmnichainEngine
-     */
-    function transferFrom(address from, address to, uint256 value)
-        public
-        override(BaseTapiocaOmnichainEngine, ERC20)
-        returns (bool)
-    {
-        return BaseTapiocaOmnichainEngine.transferFrom(from, to, value);
-    }
-
     /// =====================
     /// Module setup
     /// =====================
@@ -277,6 +266,24 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
             _executeModule(
                 uint8(ITapToken.Module.TapTokenSender),
                 abi.encodeCall(TapiocaOmnichainSender.sendPacket, (_lzSendParam, _composeMsg)),
+                false
+            ),
+            (MessagingReceipt, OFTReceipt)
+        );
+    }
+
+    /**
+     * @dev see `TapiocaOmniChainSender.sendPacketFrom`
+     */
+    function sendPacketFrom(address _from, LZSendParam calldata _lzSendParam, bytes calldata _composeMsg)
+        public
+        payable
+        returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
+    {
+        (msgReceipt, oftReceipt) = abi.decode(
+            _executeModule(
+                uint8(ITapToken.Module.TapTokenSender),
+                abi.encodeCall(TapiocaOmnichainSender.sendPacketFrom, (_from, _lzSendParam, _composeMsg)),
                 false
             ),
             (MessagingReceipt, OFTReceipt)
@@ -414,7 +421,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      *
      * @return the emitted amount.
      */
-    function emitForWeek() external onlyMinter onlyHostChain returns (uint256) {
+    function emitForWeek() external onlyMinter onlyHostChain whenNotPaused returns (uint256) {
         if (emissionsStartTime == 0) revert InitNotStarted();
 
         uint256 week = _timestampToWeek(block.timestamp);

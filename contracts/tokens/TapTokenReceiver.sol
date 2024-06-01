@@ -6,6 +6,7 @@ import {
     MessagingReceipt, OFTReceipt, SendParam
 } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {OFTCore} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {OFT} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
@@ -43,7 +44,7 @@ import {BaseTapToken} from "./BaseTapToken.sol";
    
 */
 
-contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
+contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver, ReentrancyGuard {
     using OFTMsgCodec for bytes;
     using OFTMsgCodec for bytes32;
     using SafeERC20 for IERC20;
@@ -88,6 +89,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
     function _toeComposeReceiver(uint16 _msgType, address _srcChainSender, bytes memory _toeComposeMsg)
         internal
         override
+        nonReentrant
         returns (bool success)
     {
         if (_msgType == MSG_LOCK_TWTAP) {
@@ -124,7 +126,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
         // _approve(address(this), address(twTap), lockTwTapPositionMsg_.amount);
         _approve(address(this), address(pearlmit), lockTwTapPositionMsg_.amount);
         pearlmit.approve(
-            address(this), 0, address(twTap), uint200(lockTwTapPositionMsg_.amount), uint48(block.timestamp + 1)
+            20, address(this), 0, address(twTap), uint200(lockTwTapPositionMsg_.amount), uint48(block.timestamp + 1)
         );
         twTap.participate(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.amount, lockTwTapPositionMsg_.duration);
         _approve(address(this), address(pearlmit), 0);
@@ -158,7 +160,10 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver {
         ClaimTwTapRewardsMsg memory claimTwTapRewardsMsg_ = TapTokenCodec.decodeClaimTwTapRewardsMsg(_data);
 
         // Claim rewards, make sure to have approved this contract on TwTap.
-        uint256[] memory claimedAmount_ = twTap.claimRewards(claimTwTapRewardsMsg_.tokenId, address(this));
+        uint256[] memory claimedAmount_ = twTap.claimRewards(claimTwTapRewardsMsg_.tokenId);
+        address owner = twTap.ownerOf(claimTwTapRewardsMsg_.tokenId);
+        // Clear the allowance, claimRewards only does an allowance check.
+        pearlmit.clearAllowance(owner, 721, address(twTap), claimTwTapRewardsMsg_.tokenId);
 
         // Check if the claimed amount is equal to the amount of sendParam
         if (

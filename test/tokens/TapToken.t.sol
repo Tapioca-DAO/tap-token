@@ -120,7 +120,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
         extExec = new TapiocaOmnichainExtExec();
-        pearlmit = new Pearlmit("Pearlmit", "1");
+        pearlmit = new Pearlmit("Pearlmit", "1", address(this), 0);
         cluster = new Cluster(aEid, __owner);
 
         aTapOFT = new TapTokenMock(
@@ -363,12 +363,12 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
             vm.startPrank(userA);
             bTapOFT.approve(address(pearlmit), 1e18);
-            pearlmit.approve(address(bTapOFT), 0, address(twTap), uint200(1e18), uint48(block.timestamp + 1));
+            pearlmit.approve(20, address(bTapOFT), 0, address(twTap), uint200(1e18), uint48(block.timestamp + 1));
             twTap.participate(address(userA), 1e18, 1 weeks);
 
             vm.startPrank(userB);
             bTapOFT.approve(address(pearlmit), 1e18);
-            pearlmit.approve(address(bTapOFT), 0, address(twTap), uint200(1e18), uint48(block.timestamp + 1));
+            pearlmit.approve(20, address(bTapOFT), 0, address(twTap), uint200(1e18), uint48(block.timestamp + 1));
             twTap.participate(address(userB), 1e18, 1 weeks);
             vm.stopPrank();
         }
@@ -541,7 +541,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         {
             deal(address(bTapOFT), address(this), lockAmount_);
             bTapOFT.approve(address(pearlmit), lockAmount_);
-            pearlmit.approve(address(bTapOFT), 0, address(twTap), uint200(lockAmount_), uint48(block.timestamp + 1));
+            pearlmit.approve(20, address(bTapOFT), 0, address(twTap), uint200(lockAmount_), uint48(block.timestamp + 1));
             tokenId_ = twTap.participate(address(this), lockAmount_, lockDuration_);
 
             // Skip block timestamp to
@@ -763,7 +763,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             deal(address(bTapOFT), address(this), lockAmount_);
 
             // bTapOFT.approve(address(twTap), lockAmount_);
-            pearlmit.approve(address(bTapOFT), 0, address(twTap), uint200(lockAmount_), uint48(block.timestamp + 1));
+            pearlmit.approve(20, address(bTapOFT), 0, address(twTap), uint200(lockAmount_), uint48(block.timestamp + 1));
             bTapOFT.approve(address(pearlmit), lockAmount_); // Approve pearlmit to transfer
             testData_.tokenId = twTap.participate(address(this), lockAmount_, 1 weeks);
             bTapOFT.approve(address(pearlmit), 0); // reset approval

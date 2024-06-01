@@ -17,10 +17,11 @@
     "@boringcrypto/boring-solidity": "git+https://github.com/boringcrypto/BoringSolidity#e0ff4a7771edfa09a90694c4e0f891938cf62a43",
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/providers": "^5.7.0",
-    "@layerzerolabs/lz-evm-messagelib-v2": "2.2.4",
-    "@layerzerolabs/lz-evm-oapp-v2": "2.2.4",
-    "@layerzerolabs/lz-evm-protocol-v2": "2.2.4",
-    "@layerzerolabs/lz-evm-v1-0.7": "2.2.4",
+    "@layerzerolabs/lz-evm-messagelib-v2": "2.3.6",
+    "@layerzerolabs/lz-evm-oapp-v2": "2.3.6",
+    "@layerzerolabs/lz-evm-protocol-v2": "2.3.6",
+    "@layerzerolabs/lz-evm-v1-0.7": "2.3.6",
+    "@layerzerolabs/lz-v2-utilities": "2.3.6",
     "@layerzerolabs/solidity-bytes-utils": "^0.8.0",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
     "@nomicfoundation/hardhat-foundry": "^1.1.1",
@@ -31,6 +32,7 @@
     "@openzeppelin/contracts": "^4.9.5",
     "@openzeppelin/contracts-upgradeable": "^4.8.1",
     "@primitivefi/hardhat-dodoc": "^0.2.3",
+    "@swc/core": "^1.5.24",
     "@typechain/ethers-v5": "^10.1.0",
     "@typechain/hardhat": "^6.1.2",
     "@types/chai": "^4.2.22",
@@ -60,7 +62,7 @@
     "solc": "^0.8.4",
     "solhint": "^3.3.6",
     "solidity-coverage": "^0.8.5",
-    "ts-node": "^10.2.1",
+    "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typechain": "8.1.0",
     "typescript": "^4.4.3",
@@ -68,6 +70,7 @@
     "write-json-file": "^4.3.0"
   },
   "dependencies": {
+    "@layerzerolabs/lz-v2-utilities": "^2.3.16",
     "@prb/math": "^2.5.0",
     "@types/inquirer": "^9.0.3",
     "@uniswap/sdk-core": "^4.0.10",
@@ -81,6 +84,6 @@
     "inquirer": "^8.2.5",
     "lodash": "^4.17.21",
     "merkletreejs": "^0.3.10",
-    "tapioca-sdk": "^1.7.31"
+    "tapioca-sdk": "^1.7.52"
   }
 }

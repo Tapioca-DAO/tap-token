@@ -3,16 +3,10 @@ import {
     TTapiocaDeployTaskArgs,
     TTapiocaDeployerVmPass,
 } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
-import { buildLTap } from 'tasks/deployBuilds/preLbpStack/buildLTap';
-import { DEPLOYMENT_NAMES } from './DEPLOY_CONFIG';
+import { DEPLOYMENT_NAMES } from 'tasks/deploy/DEPLOY_CONFIG';
+import { buildLTapMock } from 'tasks/deployBuilds/mocks/buildLTapMock';
 
-/**
- * @notice Called after periph perLbp task
- *
- * Deploys: Arb
- * - LTAP
- */
-export const deployPreLbpStack__task = async (
+export const ltap__deployMock__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
     hre: HardhatRuntimeEnvironment,
 ) => {
@@ -28,5 +22,9 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
-    VM.add(await buildLTap(hre, DEPLOYMENT_NAMES.LTAP, [owner, owner], []));
+    if (!isTestnet) {
+        throw new Error('[+] This task is only for testnet');
+    }
+
+    VM.add(await buildLTapMock(hre, DEPLOYMENT_NAMES.LTAP, [owner, owner], []));
 }

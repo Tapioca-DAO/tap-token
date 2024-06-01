@@ -91,7 +91,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     /// =====-------======
 
     /// @notice user address => eligible TAP amount, 0 means no eligibility
-    mapping(address => uint256) public phase4Users;
+    mapping(address user => mapping(uint256 epoch => uint256 amount)) public phase4Users;
     uint256 public constant PHASE_4_DISCOUNT = 330_000; //33 * 1e4;
 
     uint256 public EPOCH_DURATION = 2 days; // Becomes FROM_EPOCH_4_DURATION at the start of the phase 4
@@ -118,10 +118,16 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     error PaymentTokenValuationNotValid();
     error TapNotSet();
     error TapOracleNotSet();
+    error AddressZero();
+    error WaitForNewEpoch();
 
     constructor(address _aoTAP, address _pcnft, address _paymentTokenBeneficiary, IPearlmit _pearlmit, address _owner)
         PearlmitHandler(_pearlmit)
     {
+        if (_aoTAP == address(0)) revert AddressZero();
+        if (_pcnft == address(0)) revert AddressZero();
+        if (address(pearlmit) == address(0)) revert AddressZero();
+
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
         aoTAP = AOTAP(_aoTAP);
         PCNFT = IERC721(_pcnft);
@@ -199,9 +205,9 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     /// @param _aoTAPTokenId The aoTAP token ID
     /// @return aoTAPPosition The details of the aoTAP position
     /// @return claimedTapInEpoch The amount of TAP claimed in aoTAP position's epoch
-    function getOptionPosition(uint256 _aoTAPTokenId) 
-        external 
-        view 
+    function getOptionPosition(uint256 _aoTAPTokenId)
+        external
+        view
         returns (AirdropTapOption memory aoTAPPosition, uint256 claimedTapInEpoch)
     {
         (, aoTAPPosition) = aoTAP.attributes(_aoTAPTokenId);
@@ -218,6 +224,10 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         uint256 cachedEpoch = epoch;
         if (cachedEpoch == 0) revert NotStarted();
         if (cachedEpoch > LAST_EPOCH) revert Ended();
+
+        if (block.timestamp > lastEpochUpdate + EPOCH_DURATION) {
+            revert WaitForNewEpoch();
+        }
 
         // Phase 1
         if (cachedEpoch == 1) {
@@ -243,7 +253,7 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         tapExists
     {
         // Load data
-        (, AirdropTapOption memory aoTapOption) = aoTAP.attributes(_aoTAPTokenID);
+        (address owner, AirdropTapOption memory aoTapOption) = aoTAP.attributes(_aoTAPTokenID);
         if (aoTapOption.expiry <= block.timestamp) revert OptionExpired();
 
         uint256 cachedEpoch = epoch;
@@ -254,8 +264,13 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         if (paymentTokenOracle.oracle == ITapiocaOracle(address(0))) {
             revert PaymentTokenNotValid();
         }
-        if (!aoTAP.isApprovedOrOwner(msg.sender, _aoTAPTokenID)) {
-            revert NotAuthorized();
+
+        // Check allowance. Make sure to consume it post call
+        {
+            // aoTAP.isApprovedOrOwner(msg.sender, _aoTAPTokenID)
+            if (owner != msg.sender && !isERC721Approved(owner, msg.sender, address(aoTAP), _aoTAPTokenID)) {
+                revert NotAuthorized();
+            }
         }
 
         // Get eligible OTC amount
@@ -345,9 +360,9 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
             }
         }
         /// @dev We want to be able to set phase 4 users in the future on subsequent epochs
-        else if (_phase == 4) {
+        else if (_phase >= 4) {
             for (uint256 i; i < _users.length; i++) {
-                phase4Users[_users[i]] = _amounts[i];
+                phase4Users[_users[i]][_phase] = _amounts[i];
             }
         }
     }
@@ -457,8 +472,10 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         uint256[] memory _tokenIDs = abi.decode(_data, (uint256[]));
 
         uint256 arrLen = _tokenIDs.length;
+        if (arrLen == 0) revert NotValid();
         address tokenIDToAddress;
         for (uint256 i; i < arrLen;) {
+            if (_tokenIDs[i] == 0 || _tokenIDs[i] > 700) revert NotValid();
             if (PCNFT.ownerOf(_tokenIDs[i]) != msg.sender) revert NotEligible();
 
             // To avoid collision, we cast token ID to an address,
@@ -484,11 +501,11 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
 
     /// @notice Participate in phase 4 of the Airdrop. twTAP and Cassava guild's role are given TAP pro-rata.
     function _participatePhase4() internal returns (uint256 oTAPTokenID) {
-        uint256 _eligibleAmount = phase4Users[msg.sender];
+        uint256 _eligibleAmount = phase4Users[msg.sender][epoch];
         if (_eligibleAmount == 0) revert NotEligible();
 
         // Close eligibility
-        phase4Users[msg.sender] = 0;
+        phase4Users[msg.sender][epoch] = 0;
 
         // Mint aoTAP
         uint128 expiry = uint128(lastEpochUpdate + EPOCH_DURATION); // Set expiry to the end of the epoch
@@ -550,6 +567,10 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
         uint256 rawPaymentAmount = _otcAmountInUSD / _paymentTokenValuation;
         paymentAmount = rawPaymentAmount - muldiv(rawPaymentAmount, _discount, 100e4); // 1e4 is discount decimals, 100 is discount percentage
 
-        paymentAmount = paymentAmount / (10 ** (18 - _paymentTokenDecimals));
+        if (_paymentTokenDecimals <= 18) {
+            paymentAmount = paymentAmount / (10 ** (18 - _paymentTokenDecimals));
+        } else {
+            paymentAmount = paymentAmount * (10 ** (_paymentTokenDecimals - 18));
+        }
     }
 }

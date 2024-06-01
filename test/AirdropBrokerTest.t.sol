@@ -40,7 +40,7 @@ contract AirdropBrokerTest is Test {
     address TAP_ORACLE = address(new ADBOracleMock());
     address PAYMENT_TOKEN_BENEFICIARY = address(0);
     address OWNER = address(this);
-    IPearlmit PEARLMIT = IPearlmit(address(new Pearlmit("Pearlmit", "1")));
+    IPearlmit PEARLMIT = IPearlmit(address(new Pearlmit("Pearlmit", "1", address(this), 0)));
 
     function setUp() public {
         airdropBroker = new AirdropBrokerTestMock(AOTAP, PCNFT, PAYMENT_TOKEN_BENEFICIARY, PEARLMIT, OWNER);
