@@ -57,7 +57,7 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
         });
     } else {
         console.log(
-            '[+] Skipping TapToken deployment, current chain is not side chain.',
+            '[-] Skipping TapToken deployment, current chain is not side chain.',
         );
     }
 }
