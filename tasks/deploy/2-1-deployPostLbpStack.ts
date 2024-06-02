@@ -52,32 +52,41 @@ export const deployPostLbpStack_1__task = async (
 
 async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     // Settings
-    const { hre, VM, tapiocaMulticallAddr, taskArgs, isTestnet, chainInfo } =
-        params;
+    const {
+        hre,
+        VM,
+        tapiocaMulticallAddr,
+        taskArgs,
+        isTestnet,
+        chainInfo,
+        isHostChain,
+        isSideChain,
+    } = params;
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
+    console.log(isHostChain);
     // Build contracts
-    if (
-        chainInfo.name === 'arbitrum' ||
-        chainInfo.name === 'arbitrum_sepolia'
-    ) {
+    if (isHostChain) {
         VM.add(await getAOTAP({ hre, owner, tag }))
             .add(await getVestingContributors({ hre, owner }))
             .add(await getVestingEarlySupporters({ hre, owner }))
             .add(await getVestingSupporters({ hre, owner }))
             .add(await getAdb({ hre, owner, tag }));
-    }
 
-    await addTapTokenContractsVM({
-        hre,
-        tag,
-        owner,
-        VM,
-        isTestnet,
-        chainInfo,
-        lzEndpointAddress: chainInfo.address,
-    });
+        await addTapTokenContractsVM({
+            hre,
+            tag,
+            owner,
+            VM,
+            isTestnet,
+            isHostChain,
+            chainInfo,
+            lzEndpointAddress: chainInfo.address,
+        });
+    } else {
+        console.log('[+] Skipping  current chain is not host chain.');
+    }
 }
 
 /**
@@ -90,10 +99,19 @@ export async function addTapTokenContractsVM(params: {
     VM: DeployerVM;
     lzEndpointAddress: string;
     isTestnet: boolean;
+    isHostChain: boolean;
     chainInfo: (typeof SUPPORTED_CHAINS)[number];
 }) {
-    const { VM, isTestnet, lzEndpointAddress, hre, owner, chainInfo, tag } =
-        params;
+    const {
+        VM,
+        isTestnet,
+        isHostChain,
+        lzEndpointAddress,
+        hre,
+        owner,
+        chainInfo,
+        tag,
+    } = params;
     VM.add(await getExtExec({ hre, owner, tag }))
         .add(
             await getTapTokenSenderModule({
@@ -114,6 +132,7 @@ export async function addTapTokenContractsVM(params: {
                 hre,
                 tag,
                 isTestnet: !!isTestnet,
+                isHostChain,
                 owner,
                 lzEndpointAddress,
                 chainInfo,
@@ -263,6 +282,7 @@ export async function getTapToken(params: {
     hre: HardhatRuntimeEnvironment;
     tag: string;
     isTestnet: boolean;
+    isHostChain: boolean;
     owner: string;
     lzEndpointAddress: string;
     governanceEid: string;
@@ -274,14 +294,12 @@ export async function getTapToken(params: {
         tag,
         governanceEid,
         isTestnet,
+        isHostChain,
         lzEndpointAddress,
         chainInfo,
     } = params;
     let lTap = { address: hre.ethers.constants.AddressZero };
-    if (
-        chainInfo.name === 'arbitrum' ||
-        chainInfo.name === 'arbitrum_sepolia'
-    ) {
+    if (isHostChain) {
         lTap = loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.LTAP);
     }
 
