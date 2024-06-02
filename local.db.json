@@ -470,6 +470,18 @@
             "lastBlockHeight": 11103473,
             "contracts": [
                 {
+                    "name": "LTAP",
+                    "address": "0xaA6a0439266F07691667D40A5f64b0a5Df026431",
+                    "meta": {
+                        "args": [
+                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88",
+                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88"
+                        ],
+                        "salt": "0x1f3cefe61be4d5be204c4273c8f95f61de5824ab42492ec460a3739aa642ad89",
+                        "create2": true
+                    }
+                },
+                {
                     "name": "AOTAP",
                     "address": "0x1a69D498218E1e21856F0fBb51372aA1Ca566915",
                     "meta": {
@@ -607,18 +619,6 @@
                     "meta": {
                         "args": [],
                         "salt": "0xc50e6a61bdb2261ae31a87aebb6fe997ecfb5d980b4fc16aea77d84ece884c29",
-                        "create2": true
-                    }
-                },
-                {
-                    "name": "LTAP",
-                    "address": "0x00147bC902C128653d655037945968aAbE18D7d2",
-                    "meta": {
-                        "args": [
-                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88",
-                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88"
-                        ],
-                        "salt": "0xc6bf41ae321d9b0688ed604e637e7a305fd23666e588d24e91db1b48160c1ddf",
                         "create2": true
                     }
                 },
