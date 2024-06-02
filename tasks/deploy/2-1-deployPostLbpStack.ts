@@ -65,7 +65,6 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
-    console.log(isHostChain);
     // Build contracts
     if (isHostChain) {
         VM.add(await getAOTAP({ hre, owner, tag }))
@@ -85,7 +84,7 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
             lzEndpointAddress: chainInfo.address,
         });
     } else {
-        console.log('[+] Skipping  current chain is not host chain.');
+        console.log('[-] Skipping  current chain is not host chain.');
     }
 }
 

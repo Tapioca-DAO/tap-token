@@ -40,7 +40,7 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
         VM.add(await buildLTap(hre, DEPLOYMENT_NAMES.LTAP, [owner, owner], []));
     } else {
         console.log(
-            '[+] Skipping LTAP deployment, current chain is not host chain.',
+            '[-] Skipping LTAP deployment, current chain is not host chain.',
         );
     }
 }
