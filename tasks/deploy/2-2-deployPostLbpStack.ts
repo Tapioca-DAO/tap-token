@@ -33,9 +33,17 @@ export const deployPostLbpStack_2__task = async (
  * - Set USDC as payment token in ADB
  */
 async function postDeploymentSetup(params: TTapiocaDeployerVmPass<object>) {
-    const { hre, VM, taskArgs, isTestnet } = params;
+    const { hre, VM, taskArgs, isTestnet, isHostChain } = params;
     const { tag } = taskArgs;
 
     // Setup contracts
-    await VM.executeMulticall(await buildPostLbpStackPostDepSetup(hre, tag));
+    if (isHostChain) {
+        await VM.executeMulticall(
+            await buildPostLbpStackPostDepSetup(hre, tag),
+        );
+    } else {
+        console.log(
+            '[-] Skipping post LBP2 stack deployment, current chain is not host chain.',
+        );
+    }
 }
