@@ -21,6 +21,7 @@ import * as TAPIOCA_BAR_CONFIG from '@tapioca-bar/config';
 export const buildFinalStackPostDepSetup_2 = async (
     hre: HardhatRuntimeEnvironment,
     tag: string,
+    isTestnet: boolean,
 ): Promise<TapiocaMulticall.CallStruct[]> => {
     const calls: TapiocaMulticall.CallStruct[] = [];
 
@@ -42,7 +43,7 @@ export const buildFinalStackPostDepSetup_2 = async (
         ybStrategyArbSglGlpDeployment,
         ybStrategyMainnetSglDaiDeployment,
         mainnetSglDaiDeployment,
-    } = await loadContract(hre, tag);
+    } = await loadContract__arb(hre, tag, isTestnet);
 
     /**
      * Register Arb SGL GLP in TOLP
@@ -266,11 +267,6 @@ export const buildFinalStackPostDepSetup_2 = async (
     return calls;
 };
 
-async function loadContract__generic(
-    hre: HardhatRuntimeEnvironment,
-    tag: string,
-) {}
-
 async function loadContract__arb(
     hre: HardhatRuntimeEnvironment,
     tag: string,
@@ -330,7 +326,7 @@ async function loadContract__arb(
         hre.SDK.eChainId,
         TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.TOB_TAP_OPTION_ORACLE,
         tag,
-    ).address;
+    );
 
     const usdcOracleDeployment = loadGlobalContract(
         hre,
@@ -338,7 +334,7 @@ async function loadContract__arb(
         hre.SDK.eChainId,
         TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE,
         tag,
-    ).address;
+    );
 
     const usdoDeployment = loadGlobalContract(
         hre,
@@ -346,7 +342,7 @@ async function loadContract__arb(
         hre.SDK.eChainId,
         TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.USDO,
         tag,
-    ).address;
+    );
 
     const usdoOracleDeployment = loadGlobalContract(
         hre,
@@ -354,7 +350,7 @@ async function loadContract__arb(
         hre.SDK.eChainId,
         TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.USDO_USDC_UNI_V3_ORACLE,
         tag,
-    ).address;
+    );
 
     // Arbitrum SGL-GLP
     const arbSglGlpDeployment = loadGlobalContract(
@@ -363,7 +359,7 @@ async function loadContract__arb(
         hre.SDK.eChainId,
         TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.SGL_S_GLP_MARKET,
         tag,
-    ).address;
+    );
     const ybStrategyArbSglGlpDeployment = loadGlobalContract(
         hre,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
@@ -372,7 +368,7 @@ async function loadContract__arb(
             ? TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SGLP_ASSET_WITHOUT_STRATEGY
             : TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SGLP_ASSET_WITH_STRATEGY,
         tag,
-    ).address;
+    );
 
     // Mainnet SGL-DAI
     const mainnetSglDaiDeployment = loadGlobalContract(
@@ -381,7 +377,7 @@ async function loadContract__arb(
         hre.SDK.eChainId,
         TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.SGL_S_DAI_MARKET,
         tag,
-    ).address;
+    );
     const ybStrategyMainnetSglDaiDeployment = loadGlobalContract(
         hre,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
@@ -390,7 +386,7 @@ async function loadContract__arb(
             ? TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SDAI_ASSET_WITHOUT_STRATEGY
             : TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SDAI_ASSET_WITH_STRATEGY,
         tag,
-    ).address;
+    );
 
     return {
         tapToken,
