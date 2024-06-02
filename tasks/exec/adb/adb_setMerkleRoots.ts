@@ -3,9 +3,10 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { loadLocalContract } from 'tapioca-sdk';
 import { TTapiocaDeployerVmPass } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { DEPLOYMENT_NAMES } from 'tasks/deploy/DEPLOY_CONFIG';
+import fs from 'fs';
 
 export const adb_setMerkleRoots__task = async (
-    _taskArgs: TTapiocaDeployTaskArgs & { roots: string[] },
+    _taskArgs: TTapiocaDeployTaskArgs & { rootsFile: string },
     hre: HardhatRuntimeEnvironment,
 ) => {
     await hre.SDK.DeployerVM.tapiocaDeployTask(
@@ -18,17 +19,12 @@ export const adb_setMerkleRoots__task = async (
 };
 
 async function tapiocaTask(
-    params: TTapiocaDeployerVmPass<{ roots: string[] }>,
+    params: TTapiocaDeployerVmPass<{ rootsFile: string }>,
 ) {
     // Settings
     const { hre, VM, tapiocaMulticallAddr, taskArgs, isTestnet, chainInfo } =
         params;
-    const { tag, roots } = taskArgs;
-    if (roots.length !== 4) {
-        throw new Error('[-] Invalid number of roots, require 4');
-    }
-    const data = roots.map((e) => '0x' + e) as [string, string, string, string];
-
+    const { tag, rootsFile } = taskArgs;
     const adb = await hre.ethers.getContractAt(
         'AirdropBroker',
         loadLocalContract(
@@ -38,6 +34,17 @@ async function tapiocaTask(
             tag,
         ).address,
     );
+
+    const jsonData = (await getJsonData(rootsFile)) as string[];
+    if (jsonData.length !== 4) {
+        throw new Error('[-] Invalid number of roots, require 4');
+    }
+    const data = jsonData.map((e) => '0x' + e) as [
+        string,
+        string,
+        string,
+        string,
+    ];
 
     // await adb.setPhase2MerkleRoots(roots as [string, string, string, string]);
     await VM.executeMulticall([
@@ -49,4 +56,10 @@ async function tapiocaTask(
             ]),
         },
     ]);
+}
+
+async function getJsonData(filePath: string) {
+    const fileData = fs.readFileSync(filePath, 'utf-8');
+    const jsonData = JSON.parse(fileData);
+    return jsonData;
 }
