@@ -56,7 +56,7 @@ contract TapiocaOptionLiquidityProvision is
     mapping(uint256 => LockPosition) public lockPositions; // TokenID => LockPosition
 
     IYieldBox public immutable yieldBox;
-    address public immutable tapiocaOptionBroker;
+    address public tapiocaOptionBroker;
 
     // Singularity market address => SingularityPool (YieldBox Asset ID is 0 if not active)
     mapping(IERC20 => SingularityPool) public activeSingularities;
@@ -90,14 +90,13 @@ contract TapiocaOptionLiquidityProvision is
     error TransferFailed();
     error TobIsHolder();
 
-    constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner, address _tob)
+    constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
         ERC721Permit("TapiocaOptionLiquidityProvision")
         PearlmitHandler(_pearlmit)
     {
         yieldBox = IYieldBox(_yieldBox);
         EPOCH_DURATION = _epochDuration;
-        tapiocaOptionBroker = _tob;
         _transferOwnership(_owner);
     }
 
@@ -270,6 +269,14 @@ contract TapiocaOptionLiquidityProvision is
     // =========
     //   OWNER
     // =========
+
+    /**
+     * @notice Sets the Tapioca Option Broker address
+     */
+    function setTapiocaOptionBroker(address _tob) external onlyOwner {
+        if (_tob != address(0)) revert NotAuthorized(); // Only once allowed
+        tapiocaOptionBroker = _tob;
+    }
 
     /// @notice Sets the pool weight of a given singularity market
     /// @param singularity Singularity market address
