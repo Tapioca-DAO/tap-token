@@ -470,6 +470,61 @@
             "lastBlockHeight": 11103473,
             "contracts": [
                 {
+                    "name": "TAPIOCA_OPTION_LIQUIDITY_PROVISION",
+                    "address": "0x9b47f96F13c557A4015c1aa670522A3586Ae0dc5",
+                    "meta": {
+                        "args": [
+                            "0xba29090FeA82eB00B3Cb59011D8258BD4f8aC1EF",
+                            604800,
+                            "0x10f52CC364d200Fbe14033B927Da3Fb5D84CcA34",
+                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88"
+                        ],
+                        "salt": "0x353ac34560c6bf3c756cb9cb1c3d98a28bd2a67cdb6bf628a8c3e6b2d32c220d",
+                        "create2": true
+                    }
+                },
+                {
+                    "name": "OTAP",
+                    "address": "0xAeF8f8B69d95a4D8Fa050D38494512CB30902246",
+                    "meta": {
+                        "args": [
+                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88"
+                        ],
+                        "salt": "0xaf5e3b350cf1c196dad5e631e4604224a74ab5d58279bea709795b42cd4f8f20",
+                        "create2": true
+                    }
+                },
+                {
+                    "name": "TAPIOCA_OPTION_BROKER",
+                    "address": "0x309C583dEd3D78140f59b9910e5c8f57eA3185AC",
+                    "meta": {
+                        "args": [
+                            "0x9b47f96F13c557A4015c1aa670522A3586Ae0dc5",
+                            "0xAeF8f8B69d95a4D8Fa050D38494512CB30902246",
+                            "0x3488d6fc4293E7954853ea2196580c9D3973ac3d",
+                            "0x464570adA09869d8741132183721B4f0769a0287",
+                            604800,
+                            "0x10f52CC364d200Fbe14033B927Da3Fb5D84CcA34",
+                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88"
+                        ],
+                        "salt": "0x75baef73c56955b33df684d9ab1a9491dd9b49d860c926a67ee33a806b3f22b2",
+                        "create2": true
+                    }
+                },
+                {
+                    "name": "TWTAP",
+                    "address": "0x9ABB92BD60a79326189aD1A964849b5e77E2b55e",
+                    "meta": {
+                        "args": [
+                            "0x3488d6fc4293E7954853ea2196580c9D3973ac3d",
+                            "0x10f52CC364d200Fbe14033B927Da3Fb5D84CcA34",
+                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88"
+                        ],
+                        "salt": "0xc10f5afc380f82d48653c85e4939424a85212b366a8f757f21f8256b70d28902",
+                        "create2": true
+                    }
+                },
+                {
                     "name": "AOTAP",
                     "address": "0x545fdbd044B495f5849246e9c3CD39dB4E016c07",
                     "meta": {
@@ -656,61 +711,6 @@
                             "3300000000000000000"
                         ],
                         "salt": "0x4772153a54b00c8d2aeccb07d7e0d1d61278a326f9bdc04b939689b8460cee9c",
-                        "create2": true
-                    }
-                },
-                {
-                    "name": "TAPIOCA_OPTION_LIQUIDITY_PROVISION",
-                    "address": "0x2421B7C33d0DB8F5fd0C823c7B69178595f647CE",
-                    "meta": {
-                        "args": [
-                            "0xc8A3602A81A4c77Cbf067B606c1734eB0eBd7b63",
-                            604800,
-                            "0x97FEC52E01B382E6744f7042B70a389cd70BCE16",
-                            "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
-                        ],
-                        "salt": "0xe066b69c622e1fd67aa714eed0aaa186627fd3ab0f205d34538e15b6ab0b1b5b",
-                        "create2": true
-                    }
-                },
-                {
-                    "name": "OTAP",
-                    "address": "0xdc01cdFE88b68f3E680A5bb106E55b082156Daf1",
-                    "meta": {
-                        "args": [
-                            "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
-                        ],
-                        "salt": "0x80a4a96bfe0016990f746f28beddbddd6535bc315a111590e3084ceb3afb0738",
-                        "create2": true
-                    }
-                },
-                {
-                    "name": "TAPIOCA_OPTION_BROKER",
-                    "address": "0xF692Af793B9e4b75805aE4851551Fe319C9dC3D4",
-                    "meta": {
-                        "args": [
-                            "0x2421B7C33d0DB8F5fd0C823c7B69178595f647CE",
-                            "0xdc01cdFE88b68f3E680A5bb106E55b082156Daf1",
-                            "0xB7Bb4406Cf8991696514030A44cD18Dade4C7d6F",
-                            "0x464570adA09869d8741132183721B4f0769a0287",
-                            604800,
-                            "0x97FEC52E01B382E6744f7042B70a389cd70BCE16",
-                            "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
-                        ],
-                        "salt": "0x0d40acc3a5c3abf5baeabfb9ddad59417003439934f652bdf45ebd515463b7e3",
-                        "create2": true
-                    }
-                },
-                {
-                    "name": "TWTAP",
-                    "address": "0x9d211d10cAf45909EDa9ff718002490D23Ff3998",
-                    "meta": {
-                        "args": [
-                            "0xB7Bb4406Cf8991696514030A44cD18Dade4C7d6F",
-                            "0x97FEC52E01B382E6744f7042B70a389cd70BCE16",
-                            "0x1566b0344b8Ff1ee1f38beF0037fe1935A7C1268"
-                        ],
-                        "salt": "0xc984f9a8bfd3fa594d845601754d72d1a66497635d45c96e8420920cf82c2b1f",
                         "create2": true
                     }
                 },
