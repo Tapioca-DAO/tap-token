@@ -50,7 +50,9 @@ async function tapiocaPostDepSetup(params: TTapiocaDeployerVmPass<object>) {
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
-    await VM.executeMulticall(await buildFinalStackPostDepSetup_2(hre, tag));
+    await VM.executeMulticall(
+        await buildFinalStackPostDepSetup_2(hre, tag, isTestnet),
+    );
 }
 
 async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
@@ -109,13 +111,6 @@ async function getTolp(
             DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
             pearlmit,
             owner, // Owner
-            '', // TOB
-        ],
-        [
-            {
-                argPosition: 4,
-                deploymentName: DEPLOYMENT_NAMES.TAPIOCA_OPTION_BROKER,
-            },
         ],
     );
 }
