@@ -34,6 +34,8 @@ import "./mocks/ExecutorFeeLibMock.sol";
 
 // solhint-disable-next-line
 import "forge-std/console.sol";
+import "forge-std/console2.sol";
+
 
 contract TestHelper is Test, OptionsHelper {
     using OptionsBuilder for bytes;
@@ -242,7 +244,9 @@ contract TestHelper is Test, OptionsHelper {
         bytes memory bytecode = bytes.concat(abi.encodePacked(_oappBytecode), _constructorArgs);
         assembly {
             addr := create(0, add(bytecode, 0x20), mload(bytecode))
-            if iszero(extcodesize(addr)) { revert(0, 0) }
+            if iszero(extcodesize(addr)) { 
+                revert(0, 0)
+            }
         }
     }
 
