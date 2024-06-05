@@ -118,7 +118,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
     uint256 internal userBPKey = 0x2;
     address public owner = vm.addr(userAPKey);
     address public tokenBeneficiary = vm.addr(userBPKey);
-    uint256 public immutable EPOCH_DURATION = 7 days;
+    uint256 public EPOCH_DURATION = 7 days;
     uint32 internal lzChainId = 1;
 
     /**
