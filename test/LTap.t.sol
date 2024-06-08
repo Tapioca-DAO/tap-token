@@ -212,7 +212,7 @@ contract LTapTest is TapTestHelper, Errors {
         ltap.setTransferAllowList(owner, true);
 
         uint256 lTapBalanceOfOwnerBefore = ltap.balanceOf(owner);
-        vm.expectRevert(bytes("revert: ERC20: insufficient allowance"));
+        vm.expectRevert(bytes("ERC20: insufficient allowance"));
         ltap.transferFrom(lbp, owner, 5_000);
         uint256 lTapBalanceOfOwnerAfter = ltap.balanceOf(owner);
 
