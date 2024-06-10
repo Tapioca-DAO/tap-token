@@ -344,10 +344,10 @@
   dependencies:
     "@ethersproject/logger" "^5.7.0"
 
-"@ethersproject/providers@5.7.2", "@ethersproject/providers@^5.7.1", "@ethersproject/providers@^5.7.2", "@ethersproject/providers@npm:ethersproject-providers-arbitrum-hotfix@5.7.9":
-  version "5.7.9"
-  resolved "https://registry.yarnpkg.com/ethersproject-providers-arbitrum-hotfix/-/ethersproject-providers-arbitrum-hotfix-5.7.9.tgz#aa6ea8ba402f2dfedb56f59f74a3d6140dd7373d"
-  integrity sha512-44VJiAwh8T/q7+SraNNDZ2h3O5C4Ch5Ij4mqT6XQI1SYPCiOR/CaXyld7IYMoLSnqc8Ld7KWuVP7Kr3pLNdFJw==
+"@ethersproject/providers@5.7.2", "@ethersproject/providers@^5.7.1", "@ethersproject/providers@^5.7.2", "@ethersproject/providers@npm:ethersproject-providers-arbitrum-hotfix@5.7.10":
+  version "5.7.10"
+  resolved "https://registry.yarnpkg.com/ethersproject-providers-arbitrum-hotfix/-/ethersproject-providers-arbitrum-hotfix-5.7.10.tgz#cd3fa2ed67b30ad253d168101d01ea96ac71855f"
+  integrity sha512-Ocb7GT1pA3vSg9k8xxwItgmmDw8FCscjE52s9+eecEWtchy9UutRs00RXtQ4IjA0n8QCu3awkH/Ia7lvKMxUBg==
   dependencies:
     "@ethersproject/abstract-provider" "^5.7.0"
     "@ethersproject/abstract-signer" "^5.7.0"
@@ -855,10 +855,20 @@
   dependencies:
     ethereumjs-util "^7.1.4"
 
-"@nomicfoundation/hardhat-toolbox@^2.0.2":
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/@nomicfoundation/hardhat-toolbox/-/hardhat-toolbox-2.0.2.tgz#ec95f23b53cb4e71a1a7091380fa223aad18f156"
-  integrity sha512-vnN1AzxbvpSx9pfdRHbUzTRIXpMLPXnUlkW855VaDk6N1pwRaQ2gNzEmFAABk4lWf11E00PKwFd/q27HuwYrYg==
+"@nomicfoundation/hardhat-verify@^2.0.8":
+  version "2.0.8"
+  resolved "https://registry.yarnpkg.com/@nomicfoundation/hardhat-verify/-/hardhat-verify-2.0.8.tgz#6a77dc03de990a1a3aa8e6dc073c393263dbf258"
+  integrity sha512-x/OYya7A2Kcz+3W/J78dyDHxr0ezU23DKTrRKfy5wDPCnePqnr79vm8EXqX3gYps6IjPBYyGPZ9K6E5BnrWx5Q==
+  dependencies:
+    "@ethersproject/abi" "^5.1.2"
+    "@ethersproject/address" "^5.0.2"
+    cbor "^8.1.0"
+    chalk "^2.4.2"
+    debug "^4.1.1"
+    lodash.clonedeep "^4.5.0"
+    semver "^6.3.0"
+    table "^6.8.0"
+    undici "^5.14.0"
 
 "@nomicfoundation/solidity-analyzer-darwin-arm64@0.1.1":
   version "0.1.1"
@@ -4841,6 +4851,11 @@ lodash.camelcase@^4.3.0:
   resolved "https://registry.yarnpkg.com/lodash.camelcase/-/lodash.camelcase-4.3.0.tgz#b28aa6288a2b9fc651035c7711f65ab6190331a6"
   integrity sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==
 
+lodash.clonedeep@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/lodash.clonedeep/-/lodash.clonedeep-4.5.0.tgz#e23f3f9c4f8fbdde872529c1071857a086e5ccef"
+  integrity sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==
+
 lodash.merge@^4.6.2:
   version "4.6.2"
   resolved "https://registry.yarnpkg.com/lodash.merge/-/lodash.merge-4.6.2.tgz#558aa53b43b661e1925a0afdfa36a9a1085fe57a"
@@ -6492,10 +6507,10 @@ table@^6.0.9, table@^6.8.0, table@^6.8.1:
     string-width "^4.2.3"
     strip-ansi "^6.0.1"
 
-tapioca-sdk@^1.8.21:
-  version "1.8.21"
-  resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.8.21.tgz#9955e1d5670203b81726bf95f27e85193bed3a53"
-  integrity sha512-E46PG91DQi7nBKjsVKyoChKcZ3PrLC2o2kA/HA38QhVzxBA3+PqPCGkeDSVI+b+af4l8xScSm1HoM54+4tLttw==
+tapioca-sdk@^1.8.22:
+  version "1.8.22"
+  resolved "https://registry.yarnpkg.com/tapioca-sdk/-/tapioca-sdk-1.8.22.tgz#d40e17ffb9c96d0180e0653e1c4ce39046ac9edf"
+  integrity sha512-jbDwVvOs1pRusb32U3c/XUYgcHHFerVr6ixAH+XS3FXFfGaK8OvnrIYr9264LjlRRwNFDTg57mnjdx8K0Hl2TQ==
   dependencies:
     "@uniswap/v3-core" "^1.0.1"
     "@uniswap/v3-periphery" "^1.4.3"
