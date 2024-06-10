@@ -5,6 +5,7 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+import "forge-std/console.sol";
 /*
 
 ████████╗ █████╗ ██████╗ ██╗ ██████╗  ██████╗ █████╗ 
@@ -232,6 +233,7 @@ contract Vesting is Ownable, ReentrancyGuard {
         if (_initialUnlock > 0) {
             uint256 initialUnlockAmount = (_seededAmount * _initialUnlock) / 10_000;
 
+            console.log("duration in init: ", duration);
             __initialUnlockTimeOffset =
                 _computeTimeFromAmount(block.timestamp, _seededAmount, initialUnlockAmount, duration);
         }
