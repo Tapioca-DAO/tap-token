@@ -527,13 +527,13 @@
             "contracts": [
                 {
                     "name": "LTAP",
-                    "address": "0x1A7fA2C3CDFb730Ef01588eAa845F38EB1ef240e",
+                    "address": "0x3Ee8D8C0102F943a84A590AaFfc2417BC1CD0814",
                     "meta": {
                         "args": [
                             "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88",
                             "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88"
                         ],
-                        "salt": "0xd0377ffe35442cff4d4738a5e8ca2526ec926d1016703e45fbdc1c9735eb8b7b",
+                        "salt": "0x972d9930ec9d1c370216e29e439e27ea5fade687bfe6a4eeb045144703e647fc",
                         "create2": true
                     }
                 },
