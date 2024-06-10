@@ -383,6 +383,62 @@
             ]
         }
     },
+    "lbp-prod-test": {
+        "42161": {
+            "name": "arbitrum",
+            "lastBlockHeight": 219884247,
+            "contracts": [
+                {
+                    "name": "LTAP",
+                    "address": "0x1Dc08530604304FD610a2651a96dD1fa317453e6",
+                    "meta": {
+                        "args": [
+                            "0x4364aef7C6f644bb0e719784F1A35100beAee6Db",
+                            "0x4364aef7C6f644bb0e719784F1A35100beAee6Db"
+                        ],
+                        "salt": "0x448de18b25e7fbc78d04a671a12c2fcdee6336150fa0413f072aa3c9a8b21b7b",
+                        "create2": true
+                    }
+                }
+            ]
+        },
+        "43114": {
+            "name": "avalanche",
+            "lastBlockHeight": 46475244,
+            "contracts": [
+                {
+                    "name": "LTAP",
+                    "address": "0x2cd108566Ce0A4228409F3A10F10c4c840Ea577B",
+                    "meta": {
+                        "args": [
+                            "0x29CBa348D7eCB5A9f72520A22F49aDDf0739617B",
+                            "0x29CBa348D7eCB5A9f72520A22F49aDDf0739617B"
+                        ],
+                        "salt": "0x05d525a21eafd932a2919d73d6f00e114c9331201350eb915158cf2af42ee233",
+                        "create2": true
+                    }
+                }
+            ]
+        },
+        "421614": {
+            "name": "arbitrum_sepolia",
+            "lastBlockHeight": 52665330,
+            "contracts": [
+                {
+                    "name": "LTAP",
+                    "address": "0xb6Df282ce3BA38d2B2276C3C9478f06B8775C0DF",
+                    "meta": {
+                        "args": [
+                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88",
+                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88"
+                        ],
+                        "salt": "0x805a1b979a7e0d5c788ad955e244a8f3d1e53716684a59c7c2c67874dfd27e89",
+                        "create2": true
+                    }
+                }
+            ]
+        }
+    },
     "tap-token-test": {
         "43113": {
             "name": "fuji_avalanche",
