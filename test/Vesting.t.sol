@@ -106,7 +106,7 @@ contract VestingTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    /// @notice each user must have corresponding amount to vest when regiestering
+    /// @notice each user must have corresponding amount to vest when registering
     function test_register_users_different_lengths() public {
         vm.startPrank(owner);
         address[] memory users = new address[](1);
@@ -145,13 +145,26 @@ contract VestingTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    function testFuzz_register_users(uint256 amountToRegister1, uint256 amountToRegister2) public { 
+        amountToRegister1 = bound(amountToRegister1, 1, 1_000_000_000);
+        amountToRegister2 = bound(amountToRegister2, 1, 1_000_000_000);
+        test_register_users(amountToRegister1, amountToRegister2);
+    }
+
+    function test_register_users_wrapper() public {
+        test_register_users(1_000_000, 1_000_000);
+    }
+
     /// @notice registering individual user via registerUsers works
-    function test_register_users() public {
+    // @audit add an additional user here
+    function test_register_users(uint256 amountToRegister1, uint256 amountToRegister2) public {
         vm.startPrank(owner);
-        address[] memory users = new address[](1);
+        address[] memory users = new address[](2);
         users[0] = address(owner);
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = 1_000_000;
+        users[1] = address(tokenBeneficiary);
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = amountToRegister1;
+        amounts[1] = amountToRegister2;
         vesting.registerUsers(users, amounts);
         vm.stopPrank();
     }
@@ -253,7 +266,8 @@ contract VestingTest is TapTestHelper, Errors {
         assertEq(amount1, 9_999_899);
         assertEq(vesting.start(), 0);
         assertEq(address(vesting.token()), address(0));
-        vesting.init((mockToken), 1_000_000, 0);
+        vm.warp(1717912068); // warp to current block timestamp
+        vesting.init((mockToken), 9_999_899, 500); //initialize with 5% initialUnlock
         assertEq(vesting.start(), block.timestamp);
         assertEq(address(vesting.token()), address(mockToken));
         vm.stopPrank();
@@ -285,21 +299,54 @@ contract VestingTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    /// @notice claiming works
-    function test_claim() public {
+    /// @notice claiming with an initialUnlock amount > 0
+    function test_claim_initial_unlock() public {
         vm.startPrank(owner);
-        uint256 amount1 = mockToken.balanceOf(address(vesting));
-        assertEq(amount1, 9_999_899);
+
+        vesting.registerUser(address(owner), 100);
+
+        uint256 seededAmount = mockToken.balanceOf(address(vesting));
+        assertEq(seededAmount, 9_999_899);
         assertEq(vesting.start(), 0);
         assertEq(address(vesting.token()), address(0));
-        vesting.init((mockToken), 1_000_000, 0);
+
+        uint256 initialUnlock = 500; // 5 BPS
+        vm.warp(1717912068); // warp to current block timestamp
+        vesting.init((mockToken), seededAmount, initialUnlock);
         assertEq(vesting.start(), block.timestamp);
         assertEq(address(vesting.token()), address(mockToken));
+
         uint256 amountBefore = mockToken.balanceOf(address(owner));
         vm.expectRevert(NothingToClaim.selector);
         vesting.claim();
         uint256 amountAfter = mockToken.balanceOf(address(owner));
         assertEq(amountAfter, amountBefore);
+
+        vm.stopPrank();
+    }
+
+    /// @notice claiming with an initialUnlock amount == 0
+    function test_claim() public {
+        vm.startPrank(owner);
+
+        vesting.registerUser(address(owner), 100);
+
+        uint256 seededAmount = mockToken.balanceOf(address(vesting));
+        assertEq(seededAmount, 9_999_899);
+        assertEq(vesting.start(), 0);
+        assertEq(address(vesting.token()), address(0));
+
+        vm.warp(1717912068); // warp to current block timestamp
+        vesting.init((mockToken), seededAmount, 0);
+        assertEq(vesting.start(), block.timestamp);
+        assertEq(address(vesting.token()), address(mockToken));
+
+        uint256 amountBefore = mockToken.balanceOf(address(owner));
+        vm.expectRevert(NothingToClaim.selector);
+        vesting.claim();
+        uint256 amountAfter = mockToken.balanceOf(address(owner));
+        assertEq(amountAfter, amountBefore);
+
         vm.stopPrank();
     }
 }
