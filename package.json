@@ -84,7 +84,7 @@
     "inquirer": "^8.2.5",
     "lodash": "^4.17.21",
     "merkletreejs": "^0.3.10",
-    "tapioca-sdk": "^1.8.20"
+    "tapioca-sdk": "^1.8.21"
   },
   "resolutions": {
     "@ethersproject/providers": "npm:ethersproject-providers-arbitrum-hotfix@5.7.9"
