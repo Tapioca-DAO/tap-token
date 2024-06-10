@@ -383,6 +383,26 @@
             ]
         }
     },
+    "lbp-prod-deployment": {
+        "42161": {
+            "name": "arbitrum",
+            "lastBlockHeight": 220503209,
+            "contracts": [
+                {
+                    "name": "LTAP",
+                    "address": "0x00BeBF0fA54D8e67914Be964a7FA20130822a88d",
+                    "meta": {
+                        "args": [
+                            "0x302E912826211b72222cDbaa684426Dc61F7fDED",
+                            "0x302E912826211b72222cDbaa684426Dc61F7fDED"
+                        ],
+                        "salt": "0x40a7b7c66479fb9ba7cdf958b7cca462757b6e8e123b2f168fb745bf33ed3b21",
+                        "create2": true
+                    }
+                }
+            ]
+        }
+    },
     "lbp-prod-test": {
         "42161": {
             "name": "arbitrum",
