@@ -48,6 +48,7 @@ import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
 import {Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
 import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
 import {ICluster, Cluster} from  "tapioca-periph/Cluster/Cluster.sol";
+import {TWAML} from "tap-token/options/twAML.sol";
 
 // Tapioca Tests
 import {TapTestHelper} from "../helpers/TapTestHelper.t.sol";
@@ -188,12 +189,129 @@ contract twTAPTest is TapTestHelper, Errors {
         // assertEq(twTAP.maxRewardTokens(), 1000);
     }
 
+    /**
+     Fuzz Tests
+    */
+    function testFuzz_participation(uint256 lockTime) public {
+        test_participation_1_day(lockTime);
+    }
+
+    function testFuzz_participate_with_magnitude(uint256 amount, uint256 duration) public {
+        amount = bound(amount, 100 ether, 3_686_595 ether);
+        duration = bound(duration, 1000 weeks, 2000 weeks);
+        vm.assume(duration % 7 days == 0);
+        test_participate_with_magnitude(amount, duration);
+    }
+
+    function testFuzz_participate(uint256 amount, uint256 duration) public {
+        // upper bound of duration is magnitude < pool.cumulative * 4
+        uint256 durationUpperBound = _calculateDurationUpperBound();
+        duration = bound(duration, 86400, durationUpperBound - 1 seconds);
+        // using vm.assume throws here, so need to filter duration values that aren't the length of an epoch with the following if statement
+        if(duration % 7 days != 0) {
+            return;
+        }
+
+        amount = bound(amount, 100 ether, 3_686_595 ether);
+
+        test_participate(amount, duration);
+    }
+
+    function testFuzz_claim_rewards(uint256 amount, uint256 duration) public { 
+        // upper bound of duration is magnitude < pool.cumulative * 4
+        uint256 durationUpperBound = _calculateDurationUpperBound();
+        duration = bound(duration, 86400, durationUpperBound - 1 seconds);
+        // using vm.assume throws here, so need to filter duration values that aren't the length of an epoch with the following if statement
+        if(duration % 7 days != 0) {
+            return;
+        }
+
+        amount = bound(amount, 100 ether, 3_686_595 ether);
+
+        test_claim_rewards(amount, duration);
+    }
+
+    function testFuzz_distribute_rewards(uint256 amount, uint256 duration) public {
+         // upper bound of duration is magnitude < pool.cumulative * 4
+        uint256 durationUpperBound = _calculateDurationUpperBound();
+        duration = bound(duration, 86400, durationUpperBound - 1 seconds);
+        // using vm.assume throws here, so need to filter duration values that aren't the length of an epoch with the following if statement
+        if(duration % 7 days != 0) {
+            return;
+        }
+
+        amount = bound(amount, 100 ether, 3_686_595 ether);
+
+        test_distribute_rewards(amount, duration);
+    }
+
+    function testFuzz_advance_week(uint256 warpTime) public { 
+        warpTime = bound(warpTime, block.timestamp + 1 weeks + 1 seconds, block.timestamp + 100 weeks + 1 seconds);
+        vm.assume(warpTime / 1 weeks < 100);
+        test_advance_week(warpTime);
+    }
+
+    function testFuzz_exit_position(uint256 amount, uint256 duration, uint256 warpTime) public { 
+        // upper bound of duration is magnitude < pool.cumulative * 4
+        uint256 durationUpperBound = _calculateDurationUpperBound();
+        duration = bound(duration, 86400, durationUpperBound - 1 seconds);
+        // using vm.assume throws here, so need to filter duration values that aren't the length of an epoch with the following if statement
+        if(duration % 7 days != 0) {
+            return;
+        }
+
+        amount = bound(amount, 100 ether, 3_686_595 ether);
+
+        // time to warp ahead before exiting position
+        warpTime = bound(warpTime, block.timestamp + 1 weeks + 1 seconds, block.timestamp + 100 weeks + 1 seconds);
+        vm.assume(warpTime / 1 weeks < 100);
+
+        test_exit_position(amount, duration, warpTime);
+    }
+
+    /**
+        Wrappers
+    */
+
+    function test_participation_wrapper() public {
+        test_participation_1_day(86400);
+    }
+
+    function test_participate_with_magnitude_wrapper() public {
+        test_participate_with_magnitude(100 ether, 1000 weeks);
+    }
+
+    function test_participate_wrapper() public {
+        test_participate(100 ether,((86400) * 7));
+    }
+
+    function test_claim_rewards_wrapper() public {
+        test_claim_rewards(100 ether,(86400) * 7);
+    }
+
+    function test_distribute_rewards_wrapper() public {
+        test_distribute_rewards(100 ether, ((86400) * 7));
+    }
+
+    function test_advance_week_wrapper(uint256 warpTime) public { 
+        test_advance_week(block.timestamp + 1 weeks + 1 seconds);
+    }
+
+    function test_exit_position_wrapper() public {
+        test_exit_position(100 ether, ((86400) * 7), block.timestamp + 1 weeks + 20 seconds);
+    }
+
+    /**
+        Unit Test Implementations
+    */
+
     /// @notice tests that the participation duration must be > 7 days
-    function test_participation_1_day() public {
+    function test_participation_1_day(uint256 lockTime) public {
+        lockTime = bound(lockTime, 1, 86400);
         //ok
         vm.startPrank(owner);
         vm.expectRevert(LockNotAWeek.selector);
-        twTAP.participate(address(owner), 100 ether, 86400);
+        twTAP.participate(address(owner), 100 ether, lockTime);
         //make sure no NFT has been minted
         vm.expectRevert(bytes("ERC721: invalid token ID"));
         address _owner = twTAP.ownerOf(1);
@@ -201,7 +319,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice tests that lock duration can't be greater than 4x the current magnitude
-    function test_participate_with_magnitude() public {
+    function test_participate_with_magnitude(uint256 amount, uint256 duration) public {
         //ok
         vm.startPrank(__earlySupporters);
         //transfer tokens to the owner contract
@@ -216,7 +334,8 @@ contract twTAPTest is TapTestHelper, Errors {
         pearlmit.approve(20, address(aTapOFT), 0, address(twTAP), type(uint200).max, type(uint48).max); 
         
         vm.expectRevert(NotValid.selector);
-        twTAP.participate(address(owner), 100 ether, 1000 weeks);
+        // twTAP.participate(address(owner), 100 ether, 1000 weeks);
+        twTAP.participate(address(owner), amount, duration);
 
         //make sure no NFT has been minted
         vm.expectRevert(bytes("ERC721: invalid token ID"));
@@ -226,7 +345,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice tests a valid participation
-    function test_participate() public {
+    function test_participate(uint256 amount, uint256 duration) public {
         //ok
         vm.startPrank(__earlySupporters);
         //transfer tokens to the owner contract
@@ -238,7 +357,7 @@ contract twTAPTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         aTapOFT.approve(address(pearlmit), type(uint256).max);
         pearlmit.approve(20, address(aTapOFT), 0, address(twTAP), type(uint200).max, type(uint48).max); 
-        twTAP.participate(address(owner), 100 ether, ((86400) * 7));
+        twTAP.participate(address(owner), amount, duration);
         address _owner = twTAP.ownerOf(1);
         assertEq(_owner, address(owner));
         vm.stopPrank();
@@ -270,7 +389,7 @@ contract twTAPTest is TapTestHelper, Errors {
 
     /// @notice tests that if a reward token is added and a user participates, they receive the reward token on calling claimRewards
     // @audit this doesn't actually accumulate any rewards because no time passes and there's no call to distributeReward
-    function test_claim_rewards() public {
+    function test_claim_rewards(uint256 amount, uint256 duration) public {
         //ok
         vm.startPrank(__earlySupporters);
         //transfer tokens to the owner contract
@@ -282,7 +401,7 @@ contract twTAPTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         aTapOFT.approve(address(pearlmit), type(uint256).max);
         pearlmit.approve(20, address(aTapOFT), 0, address(twTAP), type(uint200).max, type(uint48).max); // NOTE: replaces previous approval implementation to approve through Pearlmit
-        twTAP.participate(address(owner), 100 ether, ((86400) * 7)); // participate for 24hrs + 1 second * 7 days
+        twTAP.participate(address(owner), amount, duration);
 
         address _owner = twTAP.ownerOf(1);
         assertEq(_owner, address(owner));
@@ -475,7 +594,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice user receives rewards after they accumulate over a week
-    function test_distribute_rewards() public {
+    function test_distribute_rewards(uint256 amount, uint256 duration) public {
         //ok
         vm.startPrank(owner);
 
@@ -508,10 +627,10 @@ contract twTAPTest is TapTestHelper, Errors {
         aTapOFT.approve(address(pearlmit), type(uint256).max);
         pearlmit.approve(20, address(aTapOFT), 0, address(twTAP), type(uint200).max, type(uint48).max); 
         
-        twTAP.participate(address(owner), 100 ether, ((86400) * 7));
+        twTAP.participate(address(owner), amount, duration);
 
         uint256 balanceTwTAP = aTapOFT.balanceOf(address(twTAP));
-        assertEq(balanceTwTAP, 100 ether);
+        assertEq(balanceTwTAP, amount);
 
         address _owner = twTAP.ownerOf(1);
         assertEq(_owner, address(owner));
@@ -538,14 +657,14 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice week advances up to actual current week
-    function test_advance_week() public {
+    function test_advance_week(uint256 warpTime) public {
         //ok
         vm.startPrank(owner);
         uint256 currentWeek = twTAP.currentWeek(); //0
-        //warp 7 days + 1 second to satisfy the next epoch
-        vm.warp(block.timestamp + 1 weeks + 1 seconds);
+        vm.warp(warpTime);
         twTAP.advanceWeek(100);
-        assertEq(twTAP.lastProcessedWeek(), 1); //0
+        uint256 timeInWeeks = warpTime / 1 weeks;
+        assertEq(twTAP.lastProcessedWeek(), timeInWeeks); 
         vm.stopPrank();
     }
 
@@ -600,7 +719,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice user receives their full balance back after exiting
-    function test_exit_position() public {
+    function test_exit_position(uint256 amount, uint256 duration, uint256 warpTime) public {
         //ok
         vm.startPrank(__earlySupporters);
         //transfer tokens to the owner contract
@@ -615,25 +734,46 @@ contract twTAPTest is TapTestHelper, Errors {
         aTapOFT.approve(address(pearlmit), type(uint256).max);
         pearlmit.approve(20, address(aTapOFT), 0, address(twTAP), type(uint200).max, type(uint48).max); 
 
-        twTAP.participate(address(owner), 100 ether, ((86400) * 7));
+        twTAP.participate(address(owner), amount, duration);
 
         uint256 balanceTwTAP = aTapOFT.balanceOf(address(twTAP));
-        assertEq(balanceTwTAP, 100 ether);
+        assertEq(balanceTwTAP, amount);
 
         address _owner = twTAP.ownerOf(1);
         assertEq(_owner, address(owner));
 
-        vm.warp(block.timestamp + 1 weeks + 20 seconds);
+        vm.warp(warpTime);
 
         uint256 balanceOwnerBefore = aTapOFT.balanceOf(address(owner));
         assertEq(balanceOwnerBefore, 3_686_495 ether);
 
-        vm.warp(block.timestamp + 1 weeks + 20 seconds);
+        vm.warp(warpTime);
 
         uint256 tapAmount_ = twTAP.exitPosition(1);
         uint256 balanceownerAfter = aTapOFT.balanceOf(address(owner));
         assertEq(balanceownerAfter, 3_686_495 ether + tapAmount_);
 
         vm.stopPrank();
+    }
+
+    /// @notice helper for clamping inputs for fuzz tests
+    function _sqrt(uint256 y) internal pure returns (uint256 z) {
+        if (y > 3) {
+            z = y;
+            uint256 x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
+    }
+
+    /// @notice calculates the duration upper bound given a pool's current cumulative value
+    function _calculateDurationUpperBound() internal returns (uint256 durationUpperBound) {
+        (,,, uint256 cumulative) = twTAP.twAML();
+        uint256 maxMagnitude = cumulative * 4;
+        durationUpperBound = _sqrt((maxMagnitude + cumulative) * (maxMagnitude + cumulative) - (cumulative * cumulative));
     }
 }
