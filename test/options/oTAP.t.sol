@@ -53,6 +53,7 @@ contract oTapTest is TapTestHelper, Errors {
         assertEq(otap.owner(), address(this));
     }
 
+    /// @notice setting the broker works
     function test_set_broker() public {
         vm.startPrank(owner);
         otap.brokerClaim();
@@ -61,6 +62,7 @@ contract oTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice trying to set the broker after it's already been set fails
     function test_claim_broker_twice() public {
         vm.startPrank(owner);
         otap.brokerClaim();
@@ -71,13 +73,15 @@ contract oTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice only broker can mint
     function test_cannot_mint_no_broker() public {
-        vm.expectRevert(bytes("OTAP: only onlyBroker"));
+        vm.expectRevert(OTAP.OnlyBroker.selector);
         otap.mint(address(owner), 1, 1, 1);
         uint256 balance = otap.balanceOf(address(owner));
         assertEq(balance, 0);
     }
 
+    /// @notice test minting oTAP works
     function test_mint_otap() public {
         vm.startPrank(owner);
         otap.brokerClaim();
@@ -87,6 +91,7 @@ contract oTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice when a token is minted it should exist
     function test_exists() public {
         vm.startPrank(owner);
         otap.brokerClaim();
@@ -98,6 +103,7 @@ contract oTapTest is TapTestHelper, Errors {
         assertEq(exists, true);
     }
 
+    /// @notice minting multiple oTAP is properly accounted for minter
     function test_mint_several_otap() public {
         vm.startPrank(owner);
         otap.brokerClaim();
@@ -112,6 +118,7 @@ contract oTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice oTAP can be transferred to a different address
     function test_transfer_from() public {
         vm.startPrank(owner);
         otap.brokerClaim();
@@ -124,6 +131,7 @@ contract oTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice oTAP is successfully burned
     function test_burn() public {
         vm.startPrank(owner);
         otap.brokerClaim();
@@ -134,17 +142,19 @@ contract oTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice only broker can burn
     function test_fail_burning() public {
         vm.startPrank(owner);
         otap.brokerClaim();
         otap.mint(owner, 1, 1, 1);
         vm.stopPrank();
         vm.startPrank(tokenBeneficiary);
-        vm.expectRevert(NotAuthorized.selector);
+        vm.expectRevert(OTAP.OnlyBroker.selector);
         otap.burn(1);
         vm.stopPrank();
     }
 
+    /// @notice approvals don't change owner
     function test_approvals() public {
         vm.startPrank(owner);
         otap.brokerClaim();
@@ -157,6 +167,7 @@ contract oTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice approval approves correct user
     function test_get_approved() public {
         vm.startPrank(owner);
         otap.brokerClaim();
@@ -167,6 +178,7 @@ contract oTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice approval for all works
     function test_set_approval_for_all() public {
         vm.startPrank(owner);
         otap.brokerClaim();

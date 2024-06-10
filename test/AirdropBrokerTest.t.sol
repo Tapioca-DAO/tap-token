@@ -34,9 +34,10 @@ contract AirdropBrokerTestMock is AirdropBroker {
 contract AirdropBrokerTest is Test {
     AirdropBrokerTestMock airdropBroker;
 
-    address AOTAP = address(0);
+    // NOTE: using dummy addresses for AOTAP and PCNFT because they're needed for deployment but not used in tests
+    address AOTAP = address(0x1);
+    address PCNFT = address(0x1);
     address payable TAPOFT = payable(address(new ERC20Mock("TAPOFT", "TAPOFT")));
-    address PCNFT = address(0);
     address TAP_ORACLE = address(new ADBOracleMock());
     address PAYMENT_TOKEN_BENEFICIARY = address(0);
     address OWNER = address(this);
