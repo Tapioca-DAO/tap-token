@@ -526,6 +526,18 @@
             "lastBlockHeight": 11103473,
             "contracts": [
                 {
+                    "name": "LTAP",
+                    "address": "0x1A7fA2C3CDFb730Ef01588eAa845F38EB1ef240e",
+                    "meta": {
+                        "args": [
+                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88",
+                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88"
+                        ],
+                        "salt": "0xd0377ffe35442cff4d4738a5e8ca2526ec926d1016703e45fbdc1c9735eb8b7b",
+                        "create2": true
+                    }
+                },
+                {
                     "name": "TAPIOCA_OPTION_LIQUIDITY_PROVISION",
                     "address": "0x9b47f96F13c557A4015c1aa670522A3586Ae0dc5",
                     "meta": {
@@ -718,18 +730,6 @@
                     "meta": {
                         "args": [],
                         "salt": "0x2b6b8fd261468624e992ee4e7501dc7790d20bfc6ca3143852268005ea52f480",
-                        "create2": true
-                    }
-                },
-                {
-                    "name": "LTAP",
-                    "address": "0xaA6a0439266F07691667D40A5f64b0a5Df026431",
-                    "meta": {
-                        "args": [
-                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88",
-                            "0xcD5B223b3ECF18ae695E797cb033e86b7b189C88"
-                        ],
-                        "salt": "0x1f3cefe61be4d5be204c4273c8f95f61de5824ab42492ec460a3739aa642ad89",
                         "create2": true
                     }
                 },
