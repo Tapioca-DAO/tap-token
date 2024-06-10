@@ -150,8 +150,8 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         setUpEndpoints(3, LibraryType.UltraLightNode); //TODO: check if this is necessary
 
         extExec = new TapiocaOmnichainExtExec();
-        pearlmit = new Pearlmit("Pearlmit", "1", owner, type(uint256).max); // @audit setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
-        cluster = new Cluster(lzChainId, owner); // @audit setting lzChainId arg here to 1, unsure if this is correct
+        pearlmit = new Pearlmit("Pearlmit", "1", owner, type(uint256).max); // NOTE: setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
+        cluster = new Cluster(lzChainId, owner); // NOTE: setting lzChainId arg here to 1, unsure if this is correct
 
         aTapOFT = new TapOFTV2Mock(
             ITapToken.TapTokenConstructorData(
@@ -235,6 +235,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         uint256 return_value2 = tapiocaOptionBroker.timestampToWeek(block.timestamp - 1 seconds);
         assertEq(return_value2, 0, "timestamp from previous time fails");
         uint256 return_value3 = tapiocaOptionBroker.timestampToWeek(block.timestamp + (7 days - 1 seconds));
+        console.log("return_value3: ", return_value3);
         assertEq(return_value3, 0, "timestamp less than epoch fails");
         uint256 return_value4 = tapiocaOptionBroker.timestampToWeek(block.timestamp + 8 days);
         assertEq(return_value4, 1, "timestamp in future fails");
@@ -306,9 +307,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         bytes memory data = abi.encode(uint256(3));
         tapiocaOptionBroker.setPaymentToken((mockToken), ITapiocaOracle(tapOracleMock), data);
-        // @audit fixed this to use values from paymentTokens mapping
         (ITapiocaOracle _tokenOracle, bytes memory _tokenOracledata) = tapiocaOptionBroker.paymentTokens(mockToken);
-        // @audit added the below assertions because they were missing
         assertEq(address(_tokenOracle), address(tapOracleMock));
         assertEq(_tokenOracledata, data);
         vm.stopPrank();

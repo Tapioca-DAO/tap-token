@@ -48,7 +48,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
      */
     function test_multi_compose_participate() public {
         vm.prank(__owner);
-        // @audit need to add bTapOFT to whitelist
+        // NOTE: need to add bTapOFT to whitelist
         cluster.updateContract(0, address(bTapOFT), true); 
 
         vm.startPrank(userA);
@@ -158,7 +158,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
     /**
      * @dev Integration test with both ERC721Permit, unlockTwTapPosition, ERC20Permit and sendRemoteTransfer
      */
-    // @audit this test fails at the call to erc721PermitApproval, appears to be an issue with the formatting of the message as the same approval call is successfully made in TapTokenTest::test_erc721_permit
+    // NOTE: this test fails at the call to erc721PermitApproval, appears to be an issue with the formatting of the message as the same approval call is successfully made in TapTokenTest::test_erc721_permit
     function test_multi_compose_exit_and_transfer() public {
         vm.startPrank(userA);
 
@@ -311,7 +311,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         {
             verifyPackets(uint32(bEid), address(bTapOFT));
             // Verify first message (approval)
-            // @audit this is the call that reverts
+            // NOTE: this is the call that reverts
             __callLzCompose(
                 LzOFTComposedData(
                     PT_NFT_APPROVALS, // msgType

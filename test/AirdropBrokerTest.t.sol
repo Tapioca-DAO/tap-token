@@ -34,7 +34,7 @@ contract AirdropBrokerTestMock is AirdropBroker {
 contract AirdropBrokerTest is Test {
     AirdropBrokerTestMock airdropBroker;
 
-    // @audit using dummy addresses for AOTAP and PCNFT because they're needed for deployment but not used in tests
+    // NOTE: using dummy addresses for AOTAP and PCNFT because they're needed for deployment but not used in tests
     address AOTAP = address(0x1);
     address PCNFT = address(0x1);
     address payable TAPOFT = payable(address(new ERC20Mock("TAPOFT", "TAPOFT")));

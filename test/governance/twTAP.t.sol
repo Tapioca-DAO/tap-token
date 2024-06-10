@@ -124,8 +124,8 @@ contract twTAPTest is TapTestHelper, Errors {
 
         setUpEndpoints(3, LibraryType.UltraLightNode); //TODO: check if this is necessary
 
-        pearlmit = new Pearlmit("Pearlmit", "v1", owner, type(uint256).max); // @audit setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
-        cluster = new Cluster(lzChainId, owner); // @audit setting lzChainId arg here to 1, unsure if this is correct
+        pearlmit = new Pearlmit("Pearlmit", "v1", owner, type(uint256).max); // NOTE: setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
+        cluster = new Cluster(lzChainId, owner); // NOTE: setting lzChainId arg here to 1, unsure if this is correct
 
         // NOTE: this replaces previous deploy method via _deployOApp that cause stack too deep error
         aTapOFT = new TapOFTV2Mock(
@@ -232,7 +232,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     function testFuzz_distribute_rewards(uint256 amount, uint256 duration) public {
-         // upper bound of duration is magnitude < pool.cumulative * 4
+        // upper bound of duration is magnitude < pool.cumulative * 4
         uint256 durationUpperBound = _calculateDurationUpperBound();
         duration = bound(duration, 86400, durationUpperBound - 1 seconds);
         // using vm.assume throws here, so need to filter duration values that aren't the length of an epoch with the following if statement
@@ -388,7 +388,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice tests that if a reward token is added and a user participates, they receive the reward token on calling claimRewards
-    // @audit this doesn't actually accumulate any rewards because no time passes and there's no call to distributeReward
+    // NOTE: this doesn't actually accumulate any rewards because no time passes and there's no call to distributeReward
     function test_claim_rewards(uint256 amount, uint256 duration) internal {
         //ok
         vm.startPrank(__earlySupporters);
@@ -561,7 +561,7 @@ contract twTAPTest is TapTestHelper, Errors {
         aTapOFT.transfer(address(owner), balance);
         vm.stopPrank();
 
-        // @audit added this transfer of reward tokens to owner which was missing
+        // NOTE: added this transfer of reward tokens to owner which was missing
         mockToken.transfer(owner, mockToken.balanceOf(address(this)) / 2);
 
         vm.startPrank(owner);
@@ -610,7 +610,7 @@ contract twTAPTest is TapTestHelper, Errors {
         assertEq(data, data2);
         vm.stopPrank();
 
-        // @audit added this transfer of reward tokens to owner which was missing
+        // NOTE: added this transfer of reward tokens to owner which was missing
         mockToken.transfer(owner, mockToken.balanceOf(address(this)) / 2);
 
         //participate

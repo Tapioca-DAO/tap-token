@@ -152,8 +152,8 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         setUpEndpoints(3, LibraryType.UltraLightNode); //TODO: check if this is necessary
 
         extExec = new TapiocaOmnichainExtExec();
-        pearlmit = new Pearlmit("Pearlmit", "1", owner, type(uint256).max); // @audit setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
-        cluster = new Cluster(lzChainId, owner); // @audit setting lzChainId arg here to 1, unsure if this is correct
+        pearlmit = new Pearlmit("Pearlmit", "1", owner, type(uint256).max); // NOTE: setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
+        cluster = new Cluster(lzChainId, owner); // NOTE: setting lzChainId arg here to 1, unsure if this is correct
 
         aTapOFT = new TapOFTV2Mock(
             ITapToken.TapTokenConstructorData(
@@ -283,7 +283,6 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
     }
 
     /// @notice registering multiple singularities works
-    // @audit this doesn't seem to be correct because it assumes singularitesAfter.length == 1
     function test_register_singularity_different_id() public {
         vm.startPrank(owner);
         tapiocaOptionLiquidityProvision.registerSingularity(singularity, 1, 1);

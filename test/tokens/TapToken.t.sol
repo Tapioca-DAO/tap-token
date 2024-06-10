@@ -120,10 +120,11 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
-        extExec = new TapiocaOmnichainExtExec();
         pearlmit = new Pearlmit("Pearlmit", "1", address(this), 0);
         cluster = new Cluster(aEid, __owner);
+        extExec = new TapiocaOmnichainExtExec();
 
+        console.log("before aTapOFT deploy");
         aTapOFT = new TapTokenMock(
             ITapToken.TapTokenConstructorData(
                 EPOCH_DURATION,
@@ -144,7 +145,9 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             )
         );
         vm.label(address(aTapOFT), "aTapOFT");
+        console.log("cluster from getCluster: ", address(aTapOFT.getCluster()));
 
+        console.log("before bTapOFT deploy");
         bTapOFT = new TapTokenMock(
             ITapToken.TapTokenConstructorData(
                 EPOCH_DURATION,
@@ -165,6 +168,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             )
         );
         vm.label(address(bTapOFT), "bTapOFT");
+        console.log("cluster from getCluster: ", address(bTapOFT.getCluster()));
 
         twTap = new TwTAP(payable(address(bTapOFT)), IPearlmit(address(pearlmit)), address(this));
         vm.label(address(twTap), "twTAP");
@@ -275,7 +279,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         bytes memory approvalsMsg_;
 
         {
-            cluster.updateContract(0, address(bTapOFT), true); // @audit adding bTapOFT to whitelist which caused revert in previous implementation  
+            cluster.updateContract(0, address(bTapOFT), true); // NOTE: adding bTapOFT to whitelist which caused revert in previous implementation  
 
             ERC20PermitStruct memory approvalUserB_ =
                 ERC20PermitStruct({owner: userA, spender: userB, value: 1e18, nonce: 0, deadline: 1 days});
@@ -371,7 +375,6 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             pearlmit.approve(20, address(bTapOFT), 0, address(twTap), uint200(1e18), uint48(block.timestamp + 1));
             twTap.participate(address(userA), 1e18, 1 weeks);
 
-            // @audit might be an issue here with starting a prank inside another
             vm.startPrank(userB);
             bTapOFT.approve(address(pearlmit), 1e18);
             pearlmit.approve(20, address(bTapOFT), 0, address(twTap), uint200(1e18), uint48(block.timestamp + 1));
@@ -384,7 +387,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         bytes memory approvalsMsg_;
 
         {
-            cluster.updateContract(0, address(twTap), true); // @audit adding bTapOFT to whitelist which caused revert before  
+            cluster.updateContract(0, address(twTap), true); // NOTE: adding bTapOFT to whitelist which caused revert before  
 
             ERC721PermitStruct memory approvalUserB_ =
                 ERC721PermitStruct({spender: userB, tokenId: 1, nonce: 1, deadline: 1 days}); // NOTE: nonce here was previously incorrectly set for approval to 0
@@ -395,12 +398,6 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
             permitApprovalB_ =
                 __getERC721PermitData(approvalUserB_, twTap.getTypedDataHash(approvalUserB_), address(twTap), userAPKey);
-
-            // @audit adding in to see if there's no mixing of value order
-            // address signer = ECDSA.recover(twTap.getTypedDataHash(approvalUserB_), permitApprovalB_.v, permitApprovalB_.r, permitApprovalB_.s);
-            // console.log("signer recovered in test: ", signer);
-            // console.log("hash of B approval in test: ");
-            // console.logBytes32(twTap.getTypedDataHash(approvalUserB_));
 
             permitApprovalC_ =
                 __getERC721PermitData(approvalUserC_, twTap.getTypedDataHash(approvalUserC_), address(twTap), userBPKey);

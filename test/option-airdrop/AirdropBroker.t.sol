@@ -122,8 +122,8 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         setUpEndpoints(3, LibraryType.UltraLightNode); //TODO: check if this is necessary
 
         extExec = new TapiocaOmnichainExtExec();
-        pearlmit = new Pearlmit("Pearlmit", "1", owner, type(uint256).max); // @audit setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
-        cluster = new Cluster(lzChainId, owner); // @audit setting lzChainId arg here to 1, unsure if this is correct
+        pearlmit = new Pearlmit("Pearlmit", "1", owner, type(uint256).max); // NOTE: setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
+        cluster = new Cluster(lzChainId, owner); // NOTE: setting lzChainId arg here to 1, unsure if this is correct
         aTapOFT = new TapOFTV2Mock(
             ITapToken.TapTokenConstructorData(
                 EPOCH_DURATION,

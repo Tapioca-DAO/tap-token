@@ -51,7 +51,7 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.label(tokenBeneficiary, "tokenBeneficiary"); //label address for test traces
 
         // pearlmit = IPearlmit(address(new Pearlmit())); //deploy Pearlmit
-        pearlmit = IPearlmit(address(new Pearlmit("Pearlmit", "1", owner, type(uint256).max))); // @audit setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
+        pearlmit = IPearlmit(address(new Pearlmit("Pearlmit", "1", owner, type(uint256).max))); // NOTE: setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
         aotap = new AOTAP(pearlmit, address(owner)); //deploy AOTAP and set address to owner
 
         super.setUp();
@@ -225,7 +225,7 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    // @audit expiry time in minting can be in the past
+    // NOTE: expiry time in minting can be in the past
     function test_mint_past_expiry_time() public {
         vm.startPrank(owner);
         aotap.brokerClaim();

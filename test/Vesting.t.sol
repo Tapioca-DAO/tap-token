@@ -155,8 +155,7 @@ contract VestingTest is TapTestHelper, Errors {
         test_register_users(1_000_000, 1_000_000);
     }
 
-    /// @notice registering individual user via registerUsers works
-    // @audit add an additional user here
+    /// @notice registering multiple user via registerUsers works
     function test_register_users(uint256 amountToRegister1, uint256 amountToRegister2) public {
         vm.startPrank(owner);
         address[] memory users = new address[](2);
