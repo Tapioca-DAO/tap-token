@@ -286,7 +286,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     function test_claim_rewards_wrapper() public {
-        test_claim_rewards(100 ether,(86400) * 7);
+        test_claim_rewards(100 ether, (86400) * 7);
     }
 
     function test_distribute_rewards_wrapper() public {
@@ -306,7 +306,7 @@ contract twTAPTest is TapTestHelper, Errors {
     */
 
     /// @notice tests that the participation duration must be > 7 days
-    function test_participation_1_day(uint256 lockTime) public {
+    function test_participation_1_day(uint256 lockTime) internal {
         lockTime = bound(lockTime, 1, 86400);
         //ok
         vm.startPrank(owner);
@@ -319,7 +319,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice tests that lock duration can't be greater than 4x the current magnitude
-    function test_participate_with_magnitude(uint256 amount, uint256 duration) public {
+    function test_participate_with_magnitude(uint256 amount, uint256 duration) internal {
         //ok
         vm.startPrank(__earlySupporters);
         //transfer tokens to the owner contract
@@ -345,7 +345,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice tests a valid participation
-    function test_participate(uint256 amount, uint256 duration) public {
+    function test_participate(uint256 amount, uint256 duration) internal {
         //ok
         vm.startPrank(__earlySupporters);
         //transfer tokens to the owner contract
@@ -389,7 +389,7 @@ contract twTAPTest is TapTestHelper, Errors {
 
     /// @notice tests that if a reward token is added and a user participates, they receive the reward token on calling claimRewards
     // @audit this doesn't actually accumulate any rewards because no time passes and there's no call to distributeReward
-    function test_claim_rewards(uint256 amount, uint256 duration) public {
+    function test_claim_rewards(uint256 amount, uint256 duration) internal {
         //ok
         vm.startPrank(__earlySupporters);
         //transfer tokens to the owner contract
@@ -594,7 +594,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice user receives rewards after they accumulate over a week
-    function test_distribute_rewards(uint256 amount, uint256 duration) public {
+    function test_distribute_rewards(uint256 amount, uint256 duration) internal {
         //ok
         vm.startPrank(owner);
 
@@ -657,7 +657,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice week advances up to actual current week
-    function test_advance_week(uint256 warpTime) public {
+    function test_advance_week(uint256 warpTime) internal {
         //ok
         vm.startPrank(owner);
         uint256 currentWeek = twTAP.currentWeek(); //0
@@ -719,7 +719,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice user receives their full balance back after exiting
-    function test_exit_position(uint256 amount, uint256 duration, uint256 warpTime) public {
+    function test_exit_position(uint256 amount, uint256 duration, uint256 warpTime) internal {
         //ok
         vm.startPrank(__earlySupporters);
         //transfer tokens to the owner contract
