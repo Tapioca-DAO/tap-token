@@ -158,13 +158,8 @@ contract TapTokenMultiComposeTest is TapTokenTest {
     /**
      * @dev Integration test with both ERC721Permit, unlockTwTapPosition, ERC20Permit and sendRemoteTransfer
      */
+    // @audit this test fails at the call to erc721PermitApproval, appears to be an issue with the formatting of the message as the same approval call is successfully made in TapTokenTest::test_erc721_permit
     function test_multi_compose_exit_and_transfer() public {
-        console.log("cluster in test: ", address(cluster));
-        // @audit added this to see if it resolved erc721PermitApproval issue
-        vm.prank(__owner);
-        // @audit need to add bTapOFT to whitelist
-        cluster.updateContract(0, address(bTapOFT), true); 
-
         vm.startPrank(userA);
 
         // Global vars
@@ -183,7 +178,6 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         }
 
         // First packet vars
-        // @audit user is approving their aTapOFT to twTap
         SetupERC721ApprovalMsgData memory erc721ApprovalsData_ = SetupERC721ApprovalMsgData({
             token: ITapToken(address(aTapOFT)),
             prepareLzCallData: PrepareLzCallData({
@@ -214,8 +208,6 @@ contract TapTokenMultiComposeTest is TapTokenTest {
             nonce: 1,
             deadline: block.timestamp + 1 days
         });
-
-        console.log("nonce in permit struct: ", 1);
 
         SetupERC721ApprovalMsgReturn memory erc721ApprovalsReturn_ = _setupERC721ApprovalMsg(erc721ApprovalsData_);
 
@@ -315,12 +307,6 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: feeValue}(
             remoteTransferReturn_.prepareLzCallReturn.lzSendParam, remoteTransferReturn_.prepareLzCallReturn.composeMsg
         );
-
-        // // @audit try calling approve directly here to see if can catch the revert message
-        // bytes memory testData = hex"000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000010000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf0000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000a8c01000000000000000000000000000000000000000000000000000000000000001c8a580ae8fcb8ffdf6a6acb23c1badaef6713deca21f602ccac9dffb046ba61df1255a94f4b4a895c9b22e19e7117f73514f923e946876fd2d7021724c2079819";
-        // extExec.erc721PermitApproval(testData);
-        // @audit added this function to be able to test calling erc721PermitApproval with proper context
-        // bTapOFT.newPermit();
 
         {
             verifyPackets(uint32(bEid), address(bTapOFT));
