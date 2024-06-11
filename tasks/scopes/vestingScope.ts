@@ -1,13 +1,22 @@
 import { scope } from 'hardhat/config';
-import { registerUserForVesting__task } from 'tasks/exec/vesting/01-vesting-registerUser';
-import { initVesting__task } from 'tasks/exec/vesting/02-vesting-init';
+import { TAP_TASK } from 'tapioca-sdk';
+import { registerUsersVesting__task } from 'tasks/exec/vesting/registerUsersVesting';
+import { vestingInit__task } from 'tasks/exec/vesting/vestingInit';
 
 const vestingScope = scope('vesting', 'Vesting setter tasks');
 
-vestingScope.task(
-    'registerUserForVesting',
-    'Add vesting for user',
-    registerUserForVesting__task,
+TAP_TASK(
+    vestingScope
+        .task(
+            'registerVestingUsers',
+            'Add users for a given vesting',
+            registerUsersVesting__task,
+        )
+        .addParam('contributorAddress', 'Address of the contributor multisig')
+        .addParam('seedFile', 'Path to the seed file')
+        .addParam('preSeedFile', 'Path to the pre-seed file'),
 );
 
-vestingScope.task('initVesting', 'Inits user vesting', initVesting__task);
+TAP_TASK(
+    vestingScope.task('initVesting', 'Inits user vesting', vestingInit__task),
+);
