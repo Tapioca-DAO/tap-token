@@ -115,7 +115,7 @@ const config: HardhatUserConfig & { dodoc: any } = {
     },
     etherscan: {
         apiKey: {
-            arbitrum: process.env.SCAN_API_KEY ?? '',
+            arbitrumOne: process.env.SCAN_API_KEY ?? '',
             ethereum: process.env.SCAN_API_KEY ?? '',
             sepolia: process.env.SCAN_API_KEY ?? '',
             arbitrumSepolia: process.env.SCAN_API_KEY ?? '',
