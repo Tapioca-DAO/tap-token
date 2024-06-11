@@ -63,7 +63,7 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     const { pearlmit, yieldBox } = await getContracts(hre, tag);
 
     VM.add(await getTolp(hre, owner, yieldBox.address, pearlmit.address))
-        .add(await getOtap(hre, owner))
+        .add(await getOtap(hre, pearlmit.address, owner))
         .add(await getTob(hre, tag, owner, pearlmit.address))
         .add(await getTwTap(hre, tag, owner, pearlmit.address));
 }
@@ -115,8 +115,12 @@ async function getTolp(
     );
 }
 
-async function getOtap(hre: HardhatRuntimeEnvironment, owner: string) {
-    return await buildOTAP(hre, DEPLOYMENT_NAMES.OTAP, [owner]);
+async function getOtap(
+    hre: HardhatRuntimeEnvironment,
+    pearlmit: string,
+    owner: string,
+) {
+    return await buildOTAP(hre, DEPLOYMENT_NAMES.OTAP, [pearlmit, owner]);
 }
 
 async function getTob(
