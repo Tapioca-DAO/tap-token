@@ -307,6 +307,8 @@ export async function getTapToken(params: {
     let dao = DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS;
     dao = isTestnet ? owner : dao;
 
+    const contributors = isTestnet ? owner : '0x'; //contributors address for vesting, we use owner for testnet
+
     const isGovernanceChain = chainInfo.lzChainId == governanceEid;
     return await buildTapToken(
         hre,
@@ -316,7 +318,7 @@ export async function getTapToken(params: {
                 epochDuration:
                     DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
                 endpoint: lzEndpointAddress, // Endpoint address
-                contributors: isTestnet ? owner : '0x', //contributors address, we use owner for testnet
+                contributors,
                 earlySupporters: hre.ethers.constants.AddressZero, // early supporters address
                 supporters: hre.ethers.constants.AddressZero, // supporters address
                 lTap: lTap.address, // lTap address
