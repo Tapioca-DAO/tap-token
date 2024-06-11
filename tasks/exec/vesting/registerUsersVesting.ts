@@ -4,6 +4,7 @@ import { loadLocalContract } from 'tapioca-sdk';
 import { TTapiocaDeployerVmPass } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { DEPLOYMENT_NAMES } from 'tasks/deploy/DEPLOY_CONFIG';
 import fs from 'fs';
+import { BigNumberish } from 'ethers';
 
 export const PRE_SEED_VESTING_TOTAL = 3_500_000n * 10n ** 18n; // 3.5m
 export const SEED_VESTING_TOTAL = 10n ** 16n * 14_582_575_34n; // 14,582,575.34
@@ -78,6 +79,7 @@ async function tapiocaTask(
     );
 
     const seedBalance = await tapToken.balanceOf(seedVesting.address);
+    console.log('[+] Seed balance:', hre.ethers.utils.formatEther(seedBalance));
     if (seedBalance.lt(SEED_VESTING_TOTAL)) {
         throw new Error(
             `[-] Seed vesting contract does not have enough tokens to vest, has ${seedBalance.toBigInt()}, needs ${SEED_VESTING_TOTAL}`,
@@ -85,6 +87,10 @@ async function tapiocaTask(
     }
 
     const preSeedBalance = await tapToken.balanceOf(preSeedVesting.address);
+    console.log(
+        '[+] Pre seed balance:',
+        hre.ethers.utils.formatEther(preSeedBalance),
+    );
     if (preSeedBalance.lt(PRE_SEED_VESTING_TOTAL)) {
         throw new Error(
             `[-] PreSeed vesting contract does not have enough tokens to vest, has ${preSeedBalance.toBigInt()}, needs ${PRE_SEED_VESTING_TOTAL}`,
@@ -92,6 +98,10 @@ async function tapiocaTask(
     }
 
     const contributorBalance = await tapToken.balanceOf(contributorAddress);
+    console.log(
+        '[+] Contributor balance:',
+        hre.ethers.utils.formatEther(contributorBalance),
+    );
     if (contributorBalance.lt(CONTRIBUTOR_VESTING_TOTAL)) {
         throw new Error(
             `[-] Contributor does not have enough tokens to vest, has ${contributorBalance.toBigInt()}, needs ${CONTRIBUTOR_VESTING_TOTAL}`,
@@ -100,20 +110,55 @@ async function tapiocaTask(
 
     type TData = {
         address: string;
-        value: string | number;
+        value: string;
     };
-    const preSeedData = (await getJsonData(preSeedFile)) as TData[];
-    const seedData = (await getJsonData(preSeedFile)) as TData[];
+    type TAggregatedData = {
+        address: string;
+        value: bigint;
+    };
+
+    function aggregateValues(data: TData[]): TAggregatedData[] {
+        const aggregated: { [key: string]: number } = {};
+
+        data.forEach((item) => {
+            if (aggregated[item.address]) {
+                aggregated[item.address] += Number(item.value);
+            } else {
+                aggregated[item.address] = Number(item.value);
+            }
+        });
+
+        return Object.keys(aggregated).map((address) => ({
+            address,
+            // Cast to BigInt and convert to 1e18. Uses 10^10 as a multiplier to avoid floating point errors
+            value: BigInt(Number(aggregated[address]) * 10 ** 10) * 10n ** 8n,
+        }));
+    }
+
+    const preSeedDataAggregated: TAggregatedData[] = aggregateValues(
+        (await getJsonData(preSeedFile)) as TData[],
+    );
+
+    const seedDataAggregated: TAggregatedData[] = aggregateValues(
+        (await getJsonData(seedFile)) as TData[],
+    );
 
     console.log(
         '[+] Total for preSeed:',
-        preSeedData.reduce((acc, data) => acc + Number(data.value), 0),
+        hre.ethers.utils.formatEther(
+            preSeedDataAggregated.reduce((acc, data) => acc + data.value, 0n),
+        ),
     );
     console.log(
         '[+] Total for seed:',
-        seedData.reduce((acc, data) => acc + Number(data.value), 0),
+        hre.ethers.utils.formatEther(
+            seedDataAggregated.reduce((acc, data) => acc + data.value, 0n),
+        ),
     );
-    console.log('[+] Total for contributor:', CONTRIBUTOR_VESTING_TOTAL);
+    console.log(
+        '[+] Total for contributor:',
+        hre.ethers.utils.formatEther(CONTRIBUTOR_VESTING_TOTAL),
+    );
 
     await VM.executeMulticall([
         {
@@ -122,8 +167,8 @@ async function tapiocaTask(
             callData: preSeedVesting.interface.encodeFunctionData(
                 'registerUsers',
                 [
-                    preSeedData.map((data) => data.address),
-                    preSeedData.map((data) => data.value),
+                    preSeedDataAggregated.map((data) => data.address),
+                    preSeedDataAggregated.map((data) => data.value),
                 ],
             ),
         },
@@ -133,8 +178,8 @@ async function tapiocaTask(
             callData: seedVesting.interface.encodeFunctionData(
                 'registerUsers',
                 [
-                    seedData.map((data) => data.address),
-                    seedData.map((data) => data.value),
+                    seedDataAggregated.map((data) => data.address),
+                    seedDataAggregated.map((data) => data.value),
                 ],
             ),
         },
