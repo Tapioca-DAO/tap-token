@@ -119,9 +119,9 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      * ============
      * Contributors: 15m
      * Early supporters: 3.5m
-     * Supporters: 14,582,575.34
+     * Supporters: 14,638,029.34
      * LBP: 5m
-     * DAO: 6,917,424.66
+     * DAO: 6,861,970.66
      * Airdrop: 2.5m
      * == 47.5M ==
      * DSO: 52.5m
@@ -162,9 +162,9 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         if (_getChainId() == _data.governanceEid) {
             _mint(_data.contributors, 1e18 * 15_000_000);
             _mint(_data.earlySupporters, 1e18 * 3_500_000);
-            _mint(_data.supporters, 1e18 * 14_582_575.34);
+            _mint(_data.supporters, 1e18 * 14_638_029.34);
             _mint(_data.lTap, 1e18 * 5_000_000);
-            _mint(_data.dao, 1e18 * 6_917_424.66);
+            _mint(_data.dao, 1e18 * 6_861_970.66);
             _mint(_data.airdrop, 1e18 * 2_500_000);
             if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
         }
