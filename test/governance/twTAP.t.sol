@@ -3,12 +3,7 @@
 pragma solidity 0.8.22;
 
 // LZ
-import {
-    SendParam,
-    MessagingFee,
-    MessagingReceipt,
-    OFTReceipt
-} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import {SendParam, MessagingFee, MessagingReceipt, OFTReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTMsgCodec.sol";
@@ -23,31 +18,15 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //Tapioca
-import {
-    ITapToken,
-    LockTwTapPositionMsg,
-    UnlockTwTapPositionMsg,
-    LZSendParam,
-    ERC20PermitStruct,
-    ERC721PermitStruct,
-    ERC20PermitApprovalMsg,
-    ERC721PermitApprovalMsg,
-    ClaimTwTapRewardsMsg,
-    RemoteTransferMsg
-} from "tap-token/tokens/ITapToken.sol";
-import {
-    TapTokenHelper,
-    PrepareLzCallData,
-    PrepareLzCallReturn,
-    ComposeMsgData
-} from "tap-token/tokens/extensions/TapTokenHelper.sol";
+import {ITapToken, LockTwTapPositionMsg, UnlockTwTapPositionMsg, LZSendParam, ERC20PermitStruct, ERC721PermitStruct, ERC20PermitApprovalMsg, ERC721PermitApprovalMsg, ClaimTwTapRewardsMsg, RemoteTransferMsg} from "tap-token/tokens/ITapToken.sol";
+import {TapTokenHelper, PrepareLzCallData, PrepareLzCallReturn, ComposeMsgData} from "tap-token/tokens/extensions/TapTokenHelper.sol";
 import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
 import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
 import {TapTokenReceiver} from "tap-token/tokens/TapTokenReceiver.sol";
 import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
 import {Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
 import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
-import {ICluster, Cluster} from  "tapioca-periph/Cluster/Cluster.sol";
+import {ICluster, Cluster} from "tapioca-periph/Cluster/Cluster.sol";
 import {TWAML} from "tap-token/options/twAML.sol";
 
 // Tapioca Tests
@@ -114,7 +93,6 @@ contract twTAPTest is TapTestHelper, Errors {
     address public __extExec = address(0x36);
     uint256 public __governanceEid = aEid; //aEid, initially bEid
     address public __owner = address(this);
-    
 
     function setUp() public override {
         vm.deal(owner, 1000 ether); //give owner some ether
@@ -139,9 +117,25 @@ contract twTAPTest is TapTestHelper, Errors {
                 __dao,
                 __airdrop,
                 __governanceEid,
-                owner, 
-                address(new TapTokenSender("", "", address(endpoints[aEid]), address(this), address(0))),
-                address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this), address(0))),
+                owner,
+                address(
+                    new TapTokenSender(
+                        "",
+                        "",
+                        address(endpoints[aEid]),
+                        address(this),
+                        address(0)
+                    )
+                ),
+                address(
+                    new TapTokenReceiver(
+                        "",
+                        "",
+                        address(endpoints[aEid]),
+                        address(this),
+                        address(0)
+                    )
+                ),
                 address(__extExec),
                 IPearlmit(address(pearlmit)),
                 ICluster(address(cluster))
@@ -156,7 +150,11 @@ contract twTAPTest is TapTestHelper, Errors {
         aotap = new AOTAP(IPearlmit(address(pearlmit)), address(this)); //deploy AOTAP and set address to owner
 
         airdropBroker = new AirdropBroker(
-            address(aotap), payable(address(aTapOFT)), tokenBeneficiary, IPearlmit(address(pearlmit)), address(owner)
+            address(aotap),
+            payable(address(aTapOFT)),
+            tokenBeneficiary,
+            IPearlmit(address(pearlmit)),
+            address(owner)
         );
 
         vm.startPrank(owner);
@@ -171,7 +169,11 @@ contract twTAPTest is TapTestHelper, Errors {
         airdropBroker.setTapOracle(tapOracleMock, _data);
         vm.stopPrank();
 
-        twTAP = new TwTAP(payable(address(aTapOFT)), IPearlmit(address(pearlmit)), address(owner));
+        twTAP = new TwTAP(
+            payable(address(aTapOFT)),
+            IPearlmit(address(pearlmit)),
+            address(owner)
+        );
 
         // config and wire the ofts
         address[] memory ofts = new address[](1);
@@ -183,10 +185,10 @@ contract twTAPTest is TapTestHelper, Errors {
 
     function test_constructor() public {
         //ok
-        // assertEq(twTAP.owner(), address(owner));
-        // // assertEq(twTAP.tapOFT(), aTapOFT);
-        // assertEq(twTAP.creation(), block.timestamp);
-        // assertEq(twTAP.maxRewardTokens(), 1000);
+        assertEq(twTAP.owner(), address(owner));
+        assertEq(address(twTAP.tapOFT()), address(aTapOFT));
+        assertEq(twTAP.creation(), block.timestamp);
+        assertEq(twTAP.maxRewardTokens(), 30);
     }
 
     /**
@@ -196,7 +198,10 @@ contract twTAPTest is TapTestHelper, Errors {
         test_participation_1_day(lockTime);
     }
 
-    function testFuzz_participate_with_magnitude(uint256 amount, uint256 duration) public {
+    function testFuzz_participate_with_magnitude(
+        uint256 amount,
+        uint256 duration
+    ) public {
         amount = bound(amount, 100 ether, 3_686_595 ether);
         duration = bound(duration, 1000 weeks, 2000 weeks);
         vm.assume(duration % 7 days == 0);
@@ -208,7 +213,7 @@ contract twTAPTest is TapTestHelper, Errors {
         uint256 durationUpperBound = _calculateDurationUpperBound();
         duration = bound(duration, 86400, durationUpperBound - 1 seconds);
         // using vm.assume throws here, so need to filter duration values that aren't the length of an epoch with the following if statement
-        if(duration % 7 days != 0) {
+        if (duration % 7 days != 0) {
             return;
         }
 
@@ -217,12 +222,12 @@ contract twTAPTest is TapTestHelper, Errors {
         test_participate(amount, duration);
     }
 
-    function testFuzz_claim_rewards(uint256 amount, uint256 duration) public { 
+    function testFuzz_claim_rewards(uint256 amount, uint256 duration) public {
         // upper bound of duration is magnitude < pool.cumulative * 4
         uint256 durationUpperBound = _calculateDurationUpperBound();
         duration = bound(duration, 86400, durationUpperBound - 1 seconds);
         // using vm.assume throws here, so need to filter duration values that aren't the length of an epoch with the following if statement
-        if(duration % 7 days != 0) {
+        if (duration % 7 days != 0) {
             return;
         }
 
@@ -231,12 +236,15 @@ contract twTAPTest is TapTestHelper, Errors {
         test_claim_rewards(amount, duration);
     }
 
-    function testFuzz_distribute_rewards(uint256 amount, uint256 duration) public {
+    function testFuzz_distribute_rewards(
+        uint256 amount,
+        uint256 duration
+    ) public {
         // upper bound of duration is magnitude < pool.cumulative * 4
         uint256 durationUpperBound = _calculateDurationUpperBound();
         duration = bound(duration, 86400, durationUpperBound - 1 seconds);
         // using vm.assume throws here, so need to filter duration values that aren't the length of an epoch with the following if statement
-        if(duration % 7 days != 0) {
+        if (duration % 7 days != 0) {
             return;
         }
 
@@ -245,25 +253,37 @@ contract twTAPTest is TapTestHelper, Errors {
         test_distribute_rewards(amount, duration);
     }
 
-    function testFuzz_advance_week(uint256 warpTime) public { 
-        warpTime = bound(warpTime, block.timestamp + 1 weeks + 1 seconds, block.timestamp + 100 weeks + 1 seconds);
+    function testFuzz_advance_week(uint256 warpTime) public {
+        warpTime = bound(
+            warpTime,
+            block.timestamp + 1 weeks + 1 seconds,
+            block.timestamp + 100 weeks + 1 seconds
+        );
         vm.assume(warpTime / 1 weeks < 100);
         test_advance_week(warpTime);
     }
 
-    function testFuzz_exit_position(uint256 amount, uint256 duration, uint256 warpTime) public { 
+    function testFuzz_exit_position(
+        uint256 amount,
+        uint256 duration,
+        uint256 warpTime
+    ) public {
         // upper bound of duration is magnitude < pool.cumulative * 4
         uint256 durationUpperBound = _calculateDurationUpperBound();
         duration = bound(duration, 86400, durationUpperBound - 1 seconds);
         // using vm.assume throws here, so need to filter duration values that aren't the length of an epoch with the following if statement
-        if(duration % 7 days != 0) {
+        if (duration % 7 days != 0) {
             return;
         }
 
         amount = bound(amount, 100 ether, 3_686_595 ether);
 
         // time to warp ahead before exiting position
-        warpTime = bound(warpTime, block.timestamp + 1 weeks + 1 seconds, block.timestamp + 100 weeks + 1 seconds);
+        warpTime = bound(
+            warpTime,
+            block.timestamp + 1 weeks + 1 seconds,
+            block.timestamp + 100 weeks + 1 seconds
+        );
         vm.assume(warpTime / 1 weeks < 100);
 
         test_exit_position(amount, duration, warpTime);
@@ -282,7 +302,7 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     function test_participate_wrapper() public {
-        test_participate(100 ether,((86400) * 7));
+        test_participate(100 ether, ((86400) * 7));
     }
 
     function test_claim_rewards_wrapper() public {
@@ -293,12 +313,16 @@ contract twTAPTest is TapTestHelper, Errors {
         test_distribute_rewards(100 ether, ((86400) * 7));
     }
 
-    function test_advance_week_wrapper(uint256 warpTime) public { 
+    function test_advance_week_wrapper(uint256 warpTime) public {
         test_advance_week(block.timestamp + 1 weeks + 1 seconds);
     }
 
     function test_exit_position_wrapper() public {
-        test_exit_position(100 ether, ((86400) * 7), block.timestamp + 1 weeks + 20 seconds);
+        test_exit_position(
+            100 ether,
+            ((86400) * 7),
+            block.timestamp + 1 weeks + 20 seconds
+        );
     }
 
     /**
@@ -319,7 +343,10 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice tests that lock duration can't be greater than 4x the current magnitude
-    function test_participate_with_magnitude(uint256 amount, uint256 duration) internal {
+    function test_participate_with_magnitude(
+        uint256 amount,
+        uint256 duration
+    ) internal {
         //ok
         vm.startPrank(__earlySupporters);
         //transfer tokens to the owner contract
@@ -331,8 +358,15 @@ contract twTAPTest is TapTestHelper, Errors {
         vm.startPrank(owner);
         // owner needs to use Pearlmit to approve twTAP for their TAP
         aTapOFT.approve(address(pearlmit), type(uint256).max);
-        pearlmit.approve(20, address(aTapOFT), 0, address(twTAP), type(uint200).max, type(uint48).max); 
-        
+        pearlmit.approve(
+            20,
+            address(aTapOFT),
+            0,
+            address(twTAP),
+            type(uint200).max,
+            type(uint48).max
+        );
+
         vm.expectRevert(NotValid.selector);
         // twTAP.participate(address(owner), 100 ether, 1000 weeks);
         twTAP.participate(address(owner), amount, duration);
@@ -356,7 +390,14 @@ contract twTAPTest is TapTestHelper, Errors {
 
         vm.startPrank(owner);
         aTapOFT.approve(address(pearlmit), type(uint256).max);
-        pearlmit.approve(20, address(aTapOFT), 0, address(twTAP), type(uint200).max, type(uint48).max); 
+        pearlmit.approve(
+            20,
+            address(aTapOFT),
+            0,
+            address(twTAP),
+            type(uint200).max,
+            type(uint48).max
+        );
         twTAP.participate(address(owner), amount, duration);
         address _owner = twTAP.ownerOf(1);
         assertEq(_owner, address(owner));
@@ -378,7 +419,9 @@ contract twTAPTest is TapTestHelper, Errors {
         assertEq(data, data2);
 
         uint256 balanceBefore = IERC20(mockToken).balanceOf(address(owner));
-        vm.expectRevert(abi.encodeWithSelector(TwTAP.NotApproved.selector, 1, owner));
+        vm.expectRevert(
+            abi.encodeWithSelector(TwTAP.NotApproved.selector, 1, owner)
+        );
         twTAP.claimRewards(1);
 
         uint256 balanceAfter = IERC20(mockToken).balanceOf(address(owner));
@@ -400,7 +443,14 @@ contract twTAPTest is TapTestHelper, Errors {
 
         vm.startPrank(owner);
         aTapOFT.approve(address(pearlmit), type(uint256).max);
-        pearlmit.approve(20, address(aTapOFT), 0, address(twTAP), type(uint200).max, type(uint48).max); // NOTE: replaces previous approval implementation to approve through Pearlmit
+        pearlmit.approve(
+            20,
+            address(aTapOFT),
+            0,
+            address(twTAP),
+            type(uint200).max,
+            type(uint48).max
+        ); // NOTE: replaces previous approval implementation to approve through Pearlmit
         twTAP.participate(address(owner), amount, duration);
 
         address _owner = twTAP.ownerOf(1);
@@ -526,7 +576,9 @@ contract twTAPTest is TapTestHelper, Errors {
 
         IERC20(mockToken).approve(address(twTAP), type(uint256).max);
 
-        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(address(owner));
+        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(
+            address(owner)
+        );
         // vm.expectRevert(bytes("0x12"));ß
         vm.expectRevert(AdvanceWeekFirst.selector);
         twTAP.distributeReward(1, 1);
@@ -567,7 +619,14 @@ contract twTAPTest is TapTestHelper, Errors {
         vm.startPrank(owner);
 
         aTapOFT.approve(address(pearlmit), type(uint256).max);
-        pearlmit.approve(20, address(aTapOFT), 0, address(twTAP), type(uint200).max, type(uint48).max); 
+        pearlmit.approve(
+            20,
+            address(aTapOFT),
+            0,
+            address(twTAP),
+            type(uint200).max,
+            type(uint48).max
+        );
         twTAP.participate(address(owner), 100 ether, ((86400) * 7));
 
         uint256 balanceTwTAP = aTapOFT.balanceOf(address(twTAP));
@@ -584,7 +643,9 @@ contract twTAPTest is TapTestHelper, Errors {
         //distribute rewards
         IERC20(mockToken).approve(address(twTAP), type(uint256).max);
 
-        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(address(owner));
+        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(
+            address(owner)
+        );
         vm.expectRevert(NotValid.selector);
         twTAP.distributeReward(1, 0);
         uint256 balanceOwnerAfter = IERC20(mockToken).balanceOf(address(owner));
@@ -594,7 +655,10 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice user receives rewards after they accumulate over a week
-    function test_distribute_rewards(uint256 amount, uint256 duration) internal {
+    function test_distribute_rewards(
+        uint256 amount,
+        uint256 duration
+    ) internal {
         //ok
         vm.startPrank(owner);
 
@@ -625,8 +689,15 @@ contract twTAPTest is TapTestHelper, Errors {
         vm.startPrank(owner);
 
         aTapOFT.approve(address(pearlmit), type(uint256).max);
-        pearlmit.approve(20, address(aTapOFT), 0, address(twTAP), type(uint200).max, type(uint48).max); 
-        
+        pearlmit.approve(
+            20,
+            address(aTapOFT),
+            0,
+            address(twTAP),
+            type(uint200).max,
+            type(uint48).max
+        );
+
         twTAP.participate(address(owner), amount, duration);
 
         uint256 balanceTwTAP = aTapOFT.balanceOf(address(twTAP));
@@ -648,7 +719,9 @@ contract twTAPTest is TapTestHelper, Errors {
         //NOTE so cool thing is that netActiveVotes is incremented in the new week when you participate therefore if you participate and try and claim before a week has passed, you will get a panic revert
         //weekTotals[w0 + 1].netActiveVotes += int256(votes);
 
-        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(address(owner));
+        uint256 balanceOwnerBefore = IERC20(mockToken).balanceOf(
+            address(owner)
+        );
         twTAP.distributeReward(1, 1);
         uint256 balanceOwnerAfter = IERC20(mockToken).balanceOf(address(owner));
         assertEq(balanceOwnerAfter, balanceOwnerBefore - 1);
@@ -664,11 +737,11 @@ contract twTAPTest is TapTestHelper, Errors {
         vm.warp(warpTime);
         twTAP.advanceWeek(100);
         uint256 timeInWeeks = warpTime / 1 weeks;
-        assertEq(twTAP.lastProcessedWeek(), timeInWeeks); 
+        assertEq(twTAP.lastProcessedWeek(), timeInWeeks);
         vm.stopPrank();
     }
 
-    /// @notice week can't advance past current on multiple advances 
+    /// @notice week can't advance past current on multiple advances
     function test_advance_week_multiple() public {
         //ok
         vm.startPrank(owner);
@@ -701,7 +774,14 @@ contract twTAPTest is TapTestHelper, Errors {
         vm.startPrank(owner);
 
         aTapOFT.approve(address(pearlmit), type(uint256).max);
-        pearlmit.approve(20, address(aTapOFT), 0, address(twTAP), type(uint200).max, type(uint48).max); 
+        pearlmit.approve(
+            20,
+            address(aTapOFT),
+            0,
+            address(twTAP),
+            type(uint200).max,
+            type(uint48).max
+        );
         twTAP.participate(address(owner), 100 ether, ((86400) * 7));
 
         uint256 balanceTwTAP = aTapOFT.balanceOf(address(twTAP));
@@ -719,7 +799,11 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice user receives their full balance back after exiting
-    function test_exit_position(uint256 amount, uint256 duration, uint256 warpTime) internal {
+    function test_exit_position(
+        uint256 amount,
+        uint256 duration,
+        uint256 warpTime
+    ) internal {
         //ok
         vm.startPrank(__earlySupporters);
         //transfer tokens to the owner contract
@@ -732,7 +816,14 @@ contract twTAPTest is TapTestHelper, Errors {
         vm.startPrank(owner);
 
         aTapOFT.approve(address(pearlmit), type(uint256).max);
-        pearlmit.approve(20, address(aTapOFT), 0, address(twTAP), type(uint200).max, type(uint48).max); 
+        pearlmit.approve(
+            20,
+            address(aTapOFT),
+            0,
+            address(twTAP),
+            type(uint200).max,
+            type(uint48).max
+        );
 
         twTAP.participate(address(owner), amount, duration);
 
@@ -771,9 +862,16 @@ contract twTAPTest is TapTestHelper, Errors {
     }
 
     /// @notice calculates the duration upper bound given a pool's current cumulative value
-    function _calculateDurationUpperBound() internal returns (uint256 durationUpperBound) {
-        (,,, uint256 cumulative) = twTAP.twAML();
+    function _calculateDurationUpperBound()
+        internal
+        returns (uint256 durationUpperBound)
+    {
+        (, , , uint256 cumulative) = twTAP.twAML();
         uint256 maxMagnitude = cumulative * 4;
-        durationUpperBound = _sqrt((maxMagnitude + cumulative) * (maxMagnitude + cumulative) - (cumulative * cumulative));
+        durationUpperBound = _sqrt(
+            (maxMagnitude + cumulative) *
+                (maxMagnitude + cumulative) -
+                (cumulative * cumulative)
+        );
     }
 }

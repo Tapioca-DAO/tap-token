@@ -41,8 +41,16 @@ contract aoTapTest is TapTestHelper, Errors {
     address public owner = vm.addr(userAPKey);
     address public tokenBeneficiary = vm.addr(userBPKey);
 
-    event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
-    event Approval(address indexed _owner, address indexed _approved, uint256 indexed _tokenId);
+    event Transfer(
+        address indexed _from,
+        address indexed _to,
+        uint256 indexed _tokenId
+    );
+    event Approval(
+        address indexed _owner,
+        address indexed _approved,
+        uint256 indexed _tokenId
+    );
 
     function setUp() public override {
         vm.deal(owner, 1000 ether); //give owner some ether
@@ -50,8 +58,9 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.label(owner, "owner"); //label address for test traces
         vm.label(tokenBeneficiary, "tokenBeneficiary"); //label address for test traces
 
-        // pearlmit = IPearlmit(address(new Pearlmit())); //deploy Pearlmit
-        pearlmit = IPearlmit(address(new Pearlmit("Pearlmit", "1", owner, type(uint256).max))); // NOTE: setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
+        pearlmit = IPearlmit(
+            address(new Pearlmit("Pearlmit", "1", owner, type(uint256).max))
+        ); // NOTE: setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
         aotap = new AOTAP(pearlmit, address(owner)); //deploy AOTAP and set address to owner
 
         super.setUp();
@@ -267,7 +276,11 @@ contract aoTapTest is TapTestHelper, Errors {
         uint128 expiry = uint128(block.timestamp + 7 days);
         aotap.mint(owner, expiry, 1, 1, 1);
         vm.expectEmit(address(aotap));
-        emit IERC721.ApprovalForAll(address(owner), address(tokenBeneficiary), true);
+        emit IERC721.ApprovalForAll(
+            address(owner),
+            address(tokenBeneficiary),
+            true
+        );
         aotap.setApprovalForAll(tokenBeneficiary, true);
         vm.stopPrank();
     }
