@@ -67,7 +67,6 @@ async function tapiocaTask(params: TTapiocaDeployerVmPass<unknown>) {
         ).address,
     );
 
-    // TODO: Verification about the balance of each contract matching this number
     await VM.executeMulticall([
         {
             target: preSeedVesting.address,
