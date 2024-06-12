@@ -15,8 +15,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
 import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
 import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
-import {TWAML, FullMath} from "tap-token/options/twAML.sol"; // TODO Naming
-import {TapToken} from "tap-token/tokens/TapToken.sol";
+import {TWAML, FullMath} from "contracts/options/twAML.sol";
+import {TapToken} from "contracts/tokens/TapToken.sol";
 import {AOTAP, AirdropTapOption} from "./aoTAP.sol";
 
 /*
@@ -49,9 +49,8 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     TapToken public tapToken;
     AOTAP public immutable aoTAP;
     IERC721 public immutable PCNFT;
-    
-    ICluster public cluster;
 
+    ICluster public cluster;
 
     uint128 public epochTAPValuation; // TAP price for the current epoch
     uint64 public lastEpochUpdate; // timestamp of the last epoch update
@@ -98,8 +97,8 @@ contract AirdropBroker is Pausable, Ownable, PearlmitHandler, FullMath, Reentran
     mapping(address user => mapping(uint256 epoch => uint256 amount)) public phase4Users;
     uint256 public constant PHASE_4_DISCOUNT = 330_000; //33 * 1e4;
 
-    uint256 public EPOCH_DURATION = 2 days; // Becomes FROM_EPOCH_4_DURATION at the start of the phase 4
-    uint256 public constant FROM_EPOCH_4_DURATION = 7 days;
+    uint256 public EPOCH_DURATION = 1800; // Becomes FROM_EPOCH_4_DURATION at the start of the phase 4
+    uint256 public constant FROM_EPOCH_4_DURATION = 1800;
     uint256 public constant LAST_EPOCH = 8; // 8 epochs, 41 days long
 
     /// =====-------======

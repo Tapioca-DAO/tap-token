@@ -1,6 +1,7 @@
 // Plugins
 import '@nomiclabs/hardhat-ethers';
 import '@nomicfoundation/hardhat-verify';
+import '@typechain/hardhat';
 
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-foundry';
@@ -73,7 +74,7 @@ const config: HardhatUserConfig & { dodoc: any } = {
                     evmVersion: 'paris', // Latest before Shanghai
                     optimizer: {
                         enabled: true,
-                        runs: 5000,
+                        runs: 3500,
                     },
                 },
             },
