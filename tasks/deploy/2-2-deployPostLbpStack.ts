@@ -1,16 +1,13 @@
 import { TTapiocaDeployTaskArgs } from '@tapioca-sdk/ethers/hardhat/DeployerVM';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { TTapiocaDeployerVmPass } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
-import { buildPostLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/buildPostLbpStackPostDepSetup';
+import { setTapOptionOracle__postDeployLbp } from 'tasks/deployBuilds/postLbpStack/setTapOptionOracle__postDeployLbp';
 
 /**
  * @notice Meant to be called AFTER deployPostLbpStack_1__task AND `tapioca-periph` postLbp task
  *
  * Scripts: Arb
- * - Broker claim on AOTAP
- * - Set tapToken in ADB
  * - Set Tap Option oracle in ADB
- * - Set USDC as payment token in ADB
  */
 export const deployPostLbpStack_2__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
@@ -39,7 +36,7 @@ async function postDeploymentSetup(params: TTapiocaDeployerVmPass<object>) {
     // Setup contracts
     if (isHostChain) {
         await VM.executeMulticall(
-            await buildPostLbpStackPostDepSetup(hre, tag),
+            await setTapOptionOracle__postDeployLbp(hre, tag),
         );
     } else {
         console.log(

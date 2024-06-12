@@ -1,10 +1,10 @@
 import * as PERIPH_DEPLOY_CONFIG from '@tapioca-periph/config';
+import SUPPORTED_CHAINS from '@tapioca-sdk/SUPPORTED_CHAINS';
 import { ELZChainID, TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import {
     IDependentOn,
     TTapiocaDeployTaskArgs,
 } from '@tapioca-sdk/ethers/hardhat/DeployerVM';
-import { BigNumberish } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { loadGlobalContract } from 'tapioca-sdk';
 import {
@@ -13,15 +13,15 @@ import {
 } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { buildADB } from 'tasks/deployBuilds/postLbpStack/airdrop/buildADB';
 import { buildAOTAP } from 'tasks/deployBuilds/postLbpStack/airdrop/buildAOTAP';
+import { buildPostLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/buildPostLbpStackPostDepSetup';
 import { buildExtExec } from 'tasks/deployBuilds/postLbpStack/tapToken/buildExtExec';
 import { buildTapToken } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapToken';
+import { buildTapTokenHelper } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapTokenHelper';
 import { loadTapTokenLocalContract } from 'tasks/utils';
 import { buildTapTokenReceiverModule } from '../deployBuilds/postLbpStack/tapToken/buildTapTokenReceiverModule';
 import { buildTapTokenSenderModule } from '../deployBuilds/postLbpStack/tapToken/buildTapTokenSenderModule';
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
-import SUPPORTED_CHAINS from '@tapioca-sdk/SUPPORTED_CHAINS';
-import { buildTapTokenHelper } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapTokenHelper';
 
 /**
  * @notice Called after periph `lbp` task, before periph `postLbp` task
@@ -38,6 +38,11 @@ import { buildTapTokenHelper } from 'tasks/deployBuilds/postLbpStack/tapToken/bu
  * - TapToken
  * - TapTokenHelper
  *
+ * Post deploy: Arb
+ * - Broker claim on AOTAP
+ * - Set tapToken in ADB
+ * - Set USDC as payment token in ADB
+ *
  */
 export const deployPostLbpStack_1__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
@@ -47,8 +52,29 @@ export const deployPostLbpStack_1__task = async (
         _taskArgs,
         { hre },
         tapiocaDeployTask,
+        postDeploy,
     );
 };
+
+/**
+ * @notice Does the following
+ * - Broker claim on AOTAP
+ * - Set tapToken in ADB
+ * - Set USDC as payment token in ADB
+ */
+async function postDeploy(params: TTapiocaDeployerVmPass<object>) {
+    // Settings
+    const { hre, VM, taskArgs, isHostChain } = params;
+    const { tag } = taskArgs;
+
+    if (isHostChain) {
+        await VM.executeMulticall(
+            await buildPostLbpStackPostDepSetup(hre, tag),
+        );
+    } else {
+        throw new Error('[-] Skipping current chain is not host chain.');
+    }
+}
 
 async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     // Settings
@@ -84,7 +110,7 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
             lzEndpointAddress: chainInfo.address,
         });
     } else {
-        console.log('[-] Skipping  current chain is not host chain.');
+        throw new Error('[-] Skipping current chain is not host chain.');
     }
 }
 

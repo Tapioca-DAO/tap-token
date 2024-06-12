@@ -20,8 +20,10 @@ export const buildPostLbpStackPostDepSetup = async (
     /**
      * Load contracts
      */
-    const { adb, tapToken, tapAdbOptionOracle, usdcOracleDeployment, aoTap } =
-        await loadContract(hre, tag);
+    const { adb, tapToken, usdcOracleDeployment, aoTap } = await loadContract(
+        hre,
+        tag,
+    );
 
     /**
      * Broker claim for AOTAP
@@ -51,26 +53,6 @@ export const buildPostLbpStackPostDepSetup = async (
             ]),
         });
         console.log('\t- Parameters:', 'TapToken', tapToken.address);
-    }
-
-    /**
-     * Set Tap Option oracle in ADB
-     */
-    if (
-        (await adb.tapToken()).toLocaleLowerCase() !==
-        tapAdbOptionOracle.address.toLocaleLowerCase()
-    ) {
-        console.log(
-            '[+] +Call queue: set TapToken Option Oracle in AirdropBroker',
-        );
-        calls.push({
-            target: adb.address,
-            allowFailure: false,
-            callData: adb.interface.encodeFunctionData('setTapOracle', [
-                tapAdbOptionOracle.address,
-                '0x',
-            ]),
-        });
     }
 
     /**
@@ -108,14 +90,6 @@ export const buildPostLbpStackPostDepSetup = async (
 };
 
 async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
-    const tapAdbOptionOracle = loadGlobalContract(
-        hre,
-        TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
-        hre.SDK.eChainId,
-        PERIPH_DEPLOY_CONFIG.DEPLOYMENT_NAMES.ADB_TAP_OPTION_ORACLE,
-        tag,
-    );
-
     const usdcOracleDeployment = loadGlobalContract(
         hre,
         TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
@@ -141,7 +115,6 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
     return {
         tapToken,
         adb,
-        tapAdbOptionOracle,
         usdcOracleDeployment,
         aoTap,
     };
