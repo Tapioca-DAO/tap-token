@@ -4,7 +4,7 @@ import { TapiocaMulticall } from '@tapioca-sdk/typechain/tapioca-periphery';
 import { AirdropBroker__factory } from '@typechain/index';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { loadGlobalContract } from 'tapioca-sdk';
-import { DEPLOYMENT_NAMES } from 'tasks/deploy/DEPLOY_CONFIG';
+import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from 'tasks/deploy/DEPLOY_CONFIG';
 import { loadTapTokenLocalContract } from 'tasks/utils';
 
 export const setTapOptionOracle__postDeployLbp = async (
@@ -16,7 +16,8 @@ export const setTapOptionOracle__postDeployLbp = async (
     /**
      * Load contracts
      */
-    const { adb, tapAdbOptionOracle } = await loadContract(hre, tag);
+    const { adb, tapAdbOptionOracle, usdcOracleDeployment } =
+        await loadContract(hre, tag);
 
     /**
      * Set Tap Option oracle in ADB
@@ -38,15 +39,53 @@ export const setTapOptionOracle__postDeployLbp = async (
         });
     }
 
+    /**
+     * Set USDC as payment token in ADB
+     */
+    const usdcAddr = DEPLOY_CONFIG.MISC[hre.SDK.eChainId]!.USDC;
+    if (
+        (await adb.paymentTokens(usdcAddr)).oracle.toLocaleLowerCase() !==
+        usdcOracleDeployment.address.toLocaleLowerCase()
+    ) {
+        console.log(
+            '[+] +Call queue: set USDC as payment token in AirdropBroker',
+        );
+        calls.push({
+            target: adb.address,
+            allowFailure: false,
+            callData: adb.interface.encodeFunctionData('setPaymentToken', [
+                usdcAddr,
+                usdcOracleDeployment.address,
+                '0x',
+            ]),
+        });
+        console.log(
+            '\t- Parameters:',
+            'USDC',
+            usdcAddr,
+            'USDC Oracle',
+            usdcOracleDeployment.address,
+            'Oracle Data',
+            '0x',
+        );
+    }
+
     return calls;
 };
 
 async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
+    const usdcOracleDeployment = loadGlobalContract(
+        hre,
+        TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
+        hre.SDK.eChainId,
+        PERIPH_DEPLOY_CONFIG.DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE,
+        tag,
+    );
     const tapAdbOptionOracle = loadGlobalContract(
         hre,
         TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
         hre.SDK.eChainId,
-        PERIPH_DEPLOY_CONFIG.DEPLOYMENT_NAMES.ADB_TAP_OPTION_ORACLE,
+        PERIPH_DEPLOY_CONFIG.DEPLOYMENT_NAMES.TAP_ORACLE,
         tag,
     );
 
@@ -59,5 +98,6 @@ async function loadContract(hre: HardhatRuntimeEnvironment, tag: string) {
     return {
         adb,
         tapAdbOptionOracle,
+        usdcOracleDeployment,
     };
 }
