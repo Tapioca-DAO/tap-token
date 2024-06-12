@@ -51,7 +51,10 @@ TAP_TASK(
             'Sets merkle roots on AirdropBroker',
             adb_setMerkleRoots__task,
         )
-        .addParam('rootsFile', 'Merkle roots file path'),
+        .addParam('role0', 'Merkle root for role 0')
+        .addParam('role1', 'Merkle root for role 1')
+        .addParam('role2', 'Merkle root for role 2')
+        .addParam('role3', 'Merkle root for role 3'),
 );
 
 adbScope.task(
