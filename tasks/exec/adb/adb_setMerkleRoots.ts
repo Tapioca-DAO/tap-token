@@ -3,10 +3,14 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { loadLocalContract } from 'tapioca-sdk';
 import { TTapiocaDeployerVmPass } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { DEPLOYMENT_NAMES } from 'tasks/deploy/DEPLOY_CONFIG';
-import fs from 'fs';
 
 export const adb_setMerkleRoots__task = async (
-    _taskArgs: TTapiocaDeployTaskArgs & { rootsFile: string },
+    _taskArgs: TTapiocaDeployTaskArgs & {
+        role0: string;
+        role1: string;
+        role2: string;
+        role3: string;
+    },
     hre: HardhatRuntimeEnvironment,
 ) => {
     await hre.SDK.DeployerVM.tapiocaDeployTask(
@@ -19,12 +23,17 @@ export const adb_setMerkleRoots__task = async (
 };
 
 async function tapiocaTask(
-    params: TTapiocaDeployerVmPass<{ rootsFile: string }>,
+    params: TTapiocaDeployerVmPass<{
+        role0: string;
+        role1: string;
+        role2: string;
+        role3: string;
+    }>,
 ) {
     // Settings
     const { hre, VM, tapiocaMulticallAddr, taskArgs, isTestnet, chainInfo } =
         params;
-    const { tag, rootsFile } = taskArgs;
+    const { tag, role0, role1, role2, role3 } = taskArgs;
     const adb = await hre.ethers.getContractAt(
         'AirdropBroker',
         loadLocalContract(
@@ -35,11 +44,7 @@ async function tapiocaTask(
         ).address,
     );
 
-    const jsonData = (await getJsonData(rootsFile)) as string[];
-    if (jsonData.length !== 4) {
-        throw new Error('[-] Invalid number of roots, require 4');
-    }
-    const data = jsonData.map((e) => '0x' + e) as [
+    const data = [role0, role1, role2, role3].map((e) => '0x' + e) as [
         string,
         string,
         string,
@@ -56,10 +61,4 @@ async function tapiocaTask(
             ]),
         },
     ]);
-}
-
-async function getJsonData(filePath: string) {
-    const fileData = fs.readFileSync(filePath, 'utf-8');
-    const jsonData = JSON.parse(fileData);
-    return jsonData;
 }
