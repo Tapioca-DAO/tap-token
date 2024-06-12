@@ -10,7 +10,7 @@ export const buildTapToken = async (
     dependsOn: IDependentOn[],
 ): Promise<IDeployerVMAdd<TapToken__factory>> => {
     return {
-        contract: new TapToken__factory(hre.ethers.provider.getSigner()),
+        contract: await hre.ethers.getContractFactory('TapToken'),
         deploymentName,
         args,
         dependsOn,
