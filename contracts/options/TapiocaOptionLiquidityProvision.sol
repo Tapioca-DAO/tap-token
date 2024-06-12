@@ -16,7 +16,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 // Tapioca
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
 import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
-import {IYieldBox} from "tap-token/interfaces/IYieldBox.sol";
+import {IYieldBox} from "contracts/interfaces/IYieldBox.sol";
 
 /*
 

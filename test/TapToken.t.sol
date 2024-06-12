@@ -29,20 +29,20 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "tap-token/tokens/ITapToken.sol";
+} from "contracts/tokens/ITapToken.sol";
 import {
     TapTokenHelper,
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "tap-token/tokens/extensions/TapTokenHelper.sol";
+} from "contracts/tokens/extensions/TapTokenHelper.sol";
 import {TapiocaOmnichainExtExec} from "tapioca-periph/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
 import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
-import {TapTokenReceiver} from "tap-token/tokens/TapTokenReceiver.sol";
+import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
 import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
-import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
-import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
-import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
+import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
+import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
+import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
 import {Cluster} from "tapioca-periph/Cluster/Cluster.sol";
 
 // Tapioca Tests
@@ -202,8 +202,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         // B tests
         assertEq(bTapOFT.owner(), address(this));
         assertEq(bTapOFT.token(), address(bTapOFT));
-        assertEq(bTapOFT.totalSupply(), 46_686_595 ether); // Everything minus DSO
-        assertEq(bTapOFT.INITIAL_SUPPLY(), 46_686_595 ether);
+        assertEq(bTapOFT.totalSupply(), 47_500_000 ether); // Everything minus DSO
+        assertEq(bTapOFT.INITIAL_SUPPLY(), 47_500_000 ether);
         assertEq(bTapOFT.governanceEid(), bEid);
         assertEq(address(bTapOFT.endpoint()), address(endpoints[bEid]));
         assertEq(address(bTapOFT.twTap()), address(twTap));

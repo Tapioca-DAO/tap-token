@@ -11,7 +11,6 @@ optimizer = true
 optimizer_runs = 9999
 
 remappings = [
-    "tap-token/=contracts/",
 	"solidity-bytes-utils/=node_modules/@layerzerolabs/solidity-bytes-utils/",
 	"tapioca-sdk/=gitmodule/tapioca-sdk/contracts/",
 	"tapioca-periph/=gitmodule/tapioca-periph/contracts/",
