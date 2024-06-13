@@ -96,6 +96,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     error InitStarted();
     error InitNotStarted();
     error InsufficientEmissions();
+    error NotAuthorized();
 
     // ===========
     // *MODIFIERS*
@@ -519,7 +520,8 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     /**
      * @notice Un/Pauses this contract.
      */
-    function setPause(bool _pauseState) external onlyOwner {
+    function setPause(bool _pauseState) external {
+        if (!getCluster().hasRole(msg.sender, keccak256("PAUSABLE")) && msg.sender != owner()) revert NotAuthorized();
         if (_pauseState) {
             _pause();
         } else {
