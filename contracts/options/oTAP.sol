@@ -116,6 +116,10 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, Pearlm
         broker = msg.sender;
     }
 
+    function _baseURI() internal view override(ERC721, ERC721NftLoader) returns (string memory) {
+        return baseURI;
+    }
+
     function supportsInterface(bytes4 interfaceId)
         public
         view
