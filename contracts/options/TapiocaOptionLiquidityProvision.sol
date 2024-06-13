@@ -73,6 +73,9 @@ contract TapiocaOptionLiquidityProvision is
 
     ICluster public cluster;
 
+    uint256 public emergencySweepCooldown = 2 days;
+    uint256 public lastEmergencySweep;
+
     error NotRegistered();
     error InvalidSingularity();
     error DurationTooShort();
@@ -93,6 +96,7 @@ contract TapiocaOptionLiquidityProvision is
     error TransferFailed();
     error TobIsHolder();
     error NotValid();
+    error EmergencySweepCooldownNotReached();
 
     constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
@@ -122,6 +126,8 @@ contract TapiocaOptionLiquidityProvision is
     event ActivateSGLPoolRescue(uint256 indexed sglAssetId, address sglAddress);
     event RegisterSingularity(uint256 indexed sglAssetId, address sglAddress, uint256 poolWeight);
     event UnregisterSingularity(uint256 indexed sglAssetId, address sglAddress);
+    event SetEmergencySweepCooldown(uint256 emergencySweepCooldown);
+    event ActivateEmergencySweep();
 
     // ===============
     //    MODIFIERS
@@ -401,6 +407,42 @@ contract TapiocaOptionLiquidityProvision is
             _pause();
         } else {
             _unpause();
+        }
+    }
+
+    /**
+     * @notice Set the emergency sweep cooldown
+     */
+    function setEmergencySweepCooldown(uint256 _emergencySweepCooldown) external onlyOwner {
+        emergencySweepCooldown = _emergencySweepCooldown;
+        emit SetEmergencySweepCooldown(_emergencySweepCooldown);
+    }
+
+    /**
+     * @notice Activate the emergency sweep cooldown
+     */
+    function activateEmergencySweep() external onlyOwner {
+        lastEmergencySweep = block.timestamp;
+        emit ActivateEmergencySweep();
+    }
+
+    /**
+     * @notice Emergency sweep of a token from the contract
+     */
+    function emergencySweep() external onlyOwner {
+        if (block.timestamp < lastEmergencySweep + emergencySweepCooldown) revert EmergencySweepCooldownNotReached();
+        if (!cluster.hasRole(msg.sender, keccak256("TOLP_EMERGENCY_SWEEP"))) revert NotAuthorized();
+
+        uint256 len = singularities.length;
+        for (uint256 i; i < len; i++) {
+            SingularityPool memory sgl = activeSingularities[sglAssetIDToAddress[singularities[i]]];
+            // Retrieve only the ones not in rescue
+            if (!sgl.rescue) {
+                // Try to sweep the funds even if one fails
+                try yieldBox.transfer(
+                    address(this), owner(), sgl.sglAssetID, yieldBox.balanceOf(address(this), sgl.sglAssetID)
+                ) {} catch {}
+            }
         }
     }
 
