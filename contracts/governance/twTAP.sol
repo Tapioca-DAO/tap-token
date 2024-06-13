@@ -13,6 +13,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 // Tapioca
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
 import {ERC721NftLoader} from "tap-token/erc721NftLoader/ERC721NftLoader.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
 import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol";
 import {ERC721PermitStruct} from "tap-token/tokens/ITapToken.sol";
 import {TapToken} from "tap-token/tokens/TapToken.sol";
@@ -126,6 +127,8 @@ contract TwTAP is
     uint256 public creation; // Week 0 starts here
     uint256 public lastProcessedWeek;
     mapping(uint256 => WeekTotals) public weekTotals;
+
+    ICluster public cluster;
 
     error NotAuthorized();
     error AdvanceWeekFirst();
@@ -569,9 +572,20 @@ contract TwTAP is
     }
 
     /**
+     * @notice updates the Cluster address.
+     * @dev can only be called by the owner.
+     * @param _cluster the new address.
+     */
+    function setCluster(ICluster _cluster) external onlyOwner {
+        if (address(_cluster) == address(0)) revert NotValid();
+        cluster = _cluster;
+    }
+
+    /**
      * @notice Un/Pauses this contract.
      */
-    function setPause(bool _pauseState) external onlyOwner {
+    function setPause(bool _pauseState) external {
+        if (!cluster.hasRole(msg.sender, keccak256("PAUSABLE")) && msg.sender != owner()) revert NotAuthorized();
         if (_pauseState) {
             _pause();
         } else {
