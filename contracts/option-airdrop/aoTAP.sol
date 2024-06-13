@@ -42,6 +42,8 @@ contract AOTAP is
     uint256 public mintedAOTAP; // total number of AOTAP minted
     address public broker; // address of the onlyBroker
 
+    string public baseURI;
+
     mapping(uint256 => AirdropTapOption) public options; // tokenId => Option
     mapping(uint256 => string) public tokenURIs; // tokenId => tokenURI
 
@@ -67,8 +69,8 @@ contract AOTAP is
     //    READ
     // =========
 
-    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
-        return tokenURIs[_tokenId];
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
     }
 
     function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool) {
@@ -130,6 +132,13 @@ contract AOTAP is
     function brokerClaim() external {
         if (broker != address(0)) revert OnlyOnce();
         broker = msg.sender;
+    }
+
+    /**
+     * @notice Set the base URI for all token IDs.
+     */
+    function setBaseURI(string calldata __baseURI) external onlyOwner {
+        baseURI = __baseURI;
     }
 
     function supportsInterface(bytes4 interfaceId)
