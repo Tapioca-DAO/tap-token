@@ -74,7 +74,7 @@ const config: HardhatUserConfig & { dodoc: any } = {
                     evmVersion: 'paris', // Latest before Shanghai
                     optimizer: {
                         enabled: true,
-                        runs: 3500,
+                        runs: 2500,
                     },
                 },
             },
