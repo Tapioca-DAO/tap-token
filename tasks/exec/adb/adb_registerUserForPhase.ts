@@ -28,9 +28,6 @@ async function tapiocaTask(
         params;
     const { tag, userFile, phase } = taskArgs;
 
-    if (phase !== '1' && phase !== '4') {
-        throw new Error('[-] Invalid phase, only 1 and 4 are supported');
-    }
     // get the json data in the userFile
     const jsonData = (await getJsonData(userFile)) as {
         user: string;

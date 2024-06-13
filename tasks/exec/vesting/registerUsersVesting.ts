@@ -4,11 +4,12 @@ import { loadLocalContract } from 'tapioca-sdk';
 import { TTapiocaDeployerVmPass } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { DEPLOYMENT_NAMES } from 'tasks/deploy/DEPLOY_CONFIG';
 import fs from 'fs';
-import { BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 
 export const PRE_SEED_VESTING_TOTAL = 3_500_000n * 10n ** 18n; // 3.5m
 export const SEED_VESTING_TOTAL = 10n ** 16n * 14_582_575_34n; // 14,582,575.34
-export const CONTRIBUTOR_VESTING_TOTAL = 15_000_000n * 10n ** 18n; // 15m
+export const CONTRIBUTOR_VESTING_TOTAL = 15_000_000n * 10n ** 18n; // 15m USE THIS FOR PROD
+// export const CONTRIBUTOR_VESTING_TOTAL = 5_000_000n * 10n ** 18n;
 
 export const registerUsersVesting__task = async (
     _taskArgs: TTapiocaDeployTaskArgs & {
@@ -97,7 +98,9 @@ async function tapiocaTask(
         );
     }
 
-    const contributorBalance = await tapToken.balanceOf(contributorAddress);
+    const contributorBalance = await tapToken.balanceOf(
+        contributorVesting.address,
+    );
     console.log(
         '[+] Contributor balance:',
         hre.ethers.utils.formatEther(contributorBalance),
@@ -114,24 +117,27 @@ async function tapiocaTask(
     };
     type TAggregatedData = {
         address: string;
-        value: bigint;
+        value: BigNumber;
     };
 
     function aggregateValues(data: TData[]): TAggregatedData[] {
-        const aggregated: { [key: string]: number } = {};
+        const aggregated: { [key: string]: BigNumber } = {};
 
         data.forEach((item) => {
             if (aggregated[item.address]) {
-                aggregated[item.address] += Number(item.value);
+                aggregated[item.address] = hre.ethers.BigNumber.from(
+                    hre.ethers.utils.parseEther(String(item.value)),
+                ).add(aggregated[item.address]);
             } else {
-                aggregated[item.address] = Number(item.value);
+                aggregated[item.address] = hre.ethers.BigNumber.from(
+                    hre.ethers.utils.parseEther(String(item.value)),
+                );
             }
         });
 
         return Object.keys(aggregated).map((address) => ({
-            address,
-            // Cast to BigInt and convert to 1e18. Uses 10^10 as a multiplier to avoid floating point errors
-            value: BigInt(Number(aggregated[address]) * 10 ** 10) * 10n ** 8n,
+            address: address.replace(/\s/g, ''),
+            value: aggregated[address],
         }));
     }
 
@@ -146,13 +152,19 @@ async function tapiocaTask(
     console.log(
         '[+] Total for preSeed:',
         hre.ethers.utils.formatEther(
-            preSeedDataAggregated.reduce((acc, data) => acc + data.value, 0n),
+            preSeedDataAggregated.reduce(
+                (acc, data) => acc + data.value.toBigInt(),
+                0n,
+            ),
         ),
     );
     console.log(
         '[+] Total for seed:',
         hre.ethers.utils.formatEther(
-            seedDataAggregated.reduce((acc, data) => acc + data.value, 0n),
+            seedDataAggregated.reduce(
+                (acc, data) => acc + data.value.toBigInt(),
+                0n,
+            ),
         ),
     );
     console.log(
@@ -160,29 +172,63 @@ async function tapiocaTask(
         hre.ethers.utils.formatEther(CONTRIBUTOR_VESTING_TOTAL),
     );
 
+    const registerUsers = async (
+        targetContract: string,
+        addresses: string[],
+        values: BigNumber[],
+    ) => {
+        const batchedAddresses = splitIntoBatches(addresses, 50);
+        const batchedValues = splitIntoBatches(values, 50);
+
+        for (let i = 0; i < batchedAddresses.length; i++) {
+            await VM.executeMulticall([
+                {
+                    target: targetContract,
+                    allowFailure: false,
+                    callData: preSeedVesting.interface.encodeFunctionData(
+                        'registerUsers',
+                        [batchedAddresses[i], batchedValues[i]],
+                    ),
+                },
+            ]);
+        }
+    };
+
+    const filterPreSeed = async (data: TAggregatedData) => {
+        if ((await preSeedVesting.users(data.address)).amount.gt(0)) {
+            return false;
+        }
+        return data;
+    };
+
+    const filterSeed = async (data: TAggregatedData) => {
+        if ((await seedVesting.users(data.address)).amount.gt(0)) {
+            return false;
+        }
+        return data;
+    };
+
+    const preSeedToRegister = (
+        await Promise.all(preSeedDataAggregated.map(filterPreSeed))
+    ).filter((e) => e);
+
+    const seedToRegister = (
+        await Promise.all(preSeedDataAggregated.map(filterSeed))
+    ).filter((e) => e);
+
+    await registerUsers(
+        preSeedVesting.address,
+        preSeedToRegister.map((data) => (data as TAggregatedData).address),
+        preSeedToRegister.map((data) => (data as TAggregatedData).value),
+    );
+
+    await registerUsers(
+        seedVesting.address,
+        seedToRegister.map((data) => (data as TAggregatedData).address),
+        seedToRegister.map((data) => (data as TAggregatedData).value),
+    );
+
     await VM.executeMulticall([
-        {
-            target: preSeedVesting.address,
-            allowFailure: false,
-            callData: preSeedVesting.interface.encodeFunctionData(
-                'registerUsers',
-                [
-                    preSeedDataAggregated.map((data) => data.address),
-                    preSeedDataAggregated.map((data) => data.value),
-                ],
-            ),
-        },
-        {
-            target: seedVesting.address,
-            allowFailure: false,
-            callData: seedVesting.interface.encodeFunctionData(
-                'registerUsers',
-                [
-                    seedDataAggregated.map((data) => data.address),
-                    seedDataAggregated.map((data) => data.value),
-                ],
-            ),
-        },
         {
             target: contributorVesting.address,
             allowFailure: false,
@@ -198,4 +244,15 @@ async function getJsonData(filePath: string) {
     const fileData = fs.readFileSync(filePath, 'utf-8');
     const jsonData = JSON.parse(fileData);
     return jsonData;
+}
+
+function splitIntoBatches<T>(array: T[], batchSize: number): T[][] {
+    const batches: T[][] = [];
+
+    for (let i = 0; i < array.length; i += batchSize) {
+        const batch = array.slice(i, i + batchSize);
+        batches.push(batch);
+    }
+
+    return batches;
 }
