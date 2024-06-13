@@ -274,7 +274,6 @@ contract TapiocaOptionLiquidityProvision is
      * @notice Sets the Tapioca Option Broker address
      */
     function setTapiocaOptionBroker(address _tob) external onlyOwner {
-        if (tapiocaOptionBroker != address(0)) revert NotAuthorized(); // Only once allowed
         tapiocaOptionBroker = _tob;
     }
 
