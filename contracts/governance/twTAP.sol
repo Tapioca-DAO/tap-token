@@ -131,6 +131,8 @@ contract TwTAP is
     ICluster public cluster;
 
     bool rescueMode;
+    uint256 public emergencySweepCooldown = 2 days;
+    uint256 public lastEmergencySweep;
 
     error NotAuthorized();
     error AdvanceWeekFirst();
@@ -144,6 +146,7 @@ contract TwTAP is
     error LockTooLong();
     error AdvanceEpochFirst();
     error DurationNotMultiple(); // Lock duration should be a multiple of 1 EPOCH
+    error EmergencySweepCooldownNotReached();
 
     /// =====-------======
     constructor(address payable _tapOFT, IPearlmit _pearlmit, address _owner)
@@ -195,6 +198,8 @@ contract TwTAP is
     event SetCluster(address _cluster);
     event EmergencySweepLocks();
     event EmergencySweepRewards();
+    event SetEmergencySweepCooldown(uint256 emergencySweepCooldown);
+    event ActivateEmergencySweep();
 
     // ==========
     //    READ
@@ -608,15 +613,32 @@ contract TwTAP is
     }
 
     /**
+     * @notice Set the emergency sweep cooldown
+     */
+    function setEmergencySweepCooldown(uint256 _emergencySweepCooldown) external onlyOwner {
+        emergencySweepCooldown = _emergencySweepCooldown;
+        emit SetEmergencySweepCooldown(_emergencySweepCooldown);
+    }
+
+    /**
+     * @notice Activate the emergency sweep cooldown
+     */
+    function activateEmergencySweep() external onlyOwner {
+        lastEmergencySweep = block.timestamp;
+        emit ActivateEmergencySweep();
+    }
+
+    /**
      * @notice Emergency sweep of all tokens in case of a critical issue.
      * Strategy is to sweep tokens, then recreate positions with them on a new contract.
      *
      * @dev Only the owner with role `TWTAP_EMERGENCY_SWEEP` can call this function.
      */
     function emergencySweepLocks() external onlyOwner {
+        if (block.timestamp < lastEmergencySweep + emergencySweepCooldown) revert EmergencySweepCooldownNotReached();
         if (!cluster.hasRole(msg.sender, keccak256("TWTAP_EMERGENCY_SWEEP"))) revert NotAuthorized();
+
         tapOFT.transfer(owner(), tapOFT.balanceOf(address(this)));
-        emit EmergencySweepLocks();
     }
 
     /**
@@ -626,15 +648,17 @@ contract TwTAP is
      * @dev Only the owner with role `TWTAP_EMERGENCY_SWEEP` can call this function.
      */
     function emergencySweepRewards() external onlyOwner {
+        if (block.timestamp < lastEmergencySweep + emergencySweepCooldown) revert EmergencySweepCooldownNotReached();
         if (!cluster.hasRole(msg.sender, keccak256("TWTAP_EMERGENCY_SWEEP"))) revert NotAuthorized();
+
         uint256 len = rewardTokens.length;
-        for (uint256 i; i < len; ++i) {
+        // Index starts at 1, see constructor
+        for (uint256 i = 1; i < len; ++i) {
             IERC20 token = rewardTokens[i];
             if (token != IERC20(address(0x0))) {
                 token.safeTransfer(owner(), token.balanceOf(address(this)));
             }
         }
-        emit EmergencySweepLocks();
     }
 
     // ============
