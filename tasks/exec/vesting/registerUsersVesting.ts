@@ -213,7 +213,7 @@ async function tapiocaTask(
     ).filter((e) => e);
 
     const seedToRegister = (
-        await Promise.all(preSeedDataAggregated.map(filterSeed))
+        await Promise.all(seedDataAggregated.map(filterSeed))
     ).filter((e) => e);
 
     await registerUsers(
