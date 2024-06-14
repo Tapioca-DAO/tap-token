@@ -1,11 +1,12 @@
 import '@nomiclabs/hardhat-ethers';
 import { scope } from 'hardhat/config';
 import { deployFinalStack__task } from '../deploy/3-deployFinalStack';
-import { deployPreLbpStack__task } from 'tasks/deploy/1-deployPreLbpStack';
+import { deployPreLbpStack__task } from 'tasks/deploy/1-1-deployPreLbpStack';
 import { TAP_TASK } from 'tapioca-sdk';
 import { deployPostLbpStack_1__task } from 'tasks/deploy/2-1-deployPostLbpStack';
 import { deployPostLbpStack_2__task } from 'tasks/deploy/2-2-deployPostLbpStack';
 import { deploySideChainPostLbpStack_1__task } from 'tasks/deploy/2-1-sideChain-deployPostLbpStack';
+import { deployLbp__task } from 'tasks/deploy/1-2-ltapAddLbpTransferAllowed';
 
 const deployScope = scope('deploys', 'Deployment tasks');
 
@@ -14,6 +15,14 @@ TAP_TASK(
         'preLbp',
         'Deploy the Pre LBP stack of the tap-token repo. Includes the LTAP.',
         deployPreLbpStack__task,
+    ),
+);
+
+TAP_TASK(
+    deployScope.task(
+        'ltapLbp',
+        'Set the LBP as whitelisted in LTAP transfer.',
+        deployLbp__task,
     ),
 );
 

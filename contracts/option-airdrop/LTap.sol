@@ -65,7 +65,7 @@ contract LTap is Ownable, ERC20Permit {
     }
 
     function _transfer(address from, address to, uint256 amount) internal override {
-        if (!transferAllowList[from]) revert TransferNotAllowed();
+        if (!transferAllowList[from] && !transferAllowList[to]) revert TransferNotAllowed();
         super._transfer(from, to, amount);
     }
 }

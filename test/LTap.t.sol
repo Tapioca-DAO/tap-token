@@ -8,7 +8,7 @@ import {TapTestHelper} from "./helpers/TapTestHelper.t.sol";
 import {ERC20Mock} from "./Mocks/ERC20Mock.sol";
 
 import {Errors} from "./helpers/errors.sol";
-import {LTap} from "tap-token/option-airdrop/LTap.sol";
+import {LTap} from "contracts/option-airdrop/LTap.sol";
 
 // import "forge-std/Test.sol";
 import {stdStorage, StdStorage} from "forge-std/Test.sol";
@@ -31,12 +31,12 @@ contract LTapTest is TapTestHelper, Errors {
         vm.deal(lbp, 1000 ether); //give tokenBeneficiary some ether
         vm.label(owner, "owner"); //label address for test traces
         vm.label(lbp, "lbp"); //label address for test traces
-        
+
         vm.startPrank(owner);
         mockTap = new ERC20Mock("MockERC20", "Mock"); //deploy MockToken
         ltap = new LTap(lbp, owner); //deploy LTap and set address to owner
         vm.label(address(mockTap), "mockTap"); //label address for test traces
-        mockTap.mint(address(ltap),  5_000_000); //transfer initial amount of mockTap to LTap
+        mockTap.mint(address(ltap), 5_000_000); //transfer initial amount of mockTap to LTap
         vm.stopPrank();
 
         super.setUp();
@@ -47,7 +47,7 @@ contract LTapTest is TapTestHelper, Errors {
         uint256 lbpLtapBalance = ltap.balanceOf(lbp);
         assertEq(lbpLtapBalance, 5_000_000 * 1e18);
         // owner is the owner of LTap
-        assertEq(owner,ltap.owner());
+        assertEq(owner, ltap.owner());
         // lbp is added to transferAllowList
         assertTrue(ltap.transferAllowList(lbp));
     }
@@ -69,9 +69,9 @@ contract LTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    /// @notice redemption works 
+    /// @notice redemption works
     function test_redeem() public {
-        // transfer LTap to owner to not redeem the entire lbp balance 
+        // transfer LTap to owner to not redeem the entire lbp balance
         vm.startPrank(lbp);
         ltap.transfer(owner, 5_000);
         assertEq(5_000, ltap.balanceOf(owner));
@@ -98,7 +98,7 @@ contract LTapTest is TapTestHelper, Errors {
 
     /// @notice user can't redeem more than their balance
     function test_cant_redeem_more_than_balance() public {
-        // transfer LTap to owner to not redeem the entire lbp balance 
+        // transfer LTap to owner to not redeem the entire lbp balance
         vm.startPrank(lbp);
         ltap.transfer(owner, 5_000);
         assertEq(5_000, ltap.balanceOf(owner));
@@ -135,7 +135,7 @@ contract LTapTest is TapTestHelper, Errors {
 
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         ltap.setOpenRedemption();
-        
+
         vm.stopPrank();
     }
 
@@ -147,13 +147,13 @@ contract LTapTest is TapTestHelper, Errors {
 
         ltap.setOpenRedemption();
         assertTrue(ltap.openRedemption());
-        
+
         vm.stopPrank();
     }
 
     /// @notice can't redeem if tapToken not set
     function test_redeem_tap_token_not_set() public {
-        // transfer LTap to owner to not redeem the entire lbp balance 
+        // transfer LTap to owner to not redeem the entire lbp balance
         vm.startPrank(lbp);
         ltap.transfer(owner, 5_000);
         assertEq(5_000, ltap.balanceOf(owner));
@@ -178,7 +178,7 @@ contract LTapTest is TapTestHelper, Errors {
 
     /// @notice can't transfer to address not on transferAllowList
     function test_transfer_not_allowed() public {
-        // transfer LTap to owner to not redeem the entire lbp balance 
+        // transfer LTap to owner to not redeem the entire lbp balance
         vm.startPrank(lbp);
         ltap.transfer(owner, 5_000);
         assertEq(5_000, ltap.balanceOf(owner));
@@ -222,7 +222,7 @@ contract LTapTest is TapTestHelper, Errors {
     }
 
     /// @notice approved but not on allow list doesn't transfer
-    function test_approved_but_not_allowed() public { 
+    function test_approved_but_not_allowed() public {
         // transfer ltap to owner
         vm.startPrank(lbp);
         ltap.transfer(owner, 5_000);
@@ -248,14 +248,14 @@ contract LTapTest is TapTestHelper, Errors {
 
     /// @notice transferAllowList works
     function test_transfer_allowed() public {
-        // transfer LTap to owner to not redeem the entire lbp balance 
+        // transfer LTap to owner to not redeem the entire lbp balance
         vm.startPrank(lbp);
         ltap.transfer(owner, 5_000);
         assertEq(5_000, ltap.balanceOf(owner));
         vm.stopPrank();
 
         vm.startPrank(owner);
-        // add owner to transfer allow list 
+        // add owner to transfer allow list
         ltap.setTransferAllowList(owner, true);
 
         // set tap token and open redemption
@@ -272,22 +272,22 @@ contract LTapTest is TapTestHelper, Errors {
     }
 
     /// @notice can't transfer after removed from transferAllowList
-     function test_transfer_remove_allowed() public {
-        // transfer LTap to owner to not redeem the entire lbp balance 
+    function test_transfer_remove_allowed() public {
+        // transfer LTap to owner to not redeem the entire lbp balance
         vm.startPrank(lbp);
         ltap.transfer(owner, 5_000);
         assertEq(5_000, ltap.balanceOf(owner));
         vm.stopPrank();
 
         vm.startPrank(owner);
-        // add owner to transfer allow list 
+        // add owner to transfer allow list
         ltap.setTransferAllowList(owner, true);
 
         // set tap token and open redemption
         ltap.setTapToken(address(mockTap));
         ltap.setOpenRedemption();
 
-        // first transfer works because on allow list 
+        // first transfer works because on allow list
         uint256 lTapBalanceOfOwnerBeforeFirst = ltap.balanceOf(owner);
         ltap.transfer(lbp, 2_500);
         uint256 lTapBalanceOfOwnerAfterFirst = ltap.balanceOf(owner);

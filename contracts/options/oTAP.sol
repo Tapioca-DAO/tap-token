@@ -7,7 +7,8 @@ import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/Borin
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 // Tapioca
-import {ERC721NftLoader} from "tap-token/erc721NftLoader/ERC721NftLoader.sol";
+import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
+import {ERC721NftLoader} from "contracts/erc721NftLoader/ERC721NftLoader.sol";
 import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol"; // TODO audit
 
 /*
@@ -29,13 +30,17 @@ struct TapOption {
     uint256 tOLP; // tOLP token ID
 }
 
-contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, BaseBoringBatchable {
+contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, PearlmitHandler, BaseBoringBatchable {
     uint256 public mintedOTAP; // total number of OTAP minted
     address public broker; // address of the onlyBroker
 
     mapping(uint256 => TapOption) public options; // tokenId => Option
 
-    constructor(address _owner) ERC721NftLoader("Option TAP", "oTAP", _owner) ERC721Permit("Option TAP") {}
+    constructor(IPearlmit _pearlmit, address _owner)
+        ERC721NftLoader("Option TAP", "oTAP", _owner)
+        ERC721Permit("Option TAP")
+        PearlmitHandler(_pearlmit)
+    {}
 
     // ==========
     //   EVENTS
@@ -59,7 +64,8 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, BaseBo
     }
 
     function isApprovedOrOwner(address _spender, uint256 _tokenId) external view returns (bool) {
-        return _isApprovedOrOwner(_spender, _tokenId);
+        return _isApprovedOrOwner(_spender, _tokenId)
+            || isERC721Approved(_ownerOf(_tokenId), _spender, address(this), _tokenId);
     }
 
     /// @notice Return the owner of the tokenId and the attributes of the option.
@@ -70,23 +76,6 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, BaseBo
     /// @notice Check if a token exists
     function exists(uint256 _tokenId) external view returns (bool) {
         return _exists(_tokenId);
-    }
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC721Enumerable, ERC721)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }
-
-    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
-        internal
-        override(ERC721, ERC721Enumerable)
-    {
-        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
 
     // ==========
@@ -125,6 +114,27 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, BaseBo
     function brokerClaim() external {
         if (broker != address(0)) revert OnlyOnce();
         broker = msg.sender;
+    }
+
+    function _baseURI() internal view override(ERC721, ERC721NftLoader) returns (string memory) {
+        return baseURI;
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721Enumerable, ERC721)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        override(ERC721, ERC721Enumerable)
+    {
+        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
 
     function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)

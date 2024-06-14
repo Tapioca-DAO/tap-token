@@ -18,15 +18,29 @@ export const deployPreLbpStack__task = async (
 ) => {
     await hre.SDK.DeployerVM.tapiocaDeployTask(
         _taskArgs,
-        { hre, staticSimulation: false },
+        { hre },
         tapiocaDeployTask,
     );
 };
 
 async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
-    const { hre, VM, tapiocaMulticallAddr, taskArgs, isTestnet } = params;
+    const {
+        hre,
+        VM,
+        tapiocaMulticallAddr,
+        taskArgs,
+        isTestnet,
+        isHostChain,
+        isSideChain,
+    } = params;
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
-    VM.add(await buildLTap(hre, DEPLOYMENT_NAMES.LTAP, [owner, owner], []));
+    if (isHostChain) {
+        VM.add(await buildLTap(hre, DEPLOYMENT_NAMES.LTAP, [owner, owner], []));
+    } else {
+        console.log(
+            '[-] Skipping LTAP deployment, current chain is not host chain.',
+        );
+    }
 }

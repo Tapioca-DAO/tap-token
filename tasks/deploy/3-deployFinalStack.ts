@@ -50,7 +50,9 @@ async function tapiocaPostDepSetup(params: TTapiocaDeployerVmPass<object>) {
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
-    await VM.executeMulticall(await buildFinalStackPostDepSetup_2(hre, tag));
+    await VM.executeMulticall(
+        await buildFinalStackPostDepSetup_2(hre, tag, isTestnet),
+    );
 }
 
 async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
@@ -61,7 +63,7 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     const { pearlmit, yieldBox } = await getContracts(hre, tag);
 
     VM.add(await getTolp(hre, owner, yieldBox.address, pearlmit.address))
-        .add(await getOtap(hre, owner))
+        .add(await getOtap(hre, pearlmit.address, owner))
         .add(await getTob(hre, tag, owner, pearlmit.address))
         .add(await getTwTap(hre, tag, owner, pearlmit.address));
 }
@@ -109,19 +111,16 @@ async function getTolp(
             DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
             pearlmit,
             owner, // Owner
-            '', // TOB
-        ],
-        [
-            {
-                argPosition: 4,
-                deploymentName: DEPLOYMENT_NAMES.TAPIOCA_OPTION_BROKER,
-            },
         ],
     );
 }
 
-async function getOtap(hre: HardhatRuntimeEnvironment, owner: string) {
-    return await buildOTAP(hre, DEPLOYMENT_NAMES.OTAP, [owner]);
+async function getOtap(
+    hre: HardhatRuntimeEnvironment,
+    pearlmit: string,
+    owner: string,
+) {
+    return await buildOTAP(hre, DEPLOYMENT_NAMES.OTAP, [pearlmit, owner]);
 }
 
 async function getTob(

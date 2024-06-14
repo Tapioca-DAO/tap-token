@@ -14,7 +14,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {TapiocaOptionLiquidityProvision, LockPosition, SingularityPool} from "./TapiocaOptionLiquidityProvision.sol";
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
 import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
-import {TapToken} from "tap-token/tokens/TapToken.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {TapToken} from "contracts/tokens/TapToken.sol";
 import {OTAP, TapOption} from "./oTAP.sol";
 import {TWAML} from "./twAML.sol";
 
@@ -55,6 +56,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     TapToken public immutable tapOFT;
     OTAP public immutable oTAP;
     ITapiocaOracle public tapOracle;
+
+    ICluster public cluster;
 
     uint256 public epochTAPValuation; // TAP price for the current epoch
     uint256 public epoch; // Represents the number of weeks since the start of the contract
@@ -107,6 +110,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     error LockExpired();
     error AdvanceEpochFirst();
     error DurationNotMultiple();
+    error NotValid();
 
     constructor(
         address _tOLP,
@@ -559,9 +563,20 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     }
 
     /**
+     * @notice updates the Cluster address.
+     * @dev can only be called by the owner.
+     * @param _cluster the new address.
+     */
+    function setCluster(ICluster _cluster) external onlyOwner {
+        if (address(_cluster) == address(0)) revert NotValid();
+        cluster = _cluster;
+    }
+
+    /**
      * @notice Un/Pauses this contract.
      */
-    function setPause(bool _pauseState) external onlyOwner {
+    function setPause(bool _pauseState) external {
+        if (!cluster.hasRole(msg.sender, keccak256("PAUSABLE")) && msg.sender != owner()) revert NotAuthorized();
         if (_pauseState) {
             _pause();
         } else {

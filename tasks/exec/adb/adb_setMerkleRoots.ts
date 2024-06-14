@@ -5,7 +5,12 @@ import { TTapiocaDeployerVmPass } from 'tapioca-sdk/dist/ethers/hardhat/Deployer
 import { DEPLOYMENT_NAMES } from 'tasks/deploy/DEPLOY_CONFIG';
 
 export const adb_setMerkleRoots__task = async (
-    _taskArgs: TTapiocaDeployTaskArgs & { roots: string[] },
+    _taskArgs: TTapiocaDeployTaskArgs & {
+        role0: string;
+        role1: string;
+        role2: string;
+        role3: string;
+    },
     hre: HardhatRuntimeEnvironment,
 ) => {
     await hre.SDK.DeployerVM.tapiocaDeployTask(
@@ -18,17 +23,17 @@ export const adb_setMerkleRoots__task = async (
 };
 
 async function tapiocaTask(
-    params: TTapiocaDeployerVmPass<{ roots: string[] }>,
+    params: TTapiocaDeployerVmPass<{
+        role0: string;
+        role1: string;
+        role2: string;
+        role3: string;
+    }>,
 ) {
     // Settings
     const { hre, VM, tapiocaMulticallAddr, taskArgs, isTestnet, chainInfo } =
         params;
-    const { tag, roots } = taskArgs;
-    if (roots.length !== 4) {
-        throw new Error('[-] Invalid number of roots, require 4');
-    }
-    const data = roots.map((e) => '0x' + e) as [string, string, string, string];
-
+    const { tag, role0, role1, role2, role3 } = taskArgs;
     const adb = await hre.ethers.getContractAt(
         'AirdropBroker',
         loadLocalContract(
@@ -38,6 +43,13 @@ async function tapiocaTask(
             tag,
         ).address,
     );
+
+    const data = [role0, role1, role2, role3].map((e) => '0x' + e) as [
+        string,
+        string,
+        string,
+        string,
+    ];
 
     // await adb.setPhase2MerkleRoots(roots as [string, string, string, string]);
     await VM.executeMulticall([

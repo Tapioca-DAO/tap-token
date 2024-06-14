@@ -24,6 +24,8 @@ import {INFTLoader} from "../interfaces/INFTLoader.sol";
 contract ERC721NftLoader is ERC721, Ownable {
     INFTLoader public nftLoader; // NFT URI loader contract
 
+    string public baseURI;
+
     constructor(string memory _name, string memory _symbol, address _owner) ERC721(_name, _symbol) {
         _transferOwnership(_owner);
     }
@@ -33,10 +35,26 @@ contract ERC721NftLoader is ERC721, Ownable {
      * @inheritdoc ERC721
      */
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        if (address(nftLoader) == address(0)) {
-            return "";
+        // If baseURI is set, use it. Otherwise, use the NFT loader contract.
+        if (bytes(baseURI).length > 0) {
+            return super.tokenURI(tokenId);
+        } else {
+            if (address(nftLoader) == address(0)) {
+                return "";
+            }
+            return INFTLoader(nftLoader).tokenURI(tokenId);
         }
-        return INFTLoader(nftLoader).tokenURI(tokenId);
+    }
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return baseURI;
+    }
+
+    /**
+     * @notice Set the base URI
+     */
+    function setBaseURI(string memory __baseURI) external onlyOwner {
+        baseURI = __baseURI;
     }
 
     /**

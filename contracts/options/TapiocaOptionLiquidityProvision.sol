@@ -15,7 +15,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
-import {IYieldBox} from "tap-token/interfaces/IYieldBox.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {IYieldBox} from "contracts/interfaces/IYieldBox.sol";
 
 /*
 
@@ -56,7 +57,7 @@ contract TapiocaOptionLiquidityProvision is
     mapping(uint256 => LockPosition) public lockPositions; // TokenID => LockPosition
 
     IYieldBox public immutable yieldBox;
-    address public immutable tapiocaOptionBroker;
+    address public tapiocaOptionBroker;
 
     // Singularity market address => SingularityPool (YieldBox Asset ID is 0 if not active)
     mapping(IERC20 => SingularityPool) public activeSingularities;
@@ -69,6 +70,11 @@ contract TapiocaOptionLiquidityProvision is
     uint256 public totalSingularityPoolWeights; // Total weight of all active singularity pools
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
     uint256 public constant MAX_LOCK_DURATION = 100 * 365 days; // 100 years
+
+    ICluster public cluster;
+
+    uint256 public emergencySweepCooldown = 2 days;
+    uint256 public lastEmergencySweep;
 
     error NotRegistered();
     error InvalidSingularity();
@@ -89,15 +95,16 @@ contract TapiocaOptionLiquidityProvision is
     error RescueCooldownNotReached();
     error TransferFailed();
     error TobIsHolder();
+    error NotValid();
+    error EmergencySweepCooldownNotReached();
 
-    constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner, address _tob)
+    constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
         ERC721Permit("TapiocaOptionLiquidityProvision")
         PearlmitHandler(_pearlmit)
     {
         yieldBox = IYieldBox(_yieldBox);
         EPOCH_DURATION = _epochDuration;
-        tapiocaOptionBroker = _tob;
         _transferOwnership(_owner);
     }
 
@@ -119,6 +126,8 @@ contract TapiocaOptionLiquidityProvision is
     event ActivateSGLPoolRescue(uint256 indexed sglAssetId, address sglAddress);
     event RegisterSingularity(uint256 indexed sglAssetId, address sglAddress, uint256 poolWeight);
     event UnregisterSingularity(uint256 indexed sglAssetId, address sglAddress);
+    event SetEmergencySweepCooldown(uint256 emergencySweepCooldown);
+    event ActivateEmergencySweep();
 
     // ===============
     //    MODIFIERS
@@ -271,6 +280,13 @@ contract TapiocaOptionLiquidityProvision is
     //   OWNER
     // =========
 
+    /**
+     * @notice Sets the Tapioca Option Broker address
+     */
+    function setTapiocaOptionBroker(address _tob) external onlyOwner {
+        tapiocaOptionBroker = _tob;
+    }
+
     /// @notice Sets the pool weight of a given singularity market
     /// @param singularity Singularity market address
     /// @param weight Weight of the pool
@@ -373,13 +389,60 @@ contract TapiocaOptionLiquidityProvision is
     }
 
     /**
+     * @notice updates the Cluster address.
+     * @dev can only be called by the owner.
+     * @param _cluster the new address.
+     */
+    function setCluster(ICluster _cluster) external onlyOwner {
+        if (address(_cluster) == address(0)) revert NotValid();
+        cluster = _cluster;
+    }
+
+    /**
      * @notice Un/Pauses this contract.
      */
-    function setPause(bool _pauseState) external onlyOwner {
+    function setPause(bool _pauseState) external {
+        if (!cluster.hasRole(msg.sender, keccak256("PAUSABLE")) && msg.sender != owner()) revert NotAuthorized();
         if (_pauseState) {
             _pause();
         } else {
             _unpause();
+        }
+    }
+
+    /**
+     * @notice Set the emergency sweep cooldown
+     */
+    function setEmergencySweepCooldown(uint256 _emergencySweepCooldown) external onlyOwner {
+        emergencySweepCooldown = _emergencySweepCooldown;
+        emit SetEmergencySweepCooldown(_emergencySweepCooldown);
+    }
+
+    /**
+     * @notice Activate the emergency sweep cooldown
+     */
+    function activateEmergencySweep() external onlyOwner {
+        lastEmergencySweep = block.timestamp;
+        emit ActivateEmergencySweep();
+    }
+
+    /**
+     * @notice Emergency sweep of a token from the contract
+     */
+    function emergencySweep() external onlyOwner {
+        if (block.timestamp < lastEmergencySweep + emergencySweepCooldown) revert EmergencySweepCooldownNotReached();
+        if (!cluster.hasRole(msg.sender, keccak256("TOLP_EMERGENCY_SWEEP"))) revert NotAuthorized();
+
+        uint256 len = singularities.length;
+        for (uint256 i; i < len; i++) {
+            SingularityPool memory sgl = activeSingularities[sglAssetIDToAddress[singularities[i]]];
+            // Retrieve only the ones not in rescue
+            if (!sgl.rescue) {
+                // Try to sweep the funds even if one fails
+                try yieldBox.transfer(
+                    address(this), owner(), sgl.sglAssetID, yieldBox.balanceOf(address(this), sgl.sglAssetID)
+                ) {} catch {}
+            }
         }
     }
 

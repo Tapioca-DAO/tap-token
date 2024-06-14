@@ -1,10 +1,10 @@
 import * as PERIPH_DEPLOY_CONFIG from '@tapioca-periph/config';
+import SUPPORTED_CHAINS from '@tapioca-sdk/SUPPORTED_CHAINS';
 import { ELZChainID, TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import {
     IDependentOn,
     TTapiocaDeployTaskArgs,
 } from '@tapioca-sdk/ethers/hardhat/DeployerVM';
-import { BigNumberish } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { loadGlobalContract } from 'tapioca-sdk';
 import {
@@ -13,15 +13,15 @@ import {
 } from 'tapioca-sdk/dist/ethers/hardhat/DeployerVM';
 import { buildADB } from 'tasks/deployBuilds/postLbpStack/airdrop/buildADB';
 import { buildAOTAP } from 'tasks/deployBuilds/postLbpStack/airdrop/buildAOTAP';
+import { buildPostLbpStackPostDepSetup } from 'tasks/deployBuilds/postLbpStack/buildPostLbpStackPostDepSetup';
 import { buildExtExec } from 'tasks/deployBuilds/postLbpStack/tapToken/buildExtExec';
 import { buildTapToken } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapToken';
+import { buildTapTokenHelper } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapTokenHelper';
 import { loadTapTokenLocalContract } from 'tasks/utils';
 import { buildTapTokenReceiverModule } from '../deployBuilds/postLbpStack/tapToken/buildTapTokenReceiverModule';
 import { buildTapTokenSenderModule } from '../deployBuilds/postLbpStack/tapToken/buildTapTokenSenderModule';
 import { buildVesting } from '../deployBuilds/postLbpStack/vesting/buildVesting';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
-import SUPPORTED_CHAINS from '@tapioca-sdk/SUPPORTED_CHAINS';
-import { buildTapTokenHelper } from 'tasks/deployBuilds/postLbpStack/tapToken/buildTapTokenHelper';
 
 /**
  * @notice Called after periph `lbp` task, before periph `postLbp` task
@@ -38,6 +38,11 @@ import { buildTapTokenHelper } from 'tasks/deployBuilds/postLbpStack/tapToken/bu
  * - TapToken
  * - TapTokenHelper
  *
+ * Post deploy: Arb
+ * - Broker claim on AOTAP
+ * - Set tapToken in ADB
+ * - Set USDC as payment token in ADB
+ *
  */
 export const deployPostLbpStack_1__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
@@ -47,37 +52,66 @@ export const deployPostLbpStack_1__task = async (
         _taskArgs,
         { hre },
         tapiocaDeployTask,
+        postDeploy,
     );
 };
 
+/**
+ * @notice Does the following
+ * - Broker claim on AOTAP
+ * - Set tapToken in ADB
+ * - Set USDC as payment token in ADB
+ */
+async function postDeploy(params: TTapiocaDeployerVmPass<object>) {
+    // Settings
+    const { hre, VM, taskArgs, isHostChain } = params;
+    const { tag } = taskArgs;
+
+    if (isHostChain) {
+        await VM.executeMulticall(
+            await buildPostLbpStackPostDepSetup(hre, tag),
+        );
+    } else {
+        throw new Error('[-] Skipping current chain is not host chain.');
+    }
+}
+
 async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     // Settings
-    const { hre, VM, tapiocaMulticallAddr, taskArgs, isTestnet, chainInfo } =
-        params;
+    const {
+        hre,
+        VM,
+        tapiocaMulticallAddr,
+        taskArgs,
+        isTestnet,
+        chainInfo,
+        isHostChain,
+        isSideChain,
+    } = params;
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
     // Build contracts
-    if (
-        chainInfo.name === 'arbitrum' ||
-        chainInfo.name === 'arbitrum_sepolia'
-    ) {
+    if (isHostChain) {
         VM.add(await getAOTAP({ hre, owner, tag }))
             .add(await getVestingContributors({ hre, owner }))
             .add(await getVestingEarlySupporters({ hre, owner }))
             .add(await getVestingSupporters({ hre, owner }))
             .add(await getAdb({ hre, owner, tag }));
-    }
 
-    await addTapTokenContractsVM({
-        hre,
-        tag,
-        owner,
-        VM,
-        isTestnet,
-        chainInfo,
-        lzEndpointAddress: chainInfo.address,
-    });
+        await addTapTokenContractsVM({
+            hre,
+            tag,
+            owner,
+            VM,
+            isTestnet,
+            isHostChain,
+            chainInfo,
+            lzEndpointAddress: chainInfo.address,
+        });
+    } else {
+        throw new Error('[-] Skipping current chain is not host chain.');
+    }
 }
 
 /**
@@ -90,10 +124,19 @@ export async function addTapTokenContractsVM(params: {
     VM: DeployerVM;
     lzEndpointAddress: string;
     isTestnet: boolean;
+    isHostChain: boolean;
     chainInfo: (typeof SUPPORTED_CHAINS)[number];
 }) {
-    const { VM, isTestnet, lzEndpointAddress, hre, owner, chainInfo, tag } =
-        params;
+    const {
+        VM,
+        isTestnet,
+        isHostChain,
+        lzEndpointAddress,
+        hre,
+        owner,
+        chainInfo,
+        tag,
+    } = params;
     VM.add(await getExtExec({ hre, owner, tag }))
         .add(
             await getTapTokenSenderModule({
@@ -114,6 +157,7 @@ export async function addTapTokenContractsVM(params: {
                 hre,
                 tag,
                 isTestnet: !!isTestnet,
+                isHostChain,
                 owner,
                 lzEndpointAddress,
                 chainInfo,
@@ -263,6 +307,7 @@ export async function getTapToken(params: {
     hre: HardhatRuntimeEnvironment;
     tag: string;
     isTestnet: boolean;
+    isHostChain: boolean;
     owner: string;
     lzEndpointAddress: string;
     governanceEid: string;
@@ -274,14 +319,12 @@ export async function getTapToken(params: {
         tag,
         governanceEid,
         isTestnet,
+        isHostChain,
         lzEndpointAddress,
         chainInfo,
     } = params;
     let lTap = { address: hre.ethers.constants.AddressZero };
-    if (
-        chainInfo.name === 'arbitrum' ||
-        chainInfo.name === 'arbitrum_sepolia'
-    ) {
+    if (isHostChain) {
         lTap = loadTapTokenLocalContract(hre, tag, DEPLOYMENT_NAMES.LTAP);
     }
 
@@ -289,6 +332,8 @@ export async function getTapToken(params: {
 
     let dao = DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS;
     dao = isTestnet ? owner : dao;
+
+    const contributors = isTestnet ? owner : '0x'; //contributors address for vesting, we use owner for testnet
 
     const isGovernanceChain = chainInfo.lzChainId == governanceEid;
     return await buildTapToken(
@@ -299,7 +344,7 @@ export async function getTapToken(params: {
                 epochDuration:
                     DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
                 endpoint: lzEndpointAddress, // Endpoint address
-                contributors: isTestnet ? owner : '0x', //contributors address, we use owner for testnet
+                contributors,
                 earlySupporters: hre.ethers.constants.AddressZero, // early supporters address
                 supporters: hre.ethers.constants.AddressZero, // supporters address
                 lTap: lTap.address, // lTap address

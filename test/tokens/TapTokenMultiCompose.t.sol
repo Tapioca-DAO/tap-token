@@ -23,17 +23,17 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "tap-token/tokens/ITapToken.sol";
+} from "contracts/tokens/ITapToken.sol";
 import {
     TapTokenHelper,
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "tap-token/tokens/extensions/TapTokenHelper.sol";
-import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
+} from "contracts/tokens/extensions/TapTokenHelper.sol";
+import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
 import {TapiocaOmnichainEngineCodec as ToeCodec} from
     "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
-import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
+import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
 
 // Tapioca test
 import {TapTokenTest} from "./TapToken.t.sol";
@@ -123,7 +123,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         deal(address(aTapOFT), userA, amountToSendLD); // Mint free tokens
 
         // Send packets
-        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{
+        (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) = aTapOFT.sendPacket{
             value: lockTwTapPositionMsgReturn_.prepareLzCallReturn.lzSendParam.fee.nativeFee
         }(
             lockTwTapPositionMsgReturn_.prepareLzCallReturn.lzSendParam,
@@ -304,7 +304,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
 
         // Send packets
         uint256 feeValue = remoteTransferReturn_.prepareLzCallReturn.lzSendParam.fee.nativeFee;
-        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: feeValue}(
+        (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) = aTapOFT.sendPacket{value: feeValue}(
             remoteTransferReturn_.prepareLzCallReturn.lzSendParam, remoteTransferReturn_.prepareLzCallReturn.composeMsg
         );
 
@@ -314,10 +314,10 @@ contract TapTokenMultiComposeTest is TapTokenTest {
             // NOTE: this is the call that reverts
             __callLzCompose(
                 LzOFTComposedData(
-                    PT_NFT_APPROVALS, // msgType
-                    msgReceipt_.guid, // guid
-                    remoteTransferReturn_.prepareLzCallReturn.composeMsg, // All of the composed messages.
-                    bEid, // dstEid
+                    PT_NFT_APPROVALS,
+                    msgReceipt_.guid,
+                    msgSent, // All of the composed messages.
+                    bEid,
                     address(bTapOFT), // Compose creator (at lzReceive).
                     address(bTapOFT), // Compose receiver (at lzCompose).
                     userA, // srcMsgSender

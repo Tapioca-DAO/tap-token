@@ -2,10 +2,16 @@
 pragma solidity 0.8.22;
 
 //LZ
+import {
+    MessagingReceipt,
+    OFTReceipt,
+    SendParam,
+    MessagingFee
+} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {IMessagingChannel} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/IMessagingChannel.sol";
-import {MessagingReceipt, OFTReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OAppReceiver} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OAppReceiver.sol";
 import {Origin} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
+import {OFTCore} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
 
 // External
 import {ERC20Permit, ERC20} from "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
@@ -14,10 +20,10 @@ import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 // Tapioca
 import {BaseTapiocaOmnichainEngine} from "tapioca-periph/tapiocaOmnichainEngine/BaseTapiocaOmnichainEngine.sol";
 import {TapiocaOmnichainSender} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainSender.sol";
-import {ERC20PermitStruct, ITapToken, LZSendParam} from "tap-token/tokens/ITapToken.sol";
+import {ERC20PermitStruct, ITapToken, LZSendParam} from "contracts/tokens/ITapToken.sol";
 import {ModuleManager} from "./module/ModuleManager.sol";
 import {TapTokenReceiver} from "./TapTokenReceiver.sol";
-import {TwTAP} from "tap-token/governance/twTAP.sol";
+import {TwTAP} from "contracts/governance/twTAP.sol";
 import {TapTokenSender} from "./TapTokenSender.sol";
 import {BaseTapToken} from "./BaseTapToken.sol";
 
@@ -36,8 +42,8 @@ import {BaseTapToken} from "./BaseTapToken.sol";
 /// @notice OFT compatible TAP token
 /// @dev Emissions E(x)= E(x-1) - E(x-1) * D with E being total supply a x week, and D the initial decay rate
 contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
-    uint256 public constant INITIAL_SUPPLY = 46_686_595 * 1e18; // Everything minus DSO
-    uint256 public dso_supply = 53_313_405 * 1e18; // Emission supply for DSO
+    uint256 public constant INITIAL_SUPPLY = 47_500_000 * 1e18; // Everything minus DSO
+    uint256 public dso_supply = 52_500_000 * 1e18; // Emission supply for DSO
 
     /// @notice the a parameter used in the emission function;
     uint256 constant decay_rate = 8800000000000000; // 0.88%
@@ -90,6 +96,7 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     error InitStarted();
     error InitNotStarted();
     error InsufficientEmissions();
+    error NotAuthorized();
 
     // ===========
     // *MODIFIERS*
@@ -110,23 +117,24 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      *
      * Allocation:
      * ============
-     * DSO: 53,313,405
-     * DAO: 8m
      * Contributors: 15m
-     * Early supporters: 3,686,595
-     * Supporters: 12.5m
+     * Early supporters: 3.5m
+     * Supporters: 14,638,029.34
      * LBP: 5m
+     * DAO: 6,861,970.66
      * Airdrop: 2.5m
+     * == 47.5M ==
+     * DSO: 52.5m
      * == 100M ==
      *
      * @param _data.epochDuration The duration of an epoch in seconds.
      * @param _data.endpoint The layer zero address endpoint deployed on the current chain.
-     * @param _data.contributors Address of the  contributors. 15m TAP.
-     * @param _data.earlySupporters Address of early supporters. 3,686,595 TAP.
-     * @param _data.supporters Address of supporters. 12.5m TAP.
-     * @param _data.lTap Address of the LBP redemption token, lTap. 5m TAP.
-     * @param _data.dao Address of the DAO. 8m TAP.
-     * @param _data.airdrop Address of the airdrop contract. 2.5m TAP.
+     * @param _data.contributors Address of the  contributors.
+     * @param _data.earlySupporters Address of early supporters.
+     * @param _data.supporters Address of supporters.
+     * @param _data.lTap Address of the LBP redemption token, lTap.
+     * @param _data.dao Address of the DAO.
+     * @param _data.airdrop Address of the airdrop contract.
      * @param _data.governanceEid Governance chain endpoint ID. Should be EID of the twTAP chain.
      * @param _data.owner Address of the conservator/owner.
      * @param _data.tapTokenSenderModule Address of the TapTokenSenderModule.
@@ -153,10 +161,10 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         // Mint only on the governance chain
         if (_getChainId() == _data.governanceEid) {
             _mint(_data.contributors, 1e18 * 15_000_000);
-            _mint(_data.earlySupporters, 1e18 * 3_686_595);
-            _mint(_data.supporters, 1e18 * 12_500_000);
+            _mint(_data.earlySupporters, 1e18 * 3_500_000);
+            _mint(_data.supporters, 1e18 * 14_638_029.34);
             _mint(_data.lTap, 1e18 * 5_000_000);
-            _mint(_data.dao, 1e18 * 8_000_000);
+            _mint(_data.dao, 1e18 * 6_861_970.66);
             _mint(_data.airdrop, 1e18 * 2_500_000);
             if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
         }
@@ -260,15 +268,21 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     function sendPacket(LZSendParam calldata _lzSendParam, bytes calldata _composeMsg)
         public
         payable
-        returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
+        whenNotPaused
+        returns (
+            MessagingReceipt memory msgReceipt,
+            OFTReceipt memory oftReceipt,
+            bytes memory message,
+            bytes memory options
+        )
     {
-        (msgReceipt, oftReceipt) = abi.decode(
+        (msgReceipt, oftReceipt, message, options) = abi.decode(
             _executeModule(
                 uint8(ITapToken.Module.TapTokenSender),
                 abi.encodeCall(TapiocaOmnichainSender.sendPacket, (_lzSendParam, _composeMsg)),
                 false
             ),
-            (MessagingReceipt, OFTReceipt)
+            (MessagingReceipt, OFTReceipt, bytes, bytes)
         );
     }
 
@@ -278,16 +292,50 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     function sendPacketFrom(address _from, LZSendParam calldata _lzSendParam, bytes calldata _composeMsg)
         public
         payable
-        returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
+        whenNotPaused
+        returns (
+            MessagingReceipt memory msgReceipt,
+            OFTReceipt memory oftReceipt,
+            bytes memory message,
+            bytes memory options
+        )
     {
-        (msgReceipt, oftReceipt) = abi.decode(
+        (msgReceipt, oftReceipt, message, options) = abi.decode(
             _executeModule(
                 uint8(ITapToken.Module.TapTokenSender),
                 abi.encodeCall(TapiocaOmnichainSender.sendPacketFrom, (_from, _lzSendParam, _composeMsg)),
                 false
             ),
-            (MessagingReceipt, OFTReceipt)
+            (MessagingReceipt, OFTReceipt, bytes, bytes)
         );
+    }
+
+    /**
+     * See `OFTCore::send()`
+     * @dev override default `send` behavior to add `whenNotPaused` modifier
+     */
+    function send(SendParam calldata _sendParam, MessagingFee calldata _fee, address _refundAddress)
+        external
+        payable
+        override(OFTCore)
+        whenNotPaused
+        returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
+    {
+        // @dev Applies the token transfers regarding this send() operation.
+        // - amountSentLD is the amount in local decimals that was ACTUALLY sent/debited from the sender.
+        // - amountReceivedLD is the amount in local decimals that will be received/credited to the recipient on the remote OFT instance.
+        (uint256 amountSentLD, uint256 amountReceivedLD) =
+            _debit(msg.sender, _sendParam.amountLD, _sendParam.minAmountLD, _sendParam.dstEid);
+
+        // @dev Builds the options and OFT message to quote in the endpoint.
+        (bytes memory message, bytes memory options) = _buildMsgAndOptions(_sendParam, amountReceivedLD);
+
+        // @dev Sends the message to the LayerZero endpoint and returns the LayerZero msg receipt.
+        msgReceipt = _lzSend(_sendParam.dstEid, message, options, _fee, _refundAddress);
+        // @dev Formulate the OFT receipt.
+        oftReceipt = OFTReceipt(amountSentLD, amountReceivedLD);
+
+        emit OFTSent(msgReceipt.guid, _sendParam.dstEid, msg.sender, amountSentLD, amountReceivedLD);
     }
 
     /// =====================
@@ -472,7 +520,8 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
     /**
      * @notice Un/Pauses this contract.
      */
-    function setPause(bool _pauseState) external onlyOwner {
+    function setPause(bool _pauseState) external {
+        if (!getCluster().hasRole(msg.sender, keccak256("PAUSABLE")) && msg.sender != owner()) revert NotAuthorized();
         if (_pauseState) {
             _pause();
         } else {

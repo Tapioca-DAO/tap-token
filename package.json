@@ -26,7 +26,6 @@
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
     "@nomicfoundation/hardhat-foundry": "^1.1.1",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.4",
-    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@nomiclabs/hardhat-ethers": "^2.1.1",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",
     "@openzeppelin/contracts": "^4.9.5",
@@ -71,6 +70,7 @@
   },
   "dependencies": {
     "@layerzerolabs/lz-v2-utilities": "^2.3.16",
+    "@nomicfoundation/hardhat-verify": "^2.0.8",
     "@prb/math": "^2.5.0",
     "@types/inquirer": "^9.0.3",
     "@uniswap/sdk-core": "^4.0.10",
@@ -84,6 +84,9 @@
     "inquirer": "^8.2.5",
     "lodash": "^4.17.21",
     "merkletreejs": "^0.3.10",
-    "tapioca-sdk": "^1.7.52"
+    "tapioca-sdk": "^1.8.24"
+  },
+  "resolutions": {
+    "@ethersproject/providers": "npm:ethersproject-providers-arbitrum-hotfix@5.7.10"
   }
 }

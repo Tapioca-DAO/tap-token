@@ -58,10 +58,11 @@ type TPostLbp = {
 const POST_LBP: TPostLbp = {
     [EChainID.ARBITRUM]: {
         TAP: {
-            DAO_ADDRESS: '',
+            DAO_ADDRESS: '0x7A3B760AcFaB78f6bc6a1AD80F7743f5bA0513Dc',
         },
         ADB: {
-            PAYMENT_TOKEN_BENEFICIARY: '',
+            PAYMENT_TOKEN_BENEFICIARY:
+                '0x7A3B760AcFaB78f6bc6a1AD80F7743f5bA0513Dc', // MULTISIG
         },
         PCNFT: {
             ADDRESS: '0xA805E1b42590be85D2c74E09c0e1c1B6063Ea1A7',
@@ -142,7 +143,7 @@ const FINAL: TFinal = {
             EPOCH_DURATION: 604800, // 7 days
         },
         TOB: {
-            PAYMENT_TOKEN_ADDRESS: '0x464570adA09869d8741132183721B4f0769a0287', // TODO replace by real address
+            PAYMENT_TOKEN_ADDRESS: '0x7A3B760AcFaB78f6bc6a1AD80F7743f5bA0513Dc', // MULTISIG
         },
     },
 };
@@ -173,10 +174,26 @@ const MISC: TMisc = {
     [EChainID.ARBITRUM_SEPOLIA]: {
         CL_SEQUENCER: '0x',
         WETH: '0x2EAe4fbc552fE35C1D3Df2B546032409bb0E431E', // Locally deployed WETH9 Mock
-        USDC: '0x6D6a13AbE7935b2cf6d67e49bc17F5035362C705', // Locally deployed USDC Mock
+        USDC: '0xF72c2794A9Ea95C5a8CD033999F319B15723E751', // Locally deployed USDC Mock
         NONFUNGIBLE_POSITION_MANAGER:
             '0xFd1a7CA61e49703da3618999B2EEdc0E79476759',
         V3_FACTORY: '0x76D8F1D83716bcd0f811449a76Fc2B3E3ef98454',
+    },
+    [EChainID.BASE_SEPOLIA]: {
+        CL_SEQUENCER: '0x',
+        WETH: '',
+        USDC: '',
+        NONFUNGIBLE_POSITION_MANAGER:
+            '0xf77d418B10642d497755a42F7EBD5578d7041bC9',
+        V3_FACTORY: '0xDF474d2667bbD4488a7CbDEc1A27d0C667123AcF',
+    },
+    [EChainID.BERACHAIN_TESTNET]: {
+        CL_SEQUENCER: '0x',
+        WETH: '',
+        USDC: '',
+        NONFUNGIBLE_POSITION_MANAGER:
+            '0xDF474d2667bbD4488a7CbDEc1A27d0C667123AcF',
+        V3_FACTORY: '0x7d91FCA53809e393eCa64a09785330bc28DF0639',
     },
 };
 

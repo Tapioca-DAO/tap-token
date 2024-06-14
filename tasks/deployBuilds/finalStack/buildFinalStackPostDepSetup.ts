@@ -17,10 +17,12 @@ import { TapiocaMulticall } from 'tapioca-sdk/dist/typechain/tapioca-periphery';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from 'tasks/deploy/DEPLOY_CONFIG';
 import * as TAPIOCA_PERIPH_CONFIG from '@tapioca-periph/config';
 import * as TAPIOCA_BAR_CONFIG from '@tapioca-bar/config';
+import * as TAPIOCA_Z_CONFIG from '@tapiocaz/config';
 
 export const buildFinalStackPostDepSetup_2 = async (
     hre: HardhatRuntimeEnvironment,
     tag: string,
+    isTestnet: boolean,
 ): Promise<TapiocaMulticall.CallStruct[]> => {
     const calls: TapiocaMulticall.CallStruct[] = [];
 
@@ -38,33 +40,52 @@ export const buildFinalStackPostDepSetup_2 = async (
         tapOracleTobDeployment,
         usdoOracleDeployment,
         usdcOracleDeployment,
-        arbSglGlpDeployment,
-        ybStrategyArbSglGlpDeployment,
-        ybStrategyMainnetSglDaiDeployment,
-        mainnetSglDaiDeployment,
-    } = await loadContract(hre, tag);
+        tSglSGlp,
+        ybStrategyTSglSGlp,
+        tSglDai,
+        ybStrategyTSglSDai,
+    } = await loadContract__arb(hre, tag, isTestnet);
+
+    /**
+     * Sets tOB in tOLP
+     */
+    if (
+        (await tOlp.tapiocaOptionBroker()).toLocaleLowerCase() !==
+        tob.address.toLocaleLowerCase()
+    ) {
+        console.log('[+] +Call queue: set tOB in TOLP');
+        calls.push({
+            target: tOlp.address,
+            allowFailure: false,
+            callData: tOlp.interface.encodeFunctionData(
+                'setTapiocaOptionBroker',
+                [tob.address],
+            ),
+        });
+        console.log('\t- Parameters', 'tOB', tob.address);
+    }
 
     /**
      * Register Arb SGL GLP in TOLP
      */
     const sglGlpYbAsset = await yieldbox.ids(
         1,
-        arbSglGlpDeployment.address,
-        ybStrategyArbSglGlpDeployment.address,
+        tSglSGlp.address,
+        ybStrategyTSglSGlp.address,
         0,
     );
 
     // If SGL_GLP is not registered in TOLP, register it
     if (
         (await tOlp.sglAssetIDToAddress(sglGlpYbAsset)).toLowerCase() !==
-        arbSglGlpDeployment.address.toLowerCase()
+        tSglSGlp.address.toLowerCase()
     ) {
         console.log('[+] +Call queue: register SGL_GLP in TOLP');
         calls.push({
             target: tOlp.address,
             allowFailure: false,
             callData: tOlp.interface.encodeFunctionData('registerSingularity', [
-                arbSglGlpDeployment.address,
+                tSglSGlp.address,
                 sglGlpYbAsset,
                 0,
             ]),
@@ -72,7 +93,7 @@ export const buildFinalStackPostDepSetup_2 = async (
         console.log(
             '\t- Parameters',
             'SGL address',
-            arbSglGlpDeployment.address,
+            tSglSGlp.address,
             'YB asset ID',
             sglGlpYbAsset,
             'Weight',
@@ -85,22 +106,22 @@ export const buildFinalStackPostDepSetup_2 = async (
      */
     const sglDaiYbAsset = await yieldbox.ids(
         1,
-        mainnetSglDaiDeployment.address,
-        ybStrategyMainnetSglDaiDeployment.address,
+        tSglDai.address,
+        ybStrategyTSglSDai.address,
         0,
     );
 
     // If SGL_DAI is not registered in TOLP, register it
     if (
         (await tOlp.sglAssetIDToAddress(sglDaiYbAsset)).toLowerCase() !==
-        mainnetSglDaiDeployment.address.toLowerCase()
+        tSglDai.address.toLowerCase()
     ) {
-        console.log('[+] +Call queue: register SGL_DAI in TOLP');
+        console.log('[+] +Call queue: register SGL_T_SGL_DAI in TOLP');
         calls.push({
             target: tOlp.address,
             allowFailure: false,
             callData: tOlp.interface.encodeFunctionData('registerSingularity', [
-                mainnetSglDaiDeployment.address,
+                tSglDai.address,
                 sglDaiYbAsset,
                 0,
             ]),
@@ -108,7 +129,7 @@ export const buildFinalStackPostDepSetup_2 = async (
         console.log(
             '\t- Parameters',
             'SGL address',
-            mainnetSglDaiDeployment.address,
+            tSglDai.address,
             'YB asset ID',
             sglDaiYbAsset,
             'Weight',
@@ -266,11 +287,6 @@ export const buildFinalStackPostDepSetup_2 = async (
     return calls;
 };
 
-async function loadContract__generic(
-    hre: HardhatRuntimeEnvironment,
-    tag: string,
-) {}
-
 async function loadContract__arb(
     hre: HardhatRuntimeEnvironment,
     tag: string,
@@ -330,7 +346,7 @@ async function loadContract__arb(
         hre.SDK.eChainId,
         TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.TOB_TAP_OPTION_ORACLE,
         tag,
-    ).address;
+    );
 
     const usdcOracleDeployment = loadGlobalContract(
         hre,
@@ -338,7 +354,7 @@ async function loadContract__arb(
         hre.SDK.eChainId,
         TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.USDC_SEER_CL_ORACLE,
         tag,
-    ).address;
+    );
 
     const usdoDeployment = loadGlobalContract(
         hre,
@@ -346,7 +362,7 @@ async function loadContract__arb(
         hre.SDK.eChainId,
         TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.USDO,
         tag,
-    ).address;
+    );
 
     const usdoOracleDeployment = loadGlobalContract(
         hre,
@@ -354,43 +370,41 @@ async function loadContract__arb(
         hre.SDK.eChainId,
         TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.USDO_USDC_UNI_V3_ORACLE,
         tag,
-    ).address;
+    );
 
     // Arbitrum SGL-GLP
-    const arbSglGlpDeployment = loadGlobalContract(
+    const tSglSGlp = loadGlobalContract(
+        hre,
+        TAPIOCA_PROJECTS_NAME.TapiocaZ,
+        hre.SDK.eChainId,
+        TAPIOCA_Z_CONFIG.DEPLOYMENT_NAMES.T_SGL_GLP_MARKET,
+        tag,
+    );
+    const ybStrategyTSglSGlp = loadGlobalContract(
         hre,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
         hre.SDK.eChainId,
-        TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.SGL_S_GLP_MARKET,
+        TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES
+            .YB_T_SGL_SGLP_ASSET_WITHOUT_STRATEGY,
         tag,
-    ).address;
-    const ybStrategyArbSglGlpDeployment = loadGlobalContract(
-        hre,
-        TAPIOCA_PROJECTS_NAME.TapiocaBar,
-        hre.SDK.eChainId,
-        isTestnet
-            ? TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SGLP_ASSET_WITHOUT_STRATEGY
-            : TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SGLP_ASSET_WITH_STRATEGY,
-        tag,
-    ).address;
+    );
 
-    // Mainnet SGL-DAI
-    const mainnetSglDaiDeployment = loadGlobalContract(
+    // Mainnet tSGL-DAI
+    const tSglDai = loadGlobalContract(
+        hre,
+        TAPIOCA_PROJECTS_NAME.TapiocaZ,
+        hre.SDK.eChainId,
+        TAPIOCA_Z_CONFIG.DEPLOYMENT_NAMES.T_SGL_SDAI_MARKET,
+        tag,
+    );
+    const ybStrategyTSglSDai = loadGlobalContract(
         hre,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
         hre.SDK.eChainId,
-        TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.SGL_S_DAI_MARKET,
+        TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES
+            .YB_T_SGL_SDAI_ASSET_WITHOUT_STRATEGY,
         tag,
-    ).address;
-    const ybStrategyMainnetSglDaiDeployment = loadGlobalContract(
-        hre,
-        TAPIOCA_PROJECTS_NAME.TapiocaBar,
-        hre.SDK.eChainId,
-        isTestnet
-            ? TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SDAI_ASSET_WITHOUT_STRATEGY
-            : TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES.YB_SDAI_ASSET_WITH_STRATEGY,
-        tag,
-    ).address;
+    );
 
     return {
         tapToken,
@@ -403,9 +417,9 @@ async function loadContract__arb(
         tapOracleTobDeployment,
         usdoOracleDeployment,
         usdcOracleDeployment,
-        arbSglGlpDeployment,
-        ybStrategyArbSglGlpDeployment,
-        mainnetSglDaiDeployment,
-        ybStrategyMainnetSglDaiDeployment,
+        tSglSGlp,
+        ybStrategyTSglSGlp,
+        tSglDai,
+        ybStrategyTSglSDai,
     };
 }
