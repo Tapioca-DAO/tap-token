@@ -7,7 +7,7 @@ import fs from 'fs';
 import { BigNumber, BigNumberish } from 'ethers';
 
 export const PRE_SEED_VESTING_TOTAL = 3_500_000n * 10n ** 18n; // 3.5m
-export const SEED_VESTING_TOTAL = 10n ** 16n * 14_582_575_34n; // 14,582,575.34
+export const SEED_VESTING_TOTAL = 10n ** 16n * 14_938_029_34n; // 14,938,029.34
 export const CONTRIBUTOR_VESTING_TOTAL = 15_000_000n * 10n ** 18n; // 15m USE THIS FOR PROD
 // export const CONTRIBUTOR_VESTING_TOTAL = 5_000_000n * 10n ** 18n;
 
