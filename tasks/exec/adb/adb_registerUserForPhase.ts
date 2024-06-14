@@ -51,23 +51,6 @@ async function tapiocaTask(
         amounts.push(data.amount);
     });
 
-    // users.push(
-    //     '0x22076fba2ea9650a028Aa499d0444c4Aa9aF1Bf8',
-    //     '0x763D405278D7532548fb2804dD6A7d7943213b6D',
-    //     '0xC3aef76B87539387B84CFfDA1b93A674f126deb0',
-    //     '0x86C73B2E0CB8E4b1272f8DAaaca0e7e8B6143be6',
-    //     '0xEAF9f533871B07B151883908B4Fb6eeF4b51A95F',
-    //     '0xFc78700591Ac71c96102A4f9bD8Fc97D663355CC',
-    // );
-    // amounts.push(
-    //     hre.ethers.utils.parseEther('1000'),
-    //     hre.ethers.utils.parseEther('1000'),
-    //     hre.ethers.utils.parseEther('1000'),
-    //     hre.ethers.utils.parseEther('1000'),
-    //     hre.ethers.utils.parseEther('1000'),
-    //     hre.ethers.utils.parseEther('1000'),
-    // );
-
     const batchUsers = splitIntoBatches(users, 200);
     const batchAmounts = splitIntoBatches(amounts, 200);
 
