@@ -67,13 +67,17 @@ async function tapiocaTask(params: TTapiocaDeployerVmPass<unknown>) {
         ).address,
     );
 
+    console.log(await tapToken.balanceOf(preSeedVesting.address));
+    console.log(await tapToken.balanceOf(seedVesting.address));
+    console.log(await tapToken.balanceOf(contributorVesting.address));
+
     await VM.executeMulticall([
         {
             target: preSeedVesting.address,
             allowFailure: false,
             callData: preSeedVesting.interface.encodeFunctionData('init', [
                 tapToken.address,
-                PRE_SEED_VESTING_TOTAL,
+                await preSeedVesting.totalRegisteredAmount(),
                 600, // Initial unlock, in BPS, 6%
             ]),
         },
@@ -82,7 +86,7 @@ async function tapiocaTask(params: TTapiocaDeployerVmPass<unknown>) {
             allowFailure: false,
             callData: seedVesting.interface.encodeFunctionData('init', [
                 tapToken.address,
-                SEED_VESTING_TOTAL,
+                await seedVesting.totalRegisteredAmount(),
                 800, // Initial unlock, in BPS, 8%
             ]),
         },
