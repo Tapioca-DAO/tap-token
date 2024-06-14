@@ -118,10 +118,10 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      * Allocation:
      * ============
      * Contributors: 15m
-     * Early supporters: 3.5m
-     * Supporters: 14,582,575.34
-     * LBP: 5m
-     * DAO: 6,917,424.66
+     * Early supporters: 3_500_001
+     * Supporters: 14,938,030.34
+     * LTAP: 3989472714402321147960046
+     * DAO: 6,561,968.66 + remaining for LBP
      * Airdrop: 2.5m
      * == 47.5M ==
      * DSO: 52.5m
@@ -160,11 +160,14 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
 
         // Mint only on the governance chain
         if (_getChainId() == _data.governanceEid) {
+            uint256 lbpSold = 3989472714402321147960046; // LBP sold 3.9m
+            uint256 lbpRemaining = (1e18 * 5_000_000) - lbpSold; // Remaining of the  LBP goes to the DAO
+
             _mint(_data.contributors, 1e18 * 15_000_000);
-            _mint(_data.earlySupporters, 1e18 * 3_500_000);
-            _mint(_data.supporters, 1e18 * 14_582_575.34);
-            _mint(_data.lTap, 1e18 * 5_000_000);
-            _mint(_data.dao, 1e18 * 6_917_424.66);
+            _mint(_data.earlySupporters, 1e18 * 3_500_001);
+            _mint(_data.supporters, 1e18 * 14_938_030.34);
+            _mint(_data.lTap, lbpSold);
+            _mint(_data.dao, (1e18 * 6_561_968.66) + lbpRemaining);
             _mint(_data.airdrop, 1e18 * 2_500_000);
             if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
         }
