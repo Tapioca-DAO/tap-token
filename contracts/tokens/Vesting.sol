@@ -41,7 +41,7 @@ contract Vesting is Ownable, ReentrancyGuard {
     uint256 public totalRegisteredAmount;
 
     /// @notice Used for initial unlock
-    uint256 private __initialUnlockTimeOffset;
+    uint256 public __initialUnlockTimeOffset;
 
     /// @notice user vesting data
     struct UserData {
@@ -53,7 +53,7 @@ contract Vesting is Ownable, ReentrancyGuard {
 
     mapping(address => UserData) public users;
 
-    uint256 private __totalClaimed;
+    uint256 public __totalClaimed;
 
     // ************** //
     // *** ERRORS *** //
@@ -113,11 +113,6 @@ contract Vesting is Ownable, ReentrancyGuard {
     /// @param _user the user address
     function vested(address _user) external view returns (uint256) {
         return _vested(users[_user].amount);
-    }
-
-    /// @notice returns total claimed
-    function totalClaimed() external view returns (uint256) {
-        return __totalClaimed;
     }
 
     /// @notice Compute the time needed to unlock an amount of tokens, given a total amount.
@@ -268,9 +263,20 @@ contract Vesting is Ownable, ReentrancyGuard {
             if (block.timestamp < _start) return 0; // Cliff not reached
         }
 
-        if (block.timestamp >= _start - __initialUnlockTimeOffset + _duration) return _totalAmount; // Fully vested
-
-        _start = _start - __initialUnlockTimeOffset; // Offset initial unlock so it's claimable immediately
-        return (_totalAmount * (block.timestamp - _start)) / _duration; // Partially vested
+        // end time - initial unlock time offset
+        if (block.timestamp >= _start - __initialUnlockTimeOffset + _duration) {
+            // Fully vested
+            if (block.timestamp >= _start + _duration) {
+                return _totalAmount;
+                // Account for initial unlock
+            } else {
+                _start = _start - __initialUnlockTimeOffset;
+                return (_totalAmount * (block.timestamp - _start)) / (_duration + __initialUnlockTimeOffset); // Take into account initial unlock
+            }
+        } else {
+            // Partially vesting
+            _start = _start - __initialUnlockTimeOffset; // Offset initial unlock so it's claimable immediately
+            return (_totalAmount * (block.timestamp - _start)) / _duration; // Partially vested
+        }
     }
 }
