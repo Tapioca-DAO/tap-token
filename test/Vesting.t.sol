@@ -8,7 +8,7 @@ import {TapTestHelper} from "./helpers/TapTestHelper.t.sol";
 import {ERC20Mock} from "./Mocks/ERC20Mock.sol";
 
 import {Errors} from "./helpers/errors.sol";
-import {Vesting} from "tap-token/tokens/Vesting.sol";
+import {Vesting} from "contracts/tokens/Vesting.sol";
 
 // import "forge-std/Test.sol";
 import {stdStorage, StdStorage} from "forge-std/Test.sol";
@@ -145,10 +145,7 @@ contract VestingTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    function testFuzz_register_users(
-        uint256 amountToRegister1,
-        uint256 amountToRegister2
-    ) internal {
+    function testFuzz_register_users(uint256 amountToRegister1, uint256 amountToRegister2) internal {
         amountToRegister1 = bound(amountToRegister1, 1, 1_000_000_000);
         amountToRegister2 = bound(amountToRegister2, 1, 1_000_000_000);
         test_register_users(amountToRegister1, amountToRegister2);
@@ -159,10 +156,7 @@ contract VestingTest is TapTestHelper, Errors {
     }
 
     /// @notice registering multiple user via registerUsers works
-    function test_register_users(
-        uint256 amountToRegister1,
-        uint256 amountToRegister2
-    ) internal {
+    function test_register_users(uint256 amountToRegister1, uint256 amountToRegister2) internal {
         vm.startPrank(owner);
         address[] memory users = new address[](2);
         users[0] = address(owner);

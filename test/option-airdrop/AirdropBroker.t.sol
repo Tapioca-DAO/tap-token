@@ -34,19 +34,19 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "tap-token/tokens/ITapToken.sol";
+} from "contracts/tokens/ITapToken.sol";
 import {
     TapTokenHelper,
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "tap-token/tokens/extensions/TapTokenHelper.sol";
-import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
-import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
-import {TapTokenReceiver} from "tap-token/tokens/TapTokenReceiver.sol";
-import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
+} from "contracts/tokens/extensions/TapTokenHelper.sol";
+import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
+import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
+import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
+import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
 import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
-import {ICluster, Cluster} from  "tapioca-periph/Cluster/Cluster.sol";
+import {ICluster, Cluster} from "tapioca-periph/Cluster/Cluster.sol";
 import {TapiocaOmnichainExtExec} from "tapioca-periph/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
 
 // Tapioca Tests
@@ -61,10 +61,10 @@ import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.so
 import {ERC20Mock} from "../Mocks/ERC20Mock.sol";
 
 // Tapioca contracts
-import {AOTAP} from "tap-token/option-airdrop/AOTAP.sol";
+import {AOTAP} from "contracts/option-airdrop/AOTAP.sol";
 
 // Import contract to test
-import {AirdropBroker} from "tap-token/option-airdrop/AirdropBroker.sol";
+import {AirdropBroker} from "contracts/option-airdrop/AirdropBroker.sol";
 import {Errors} from "../helpers/errors.sol";
 
 // import "forge-std/Test.sol";
@@ -91,7 +91,7 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
     AOTAP public aotap; //instance of AOTAP
     TapiocaOmnichainExtExec extExec; //instance of TapiocaOmnichainExtExec
     Pearlmit pearlmit;
-    Cluster cluster; 
+    Cluster cluster;
 
     uint256 internal userAPKey = 0x1;
     uint256 internal userBPKey = 0x2;
@@ -135,7 +135,7 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
                 __dao,
                 __airdrop,
                 __governanceEid,
-                owner, 
+                owner,
                 address(new TapTokenSender("", "", address(endpoints[aEid]), address(this), address(0))),
                 address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this), address(0))),
                 address(extExec),
@@ -149,12 +149,11 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         vm.label(address(erc721Mock), "erc721Mock"); //label address for test traces
         tapTokenHelper = new TapTokenHelper();
         tapOracleMock = new TapOracleMock();
-        aotap = new AOTAP(IPearlmit(address(pearlmit)),owner); //deploy AOTAP and set address to owner
+        aotap = new AOTAP(IPearlmit(address(pearlmit)), owner); //deploy AOTAP and set address to owner
 
         airdropBroker = new AirdropBroker(
             address(aotap), address(erc721Mock), tokenBeneficiary, IPearlmit(address(pearlmit)), address(owner)
         );
-
 
         vm.startPrank(owner);
         mockToken = new ERC20Mock("MockERC20", "Mock"); //deploy ERC20Mock

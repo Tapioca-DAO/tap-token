@@ -34,20 +34,20 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "tap-token/tokens/ITapToken.sol";
+} from "contracts/tokens/ITapToken.sol";
 import {
     TapTokenHelper,
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "tap-token/tokens/extensions/TapTokenHelper.sol";
+} from "contracts/tokens/extensions/TapTokenHelper.sol";
 import {TapiocaOmnichainExtExec} from "tapioca-periph/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
 import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
-import {ICluster, Cluster} from  "tapioca-periph/Cluster/Cluster.sol";
-import {TapTokenReceiver} from "tap-token/tokens/TapTokenReceiver.sol";
-import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
-import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
-import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
+import {ICluster, Cluster} from "tapioca-periph/Cluster/Cluster.sol";
+import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
+import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
+import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
+import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
 
 // Tapioca Tests
 
@@ -112,7 +112,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
     WrappedNativeMock public wrappedNativeMock; //instance of wrappedNativeMock
     TapiocaOmnichainExtExec extExec;
     Pearlmit pearlmit;
-    Cluster cluster; 
+    Cluster cluster;
 
     uint256 internal userAPKey = 0x1;
     uint256 internal userBPKey = 0x2;
@@ -164,7 +164,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
                 __dao,
                 __airdrop,
                 __governanceEid,
-                owner, 
+                owner,
                 address(new TapTokenSender("", "", address(endpoints[aEid]), address(this), address(0))),
                 address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this), address(0))),
                 address(extExec),
@@ -182,13 +182,13 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         yieldBoxURIBuilder = new YieldBoxURIBuilder();
         wrappedNativeMock = new WrappedNativeMock();
         yieldBox = new YieldBox(IWrappedNative(wrappedNativeMock), yieldBoxURIBuilder, pearlmit, owner);
-        otap = new OTAP(address(this));
+        otap = new OTAP(IPearlmit(address(pearlmit)), address(this)); //deploy OTAP
         aotap = new AOTAP(IPearlmit(address(pearlmit)), address(this)); //deploy AOTAP and set address to owner
 
-        // NOTE: this currently sets tapiocaOptionBroker address in tapiocaOptionLiquidityProvision because it's not deployed yet but since these contracts are self-referencing 
+        // NOTE: this currently sets tapiocaOptionBroker address in tapiocaOptionLiquidityProvision because it's not deployed yet but since these contracts are self-referencing
         // and set these values as immutable there's no simple fix. Since the functions called on tapiocaOptionLiquidityProvision in these tests aren't dependent on what the tapiocaOptionBroker is set to this is the simplest workaround
         tapiocaOptionLiquidityProvision =
-            new TapiocaOptionLiquidityProvision(address(yieldBox), 7 days, IPearlmit(address(pearlmit)), address(owner), address(tapiocaOptionBroker));
+            new TapiocaOptionLiquidityProvision(address(yieldBox), 7 days, IPearlmit(address(pearlmit)), address(owner));
 
         airdropBroker = new AirdropBroker(
             address(aotap), address(erc721Mock), tokenBeneficiary, IPearlmit(address(pearlmit)), address(owner)
@@ -203,7 +203,6 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
             IPearlmit(address(pearlmit)),
             owner
         );
-
 
         vm.startPrank(owner);
         mockToken = new ERC20Mock("MockERC20", "Mock"); //deploy ERC20Mock
@@ -361,7 +360,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    /// @notice paymentTokenBeneficiary receives tokens from broker   
+    /// @notice paymentTokenBeneficiary receives tokens from broker
     function test_collect_payments() public {
         //ok
 
@@ -415,7 +414,7 @@ contract TapiocaOptionBrokerTest is TapTestHelper, Errors {
 
         vm.startPrank(address(tapiocaOptionBroker));
         // init emissions so that aTapOFT can be emitted in call to newEpoch
-        aTapOFT.initEmissions(); 
+        aTapOFT.initEmissions();
         vm.stopPrank();
 
         vm.startPrank(owner);

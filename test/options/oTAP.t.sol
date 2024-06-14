@@ -20,6 +20,7 @@ import {OTAP} from "../../contracts/options/oTAP.sol";
 
 // Import contract to test
 import {AirdropBroker} from "../../contracts/option-airdrop/AirdropBroker.sol";
+import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
 
 import {Errors} from "../helpers/errors.sol";
 
@@ -43,7 +44,8 @@ contract oTapTest is TapTestHelper, Errors {
         vm.label(owner, "owner"); //label address for test traces
         vm.label(tokenBeneficiary, "tokenBeneficiary"); //label address for test traces
 
-        otap = new OTAP(address(this)); //deploy OTAP
+        Pearlmit pearlmit = new Pearlmit("Pearlmit", "1", owner, type(uint256).max);
+        otap = new OTAP(IPearlmit(address(pearlmit)), address(this)); //deploy OTAP
         super.setUp();
     }
 

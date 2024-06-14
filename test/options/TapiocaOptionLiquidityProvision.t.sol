@@ -35,19 +35,19 @@ import {
     ERC721PermitApprovalMsg,
     ClaimTwTapRewardsMsg,
     RemoteTransferMsg
-} from "tap-token/tokens/ITapToken.sol";
+} from "contracts/tokens/ITapToken.sol";
 import {
     TapTokenHelper,
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "tap-token/tokens/extensions/TapTokenHelper.sol";
+} from "contracts/tokens/extensions/TapTokenHelper.sol";
 import {TapiocaOmnichainExtExec} from "tapioca-periph/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
-import {TapTokenReceiver} from "tap-token/tokens/TapTokenReceiver.sol";
-import {ICluster, Cluster} from  "tapioca-periph/Cluster/Cluster.sol";
-import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
-import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
-import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
+import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
+import {ICluster, Cluster} from "tapioca-periph/Cluster/Cluster.sol";
+import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
+import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
+import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
 
 // Tapioca Tests
 
@@ -112,7 +112,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
     WrappedNativeMock public wrappedNativeMock; //instance of wrappedNativeMock
     TapiocaOmnichainExtExec extExec; //instance of TapiocaOmnichainExtExec
     Pearlmit pearlmit;
-    Cluster cluster; 
+    Cluster cluster;
 
     uint256 internal userAPKey = 0x1;
     uint256 internal userBPKey = 0x2;
@@ -134,7 +134,6 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
     address public __airdrop = address(0x35);
     uint256 public __governanceEid = aEid; //aEid, initially bEid
     address public __owner = address(this);
-    
 
     struct SingularityPool {
         uint256 sglAssetID; // Singularity market YieldBox asset ID
@@ -166,7 +165,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
                 __dao,
                 __airdrop,
                 __governanceEid,
-                owner, 
+                owner,
                 address(new TapTokenSender("", "", address(endpoints[aEid]), address(this), address(0))),
                 address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this), address(0))),
                 address(extExec),
@@ -184,12 +183,13 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         yieldBoxURIBuilder = new YieldBoxURIBuilder();
         wrappedNativeMock = new WrappedNativeMock();
         yieldBox = new YieldBox(IWrappedNative(wrappedNativeMock), yieldBoxURIBuilder, pearlmit, owner);
-        otap = new OTAP(address(this));
+        otap = new OTAP(IPearlmit(address(pearlmit)), address(this)); //deploy OTAP
         aotap = new AOTAP(IPearlmit(address(pearlmit)), address(this)); //deploy AOTAP and set address to owner
 
         // NOTE: tapiocaOptionBroker is set to default address 0 when passed in here but shouldn't be a problem because no logic in tests implemented depend on this
-        tapiocaOptionLiquidityProvision =
-            new TapiocaOptionLiquidityProvision(address(yieldBox), EPOCH_DURATION, IPearlmit(address(pearlmit)), address(owner), address(tapiocaOptionBroker));
+        tapiocaOptionLiquidityProvision = new TapiocaOptionLiquidityProvision(
+            address(yieldBox), EPOCH_DURATION, IPearlmit(address(pearlmit)), address(owner)
+        );
         tapiocaOptionBroker = new TapiocaOptionBroker(
             address(tapiocaOptionLiquidityProvision),
             payable(address(otap)),
@@ -235,7 +235,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         assertEq(_owner, address(owner));
     }
 
-    /// @notice registering singularities works 
+    /// @notice registering singularities works
     function test_new_epoch_with_singularities() public {
         vm.startPrank(owner);
         vm.warp(block.timestamp + 7 days + 1 seconds);
@@ -258,7 +258,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    /// @notice can't register singularity asset with id 0 
+    /// @notice can't register singularity asset with id 0
     function test_register_singularity_id_not_valid() public {
         vm.startPrank(owner);
         vm.expectRevert(AssetIdNotValid.selector);
@@ -449,7 +449,7 @@ contract TapiocaOptionLiquidityProvisionTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
-    /// @notice can't lock YieldBox shares for less than EPOCH_DURATION 
+    /// @notice can't lock YieldBox shares for less than EPOCH_DURATION
     function test_lock_short_duration() public {
         vm.startPrank(owner);
         vm.expectRevert(DurationTooShort.selector);
