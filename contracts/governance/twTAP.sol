@@ -303,7 +303,6 @@ contract TwTAP is
             //    so that the subtraction net_n - c_n does not underflow.
             //    (The rounding the calculation favors the greater first
             //    term).
-            //    (TODO: Word better?)
             //
             uint256 net = cur.totalDistPerVote[i] - prev.totalDistPerVote[i];
             result[i] = ((votes * net) / DIST_PRECISION) - claimed[_tokenId][i];
@@ -392,7 +391,6 @@ contract TwTAP is
             if (divergenceForce) {
                 pool.cumulative += pool.averageMagnitude;
             } else {
-                // TODO: Strongly suspect this is never less. Prove it.
                 if (pool.cumulative > pool.averageMagnitude) {
                     pool.cumulative -= pool.averageMagnitude;
                 } else {
@@ -484,7 +482,8 @@ contract TwTAP is
     /// @notice Reverts if called in week 0. Let it.
     /// @param _limit Maximum number of weeks to process in one call
     function advanceWeek(uint256 _limit) public nonReentrant {
-        // TODO: Make whole function unchecked
+        if (!cluster.hasRole(msg.sender, keccak256("NEW_EPOCH"))) revert NotAuthorized();
+
         uint256 week = lastProcessedWeek;
         uint256 goal = currentWeek();
         unchecked {
@@ -496,7 +495,7 @@ contract TwTAP is
         while (week < goal) {
             WeekTotals storage prev = weekTotals[week];
             WeekTotals storage next = weekTotals[++week];
-            // TODO: Prove that math is safe
+
             next.netActiveVotes += prev.netActiveVotes;
             for (uint256 i; i < len;) {
                 next.totalDistPerVote[i] += prev.totalDistPerVote[i];
@@ -527,7 +526,6 @@ contract TwTAP is
         // no way to give out rewards THIS week.
         // Cast is safe: `netActiveVotes` is at most zero by construction of
         // weekly totals and the requirement that they are up to date.
-        // TODO: Word this better
         totals.totalDistPerVote[_rewardTokenId] += (_amount * DIST_PRECISION) / uint256(totals.netActiveVotes);
 
         rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
@@ -573,7 +571,6 @@ contract TwTAP is
      * @notice Add a reward token to the list of reward tokens.
      * @param _token The address of the reward token.
      */
-    // TODO Check if it should be one type of token only? Like OFT?
     function addRewardToken(IERC20 _token) external onlyOwner returns (uint256) {
         if (rewardTokenIndex[_token] != 0) revert Registered();
         if (rewardTokens.length + 1 > maxRewardTokens) {
