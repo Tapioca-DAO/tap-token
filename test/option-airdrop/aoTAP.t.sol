@@ -41,8 +41,16 @@ contract aoTapTest is TapTestHelper, Errors {
     address public owner = vm.addr(userAPKey);
     address public tokenBeneficiary = vm.addr(userBPKey);
 
-    event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
-    event Approval(address indexed _owner, address indexed _approved, uint256 indexed _tokenId);
+    event Transfer(
+        address indexed _from,
+        address indexed _to,
+        uint256 indexed _tokenId
+    );
+    event Approval(
+        address indexed _owner,
+        address indexed _approved,
+        uint256 indexed _tokenId
+    );
 
     function setUp() public override {
         vm.deal(owner, 1000 ether); //give owner some ether
@@ -50,22 +58,27 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.label(owner, "owner"); //label address for test traces
         vm.label(tokenBeneficiary, "tokenBeneficiary"); //label address for test traces
 
-        pearlmit = IPearlmit(address(new Pearlmit())); //deploy Pearlmit
+        pearlmit = IPearlmit(
+            address(new Pearlmit("Pearlmit", "1", owner, type(uint256).max))
+        ); // NOTE: setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
         aotap = new AOTAP(pearlmit, address(owner)); //deploy AOTAP and set address to owner
 
         super.setUp();
     }
 
+    /// @notice only broker can mint
     function test_cannot_mint_no_broker() public {
+        uint128 expiry = uint128(block.timestamp + 7 days);
         vm.expectRevert(OnlyBroker.selector);
-        aotap.mint(address(owner), 1, 1, 1);
+        aotap.mint(address(owner), expiry, 1, 1, 1);
     }
 
+    /// @notice only token owner or approved account can set the token URI
     function test_set_uri_not_approved() public {
         vm.startPrank(owner);
-
         aotap.brokerClaim();
-        uint256 tokenId = aotap.mint(address(owner), 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        uint256 tokenId = aotap.mint(address(owner), expiry, 1, 1, 1);
         uint256 balance = aotap.balanceOf(address(owner));
         assertEq(balance, 1);
         aotap.transferFrom(owner, tokenBeneficiary, 1);
@@ -80,6 +93,7 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice can't set URI on token that hasn't been minted
     function test_set_uri_not_invalid_id() public {
         vm.startPrank(owner);
         vm.expectRevert(bytes("ERC721: invalid token ID"));
@@ -89,10 +103,12 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice owner can successfully set URI on their token
     function test_set_uri() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        uint256 tokenId = aotap.mint(address(owner), 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        uint256 tokenId = aotap.mint(address(owner), expiry, 1, 1, 1);
         uint256 balance = aotap.balanceOf(address(owner));
         assertEq(balance, 1);
         aotap.setTokenURI(1, "https://tapioca.games");
@@ -101,21 +117,25 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice broker can mint aoTAP
     function test_mint_aoTAP() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        uint256 tokenId = aotap.mint(address(owner), 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        uint256 tokenId = aotap.mint(address(owner), expiry, 1, 1, 1);
         uint256 balance = aotap.balanceOf(address(owner));
         assertEq(balance, 1);
         vm.stopPrank();
     }
 
+    /// @notice broker can mint multiple aoTAP
     function test_mint_several_aoTAP() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
+        uint128 expiry = uint128(block.timestamp + 7 days);
         uint256 i;
         for (i; i < 10; i++) {
-            uint256 tokenId = aotap.mint(address(owner), 1, 1, 1);
+            uint256 tokenId = aotap.mint(address(owner), expiry, 1, 1, 1);
             uint256 balance = aotap.balanceOf(address(owner));
             assertEq(balance, i + 1);
         }
@@ -124,10 +144,12 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice existence check works correctly for minted aoTAP tokens
     function test_exists() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        uint256 tokenId = aotap.mint(address(owner), 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        uint256 tokenId = aotap.mint(address(owner), expiry, 1, 1, 1);
         uint256 balance = aotap.balanceOf(address(owner));
         assertEq(balance, 1);
         vm.stopPrank();
@@ -135,10 +157,12 @@ contract aoTapTest is TapTestHelper, Errors {
         assertEq(exists, true);
     }
 
+    /// @notice transferFrom works
     function test_transfer_from() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        aotap.mint(owner, 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        aotap.mint(owner, expiry, 1, 1, 1);
         aotap.safeTransferFrom(owner, tokenBeneficiary, 1);
         address new_owner = aotap.ownerOf(1);
         assertEq(tokenBeneficiary, new_owner);
@@ -147,20 +171,24 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice burning works
     function test_burn() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        aotap.mint(owner, 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        aotap.mint(owner, expiry, 1, 1, 1);
         aotap.burn(1);
         uint256 bal = aotap.balanceOf(owner);
         assertEq(bal, (0));
         vm.stopPrank();
     }
 
+    /// @notice only owner or approved can burn
     function test_fail_burning() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        aotap.mint(owner, 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        aotap.mint(owner, expiry, 1, 1, 1);
         vm.stopPrank();
         vm.startPrank(tokenBeneficiary);
         vm.expectRevert(NotAuthorized.selector);
@@ -168,10 +196,12 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice approved account can mint
     function test_approvals() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        aotap.mint(owner, 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        aotap.mint(owner, expiry, 1, 1, 1);
         aotap.approve(tokenBeneficiary, 1);
         address _owner = aotap.ownerOf(1);
         assertEq(owner, _owner);
@@ -180,23 +210,39 @@ contract aoTapTest is TapTestHelper, Errors {
         vm.stopPrank();
     }
 
+    /// @notice getApproved works correctly
     function test_get_approved() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        aotap.mint(owner, 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        aotap.mint(owner, expiry, 1, 1, 1);
         aotap.approve(tokenBeneficiary, 1);
         address _approved = aotap.getApproved(1);
         assertEq(_approved, tokenBeneficiary);
         vm.stopPrank();
     }
 
+    /// @notice setApprovalForAll works correctly
     function test_set_approval_for_all() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        aotap.mint(owner, 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        aotap.mint(owner, expiry, 1, 1, 1);
         aotap.setApprovalForAll(tokenBeneficiary, true);
         bool _approved = aotap.isApprovedForAll(owner, tokenBeneficiary);
         assertEq(_approved, true);
+        vm.stopPrank();
+    }
+
+    // NOTE: expiry time in minting can be in the past
+    function test_mint_past_expiry_time() public {
+        vm.startPrank(owner);
+        aotap.brokerClaim();
+        vm.warp(block.timestamp + 7 days);
+        uint128 expiry = uint128(block.timestamp - 7 days);
+        uint256 tokenId = aotap.mint(address(owner), expiry, 1, 1, 1);
+        uint256 balance = aotap.balanceOf(address(owner));
+        assertEq(balance, 1);
         vm.stopPrank();
     }
 
@@ -205,7 +251,8 @@ contract aoTapTest is TapTestHelper, Errors {
     function testTransferEvent() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        aotap.mint(owner, 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        aotap.mint(owner, expiry, 1, 1, 1);
         vm.expectEmit(address(aotap));
         emit IERC721.Transfer(address(owner), address(tokenBeneficiary), 1);
         aotap.safeTransferFrom(owner, tokenBeneficiary, 1);
@@ -215,7 +262,8 @@ contract aoTapTest is TapTestHelper, Errors {
     function testApprovalEvent() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        aotap.mint(owner, 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        aotap.mint(owner, expiry, 1, 1, 1);
         vm.expectEmit(address(aotap));
         emit IERC721.Approval(address(owner), address(tokenBeneficiary), 1);
         aotap.approve(tokenBeneficiary, 1);
@@ -225,9 +273,14 @@ contract aoTapTest is TapTestHelper, Errors {
     function testApprovalForAllEvent() public {
         vm.startPrank(owner);
         aotap.brokerClaim();
-        aotap.mint(owner, 1, 1, 1);
+        uint128 expiry = uint128(block.timestamp + 7 days);
+        aotap.mint(owner, expiry, 1, 1, 1);
         vm.expectEmit(address(aotap));
-        emit IERC721.ApprovalForAll(address(owner), address(tokenBeneficiary), true);
+        emit IERC721.ApprovalForAll(
+            address(owner),
+            address(tokenBeneficiary),
+            true
+        );
         aotap.setApprovalForAll(tokenBeneficiary, true);
         vm.stopPrank();
     }

@@ -38,6 +38,7 @@ import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
 // Tapioca test
 import {TapTokenTest} from "./TapToken.t.sol";
 
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "forge-std/Test.sol";
 
 contract TapTokenMultiComposeTest is TapTokenTest {
@@ -46,6 +47,10 @@ contract TapTokenMultiComposeTest is TapTokenTest {
      * @dev `userA` should be the sender
      */
     function test_multi_compose_participate() public {
+        vm.prank(__owner);
+        // NOTE: need to add bTapOFT to whitelist
+        cluster.updateContract(0, address(bTapOFT), true); 
+
         vm.startPrank(userA);
 
         // Global vars
@@ -99,7 +104,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     msgType: PT_LOCK_TWTAP,
                     composeMsgData: ComposeMsgData({
                         index: 1,
-                        gas: 0,
+                        gas: 1,
                         value: 0,
                         data: new bytes(0), // Will be written in the _setupLockTwTapPositionMsg function.
                         prevData: erc20ApprovalsReturn_.prepareLzCallReturn.composeMsg,
@@ -153,6 +158,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
     /**
      * @dev Integration test with both ERC721Permit, unlockTwTapPosition, ERC20Permit and sendRemoteTransfer
      */
+    // NOTE: this test fails at the call to erc721PermitApproval, appears to be an issue with the formatting of the message as the same approval call is successfully made in TapTokenTest::test_erc721_permit
     function test_multi_compose_exit_and_transfer() public {
         vm.startPrank(userA);
 
@@ -199,7 +205,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         erc721ApprovalsData_.permitData[0] = ERC721PermitStruct({
             tokenId: tokenId_,
             spender: address(twTap),
-            nonce: 0,
+            nonce: 1,
             deadline: block.timestamp + 1 days
         });
 
@@ -217,7 +223,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     msgType: PT_UNLOCK_TWTAP,
                     composeMsgData: ComposeMsgData({
                         index: 1,
-                        gas: 0,
+                        gas: 1,
                         value: 0,
                         data: new bytes(0), // Will be written in the _setupUnlockTwTapPositionMsg function.
                         prevData: erc721ApprovalsReturn_.prepareLzCallReturn.composeMsg,
@@ -279,7 +285,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     msgType: PT_REMOTE_TRANSFER,
                     composeMsgData: ComposeMsgData({
                         index: 3,
-                        gas: 0,
+                        gas: 1,
                         value: 0,
                         data: new bytes(0), // Will be written in the _setupRemoteTransferMsg function.
                         prevData: erc20ApprovalsReturn_.prepareLzCallReturn.composeMsg,
@@ -305,15 +311,16 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         {
             verifyPackets(uint32(bEid), address(bTapOFT));
             // Verify first message (approval)
+            // NOTE: this is the call that reverts
             __callLzCompose(
                 LzOFTComposedData(
-                    PT_NFT_APPROVALS,
-                    msgReceipt_.guid,
+                    PT_NFT_APPROVALS, // msgType
+                    msgReceipt_.guid, // guid
                     remoteTransferReturn_.prepareLzCallReturn.composeMsg, // All of the composed messages.
-                    bEid,
+                    bEid, // dstEid
                     address(bTapOFT), // Compose creator (at lzReceive).
                     address(bTapOFT), // Compose receiver (at lzCompose).
-                    userA,
+                    userA, // srcMsgSender
                     erc721ApprovalsReturn_.prepareLzCallReturn.composeOptions // All of the options aggregated options.
                 )
             );

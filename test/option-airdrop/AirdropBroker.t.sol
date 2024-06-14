@@ -45,6 +45,9 @@ import {TapTokenCodec} from "tap-token/tokens/TapTokenCodec.sol";
 import {TwTAP, Participation} from "tap-token/governance/twTAP.sol";
 import {TapTokenReceiver} from "tap-token/tokens/TapTokenReceiver.sol";
 import {TapTokenSender} from "tap-token/tokens/TapTokenSender.sol";
+import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
+import {ICluster, Cluster} from  "tapioca-periph/Cluster/Cluster.sol";
+import {TapiocaOmnichainExtExec} from "tapioca-periph/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
 
 // Tapioca Tests
 
@@ -86,11 +89,16 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
     ERC20Mock public mockToken; //instance of ERC20Mock (erc20)
     ERC721Mock public erc721Mock; //instance of ERC721Mock
     AOTAP public aotap; //instance of AOTAP
+    TapiocaOmnichainExtExec extExec; //instance of TapiocaOmnichainExtExec
+    Pearlmit pearlmit;
+    Cluster cluster; 
 
     uint256 internal userAPKey = 0x1;
     uint256 internal userBPKey = 0x2;
     address public owner = vm.addr(userAPKey);
     address public tokenBeneficiary = vm.addr(userBPKey);
+    uint256 public EPOCH_DURATION = 7 days;
+    uint32 public lzChainId = 1;
 
     /**
      * DEPLOY setup addresses
@@ -113,24 +121,26 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
 
         setUpEndpoints(3, LibraryType.UltraLightNode); //TODO: check if this is necessary
 
-        aTapOFT = TapOFTV2Mock(
-            payable(
-                _deployOApp(
-                    type(TapOFTV2Mock).creationCode,
-                    abi.encode(
-                        address(endpoints[aEid]),
-                        __contributors,
-                        __earlySupporters,
-                        __supporters,
-                        __lbp,
-                        __dao,
-                        __airdrop,
-                        __governanceEid,
-                        address(this),
-                        address(new TapTokenSender(address(endpoints[aEid]), address(this))),
-                        address(new TapTokenReceiver(address(endpoints[aEid]), address(this)))
-                    )
-                )
+        extExec = new TapiocaOmnichainExtExec();
+        pearlmit = new Pearlmit("Pearlmit", "1", owner, type(uint256).max); // NOTE: setting nativeValueToCheckPauseState in Pearlmit to max to avoid potentially setting pause state unintentionally
+        cluster = new Cluster(lzChainId, owner); // NOTE: setting lzChainId arg here to 1, unsure if this is correct
+        aTapOFT = new TapOFTV2Mock(
+            ITapToken.TapTokenConstructorData(
+                EPOCH_DURATION,
+                address(endpoints[aEid]),
+                __contributors,
+                __earlySupporters,
+                __supporters,
+                __lbp,
+                __dao,
+                __airdrop,
+                __governanceEid,
+                owner, 
+                address(new TapTokenSender("", "", address(endpoints[aEid]), address(this), address(0))),
+                address(new TapTokenReceiver("", "", address(endpoints[aEid]), address(this), address(0))),
+                address(extExec),
+                IPearlmit(address(pearlmit)),
+                ICluster(address(cluster))
             )
         );
         vm.label(address(aTapOFT), "aTapOFT"); //label address for test traces
@@ -139,22 +149,24 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         vm.label(address(erc721Mock), "erc721Mock"); //label address for test traces
         tapTokenHelper = new TapTokenHelper();
         tapOracleMock = new TapOracleMock();
-        aotap = new AOTAP(address(this)); //deploy AOTAP and set address to owner
+        aotap = new AOTAP(IPearlmit(address(pearlmit)),owner); //deploy AOTAP and set address to owner
 
         airdropBroker = new AirdropBroker(
-            address(aotap), payable(address(aTapOFT)), address(erc721Mock), tokenBeneficiary, address(owner)
+            address(aotap), address(erc721Mock), tokenBeneficiary, IPearlmit(address(pearlmit)), address(owner)
         );
+
 
         vm.startPrank(owner);
         mockToken = new ERC20Mock("MockERC20", "Mock"); //deploy ERC20Mock
         vm.label(address(mockToken), "erc20Mock"); //label address for test traces
-        mockToken.transfer(address(this), 1_000_001 * 10 ** 18); //transfer some tokens to address(this)
-        mockToken.transfer(address(airdropBroker), 333333 * 10 ** 18);
+        mockToken.mint(address(this), 1_000_001 * 10 ** 18); //transfer some tokens to address(this)
+        mockToken.mint(address(airdropBroker), 333333 * 10 ** 18);
         bytes memory _data = abi.encode(uint256(1));
 
         erc721Mock.mint(address(owner), 1); //mint NFT id 1 to owner
         erc721Mock.mint(address(tokenBeneficiary), 2); //mint NFT id 2 to beneficiary
         airdropBroker.setTapOracle(tapOracleMock, _data);
+        airdropBroker.setTapToken(payable(address(aTapOFT)));
         vm.stopPrank();
 
         // config and wire the ofts
@@ -177,6 +189,7 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
     }
 
     function test_participate_phase_1_not_elegible() public {
+        vm.startPrank(owner);
         uint256[] memory _tokenID = new uint256[](2);
         _tokenID[0] = uint256(1);
         _tokenID[1] = uint256(2);
@@ -187,20 +200,23 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
 
         vm.expectRevert(NotEligible.selector);
         airdropBroker.participate(_data);
+        vm.stopPrank();
     }
 
     function test_new_epoch_too_soon() public {
+        vm.startPrank(owner);
         vm.warp(block.timestamp + 172810); //2 days in seconds + 10 seconds 172810 to increase the epoch
         airdropBroker.newEpoch();
 
         vm.warp(block.timestamp + 1); //only 1 second more to trigger revert
         vm.expectRevert(TooSoon.selector);
         airdropBroker.newEpoch();
+        vm.stopPrank();
     }
 
     function test_participate_phase_3_not_elegible() public {
         //ok
-
+        vm.startPrank(owner);
         uint256[] memory _tokenID = new uint256[](1);
         _tokenID[0] = uint256(2);
 
@@ -213,11 +229,12 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
 
         vm.expectRevert(NotEligible.selector);
         airdropBroker.participate(_data);
+        vm.stopPrank();
     }
 
     function test_participate_phase_3_not_existent_nft() public {
         //ok
-
+        vm.startPrank(owner);
         uint256[] memory _tokenID = new uint256[](1);
         _tokenID[0] = uint256(11); //NOTE not existent tokenId
 
@@ -230,6 +247,7 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
 
         vm.expectRevert(bytes("ERC721: invalid token ID"));
         airdropBroker.participate(_data);
+        vm.stopPrank();
     }
 
     function test_participate_phase_3_only_broker() public {
@@ -266,7 +284,7 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
             airdropBroker.newEpoch();
         }
 
-        vm.expectRevert(bytes("adb: too soon"));
+        vm.expectRevert(TooSoon.selector);
         airdropBroker.daoRecoverTAP();
         vm.stopPrank();
     }
@@ -299,9 +317,9 @@ contract AirdropBrokerTest is TapTestHelper, Errors {
         airdropBroker.daoRecoverTAP();
         uint256 balanceAfterAirdrop = aTapOFT.balanceOf(address(airdropBroker));
         uint256 balanceAfterOwner = aTapOFT.balanceOf(address(owner));
-        assertEq(balanceBeforeAirdrop + balanceBeforeOwner, balanceAfterOwner + balanceAfterAirdrop); //NOTE this is counting no fee-on-transfer tokens
-        assertEq(balanceAfterOwner, balanceBeforeOwner + balanceBeforeAirdrop);
-        assertEq(balanceAfterAirdrop, 0);
+        assertEq(balanceBeforeAirdrop + balanceBeforeOwner, balanceAfterOwner + balanceAfterAirdrop, "gain of value"); //NOTE this is counting no fee-on-transfer tokens
+        assertEq(balanceAfterOwner, balanceBeforeOwner + balanceBeforeAirdrop, "owner balance after airdrop incorrect");
+        assertEq(balanceAfterAirdrop, 0, "balance after airdrop is nonzero");
 
         vm.stopPrank();
     }

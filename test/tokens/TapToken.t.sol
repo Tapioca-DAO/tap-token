@@ -16,6 +16,7 @@ import {OFTMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTM
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 // Tapioca
 import {
@@ -119,10 +120,11 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
-        extExec = new TapiocaOmnichainExtExec();
         pearlmit = new Pearlmit("Pearlmit", "1", address(this), 0);
         cluster = new Cluster(aEid, __owner);
+        extExec = new TapiocaOmnichainExtExec();
 
+        console.log("before aTapOFT deploy");
         aTapOFT = new TapTokenMock(
             ITapToken.TapTokenConstructorData(
                 EPOCH_DURATION,
@@ -143,7 +145,9 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             )
         );
         vm.label(address(aTapOFT), "aTapOFT");
+        console.log("cluster from getCluster: ", address(aTapOFT.getCluster()));
 
+        console.log("before bTapOFT deploy");
         bTapOFT = new TapTokenMock(
             ITapToken.TapTokenConstructorData(
                 EPOCH_DURATION,
@@ -164,6 +168,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             )
         );
         vm.label(address(bTapOFT), "bTapOFT");
+        console.log("cluster from getCluster: ", address(bTapOFT.getCluster()));
 
         twTap = new TwTAP(payable(address(bTapOFT)), IPearlmit(address(pearlmit)), address(this));
         vm.label(address(twTap), "twTAP");
@@ -222,6 +227,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         bTapOFT.setTwTAP(address(twTap));
     }
 
+    /// @notice permitting an ERC20 works
     function test_erc20_permit() public {
         ERC20PermitStruct memory permit_ =
             ERC20PermitStruct({owner: userA, spender: userB, value: 1e18, nonce: 0, deadline: 1 days});
@@ -243,12 +249,13 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         assertEq(aTapOFT.nonces(userA), 1);
     }
 
+    /// @notice permitting an ERC721 works
     function test_erc721_permit() public {
         ERC721Mock erc721Mock = new ERC721Mock("Mock", "Mock");
         vm.label(address(erc721Mock), "erc721Mock");
         erc721Mock.mint(address(userA), 1);
 
-        ERC721PermitStruct memory permit_ = ERC721PermitStruct({spender: userB, tokenId: 1, nonce: 0, deadline: 1 days});
+        ERC721PermitStruct memory permit_ = ERC721PermitStruct({spender: userB, tokenId: 1, nonce: 1, deadline: 1 days}); // NOTE: nonce was previously set to 0 which caused invalid signature
 
         bytes32 digest_ = erc721Mock.getTypedDataHash(permit_);
         ERC721PermitApprovalMsg memory permitApproval_ =
@@ -258,7 +265,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             permit_.spender, permit_.tokenId, permit_.deadline, permitApproval_.v, permitApproval_.r, permitApproval_.s
         );
         assertEq(erc721Mock.getApproved(1), userB);
-        assertEq(erc721Mock.nonces(permit_.tokenId), 1);
+        assertEq(erc721Mock.nonces(permit_.tokenId), 2);
     }
 
     /**
@@ -272,6 +279,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         bytes memory approvalsMsg_;
 
         {
+            cluster.updateContract(0, address(bTapOFT), true); // NOTE: adding bTapOFT to whitelist which caused revert in previous implementation  
+
             ERC20PermitStruct memory approvalUserB_ =
                 ERC20PermitStruct({owner: userA, spender: userB, value: 1e18, nonce: 0, deadline: 1 days});
             ERC20PermitStruct memory approvalUserC_ = ERC20PermitStruct({
@@ -378,16 +387,22 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         bytes memory approvalsMsg_;
 
         {
+            cluster.updateContract(0, address(twTap), true); // NOTE: adding bTapOFT to whitelist which caused revert before  
+
             ERC721PermitStruct memory approvalUserB_ =
-                ERC721PermitStruct({spender: userB, tokenId: 1, nonce: 0, deadline: 1 days});
+                ERC721PermitStruct({spender: userB, tokenId: 1, nonce: 1, deadline: 1 days}); // NOTE: nonce here was previously incorrectly set for approval to 0
+            
             ERC721PermitStruct memory approvalUserC_ =
-                ERC721PermitStruct({spender: userC_, tokenId: 2, nonce: 0, deadline: 1 days});
+                ERC721PermitStruct({spender: userC_, tokenId: 2, nonce: 1, deadline: 1 days}); // NOTE: nonce here was previously incorrectly set for approval to 0
+        
 
             permitApprovalB_ =
                 __getERC721PermitData(approvalUserB_, twTap.getTypedDataHash(approvalUserB_), address(twTap), userAPKey);
 
             permitApprovalC_ =
                 __getERC721PermitData(approvalUserC_, twTap.getTypedDataHash(approvalUserC_), address(twTap), userBPKey);
+            // console.log("hash of C approval in test: ");
+            // console.logBytes32(twTap.getTypedDataHash(approvalUserC_));
 
             ERC721PermitApprovalMsg[] memory approvals_ = new ERC721PermitApprovalMsg[](2);
             approvals_[0] = permitApprovalB_;
@@ -447,8 +462,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         assertEq(twTap.getApproved(1), userB);
         assertEq(twTap.getApproved(2), userC_);
-        assertEq(twTap.nonces(permitApprovalB_.tokenId), 1);
-        assertEq(twTap.nonces(permitApprovalC_.tokenId), 1);
+        assertEq(twTap.nonces(permitApprovalB_.tokenId), 2);
+        assertEq(twTap.nonces(permitApprovalC_.tokenId), 2);
     }
 
     /**
@@ -903,8 +918,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
             // Initiate approval
 
-            twTap.approve(address(bTapOFT), testData_.tokenId);
-
+            twTap.approve(address(pearlmit), 1); // Approve pearlmit to transfer
+            pearlmit.approve(721, address(twTap), 1, address(bTapOFT), 1, type(uint48).max);
             __callLzCompose(
                 LzOFTComposedData(
                     PT_CLAIM_REWARDS,
