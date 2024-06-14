@@ -6,8 +6,8 @@ import { DEPLOYMENT_NAMES } from 'tasks/deploy/DEPLOY_CONFIG';
 import fs from 'fs';
 import { BigNumber, BigNumberish } from 'ethers';
 
-export const PRE_SEED_VESTING_TOTAL = 3_500_000n * 10n ** 18n; // 3.5m
-export const SEED_VESTING_TOTAL = 10n ** 16n * 14_938_029_34n; // 14,938,029.34
+export const PRE_SEED_VESTING_TOTAL = 3_500_001n * 10n ** 18n; // 3_500_001
+export const SEED_VESTING_TOTAL = 10n ** 16n * 14_938_030_34n; // 14,938,030.34
 export const CONTRIBUTOR_VESTING_TOTAL = 15_000_000n * 10n ** 18n; // 15m USE THIS FOR PROD
 // export const CONTRIBUTOR_VESTING_TOTAL = 5_000_000n * 10n ** 18n;
 
@@ -124,19 +124,20 @@ async function tapiocaTask(
         const aggregated: { [key: string]: BigNumber } = {};
 
         data.forEach((item) => {
-            if (aggregated[item.address]) {
-                aggregated[item.address] = hre.ethers.BigNumber.from(
+            const itemAddress = item.address.toLowerCase().replace(/\s/g, '');
+            if (aggregated[itemAddress]) {
+                aggregated[itemAddress] = hre.ethers.BigNumber.from(
                     hre.ethers.utils.parseEther(String(item.value)),
-                ).add(aggregated[item.address]);
+                ).add(aggregated[itemAddress]);
             } else {
-                aggregated[item.address] = hre.ethers.BigNumber.from(
+                aggregated[itemAddress] = hre.ethers.BigNumber.from(
                     hre.ethers.utils.parseEther(String(item.value)),
                 );
             }
         });
 
         return Object.keys(aggregated).map((address) => ({
-            address: address.replace(/\s/g, ''),
+            address,
             value: aggregated[address],
         }));
     }
@@ -216,18 +217,21 @@ async function tapiocaTask(
         await Promise.all(seedDataAggregated.map(filterSeed))
     ).filter((e) => e);
 
+    console.log('[+] PreSeed to register:', preSeedToRegister.length);
     await registerUsers(
         preSeedVesting.address,
         preSeedToRegister.map((data) => (data as TAggregatedData).address),
         preSeedToRegister.map((data) => (data as TAggregatedData).value),
     );
 
+    console.log('[+] Seed to register:', seedToRegister.length);
     await registerUsers(
         seedVesting.address,
         seedToRegister.map((data) => (data as TAggregatedData).address),
         seedToRegister.map((data) => (data as TAggregatedData).value),
     );
 
+    console.log('[+] Registering contributor');
     await VM.executeMulticall([
         {
             target: contributorVesting.address,
