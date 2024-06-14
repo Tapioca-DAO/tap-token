@@ -232,6 +232,13 @@ contract Vesting is Ownable, ReentrancyGuard {
         }
     }
 
+    /**
+     * @notice Emergency rescue
+     */
+    function emergencyRescue(uint256 amount) external onlyOwner {
+        token.safeTransfer(msg.sender, amount);
+    }
+
     /// @notice Compute the time needed to unlock an amount of tokens, given a total amount.
     /// @param _start The start time
     /// @param _totalAmount The total amount to be vested
@@ -257,7 +264,6 @@ contract Vesting is Ownable, ReentrancyGuard {
         uint256 _duration = duration;
 
         if (_start == 0) return 0; // Not started
-
         if (_cliff > 0) {
             _start = _start + _cliff; // Apply cliff offset
             if (block.timestamp < _start) return 0; // Cliff not reached
@@ -276,7 +282,7 @@ contract Vesting is Ownable, ReentrancyGuard {
         } else {
             // Partially vesting
             _start = _start - __initialUnlockTimeOffset; // Offset initial unlock so it's claimable immediately
-            return (_totalAmount * (block.timestamp - _start)) / _duration; // Partially vested
+            return (_totalAmount * (block.timestamp - _start)) / (_duration + __initialUnlockTimeOffset); // Partially vested
         }
     }
 }
