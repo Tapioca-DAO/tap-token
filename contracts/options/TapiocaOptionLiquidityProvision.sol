@@ -15,6 +15,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
 import {IYieldBox} from "tap-token/interfaces/IYieldBox.sol";
 
 /*
@@ -70,6 +71,8 @@ contract TapiocaOptionLiquidityProvision is
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
     uint256 public constant MAX_LOCK_DURATION = 100 * 365 days; // 100 years
 
+    ICluster public cluster;
+
     error NotRegistered();
     error InvalidSingularity();
     error DurationTooShort();
@@ -89,6 +92,7 @@ contract TapiocaOptionLiquidityProvision is
     error RescueCooldownNotReached();
     error TransferFailed();
     error TobIsHolder();
+    error NotValid();
 
     constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
@@ -379,9 +383,20 @@ contract TapiocaOptionLiquidityProvision is
     }
 
     /**
+     * @notice updates the Cluster address.
+     * @dev can only be called by the owner.
+     * @param _cluster the new address.
+     */
+    function setCluster(ICluster _cluster) external onlyOwner {
+        if (address(_cluster) == address(0)) revert NotValid();
+        cluster = _cluster;
+    }
+
+    /**
      * @notice Un/Pauses this contract.
      */
-    function setPause(bool _pauseState) external onlyOwner {
+    function setPause(bool _pauseState) external {
+        if (!cluster.hasRole(msg.sender, keccak256("PAUSABLE")) && msg.sender != owner()) revert NotAuthorized();
         if (_pauseState) {
             _pause();
         } else {
