@@ -130,6 +130,8 @@ contract TwTAP is
 
     ICluster public cluster;
 
+    bool rescueMode;
+
     error NotAuthorized();
     error AdvanceWeekFirst();
     error NotValid();
@@ -189,6 +191,7 @@ contract TwTAP is
     event LogMaxRewardsLength(uint256 _oldLength, uint256 _newLength, uint256 _currentLength);
     event SetMinWeightFactor(uint256 newMinWeightFactor, uint256 oldMinWeightFactor);
     event SetVirtualTotalAmount(uint256 newVirtualTotalAmount, uint256 oldVirtualTotalAmount);
+    event RescueMode(bool _rescueMode);
 
     // ==========
     //    READ
@@ -527,6 +530,13 @@ contract TwTAP is
     // =========
     //   OWNER
     // =========
+    /**
+     * @notice Set the rescue mode.
+     */
+    function setRescueMode(bool _rescueMode) external onlyOwner {
+        emit RescueMode(_rescueMode);
+        rescueMode = _rescueMode;
+    }
 
     /**
      * @notice Set the `VIRTUAL_TOTAL_AMOUNT` state variable.
@@ -632,7 +642,12 @@ contract TwTAP is
      */
     function _releaseTap(uint256 _tokenId, address _to) internal returns (uint256 releasedAmount) {
         Participation memory position = participants[_tokenId];
-        if (position.expiry > block.timestamp) revert LockNotExpired();
+
+        // If in rescue mode, allow the release of the TAP even if the lock has not expired.
+        if (!rescueMode) {
+            if (position.expiry > block.timestamp) revert LockNotExpired();
+        }
+
         if (position.tapReleased) {
             return 0;
         }
