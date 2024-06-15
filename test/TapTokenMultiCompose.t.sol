@@ -118,7 +118,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         deal(address(aTapOFT), userA, amountToSendLD); // Mint free tokens
 
         // Send packets
-        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{
+        (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) = aTapOFT.sendPacket{
             value: lockTwTapPositionMsgReturn_.prepareLzCallReturn.lzSendParam.fee.nativeFee
         }(
             lockTwTapPositionMsgReturn_.prepareLzCallReturn.lzSendParam,
@@ -298,7 +298,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
 
         // Send packets
         uint256 feeValue = remoteTransferReturn_.prepareLzCallReturn.lzSendParam.fee.nativeFee;
-        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: feeValue}(
+        (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) = aTapOFT.sendPacket{value: feeValue}(
             remoteTransferReturn_.prepareLzCallReturn.lzSendParam, remoteTransferReturn_.prepareLzCallReturn.composeMsg
         );
 
@@ -309,7 +309,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                 LzOFTComposedData(
                     PT_NFT_APPROVALS,
                     msgReceipt_.guid,
-                    remoteTransferReturn_.prepareLzCallReturn.composeMsg, // All of the composed messages.
+                    msgSent, // All of the composed messages.
                     bEid,
                     address(bTapOFT), // Compose creator (at lzReceive).
                     address(bTapOFT), // Compose receiver (at lzCompose).

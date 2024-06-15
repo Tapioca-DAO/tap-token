@@ -323,7 +323,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         MessagingFee memory msgFee_ = prepareLzCallReturn_.msgFee;
         LZSendParam memory lzSendParam_ = prepareLzCallReturn_.lzSendParam;
 
-        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+        (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) =
+            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         verifyPackets(uint32(bEid), address(bTapOFT));
 
@@ -337,7 +338,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             LzOFTComposedData(
                 PT_APPROVALS,
                 msgReceipt_.guid,
-                composeMsg_,
+                msgSent,
                 bEid,
                 address(bTapOFT), // Compose creator (at lzReceive)
                 address(bTapOFT), // Compose receiver (at lzCompose)
@@ -422,7 +423,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         MessagingFee memory msgFee_ = prepareLzCallReturn_.msgFee;
         LZSendParam memory lzSendParam_ = prepareLzCallReturn_.lzSendParam;
 
-        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+        (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) =
+            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         verifyPackets(uint32(bEid), address(bTapOFT));
 
@@ -436,7 +438,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             LzOFTComposedData(
                 PT_NFT_APPROVALS,
                 msgReceipt_.guid,
-                composeMsg_,
+                msgSent,
                 bEid,
                 address(bTapOFT), // Compose creator (at lzReceive)
                 address(bTapOFT), // Compose receiver (at lzCompose)
@@ -494,7 +496,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         // Mint necessary tokens
         deal(address(aTapOFT), address(this), amountToSendLD);
 
-        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+        (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) =
+            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         verifyPackets(uint32(bEid), address(bTapOFT));
 
@@ -505,7 +508,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             LzOFTComposedData(
                 PT_LOCK_TWTAP,
                 msgReceipt_.guid,
-                composeMsg_,
+                msgSent,
                 bEid,
                 address(bTapOFT), // Compose creator (at lzReceive)
                 address(bTapOFT), // Compose receiver (at lzCompose)
@@ -580,7 +583,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         MessagingFee memory msgFee_ = prepareLzCallReturn_.msgFee;
         LZSendParam memory lzSendParam_ = prepareLzCallReturn_.lzSendParam;
 
-        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+        (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) =
+            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         verifyPackets(uint32(bEid), address(bTapOFT));
 
@@ -591,7 +595,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             LzOFTComposedData(
                 PT_UNLOCK_TWTAP,
                 msgReceipt_.guid,
-                composeMsg_,
+                msgSent,
                 bEid,
                 address(bTapOFT), // Compose creator (at lzReceive)
                 address(bTapOFT), // Compose receiver (at lzCompose)
@@ -675,7 +679,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         MessagingFee memory msgFee_ = prepareLzCallReturn2_.msgFee;
         LZSendParam memory lzSendParam_ = prepareLzCallReturn2_.lzSendParam;
 
-        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+        (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) =
+            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         {
             verifyPackets(uint32(bEid), address(bTapOFT));
@@ -687,7 +692,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                 LzOFTComposedData(
                     PT_REMOTE_TRANSFER,
                     msgReceipt_.guid,
-                    composeMsg_,
+                    msgSent,
                     bEid,
                     address(bTapOFT), // Compose creator (at lzReceive)
                     address(bTapOFT), // Compose receiver (at lzCompose)
@@ -893,7 +898,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             lzSendParam_ = prepareLzCallReturn_.lzSendParam;
         }
 
-        (MessagingReceipt memory msgReceipt_,) = aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
+        (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) =
+            aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
         {
             // A->B
@@ -909,7 +915,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                 LzOFTComposedData(
                     PT_CLAIM_REWARDS,
                     msgReceipt_.guid,
-                    composeMsg_,
+                    msgSent,
                     bEid,
                     address(bTapOFT), // Compose creator (at lzReceive)
                     address(bTapOFT), // Compose receiver (at lzCompose)
@@ -1017,9 +1023,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             _lzOFTComposedData.extraOptions,
             _lzOFTComposedData.guid,
             _lzOFTComposedData.to,
-            abi.encodePacked(
-                OFTMsgCodec.addressToBytes32(_lzOFTComposedData.srcMsgSender), _lzOFTComposedData.composeMsg
-            )
+            _lzOFTComposedData.composeMsg
         );
     }
 
