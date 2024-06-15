@@ -18,7 +18,7 @@ export const deployPreLbpStack__task = async (
 ) => {
     await hre.SDK.DeployerVM.tapiocaDeployTask(
         _taskArgs,
-        { hre, staticSimulation: false },
+        { hre },
         tapiocaDeployTask,
     );
 };

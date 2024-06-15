@@ -1,7 +1,9 @@
 // Plugins
+import '@nomiclabs/hardhat-ethers';
+import '@nomicfoundation/hardhat-verify';
+
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-foundry';
-import '@nomicfoundation/hardhat-toolbox';
 import '@primitivefi/hardhat-dodoc';
 import 'hardhat-contract-sizer';
 import 'hardhat-tracer';
@@ -113,6 +115,8 @@ const config: HardhatUserConfig & { dodoc: any } = {
     },
     etherscan: {
         apiKey: {
+            arbitrumOne: process.env.SCAN_API_KEY ?? '',
+            ethereum: process.env.SCAN_API_KEY ?? '',
             sepolia: process.env.SCAN_API_KEY ?? '',
             arbitrumSepolia: process.env.SCAN_API_KEY ?? '',
             optimismSepolia: process.env.SCAN_API_KEY ?? '',
