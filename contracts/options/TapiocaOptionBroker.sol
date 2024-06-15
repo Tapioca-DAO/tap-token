@@ -414,10 +414,12 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /// @param _tapAmount Amount of TAP to exercise. If 0, the full amount is exercised
     function exerciseOption(uint256 _oTAPTokenID, ERC20 _paymentToken, uint256 _tapAmount) external whenNotPaused {
         // Load data
-        (, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
+        (address owner, TapOption memory oTAPPosition) = oTAP.attributes(_oTAPTokenID);
         LockPosition memory tOLPLockPosition = tOLP.getLock(oTAPPosition.tOLP);
-        bool isPositionActive = _isPositionActive(tOLPLockPosition);
-        if (!isPositionActive) revert OptionExpired();
+        {
+            bool isPositionActive = _isPositionActive(tOLPLockPosition);
+            if (!isPositionActive) revert OptionExpired();
+        }
 
         uint256 cachedEpoch = epoch;
 
@@ -430,7 +432,6 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
         // Check allowance. Make sure to consume it post call
         {
-            address owner = oTAP.ownerOf(_oTAPTokenID);
             // oTAP.isApprovedOrOwner(msg.sender, _oTAPTokenID)
             if (owner != msg.sender && !isERC721Approved(owner, msg.sender, address(oTAP), _oTAPTokenID)) {
                 revert NotAuthorized();
