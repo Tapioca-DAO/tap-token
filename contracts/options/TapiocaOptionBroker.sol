@@ -470,6 +470,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /// @notice Start a new epoch, extract TAP from the TapOFT contract,
     ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
+        if (!cluster.hasRole(msg.sender, keccak256("NEW_EPOCH"))) revert NotAuthorized();
         if (_timestampToWeek(block.timestamp) <= epoch) revert TooSoon();
 
         uint256[] memory singularities = tOLP.getSingularities();
@@ -562,7 +563,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         }
     }
 
-   /**
+    /**
      * @notice updates the Cluster address.
      * @dev can only be called by the owner.
      * @param _cluster the new address.
