@@ -767,6 +767,10 @@ contract TwTAP is
         return block.chainid;
     }
 
+    function _baseURI() internal view override(ERC721, ERC721NftLoader) returns (string memory) {
+        return baseURI;
+    }
+
     function supportsInterface(bytes4 interfaceId)
         public
         view
