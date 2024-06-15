@@ -5,6 +5,15 @@ import { addTapTokenContractsVM } from './2-1-deployPostLbpStack';
 import { setLzPeer__task } from 'tapioca-sdk';
 import { DEPLOYMENT_NAMES } from './DEPLOY_CONFIG';
 
+/**
+ * @notice Meant to be called AFTER deployPostLbpStack_1__task
+ *
+ * Deploys: Eth
+ * - TapToken
+ *
+ * Post deploy: Arb, Eth
+ * - Set LZ peer
+ */
 export const deploySideChainPostLbpStack_1__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
     hre: HardhatRuntimeEnvironment,
@@ -21,21 +30,36 @@ export const deploySideChainPostLbpStack_1__task = async (
 
 async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     // Settings
-    const { hre, VM, tapiocaMulticallAddr, taskArgs, isTestnet, chainInfo } =
-        params;
+    const {
+        hre,
+        VM,
+        tapiocaMulticallAddr,
+        taskArgs,
+        isTestnet,
+        isHostChain,
+        isSideChain,
+        chainInfo,
+    } = params;
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
     // Build contracts
-    await addTapTokenContractsVM({
-        hre,
-        tag,
-        owner,
-        VM,
-        lzEndpointAddress: chainInfo.address,
-        isTestnet,
-        chainInfo,
-    });
+    if (isSideChain) {
+        await addTapTokenContractsVM({
+            hre,
+            tag,
+            owner,
+            VM,
+            lzEndpointAddress: chainInfo.address,
+            isTestnet,
+            isHostChain,
+            chainInfo,
+        });
+    } else {
+        console.log(
+            '[-] Skipping TapToken deployment, current chain is not side chain.',
+        );
+    }
 }
 
 async function linkTapContract(params: TTapiocaDeployerVmPass<object>) {
