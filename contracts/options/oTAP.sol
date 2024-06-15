@@ -8,7 +8,7 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 // Tapioca
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
-import {ERC721NftLoader} from "tap-token/erc721NftLoader/ERC721NftLoader.sol";
+import {ERC721NftLoader} from "contracts/erc721NftLoader/ERC721NftLoader.sol";
 import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol"; // TODO audit
 
 /*

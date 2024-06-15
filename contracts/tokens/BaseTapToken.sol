@@ -6,7 +6,7 @@ import {BaseTapiocaOmnichainEngine} from "tapioca-periph/tapiocaOmnichainEngine/
 import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
 import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
 import {BaseTapTokenMsgType} from "./BaseTapTokenMsgType.sol";
-import {TwTAP} from "tap-token/governance/twTAP.sol";
+import {TwTAP} from "contracts/governance/twTAP.sol";
 
 /*
 

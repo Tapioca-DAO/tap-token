@@ -8,6 +8,7 @@ import { setPaymentTokenBeneficiaryAB__task } from 'tasks/exec/adb/11-ab-setPaym
 import { collectPaymentTokensOnAB__task } from 'tasks/exec/adb/12-ab-collectPaymentTokens';
 import { daoRecoverTAPFromAB__task } from 'tasks/exec/adb/13-ab-daoRecoverTAP';
 import { adb_addPaymentToken__task } from 'tasks/exec/adb/adb_addPaymentToken';
+import { adb_collectPayments } from 'tasks/exec/adb/adb_collectPayments';
 import { adb_newEpoch__task } from 'tasks/exec/adb/adb_newEpoch';
 import { adb_setPhase2Roots__task } from 'tasks/exec/adb/adb_registerUserForPhase';
 import { adb_setMerkleRoots__task } from 'tasks/exec/adb/adb_setMerkleRoots';
@@ -45,13 +46,24 @@ TAP_TASK(
 );
 
 TAP_TASK(
+    adbScope.task(
+        'collectPayments',
+        'Collect payment tokens on ADB',
+        adb_collectPayments,
+    ),
+);
+
+TAP_TASK(
     adbScope
         .task(
             'setMerkleRoots',
             'Sets merkle roots on AirdropBroker',
             adb_setMerkleRoots__task,
         )
-        .addParam('rootsFile', 'Merkle roots file path'),
+        .addParam('role0', 'Merkle root for role 0')
+        .addParam('role1', 'Merkle root for role 1')
+        .addParam('role2', 'Merkle root for role 2')
+        .addParam('role3', 'Merkle root for role 3'),
 );
 
 adbScope.task(

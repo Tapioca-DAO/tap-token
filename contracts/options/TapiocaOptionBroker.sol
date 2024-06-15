@@ -15,7 +15,7 @@ import {TapiocaOptionLiquidityProvision, LockPosition, SingularityPool} from "./
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
 import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
 import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
-import {TapToken} from "tap-token/tokens/TapToken.sol";
+import {TapToken} from "contracts/tokens/TapToken.sol";
 import {OTAP, TapOption} from "./oTAP.sol";
 import {TWAML} from "./twAML.sol";
 

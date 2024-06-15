@@ -8,6 +8,7 @@ import { setTapOptionOracle__postDeployLbp } from 'tasks/deployBuilds/postLbpSta
  *
  * Scripts: Arb
  * - Set Tap Option oracle in ADB
+ * - Set USDC as payment token in ADB
  */
 export const deployPostLbpStack_2__task = async (
     _taskArgs: TTapiocaDeployTaskArgs,
@@ -22,13 +23,6 @@ export const deployPostLbpStack_2__task = async (
     );
 };
 
-/**
- * @notice Does the following
- * - Broker claim on AOTAP
- * - Set tapToken in ADB
- * - Set Tap oracle in ADB
- * - Set USDC as payment token in ADB
- */
 async function postDeploymentSetup(params: TTapiocaDeployerVmPass<object>) {
     const { hre, VM, taskArgs, isTestnet, isHostChain } = params;
     const { tag } = taskArgs;

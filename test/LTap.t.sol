@@ -3,7 +3,7 @@ pragma solidity 0.8.22;
 
 import "forge-std/Test.sol";
 
-import {LTap} from "tap-token/option-airdrop/LTap.sol";
+import {LTap} from "contracts/option-airdrop/LTap.sol";
 
 library LTapErrors {
     error TransferNotAllowed();

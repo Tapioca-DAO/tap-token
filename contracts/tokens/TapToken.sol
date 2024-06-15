@@ -20,10 +20,10 @@ import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 // Tapioca
 import {BaseTapiocaOmnichainEngine} from "tapioca-periph/tapiocaOmnichainEngine/BaseTapiocaOmnichainEngine.sol";
 import {TapiocaOmnichainSender} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainSender.sol";
-import {ERC20PermitStruct, ITapToken, LZSendParam} from "tap-token/tokens/ITapToken.sol";
+import {ERC20PermitStruct, ITapToken, LZSendParam} from "contracts/tokens/ITapToken.sol";
 import {ModuleManager} from "./module/ModuleManager.sol";
 import {TapTokenReceiver} from "./TapTokenReceiver.sol";
-import {TwTAP} from "tap-token/governance/twTAP.sol";
+import {TwTAP} from "contracts/governance/twTAP.sol";
 import {TapTokenSender} from "./TapTokenSender.sol";
 import {BaseTapToken} from "./BaseTapToken.sol";
 
@@ -118,10 +118,10 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      * Allocation:
      * ============
      * Contributors: 15m
-     * Early supporters: 3.5m
-     * Supporters: 14,638,029.34
-     * LBP: 5m
-     * DAO: 6,861,970.66
+     * Early supporters: 3_500_001
+     * Supporters: 14,938,030.34
+     * LTAP: 3989472714402321147960046
+     * DAO: 6,561,968.66 + remaining for LBP
      * Airdrop: 2.5m
      * == 47.5M ==
      * DSO: 52.5m
@@ -164,10 +164,10 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
             uint256 lbpRemaining = (1e18 * 5_000_000) - lbpSold; // Remaining of the  LBP goes to the DAO
 
             _mint(_data.contributors, 1e18 * 15_000_000);
-            _mint(_data.earlySupporters, 1e18 * 3_500_000);
-            _mint(_data.supporters, 1e18 * 14_638_029.34);
-            _mint(_data.lTap, 1e18 * 5_000_000);
-            _mint(_data.dao, 1e18 * 6_861_970.66);
+            _mint(_data.earlySupporters, 1e18 * 3_500_001);
+            _mint(_data.supporters, 1e18 * 14_938_030.34);
+            _mint(_data.lTap, lbpSold);
+            _mint(_data.dao, (1e18 * 6_561_968.66) + lbpRemaining);
             _mint(_data.airdrop, 1e18 * 2_500_000);
             if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
         }
