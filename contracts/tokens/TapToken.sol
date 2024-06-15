@@ -42,8 +42,8 @@ import {BaseTapToken} from "./BaseTapToken.sol";
 /// @notice OFT compatible TAP token
 /// @dev Emissions E(x)= E(x-1) - E(x-1) * D with E being total supply a x week, and D the initial decay rate
 contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
-    uint256 public constant INITIAL_SUPPLY = 46_686_595 * 1e18; // Everything minus DSO
-    uint256 public dso_supply = 53_313_405 * 1e18; // Emission supply for DSO
+    uint256 public constant INITIAL_SUPPLY = 47_500_000 * 1e18; // Everything minus DSO
+    uint256 public dso_supply = 52_500_000 * 1e18; // Emission supply for DSO
 
     /// @notice the a parameter used in the emission function;
     uint256 constant decay_rate = 8800000000000000; // 0.88%
@@ -116,23 +116,24 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
      *
      * Allocation:
      * ============
-     * DSO: 53,313,405
-     * DAO: 8m
      * Contributors: 15m
-     * Early supporters: 3,686,595
-     * Supporters: 12.5m
+     * Early supporters: 3.5m
+     * Supporters: 14,582,575.34
      * LBP: 5m
+     * DAO: 6,917,424.66
      * Airdrop: 2.5m
+     * == 47.5M ==
+     * DSO: 52.5m
      * == 100M ==
      *
      * @param _data.epochDuration The duration of an epoch in seconds.
      * @param _data.endpoint The layer zero address endpoint deployed on the current chain.
-     * @param _data.contributors Address of the  contributors. 15m TAP.
-     * @param _data.earlySupporters Address of early supporters. 3,686,595 TAP.
-     * @param _data.supporters Address of supporters. 12.5m TAP.
-     * @param _data.lTap Address of the LBP redemption token, lTap. 5m TAP.
-     * @param _data.dao Address of the DAO. 8m TAP.
-     * @param _data.airdrop Address of the airdrop contract. 2.5m TAP.
+     * @param _data.contributors Address of the  contributors.
+     * @param _data.earlySupporters Address of early supporters.
+     * @param _data.supporters Address of supporters.
+     * @param _data.lTap Address of the LBP redemption token, lTap.
+     * @param _data.dao Address of the DAO.
+     * @param _data.airdrop Address of the airdrop contract.
      * @param _data.governanceEid Governance chain endpoint ID. Should be EID of the twTAP chain.
      * @param _data.owner Address of the conservator/owner.
      * @param _data.tapTokenSenderModule Address of the TapTokenSenderModule.
@@ -159,10 +160,10 @@ contract TapToken is BaseTapToken, ModuleManager, ERC20Permit, Pausable {
         // Mint only on the governance chain
         if (_getChainId() == _data.governanceEid) {
             _mint(_data.contributors, 1e18 * 15_000_000);
-            _mint(_data.earlySupporters, 1e18 * 3_686_595);
-            _mint(_data.supporters, 1e18 * 12_500_000);
+            _mint(_data.earlySupporters, 1e18 * 3_500_000);
+            _mint(_data.supporters, 1e18 * 14_582_575.34);
             _mint(_data.lTap, 1e18 * 5_000_000);
-            _mint(_data.dao, 1e18 * 8_000_000);
+            _mint(_data.dao, 1e18 * 6_917_424.66);
             _mint(_data.airdrop, 1e18 * 2_500_000);
             if (totalSupply() != INITIAL_SUPPLY) revert SupplyNotValid();
         }
