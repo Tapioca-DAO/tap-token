@@ -11,3 +11,4 @@ import 'tasks/scopes/tOLPScope';
 import 'tasks/scopes/twTapScope';
 import 'tasks/scopes/utilScope';
 import 'tasks/scopes/vestingScope';
+import 'tasks/scopes/miscScope';
