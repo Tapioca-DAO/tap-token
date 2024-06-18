@@ -466,7 +466,13 @@ contract TwTAP is
      *
      * @return amounts_ Claimed amountsof each reward token, for each tokenId
      */
-    function batchClaimRewards(uint256[] calldata _tokenIds) external nonReentrant whenNotPaused returns (uint256[][] memory amounts_) {
+    function batchClaimRewards(uint256[] calldata _tokenIds)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256[][] memory amounts_)
+    {
+        amounts_ = new uint256[][](_tokenIds.length);
         uint256 len = _tokenIds.length;
         for (uint256 i; i < len; i++) {
             amounts_[i] = _claimRewardsForToken(_tokenIds[i]);
