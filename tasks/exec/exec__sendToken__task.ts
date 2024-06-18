@@ -41,7 +41,7 @@ async function tapiocaTask(
     const targetChain = hre.SDK.utils.getChainBy('name', targetNetwork);
 
     const localContract = (await hre.ethers.getContractAt(
-        'tap-token/tokens/TapToken.sol:TapToken',
+        'TapToken',
         loadLocalContract(
             hre,
             chainInfo.chainId,
