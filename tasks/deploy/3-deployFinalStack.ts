@@ -24,6 +24,7 @@ import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
  * Post deploy: Arb
  * - Register Arb SGL GLP in TOLP
  * - Register T SGL DAI in TOLP
+ * - Set Cluster on tOLP, tOB, twTAP
  * - Set tOB as minter for TapOFT
  * - Set tOB Broker role for tOB on oTAP and init TapToken emissions
  * - Set TAP Oracle in tOB

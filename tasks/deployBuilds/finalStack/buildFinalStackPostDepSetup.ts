@@ -30,6 +30,7 @@ export const buildFinalStackPostDepSetup_2 = async (
      * Load addresses
      */
     const {
+        cluster,
         tapToken,
         oTap,
         tob,
@@ -63,6 +64,58 @@ export const buildFinalStackPostDepSetup_2 = async (
             ),
         });
         console.log('\t- Parameters', 'tOB', tob.address);
+    }
+
+    /**
+     * Set cluster in tOB
+     */
+    if (
+        (await tob.cluster()).toLocaleLowerCase() !==
+        cluster.address.toLocaleLowerCase()
+    ) {
+        console.log('[+] +Call queue: set cluster in tOB');
+        calls.push({
+            target: tob.address,
+            allowFailure: false,
+            callData: tob.interface.encodeFunctionData('setCluster', [
+                cluster.address,
+            ]),
+        });
+        console.log('\t- Parameters', 'cluster', cluster.address);
+    }
+    /**
+     * Set cluster in tOLP
+     */
+    if (
+        (await tOlp.cluster()).toLocaleLowerCase() !==
+        cluster.address.toLocaleLowerCase()
+    ) {
+        console.log('[+] +Call queue: set cluster in tOLP');
+        calls.push({
+            target: tOlp.address,
+            allowFailure: false,
+            callData: tOlp.interface.encodeFunctionData('setCluster', [
+                cluster.address,
+            ]),
+        });
+        console.log('\t- Parameters', 'cluster', cluster.address);
+    }
+    /**
+     * Set cluster in twTAP
+     */
+    if (
+        (await twTap.cluster()).toLocaleLowerCase() !==
+        cluster.address.toLocaleLowerCase()
+    ) {
+        console.log('[+] +Call queue: set cluster in twTAP');
+        calls.push({
+            target: twTap.address,
+            allowFailure: false,
+            callData: twTap.interface.encodeFunctionData('setCluster', [
+                cluster.address,
+            ]),
+        });
+        console.log('\t- Parameters', 'cluster', cluster.address);
     }
 
     /**
@@ -339,6 +392,16 @@ async function loadContract__arb(
             tag,
         ).address,
     );
+    const cluster = await hre.ethers.getContractAt(
+        'Cluster',
+        loadGlobalContract(
+            hre,
+            TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
+            hre.SDK.eChainId,
+            TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.CLUSTER,
+            tag,
+        ).address,
+    );
 
     const tapOracleTobDeployment = loadGlobalContract(
         hre,
@@ -407,6 +470,7 @@ async function loadContract__arb(
     );
 
     return {
+        cluster,
         tapToken,
         twTap,
         tob,
