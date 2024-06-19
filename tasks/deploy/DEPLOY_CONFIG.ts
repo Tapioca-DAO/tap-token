@@ -79,6 +79,29 @@ const POST_LBP: TPostLbp = {
             SUPPORTERS_PERIOD: 46656000, // 18 months vesting
         },
     },
+    [EChainID.MAINNET]: {
+        TAP: {
+            DAO_ADDRESS: '0x7A3B760AcFaB78f6bc6a1AD80F7743f5bA0513Dc',
+        },
+        ADB: {
+            PAYMENT_TOKEN_BENEFICIARY:
+                '0x7A3B760AcFaB78f6bc6a1AD80F7743f5bA0513Dc', // MULTISIG
+        },
+        PCNFT: {
+            ADDRESS: '0xA805E1b42590be85D2c74E09c0e1c1B6063Ea1A7',
+        },
+        VESTING: {
+            // Contributors
+            CONTRIBUTORS_CLIFF: 31104000, // 12 months cliff
+            CONTRIBUTORS_PERIOD: 93312000, // 36 months vesting
+            // Early supporters
+            EARLY_SUPPORTERS_CLIFF: 0,
+            EARLY_SUPPORTERS_PERIOD: 62208000, // 24 months vesting
+            // Supporters
+            SUPPORTERS_CLIFF: 0,
+            SUPPORTERS_PERIOD: 46656000, // 18 months vesting
+        },
+    },
     [EChainID.ARBITRUM_SEPOLIA]: {
         TAP: {
             DAO_ADDRESS: '',
@@ -139,6 +162,14 @@ type TFinal = {
 
 const FINAL: TFinal = {
     [EChainID.ARBITRUM]: {
+        TOLP: {
+            EPOCH_DURATION: 604800, // 7 days
+        },
+        TOB: {
+            PAYMENT_TOKEN_ADDRESS: '0x7A3B760AcFaB78f6bc6a1AD80F7743f5bA0513Dc', // MULTISIG
+        },
+    },
+    [EChainID.MAINNET]: {
         TOLP: {
             EPOCH_DURATION: 604800, // 7 days
         },
