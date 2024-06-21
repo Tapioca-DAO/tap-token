@@ -43,8 +43,8 @@ export const buildFinalStackPostDepSetup_2 = async (
         usdcOracleDeployment,
         tSglSGlp,
         ybStrategyTSglSGlp,
-        tSglDai,
-        ybStrategyTSglSDai,
+        // tSglDai,
+        // ybStrategyTSglSDai,
     } = await loadContract__arb(hre, tag, isTestnet);
 
     /**
@@ -154,41 +154,41 @@ export const buildFinalStackPostDepSetup_2 = async (
         );
     }
 
-    /**
-     * Register Mainnet SGL DAI in TOLP
-     */
-    const sglDaiYbAsset = await yieldbox.ids(
-        1,
-        tSglDai.address,
-        ybStrategyTSglSDai.address,
-        0,
-    );
+    // /**
+    //  * Register Mainnet SGL DAI in TOLP
+    //  */
+    // const sglDaiYbAsset = await yieldbox.ids(
+    //     1,
+    //     tSglDai.address,
+    //     ybStrategyTSglSDai.address,
+    //     0,
+    // );
 
-    // If SGL_DAI is not registered in TOLP, register it
-    if (
-        (await tOlp.sglAssetIDToAddress(sglDaiYbAsset)).toLowerCase() !==
-        tSglDai.address.toLowerCase()
-    ) {
-        console.log('[+] +Call queue: register SGL_T_SGL_DAI in TOLP');
-        calls.push({
-            target: tOlp.address,
-            allowFailure: false,
-            callData: tOlp.interface.encodeFunctionData('registerSingularity', [
-                tSglDai.address,
-                sglDaiYbAsset,
-                0,
-            ]),
-        });
-        console.log(
-            '\t- Parameters',
-            'SGL address',
-            tSglDai.address,
-            'YB asset ID',
-            sglDaiYbAsset,
-            'Weight',
-            0,
-        );
-    }
+    // // If SGL_DAI is not registered in TOLP, register it
+    // if (
+    //     (await tOlp.sglAssetIDToAddress(sglDaiYbAsset)).toLowerCase() !==
+    //     tSglDai.address.toLowerCase()
+    // ) {
+    //     console.log('[+] +Call queue: register SGL_T_SGL_DAI in TOLP');
+    //     calls.push({
+    //         target: tOlp.address,
+    //         allowFailure: false,
+    //         callData: tOlp.interface.encodeFunctionData('registerSingularity', [
+    //             tSglDai.address,
+    //             sglDaiYbAsset,
+    //             0,
+    //         ]),
+    //     });
+    //     console.log(
+    //         '\t- Parameters',
+    //         'SGL address',
+    //         tSglDai.address,
+    //         'YB asset ID',
+    //         sglDaiYbAsset,
+    //         'Weight',
+    //         0,
+    //     );
+    // }
 
     /**
      * Set tOB as minter for TapOFT
@@ -239,7 +239,7 @@ export const buildFinalStackPostDepSetup_2 = async (
             allowFailure: false,
             callData: tob.interface.encodeFunctionData('setTapOracle', [
                 tapOracleTobDeployment.address,
-                '0x00',
+                '0x',
             ]),
         });
     }
@@ -277,7 +277,7 @@ export const buildFinalStackPostDepSetup_2 = async (
             callData: tob.interface.encodeFunctionData('setPaymentToken', [
                 usdoDeployment.address,
                 usdoOracleDeployment.address,
-                '0x00',
+                '0x',
             ]),
         });
         console.log(
@@ -287,7 +287,7 @@ export const buildFinalStackPostDepSetup_2 = async (
             'USDO Oracle',
             usdoOracleDeployment.address,
             'Data',
-            '0x00',
+            '0x',
         );
     }
 
@@ -306,7 +306,7 @@ export const buildFinalStackPostDepSetup_2 = async (
             callData: tob.interface.encodeFunctionData('setPaymentToken', [
                 usdcAddr,
                 usdcOracleDeployment.address,
-                '0x00',
+                '0x',
             ]),
         });
         console.log(
@@ -316,7 +316,7 @@ export const buildFinalStackPostDepSetup_2 = async (
             'USDC Oracle',
             usdcOracleDeployment.address,
             'Data',
-            '0x00',
+            '0x',
         );
     }
 
@@ -453,21 +453,21 @@ async function loadContract__arb(
     );
 
     // Mainnet tSGL-DAI
-    const tSglDai = loadGlobalContract(
-        hre,
-        TAPIOCA_PROJECTS_NAME.TapiocaZ,
-        hre.SDK.eChainId,
-        TAPIOCA_Z_CONFIG.DEPLOYMENT_NAMES.T_SGL_SDAI_MARKET,
-        tag,
-    );
-    const ybStrategyTSglSDai = loadGlobalContract(
-        hre,
-        TAPIOCA_PROJECTS_NAME.TapiocaBar,
-        hre.SDK.eChainId,
-        TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES
-            .YB_T_SGL_SDAI_ASSET_WITHOUT_STRATEGY,
-        tag,
-    );
+    // const tSglDai = loadGlobalContract(
+    //     hre,
+    //     TAPIOCA_PROJECTS_NAME.TapiocaZ,
+    //     hre.SDK.eChainId,
+    //     TAPIOCA_Z_CONFIG.DEPLOYMENT_NAMES.T_SGL_SDAI_MARKET,
+    //     tag,
+    // );
+    // const ybStrategyTSglSDai = loadGlobalContract(
+    //     hre,
+    //     TAPIOCA_PROJECTS_NAME.TapiocaBar,
+    //     hre.SDK.eChainId,
+    //     TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES
+    //         .YB_T_SGL_SDAI_ASSET_WITHOUT_STRATEGY,
+    //     tag,
+    // );
 
     return {
         cluster,
@@ -483,7 +483,7 @@ async function loadContract__arb(
         usdcOracleDeployment,
         tSglSGlp,
         ybStrategyTSglSGlp,
-        tSglDai,
-        ybStrategyTSglSDai,
+        // tSglDai,
+        // ybStrategyTSglSDai,
     };
 }
