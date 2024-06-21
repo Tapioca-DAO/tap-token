@@ -407,7 +407,7 @@ async function loadContract__arb(
         hre,
         TAPIOCA_PROJECTS_NAME.TapiocaPeriph,
         hre.SDK.eChainId,
-        TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.TOB_TAP_OPTION_ORACLE,
+        TAPIOCA_PERIPH_CONFIG.DEPLOYMENT_NAMES.TAP_ORACLE,
         tag,
     );
 
