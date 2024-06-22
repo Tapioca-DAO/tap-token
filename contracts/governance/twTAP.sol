@@ -136,6 +136,7 @@ contract TwTAP is
     uint256 public emergencySweepCooldown = 2 days;
     uint256 public lastEmergencySweep;
 
+    uint256 maxEpochCoeff = 4; // Maximum epoch coefficient for the cumulative
     ITwTapMagnitudeMultiplier public twTapMagnitudeMultiplier;
     uint256 constant MULTIPLIER_PRECISION = 1e18;
 
@@ -395,7 +396,7 @@ contract TwTAP is
                 _lastEpochCumulative = EPOCH_DURATION;
             }
             // Revert if the lock 4x the cumulative
-            if (magnitude >= _lastEpochCumulative * 4) revert NotValid();
+            if (magnitude >= lastEpochCumulative * maxEpochCoeff) revert NotValid();
         }
         uint256 multiplier = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
@@ -584,6 +585,10 @@ contract TwTAP is
     // =========
     //   OWNER
     // =========
+
+    function setMaxEpochCoeff(uint256 _maxEpochCoeff) external onlyOwner {
+        maxEpochCoeff = _maxEpochCoeff;
+    }
 
     function setTwTapMagnitudeMultiplier(ITwTapMagnitudeMultiplier _twTapMagnitudeMultiplier) external onlyOwner {
         twTapMagnitudeMultiplier = _twTapMagnitudeMultiplier;
