@@ -89,6 +89,7 @@ contract TwTAP is
 
     /// ===== TWAML ======
     TWAMLPool public twAML; // sglAssetId => twAMLPool
+    uint256 public lastEpochCumulative; // Last cumulative for the last epoch
 
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
@@ -505,6 +506,8 @@ contract TwTAP is
     /// @param _limit Maximum number of weeks to process in one call
     function advanceWeek(uint256 _limit) public nonReentrant {
         if (!cluster.hasRole(msg.sender, keccak256("NEW_EPOCH"))) revert NotAuthorized();
+
+        lastEpochCumulative = twAML.cumulative;
 
         uint256 week = lastProcessedWeek;
         uint256 goal = currentWeek();

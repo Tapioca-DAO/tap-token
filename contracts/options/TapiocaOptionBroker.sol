@@ -87,6 +87,10 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
     /// @notice Total amount of participation per epoch
     mapping(uint256 epoch => mapping(uint256 sglAssetID => int256 netAmount)) public netDepositedForEpoch;
+
+    /// @notice Cumulative for each epoch
+    mapping(uint256 sglAssetID => uint256 cumulative) public lastEpochCumulativeForSgl;
+
     /// =====-------======
 
     error NotEqualDurations();
@@ -315,8 +319,15 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
-        // Revert if the lock 4x the cumulative
-        if (magnitude > pool.cumulative * 4) revert TooLong();
+        // Revert if the lock 4x the last epoch cumulative
+        {
+            uint256 lastEpochCumulative = lastEpochCumulativeForSgl[lock.sglAssetID]; // Get the last epoch cumulative
+            if (lastEpochCumulative == 0) {
+                lastEpochCumulative = EPOCH_DURATION;
+            }
+
+            if (magnitude > lastEpochCumulative * 4) revert TooLong();
+        }
 
         bool divergenceForce;
         // Participate in twAMl voting
@@ -478,9 +489,17 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (_timestampToWeek(block.timestamp) <= epoch) revert TooSoon();
 
         uint256[] memory singularities = tOLP.getSingularities();
-        if (singularities.length == 0) revert NoActiveSingularities();
+        uint256 sglLen = singularities.length;
+        if (sglLen == 0) revert NoActiveSingularities();
 
         epoch++;
+
+        // Update the lastEpochCumulativeForSgl on each active singularity
+        for (uint256 i; i < sglLen; i++) {
+            uint256 sglAssetId = singularities[i];
+            TWAMLPool memory twAMLPool = twAML[sglAssetId];
+            lastEpochCumulativeForSgl[sglAssetId] = twAMLPool.cumulative;
+        }
 
         // Extract TAP + emit to gauges
         uint256 epochTAP = tapOFT.emitForWeek();
