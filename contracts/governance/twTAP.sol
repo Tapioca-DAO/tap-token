@@ -11,6 +11,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
+import {ITwTapMagnitudeMultiplier} from "contracts/interfaces/IMagnitudeMultiplier.sol";
 import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
 import {ERC721NftLoader} from "contracts/erc721NftLoader/ERC721NftLoader.sol";
 import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
@@ -134,6 +135,10 @@ contract TwTAP is
     bool rescueMode;
     uint256 public emergencySweepCooldown = 2 days;
     uint256 public lastEmergencySweep;
+
+    uint256 maxEpochCoeff = 4; // Maximum epoch coefficient for the cumulative
+    ITwTapMagnitudeMultiplier public twTapMagnitudeMultiplier;
+    uint256 constant MULTIPLIER_PRECISION = 1e18;
 
     error NotAuthorized();
     error AdvanceWeekFirst();
@@ -384,14 +389,13 @@ contract TwTAP is
         TWAMLPool memory pool = twAML;
 
         uint256 magnitude = computeMagnitude(_duration, pool.cumulative);
-        
         {
             uint256 _lastEpochCumulative = lastEpochCumulative;
             if (_lastEpochCumulative == 0) {
                 _lastEpochCumulative = EPOCH_DURATION;
             }
             // Revert if the lock 4x the cumulative
-            if (magnitude >= lastEpochCumulative * 4) revert NotValid();
+            if (magnitude >= lastEpochCumulative * maxEpochCoeff) revert NotValid();
         }
         uint256 multiplier = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
@@ -406,10 +410,22 @@ contract TwTAP is
             divergenceForce = _duration >= pool.cumulative;
 
             if (divergenceForce) {
-                pool.cumulative += pool.averageMagnitude;
+                uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;
+                if (address(twTapMagnitudeMultiplier) != address(0)) {
+                    aMagnitudeMultiplier =
+                        twTapMagnitudeMultiplier.getPositiveMagnitudeMultiplier(_participant, _amount, _duration);
+                }
+
+                pool.cumulative += (pool.averageMagnitude * aMagnitudeMultiplier / MULTIPLIER_PRECISION);
             } else {
                 if (pool.cumulative > pool.averageMagnitude) {
-                    pool.cumulative -= pool.averageMagnitude;
+                    uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;
+                    if (address(twTapMagnitudeMultiplier) != address(0)) {
+                        aMagnitudeMultiplier =
+                            twTapMagnitudeMultiplier.getNegativeMagnitudeMultiplier(_participant, _amount, _duration);
+                    }
+
+                    pool.cumulative -= (pool.averageMagnitude * aMagnitudeMultiplier / MULTIPLIER_PRECISION);
                 } else {
                     pool.cumulative = EPOCH_DURATION;
                 }
@@ -568,6 +584,15 @@ contract TwTAP is
     // =========
     //   OWNER
     // =========
+
+    function setMaxEpochCoeff(uint256 _maxEpochCoeff) external onlyOwner {
+        maxEpochCoeff = _maxEpochCoeff;
+    }
+
+    function setTwTapMagnitudeMultiplier(ITwTapMagnitudeMultiplier _twTapMagnitudeMultiplier) external onlyOwner {
+        twTapMagnitudeMultiplier = _twTapMagnitudeMultiplier;
+    }
+
     /**
      * @notice Set the rescue mode.
      */
