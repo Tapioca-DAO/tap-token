@@ -301,6 +301,10 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
         TWAMLPool memory pool = twAML[lock.sglAssetID];
 
+        if (pool.cumulative == 0) {
+            pool.cumulative = EPOCH_DURATION;
+        }
+
         // Transfer tOLP position to this contract
         // tOLP.transferFrom(msg.sender, address(this), _tOLPTokenID);
         {
