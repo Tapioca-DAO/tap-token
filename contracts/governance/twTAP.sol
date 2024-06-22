@@ -412,7 +412,7 @@ contract TwTAP is
             if (divergenceForce) {
                 uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;
                 if (address(twTapMagnitudeMultiplier) != address(0)) {
-                    multiplier =
+                    aMagnitudeMultiplier =
                         twTapMagnitudeMultiplier.getPositiveMagnitudeMultiplier(_participant, _amount, _duration);
                 }
 
