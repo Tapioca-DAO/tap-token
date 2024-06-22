@@ -362,7 +362,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
                             tobMagnitudeMultiplier.getNegativeMagnitudeMultiplier(_tOLPTokenID);
                     }
 
-                    pool.cumulative -= pool.averageMagnitude;
+                    pool.cumulative -= (pool.averageMagnitude * aMagnitudeMultiplier / MULTIPLIER_PRECISION);
                 } else {
                     pool.cumulative = EPOCH_DURATION;
                 }
