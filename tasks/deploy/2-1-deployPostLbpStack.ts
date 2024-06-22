@@ -333,7 +333,7 @@ export async function getTapToken(params: {
     let dao = DEPLOY_CONFIG.POST_LBP[hre.SDK.eChainId]!.TAP.DAO_ADDRESS;
     dao = isTestnet ? owner : dao;
 
-    const contributors = isTestnet ? owner : '0x'; //contributors address for vesting, we use owner for testnet
+    const contributors = isTestnet ? owner : hre.ethers.constants.AddressZero; //contributors address for vesting, we use owner for testnet
 
     const isGovernanceChain = chainInfo.lzChainId == governanceEid;
     return await buildTapToken(

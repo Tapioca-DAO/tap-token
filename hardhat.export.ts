@@ -88,6 +88,16 @@ const config: HardhatUserConfig & { dodoc: any } = {
                     },
                 },
             },
+            'contracts/governance/twTAP.sol': {
+                version: '0.8.22',
+                settings: {
+                    evmVersion: 'paris', // Latest before Shanghai
+                    optimizer: {
+                        enabled: true,
+                        runs: 5000,
+                    },
+                },
+            },
         },
     },
     paths: {
