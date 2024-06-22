@@ -118,7 +118,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         deal(address(aTapOFT), userA, amountToSendLD); // Mint free tokens
 
         // Send packets
-        (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) = aTapOFT.sendPacket{
+        (MessagingReceipt memory msgReceipt_,,,) = aTapOFT.sendPacket{
             value: lockTwTapPositionMsgReturn_.prepareLzCallReturn.lzSendParam.fee.nativeFee
         }(
             lockTwTapPositionMsgReturn_.prepareLzCallReturn.lzSendParam,

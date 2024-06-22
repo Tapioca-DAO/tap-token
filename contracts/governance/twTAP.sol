@@ -455,15 +455,28 @@ contract TwTAP is
      * @return amounts_ Claimed amount of each reward token.
      */
     function claimRewards(uint256 _tokenId) external nonReentrant whenNotPaused returns (uint256[] memory amounts_) {
-        // Either the owner or a delegate can claim the rewards
-        // In this case it's `TapToken` to claim the rewards on behalf of the user and send them xChain.
-        address owner = _ownerOf(_tokenId);
+        amounts_ = _claimRewardsForToken(_tokenId);
+    }
 
-        if (owner != msg.sender && !isERC721Approved(owner, msg.sender, address(this), _tokenId)) {
-            revert NotApproved(_tokenId, msg.sender);
+    /**
+     * @notice batch claims all rewards distributed since token mint or last claim.
+     * @dev Should be safe to claim even after position exit.
+     *
+     * @param _tokenIds tokenIds whose rewards to claim
+     *
+     * @return amounts_ Claimed amountsof each reward token, for each tokenId
+     */
+    function batchClaimRewards(uint256[] calldata _tokenIds)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256[][] memory amounts_)
+    {
+        amounts_ = new uint256[][](_tokenIds.length);
+        uint256 len = _tokenIds.length;
+        for (uint256 i; i < len; i++) {
+            amounts_[i] = _claimRewardsForToken(_tokenIds[i]);
         }
-
-        amounts_ = _claimRewards(_tokenId, msg.sender);
     }
 
     /**
@@ -661,6 +674,17 @@ contract TwTAP is
     // ============
     //   INTERNAL
     // ============
+    function _claimRewardsForToken(uint256 _tokenId) private returns (uint256[] memory amounts_) {
+        // Either the owner or a delegate can claim the rewards
+        // In this case it's `TapToken` to claim the rewards on behalf of the user and send them xChain.
+        address owner = _ownerOf(_tokenId);
+
+        if (owner != msg.sender && !isERC721Approved(owner, msg.sender, address(this), _tokenId)) {
+            revert NotApproved(_tokenId, msg.sender);
+        }
+
+        amounts_ = _claimRewards(_tokenId, msg.sender);
+    }
 
     /// @notice returns week for timestamp
     function _timestampToWeek(uint256 timestamp) internal view returns (uint256) {
