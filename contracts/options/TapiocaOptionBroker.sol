@@ -82,7 +82,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     uint256 constant dMIN = 0;
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
 
-    uint256 maxEpochCoeff = 4; // Maximum epoch coefficient for the cumulative
+    uint256 public maxEpochCoeff = 4; // Maximum epoch coefficient for the cumulative
 
     /// @notice starts time for emissions
     /// @dev initialized in the constructor with block.timestamp
