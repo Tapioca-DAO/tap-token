@@ -223,6 +223,15 @@ contract TwTAP is
         return (block.timestamp - creation) / EPOCH_DURATION;
     }
 
+    /**
+     * @notice Return the total amount distributed for a reward token in a given week.
+     * @param _week The week to query.
+     * @param _rewardTokenId The reward token to query.
+     */
+    function getTotalDistPerVoteForWeek(uint256 _week, uint256 _rewardTokenId) external view returns (uint256) {
+        return weekTotals[_week].totalDistPerVote[_rewardTokenId];
+    }
+
     /// @notice Return the participation of a token. Returns 0 votes for expired tokens.
     function getParticipation(uint256 _tokenId) external view returns (Participation memory participant) {
         participant = participants[_tokenId];
