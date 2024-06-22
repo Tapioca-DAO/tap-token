@@ -12,9 +12,10 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
 import {TapiocaOptionLiquidityProvision, LockPosition, SingularityPool} from "./TapiocaOptionLiquidityProvision.sol";
-import {IPearlmit, PearlmitHandler} from "tap-utils/pearlmit/PearlmitHandler.sol";
-import {ITapiocaOracle} from "tap-utils/interfaces/periph/ITapiocaOracle.sol";
-import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
+import {ITobMagnitudeMultiplier} from "contracts/interfaces/IMagnitudeMultiplier.sol";
+import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
+import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
 import {TapToken} from "contracts/tokens/TapToken.sol";
 import {OTAP, TapOption} from "./oTAP.sol";
 import {TWAML} from "./twAML.sol";
@@ -81,6 +82,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     uint256 constant dMIN = 0;
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
 
+    uint256 maxEpochCoeff = 4; // Maximum epoch coefficient for the cumulative
+
     /// @notice starts time for emissions
     /// @dev initialized in the constructor with block.timestamp
     uint256 public emissionsStartTime;
@@ -90,6 +93,10 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
     /// @notice Cumulative for each epoch
     mapping(uint256 sglAssetID => uint256 cumulative) public lastEpochCumulativeForSgl;
+
+    /// @notice The maximum epoch coefficient for the cumulative
+    ITobMagnitudeMultiplier public tobMagnitudeMultiplier;
+    uint256 constant MULTIPLIER_PRECISION = 1e18;
 
     /// =====-------======
 
@@ -326,7 +333,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
                 lastEpochCumulative = EPOCH_DURATION;
             }
 
-            if (magnitude > lastEpochCumulative * 4) revert TooLong();
+            if (magnitude > lastEpochCumulative * maxEpochCoeff) revert TooLong();
         }
 
         bool divergenceForce;
@@ -340,9 +347,19 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
             // Compute and save new cumulative
             divergenceForce = lock.lockDuration >= pool.cumulative;
             if (divergenceForce) {
-                pool.cumulative += pool.averageMagnitude;
+                uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;
+                if (address(tobMagnitudeMultiplier) != address(0)) {
+                    aMagnitudeMultiplier = tobMagnitudeMultiplier.getPositiveMagnitudeMultiplier(_tOLPTokenID);
+                }
+
+                pool.cumulative += (pool.averageMagnitude * aMagnitudeMultiplier / MULTIPLIER_PRECISION);
             } else {
                 if (pool.cumulative > pool.averageMagnitude) {
+                    uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;
+                    if (address(tobMagnitudeMultiplier) != address(0)) {
+                        aMagnitudeMultiplier = tobMagnitudeMultiplier.getNegativeMagnitudeMultiplier(_tOLPTokenID);
+                    }
+
                     pool.cumulative -= pool.averageMagnitude;
                 } else {
                     pool.cumulative = EPOCH_DURATION;
@@ -524,6 +541,14 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     // =========
     //   OWNER
     // =========
+
+    function setTobMagnitudeMultiplier(ITobMagnitudeMultiplier _tobMagnitudeMultiplier) external onlyOwner {
+        tobMagnitudeMultiplier = _tobMagnitudeMultiplier;
+    }
+
+    function setMaxEpochCoeff(uint256 _maxEpochCoeff) external onlyOwner {
+        maxEpochCoeff = _maxEpochCoeff;
+    }
 
     /**
      * @notice Set the `VIRTUAL_TOTAL_AMOUNT` state variable.
