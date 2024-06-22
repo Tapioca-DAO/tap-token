@@ -384,6 +384,11 @@ contract TwTAP is
         TWAMLPool memory pool = twAML;
 
         uint256 magnitude = computeMagnitude(_duration, pool.cumulative);
+
+        uint256 _lastEpochCumulative = lastEpochCumulative;
+        if (_lastEpochCumulative == 0) {
+            _lastEpochCumulative = EPOCH_DURATION;
+        }
         // Revert if the lock 4x the cumulative
         if (magnitude >= lastEpochCumulative * 4) revert NotValid();
         uint256 multiplier = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
