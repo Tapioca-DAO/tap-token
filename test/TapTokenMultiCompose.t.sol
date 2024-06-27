@@ -65,11 +65,11 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     index: 0,
                     gas: 1_000_000,
                     value: 0,
-                    data: new bytes(0), // Will be written in the _setupERC20ApprovalMsg function.
-                    prevData: new bytes(0),
-                    prevOptionsData: new bytes(0)
+                    data: bytes(""), // Will be written in the _setupERC20ApprovalMsg function.
+                    prevData: bytes(""),
+                    prevOptionsData: bytes("")
                 }),
-                lzReceiveGas: 1,
+                lzReceiveGas: 1_000_000,
                 lzReceiveValue: 0,
                 refundAddress: address(this)
             }),
@@ -99,9 +99,9 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     msgType: PT_LOCK_TWTAP,
                     composeMsgData: ComposeMsgData({
                         index: 1,
-                        gas: 0,
+                        gas: 1_000_000,
                         value: 0,
-                        data: new bytes(0), // Will be written in the _setupLockTwTapPositionMsg function.
+                        data: bytes(""), // Will be written in the _setupLockTwTapPositionMsg function.
                         prevData: erc20ApprovalsReturn_.prepareLzCallReturn.composeMsg,
                         prevOptionsData: erc20ApprovalsReturn_.prepareLzCallReturn.composeOptions
                     }),
@@ -118,7 +118,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         deal(address(aTapOFT), userA, amountToSendLD); // Mint free tokens
 
         // Send packets
-        (MessagingReceipt memory msgReceipt_,,,) = aTapOFT.sendPacket{
+        (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) = aTapOFT.sendPacket{
             value: lockTwTapPositionMsgReturn_.prepareLzCallReturn.lzSendParam.fee.nativeFee
         }(
             lockTwTapPositionMsgReturn_.prepareLzCallReturn.lzSendParam,
@@ -132,7 +132,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                 LzOFTComposedData(
                     PT_APPROVALS,
                     msgReceipt_.guid,
-                    lockTwTapPositionMsgReturn_.prepareLzCallReturn.composeMsg, // All of the composed messages.
+                    msgSent, // All of the composed messages.
                     bEid,
                     address(bTapOFT), // Compose creator (at lzReceive).
                     address(bTapOFT), // Compose receiver (at lzCompose).
@@ -176,20 +176,20 @@ contract TapTokenMultiComposeTest is TapTokenTest {
             token: ITapToken(address(aTapOFT)),
             prepareLzCallData: PrepareLzCallData({
                 dstEid: bEid,
-                recipient: OFTMsgCodec.addressToBytes32(userA),
+                recipient: OFTMsgCodec.addressToBytes32(address(this)),
                 amountToSendLD: 0,
                 minAmountToCreditLD: 0,
                 msgType: PT_NFT_APPROVALS,
                 composeMsgData: ComposeMsgData({
                     index: 0,
                     gas: 1_000_000,
-                    value: 2_000_000,
-                    data: new bytes(0), // Will be written in the _setupERC20ApprovalMsg function.
-                    prevData: new bytes(0),
-                    prevOptionsData: new bytes(0)
+                    value: 1e16,
+                    data: bytes(""), // Will be written in the _setupERC20ApprovalMsg function.
+                    prevData: bytes(""),
+                    prevOptionsData: bytes("")
                 }),
-                lzReceiveGas: 1,
-                lzReceiveValue: 0,
+                lzReceiveGas: 1_000_000,
+                lzReceiveValue: 1e16,
                 refundAddress: address(this)
             }),
             approvalOn: address(twTap),
@@ -198,8 +198,8 @@ contract TapTokenMultiComposeTest is TapTokenTest {
         });
         erc721ApprovalsData_.permitData[0] = ERC721PermitStruct({
             tokenId: tokenId_,
-            spender: address(twTap),
-            nonce: 0,
+            spender: address(bTapOFT),
+            nonce: 1,
             deadline: block.timestamp + 1 days
         });
 
@@ -217,14 +217,14 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     msgType: PT_UNLOCK_TWTAP,
                     composeMsgData: ComposeMsgData({
                         index: 1,
-                        gas: 0,
-                        value: 0,
-                        data: new bytes(0), // Will be written in the _setupUnlockTwTapPositionMsg function.
+                        gas: 1_000_000,
+                        value: 1_000_000,
+                        data: bytes(""), // Will be written in the _setupUnlockTwTapPositionMsg function.
                         prevData: erc721ApprovalsReturn_.prepareLzCallReturn.composeMsg,
                         prevOptionsData: erc721ApprovalsReturn_.prepareLzCallReturn.composeOptions
                     }),
-                    lzReceiveGas: 1,
-                    lzReceiveValue: 0,
+                    lzReceiveGas: 1_000_000,
+                    lzReceiveValue: 1_000_000,
                     refundAddress: address(this)
                 }),
                 user: userA,
@@ -243,14 +243,14 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                 msgType: PT_APPROVALS,
                 composeMsgData: ComposeMsgData({
                     index: 2,
-                    gas: 1,
-                    value: 0,
-                    data: new bytes(0), // Will be written in the _setupERC20ApprovalMsg function.
+                    gas: 1_000_000,
+                    value: 1_000_000,
+                    data: bytes(""), // Will be written in the _setupERC20ApprovalMsg function.
                     prevData: unlockTwTapPositionMsgReturn_.prepareLzCallReturn.composeMsg,
                     prevOptionsData: unlockTwTapPositionMsgReturn_.prepareLzCallReturn.composeOptions
                 }),
-                lzReceiveGas: 1,
-                lzReceiveValue: 0,
+                lzReceiveGas: 1_000_000,
+                lzReceiveValue: 1_000_000,
                 refundAddress: address(this)
             }),
             approvalOn: ITapToken(address(bTapOFT)),
@@ -279,14 +279,14 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                     msgType: PT_REMOTE_TRANSFER,
                     composeMsgData: ComposeMsgData({
                         index: 3,
-                        gas: 0,
-                        value: 0,
-                        data: new bytes(0), // Will be written in the _setupRemoteTransferMsg function.
+                        gas: 1_000_000,
+                        value: 1_000_000,
+                        data: bytes(""), // Will be written in the _setupRemoteTransferMsg function.
                         prevData: erc20ApprovalsReturn_.prepareLzCallReturn.composeMsg,
                         prevOptionsData: erc20ApprovalsReturn_.prepareLzCallReturn.composeOptions
                     }),
                     lzReceiveGas: 1_000_000,
-                    lzReceiveValue: 0,
+                    lzReceiveValue: 1_000_000,
                     refundAddress: address(this)
                 }),
                 dstToken: ITapToken(address(bTapOFT)),
@@ -509,9 +509,9 @@ contract TapTokenMultiComposeTest is TapTokenTest {
                         index: 0,
                         gas: 0,
                         value: 0,
-                        data: new bytes(0),
-                        prevData: new bytes(0),
-                        prevOptionsData: new bytes(0)
+                        data: bytes(""),
+                        prevData: bytes(""),
+                        prevOptionsData: bytes("")
                     }),
                     lzReceiveGas: 1_000_000,
                     lzReceiveValue: 0,
@@ -521,7 +521,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
             remoteTransferMsg_ = RemoteTransferMsg({
                 owner: _data.owner,
                 lzSendParam: prepareLzCallReturnRemoteTransfer_.lzSendParam,
-                composeMsg: new bytes(0)
+                composeMsg: bytes("")
             });
 
             _data.prepareLzCallData.composeMsgData.value = uint128(prepareLzCallReturnRemoteTransfer_.msgFee.nativeFee); // Overwrite fees after computing it

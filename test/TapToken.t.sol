@@ -166,6 +166,15 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         vm.label(address(bTapOFT), "bTapOFT");
 
         twTap = new TwTAP(payable(address(bTapOFT)), IPearlmit(address(pearlmit)), address(this));
+        twTap.setCluster(cluster);
+
+        // Cluster approvals
+        cluster.setRoleForContract(address(this), keccak256("NEW_EPOCH"), true);
+        cluster.updateContract(0, address(this), true);
+        cluster.updateContract(0, address(aTapOFT), true);
+        cluster.updateContract(0, address(bTapOFT), true);
+        cluster.updateContract(0, address(twTap), true);
+
         vm.label(address(twTap), "twTAP");
 
         bTapOFT.setTwTAP(address(twTap));
@@ -248,7 +257,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         vm.label(address(erc721Mock), "erc721Mock");
         erc721Mock.mint(address(userA), 1);
 
-        ERC721PermitStruct memory permit_ = ERC721PermitStruct({spender: userB, tokenId: 1, nonce: 0, deadline: 1 days});
+        ERC721PermitStruct memory permit_ = ERC721PermitStruct({spender: userB, tokenId: 1, nonce: 1, deadline: 1 days});
 
         bytes32 digest_ = erc721Mock.getTypedDataHash(permit_);
         ERC721PermitApprovalMsg memory permitApproval_ =
@@ -258,7 +267,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
             permit_.spender, permit_.tokenId, permit_.deadline, permitApproval_.v, permitApproval_.r, permitApproval_.s
         );
         assertEq(erc721Mock.getApproved(1), userB);
-        assertEq(erc721Mock.nonces(permit_.tokenId), 1);
+        assertEq(erc721Mock.nonces(permit_.tokenId), 2);
     }
 
     /**
@@ -380,9 +389,9 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         {
             ERC721PermitStruct memory approvalUserB_ =
-                ERC721PermitStruct({spender: userB, tokenId: 1, nonce: 0, deadline: 1 days});
+                ERC721PermitStruct({spender: userB, tokenId: 1, nonce: 1, deadline: 1 days});
             ERC721PermitStruct memory approvalUserC_ =
-                ERC721PermitStruct({spender: userC_, tokenId: 2, nonce: 0, deadline: 1 days});
+                ERC721PermitStruct({spender: userC_, tokenId: 2, nonce: 1, deadline: 1 days});
 
             permitApprovalB_ =
                 __getERC721PermitData(approvalUserB_, twTap.getTypedDataHash(approvalUserB_), address(twTap), userAPKey);
@@ -449,8 +458,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
 
         assertEq(twTap.getApproved(1), userB);
         assertEq(twTap.getApproved(2), userC_);
-        assertEq(twTap.nonces(permitApprovalB_.tokenId), 1);
-        assertEq(twTap.nonces(permitApprovalC_.tokenId), 1);
+        assertEq(twTap.nonces(permitApprovalB_.tokenId), 2);
+        assertEq(twTap.nonces(permitApprovalC_.tokenId), 2);
     }
 
     /**
@@ -901,6 +910,8 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         (MessagingReceipt memory msgReceipt_,, bytes memory msgSent,) =
             aTapOFT.sendPacket{value: msgFee_.nativeFee}(lzSendParam_, composeMsg_);
 
+        pearlmit.approve(721, address(twTap), testData_.tokenId, address(bTapOFT), 1, uint48(block.timestamp));
+
         {
             // A->B
             // Verify first sent packets
@@ -1017,7 +1028,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
         vm.expectEmit(true, true, true, false);
         emit ComposeReceived(_lzOFTComposedData.msgType, _lzOFTComposedData.guid, _lzOFTComposedData.composeMsg);
 
-        this.lzCompose(
+        this.lzCompose{value: 1_000_000}(
             _lzOFTComposedData.dstEid,
             _lzOFTComposedData.from,
             _lzOFTComposedData.extraOptions,

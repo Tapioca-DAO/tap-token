@@ -34,11 +34,11 @@ contract AirdropBrokerTestMock is AirdropBroker {
 contract AirdropBrokerTest is Test {
     AirdropBrokerTestMock airdropBroker;
 
-    address AOTAP = address(0);
+    address AOTAP = address(0x1);
     address payable TAPOFT = payable(address(new ERC20Mock("TAPOFT", "TAPOFT")));
-    address PCNFT = address(0);
+    address PCNFT = address(0x2);
     address TAP_ORACLE = address(new ADBOracleMock());
-    address PAYMENT_TOKEN_BENEFICIARY = address(0);
+    address PAYMENT_TOKEN_BENEFICIARY = address(0x3);
     address OWNER = address(this);
     IPearlmit PEARLMIT = IPearlmit(address(new Pearlmit("Pearlmit", "1", address(this), 0)));
 
