@@ -1,0 +1,40 @@
+name: 'Setup Environment'
+description: 'Setup Yarn, Node.js, update submodules, install Yarn dependencies and foundry'
+runs:
+  using: 'composite'
+  steps:
+  - name: Setup yarn
+    shell: bash
+    run: npm install -g yarn
+
+  - name: Setup Node.js with yarn caching
+    uses: actions/setup-node@v4
+    with:
+      node-version: "18.16.0"
+      cache: yarn
+
+  - name: Update submodules
+    shell: bash
+    run: git submodule update --init
+
+  - name: Update nested submodules
+    shell: bash
+    run: |
+      cd gitmodule/tapioca-periph
+      git submodule update --init gitmodule/permitc
+      cd -
+
+  - name: Install Yarn dependencies
+    shell: bash
+    run: yarn
+
+  - name: Install foundry
+    uses: foundry-rs/foundry-toolchain@v1
+    with:
+      version: nightly
+
+  - name: Install foundry dependencies
+    shell: bash
+    run: |
+      forge --version
+      forge install

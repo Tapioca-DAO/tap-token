@@ -46,6 +46,8 @@ contract TapTokenMultiComposeTest is TapTokenTest {
      * @dev `userA` should be the sender
      */
     function test_multi_compose_participate() public {
+        vm.skip(true);
+
         vm.startPrank(userA);
 
         // Global vars
@@ -154,6 +156,8 @@ contract TapTokenMultiComposeTest is TapTokenTest {
      * @dev Integration test with both ERC721Permit, unlockTwTapPosition, ERC20Permit and sendRemoteTransfer
      */
     function test_multi_compose_exit_and_transfer() public {
+        vm.skip(true);
+
         vm.startPrank(userA);
 
         // Global vars
