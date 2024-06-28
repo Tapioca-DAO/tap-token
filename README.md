@@ -19,7 +19,7 @@ foundryup
 To clone the repo:
 
 ```sh
-git clone https://github.com/euler-xyz/euler-vault-kit.git && cd euler-vault-kit
+git clone https://github.com/Tapioca-DAO/tap-token.git && cd tap-token
 ```
 
 ## Install
