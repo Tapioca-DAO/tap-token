@@ -253,7 +253,6 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
     }
 
     function test_erc721_permit() public {
-        vm.skip(true);
         ERC721Mock erc721Mock = new ERC721Mock("Mock", "Mock");
         vm.label(address(erc721Mock), "erc721Mock");
         erc721Mock.mint(address(userA), 1);
@@ -275,8 +274,6 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
      * ERC20 APPROVALS
      */
     function test_tapOFT_erc20_approvals() public {
-        vm.skip(true);
-
         address userC_ = vm.addr(0x3);
 
         ERC20PermitApprovalMsg memory permitApprovalB_;
@@ -368,8 +365,6 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
      * ERC721 APPROVALS
      */
     function test_tapOFT_erc721_approvals() public {
-        vm.skip(true);
-
         address userC_ = vm.addr(0x3);
         // Mint tokenId
         {
@@ -623,8 +618,6 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
      * @dev Test the OApp functionality of `TapToken.unlockTwTapPosition()` function.
      */
     function test_remote_transfer() public {
-        vm.skip(true);
-        // vars
         uint256 tokenAmount_ = 1 ether;
         LZSendParam memory remoteLzSendParam_;
         MessagingFee memory remoteMsgFee_; // Will be used as value for the composed msg
@@ -746,7 +739,6 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
      * @dev Test the OApp functionality of `TapToken.unlockTwTapPosition()` function.
      */
     function test_claim_rewards() public {
-        vm.skip(true);
         // Init vars
         TestClaimRewardsData memory testData_;
         testData_.erc20Mock1 = _createNewToftToken("ERCM1", address(endpoints[bEid]));

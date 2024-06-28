@@ -31,7 +31,7 @@ contract AirdropBrokerTestMock is AirdropBroker {
     {}
 }
 
-/* contract AirdropBrokerTest is Test {
+contract AirdropBrokerTest is Test {
     AirdropBrokerTestMock airdropBroker;
 
     address AOTAP = address(0x1);
@@ -97,4 +97,4 @@ contract AirdropBrokerTestMock is AirdropBroker {
         airdropBroker.registerUsersForPhase(1, users, amounts);
         _advanceEpochsBy(1);
     }
-} */
+}
