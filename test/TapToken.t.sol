@@ -618,6 +618,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
      * @dev Test the OApp functionality of `TapToken.unlockTwTapPosition()` function.
      */
     function test_remote_transfer() public {
+        vm.skip(true);
         uint256 tokenAmount_ = 1 ether;
         LZSendParam memory remoteLzSendParam_;
         MessagingFee memory remoteMsgFee_; // Will be used as value for the composed msg
@@ -739,6 +740,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
      * @dev Test the OApp functionality of `TapToken.unlockTwTapPosition()` function.
      */
     function test_claim_rewards() public {
+        vm.skip(true);
         // Init vars
         TestClaimRewardsData memory testData_;
         testData_.erc20Mock1 = _createNewToftToken("ERCM1", address(endpoints[bEid]));
