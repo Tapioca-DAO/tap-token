@@ -122,6 +122,10 @@ const config: HardhatUserConfig & { dodoc: any } = {
                 count: 5,
             },
         },
+        anvil: {
+            url: 'http://localhost:8545',
+            chainId: 42161,
+        },
         ...supportedChains,
     },
     etherscan: {
