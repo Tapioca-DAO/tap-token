@@ -16,3 +16,6 @@
 [submodule "gitmodule/tapiocaz"]
 	path = gitmodule/tapiocaz
 	url = https://github.com/Tapioca-DAO/tapiocaz
+[submodule "gitmodule/tap-yieldbox"]
+	path = gitmodule/tap-yieldbox
+	url = https://github.com/Tapioca-DAO/tap-yieldbox
