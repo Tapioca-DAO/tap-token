@@ -618,7 +618,6 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
      * @dev Test the OApp functionality of `TapToken.unlockTwTapPosition()` function.
      */
     function test_remote_transfer() public {
-        // vars
         uint256 tokenAmount_ = 1 ether;
         LZSendParam memory remoteLzSendParam_;
         MessagingFee memory remoteMsgFee_; // Will be used as value for the composed msg
@@ -646,7 +645,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         prevData: bytes(""),
                         prevOptionsData: bytes("")
                     }),
-                    lzReceiveGas: 500_000,
+                    lzReceiveGas: 2_000_000,
                     lzReceiveValue: 0,
                     refundAddress: address(this)
                 })
@@ -672,13 +671,13 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                 msgType: PT_REMOTE_TRANSFER,
                 composeMsgData: ComposeMsgData({
                     index: 0,
-                    gas: 500_000,
+                    gas: 1_000_000,
                     value: uint128(remoteMsgFee_.nativeFee), // TODO Should we care about verifying cast boundaries?
                     data: remoteTransferMsg_,
                     prevData: bytes(""),
                     prevOptionsData: bytes("")
                 }),
-                lzReceiveGas: 500_000,
+                lzReceiveGas: 2_000_000,
                 lzReceiveValue: 0,
                 refundAddress: address(this)
             })
@@ -828,7 +827,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         prevData: bytes(""),
                         prevOptionsData: bytes("")
                     }),
-                    lzReceiveGas: 500_000,
+                    lzReceiveGas: 2_000_000,
                     lzReceiveValue: 0,
                     refundAddress: address(this)
                 })
@@ -853,7 +852,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                         prevData: bytes(""),
                         prevOptionsData: bytes("")
                     }),
-                    lzReceiveGas: 500_000,
+                    lzReceiveGas: 2_000_000,
                     lzReceiveValue: 0,
                     refundAddress: address(this)
                 })
@@ -890,7 +889,7 @@ contract TapTokenTest is TapTestHelper, IERC721Receiver {
                     msgType: PT_CLAIM_REWARDS,
                     composeMsgData: ComposeMsgData({
                         index: 0,
-                        gas: 1_000_000,
+                        gas: 2_000_000,
                         value: uint128(testData_.remoteMsgFee1.nativeFee + testData_.remoteMsgFee2.nativeFee), // TODO Should we care about verifying cast boundaries?
                         data: claimTwTapRewardsMsg_,
                         prevData: bytes(""),
