@@ -1,18 +1,46 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-import {UnitBaseTest, TapiocaOptionLiquidityProvision, YieldBox, Pearlmit, IPearlmit} from "../../UnitBaseTest.t.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {
+    UnitBaseTest,
+    TapiocaOptionLiquidityProvision,
+    YieldBox1155Mock,
+    Pearlmit,
+    IPearlmit
+} from "../../UnitBaseTest.t.sol";
 import {SingularityPool} from "contracts/options/TapiocaOptionLiquidityProvision.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract TolpBaseTest is UnitBaseTest {
     TapiocaOptionLiquidityProvision public tolp;
-    YieldBox public yieldBox;
+    YieldBox1155Mock public yieldBox;
     Pearlmit public pearlmit;
+
+    error NotRegistered();
+    error InvalidSingularity();
+    error DurationTooShort();
+    error DurationTooLong();
+    error SharesNotValid();
+    error SingularityInRescueMode();
+    error SingularityNotActive();
+    error PositionExpired();
+    error LockNotExpired();
+    error AlreadyActive();
+    error AssetIdNotValid();
+    error DuplicateAssetId();
+    error AlreadyRegistered();
+    error NotAuthorized();
+    error NotInRescueMode();
+    error NotActive();
+    error RescueCooldownNotReached();
+    error TransferFailed();
+    error TobIsHolder();
+    error NotValid();
+    error EmergencySweepCooldownNotReached();
 
     function setUp() public {
         pearlmit = createPearlmit(adminAddr);
-        yieldBox = createYieldBox(pearlmit, adminAddr);
+        yieldBox = createYieldBox1155Mock();
         tolp = createTolpInstance(address(yieldBox), 7 days, IPearlmit(address(pearlmit)), adminAddr);
     }
 
