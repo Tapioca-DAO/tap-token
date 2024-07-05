@@ -1,0 +1,6 @@
+TOLP_requestSglPoolRescue
+├── when sgl asset id is 0
+│   └── it should revert
+├── when sgl rescue is already activated
+│   └── it should revert
+└── it should request the sgl pool to rescue with the block timestamp
