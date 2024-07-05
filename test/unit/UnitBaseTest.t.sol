@@ -26,6 +26,10 @@ contract UnitBaseTest is Test {
     uint256 internal alicePKey = 0x2;
     address public aliceAddr = vm.addr(alicePKey);
 
+    function setUp() public virtual {
+        vm.label(aliceAddr, "Alice");
+    }
+
     /**
      * Tap Token core contracts
      */

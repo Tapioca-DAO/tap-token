@@ -262,6 +262,8 @@ contract TapiocaOptionLiquidityProvision is
             // If not, the lock must be expired
             if (block.timestamp < lockPosition.lockTime + lockPosition.lockDuration) revert LockNotExpired();
         }
+
+        // TODO remove. This is an assertion, and should never happen
         if (sgl.sglAssetID != lockPosition.sglAssetID) {
             revert InvalidSingularity();
         }

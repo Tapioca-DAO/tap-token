@@ -38,7 +38,9 @@ contract TolpBaseTest is UnitBaseTest {
     error NotValid();
     error EmergencySweepCooldownNotReached();
 
-    function setUp() public {
+    function setUp() public virtual override {
+        super.setUp();
+
         pearlmit = createPearlmit(adminAddr);
         yieldBox = createYieldBox1155Mock();
         tolp = createTolpInstance(address(yieldBox), 7 days, IPearlmit(address(pearlmit)), adminAddr);
@@ -59,13 +61,28 @@ contract TolpBaseTest is UnitBaseTest {
     }
 
     /**
-     * @dev Set the last pool in rescue mode
+     * @dev Set the asset ID 5 in rescue mode
      */
     modifier setPoolRescue() {
         vm.startPrank(adminAddr);
         tolp.setRescueCooldown(0);
         tolp.requestSglPoolRescue(5);
         tolp.activateSGLPoolRescue(IERC20(address(0x5)));
+        vm.stopPrank();
+        _;
+    }
+
+    /**
+     * @dev Create a lock for with Alice on asset ID 1
+     */
+    modifier createLock() {
+        uint128 lockDuration = uint128(tolp.EPOCH_DURATION());
+        yieldBox.depositAsset(1, aliceAddr, 1);
+        vm.startPrank(aliceAddr);
+        yieldBox.setApprovalForAll(address(pearlmit), true);
+        pearlmit.approve(1155, address(yieldBox), 1, address(tolp), type(uint200).max, uint48(block.timestamp + 1));
+        tolp.lock(aliceAddr, IERC20(address(0x1)), lockDuration, 1);
+        assertEq(tolp.balanceOf(aliceAddr), 1, "TOLP_lock: Invalid balance");
         vm.stopPrank();
         _;
     }
