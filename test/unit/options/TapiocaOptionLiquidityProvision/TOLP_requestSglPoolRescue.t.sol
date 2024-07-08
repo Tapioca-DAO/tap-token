@@ -3,13 +3,13 @@ pragma solidity 0.8.22;
 
 import {TolpBaseTest, IERC20} from "./TolpBaseTest.t.sol";
 
-contract TOLP_setSGLPoolWeight is TolpBaseTest {
+contract TOLP_requestSglPoolRescue is TolpBaseTest {
     function test_ShouldRequestTheSglPoolToRescueWithTheBlockTimestamp() external registerSingularityPool {
         // it should request the sgl pool to rescue with the block timestamp
         vm.startPrank(adminAddr);
 
         tolp.requestSglPoolRescue(1);
-        assertEq(tolp.sglRescueRequest(1), block.timestamp, "TOLP_setSGLPoolWeight: Invalid rescue request");
+        assertEq(tolp.sglRescueRequest(1), block.timestamp, "TOLP_requestSglPoolRescue: Invalid rescue request");
     }
 
     function test_RevertWhen_SglAssetIdIs0() external {
