@@ -86,4 +86,13 @@ contract TolpBaseTest is UnitBaseTest {
         vm.stopPrank();
         _;
     }
+
+    modifier setSglInRescue(IERC20 sgl, uint256 assetId) {
+        vm.startPrank(adminAddr);
+        tolp.requestSglPoolRescue(assetId);
+        vm.warp(block.timestamp + tolp.rescueCooldown());
+        tolp.activateSGLPoolRescue(sgl);
+        vm.stopPrank();
+        _;
+    }
 }
