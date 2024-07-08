@@ -5,6 +5,8 @@ pragma solidity 0.8.22;
  * Tap Token core contracts
  */
 import {TapiocaOptionLiquidityProvision} from "contracts/options/TapiocaOptionLiquidityProvision.sol";
+import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {Cluster} from "tapioca-periph/Cluster/Cluster.sol";
 
 /**
  * Peripheral contracts
@@ -37,7 +39,14 @@ contract UnitBaseTest is Test {
         internal
         returns (TapiocaOptionLiquidityProvision)
     {
-        return new TapiocaOptionLiquidityProvision(_yieldBox, _epochDuration, _pearlmit, _owner);
+        TapiocaOptionLiquidityProvision tolp =
+            new TapiocaOptionLiquidityProvision(_yieldBox, _epochDuration, _pearlmit, _owner);
+
+        vm.startPrank(_owner);
+        tolp.setCluster(ICluster(address(new Cluster(0, _owner))));
+        vm.stopPrank();
+
+        return tolp;
     }
 
     /**
