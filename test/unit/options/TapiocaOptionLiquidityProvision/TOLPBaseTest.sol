@@ -12,13 +12,11 @@ import {
     Pearlmit,
     IPearlmit,
     ICluster
-} from "../../UnitBaseTest.t.sol";
+} from "../../UnitBaseTest.sol";
 import {SingularityPool} from "contracts/options/TapiocaOptionLiquidityProvision.sol";
 
 contract TolpBaseTest is UnitBaseTest {
     TapiocaOptionLiquidityProvision public tolp;
-    YieldBox1155Mock public yieldBox;
-    Pearlmit public pearlmit;
 
     error NotRegistered();
     error InvalidSingularity();
@@ -45,8 +43,6 @@ contract TolpBaseTest is UnitBaseTest {
     function setUp() public virtual override {
         super.setUp();
 
-        pearlmit = createPearlmit(adminAddr);
-        yieldBox = createYieldBox1155Mock();
         tolp = createTolpInstance(address(yieldBox), 7 days, IPearlmit(address(pearlmit)), adminAddr);
     }
 

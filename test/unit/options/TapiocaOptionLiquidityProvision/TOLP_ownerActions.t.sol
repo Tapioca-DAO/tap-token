@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-import {TolpBaseTest, IERC20, ICluster} from "./TolpBaseTest.t.sol";
+import {TolpBaseTest, IERC20, ICluster} from "./TolpBaseTest.sol";
 
 contract TOLP_ownerActions is TolpBaseTest {
     function test_WhenNotOwner() external {

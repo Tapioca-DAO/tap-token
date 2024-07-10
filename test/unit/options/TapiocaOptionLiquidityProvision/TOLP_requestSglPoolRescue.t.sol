@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-import {TolpBaseTest, IERC20} from "./TolpBaseTest.t.sol";
+import {TolpBaseTest, IERC20} from "./TolpBaseTest.sol";
 
 contract TOLP_requestSglPoolRescue is TolpBaseTest {
     function test_ShouldRequestTheSglPoolToRescueWithTheBlockTimestamp() external registerSingularityPool {

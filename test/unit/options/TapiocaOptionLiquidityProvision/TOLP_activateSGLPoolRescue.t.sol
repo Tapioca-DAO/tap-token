@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-import {TolpBaseTest, IERC20, SingularityPool} from "./TolpBaseTest.t.sol";
+import {TolpBaseTest, IERC20, SingularityPool} from "./TolpBaseTest.sol";
 
 contract TOLP_activateSGLPoolRescue is TolpBaseTest {
     function test_ShouldSetRescueToTrue() external registerSingularityPool {
@@ -49,6 +49,5 @@ contract TOLP_activateSGLPoolRescue is TolpBaseTest {
         tolp.requestSglPoolRescue(1);
         vm.expectRevert(RescueCooldownNotReached.selector);
         tolp.activateSGLPoolRescue(IERC20(address(0x1)));
-        
     }
 }
