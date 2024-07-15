@@ -18,6 +18,16 @@ import {SingularityPool} from "contracts/options/TapiocaOptionLiquidityProvision
 contract TolpBaseTest is UnitBaseTest {
     TapiocaOptionLiquidityProvision public tolp;
 
+    event Mint(
+        address indexed to,
+        uint256 indexed sglAssetId,
+        address sglAddress,
+        uint256 tolpTokenId,
+        uint128 lockDuration,
+        uint128 ybShares
+    );
+    event Burn(address indexed from, uint256 indexed sglAssetId, address sglAddress, uint256 tolpTokenId);
+
     error NotRegistered();
     error InvalidSingularity();
     error DurationTooShort();
@@ -75,16 +85,19 @@ contract TolpBaseTest is UnitBaseTest {
     /**
      * @dev Create a lock for with Alice on asset ID 1
      */
-    modifier createLock() {
+    modifier createLock(uint256 _weight) {
+        _createLock(_weight);
+        _;
+    }
+
+    function _createLock(uint256 _weight) internal {
         uint128 lockDuration = uint128(tolp.EPOCH_DURATION());
-        yieldBox.depositAsset(1, aliceAddr, 1);
+        (, uint256 shares) = yieldBox.depositAsset(1, aliceAddr, _weight);
         vm.startPrank(aliceAddr);
         yieldBox.setApprovalForAll(address(pearlmit), true);
         pearlmit.approve(1155, address(yieldBox), 1, address(tolp), type(uint200).max, uint48(block.timestamp + 1));
-        tolp.lock(aliceAddr, IERC20(address(0x1)), lockDuration, 1);
-        assertEq(tolp.balanceOf(aliceAddr), 1, "TOLP_lock: Invalid balance");
+        tolp.lock(aliceAddr, IERC20(address(0x1)), lockDuration, uint128(shares));
         vm.stopPrank();
-        _;
     }
 
     modifier setSglInRescue(IERC20 sgl, uint256 assetId) {

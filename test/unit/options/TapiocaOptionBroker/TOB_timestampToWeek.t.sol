@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.22;
 
-import {TobBaseTest} from "test/unit/options/TapiocaOptionBroker/TobBaseTest.t.sol";
+import {TobBaseTest} from "test/unit/options/TapiocaOptionBroker/TobBaseTest.sol";
 
 contract TOB_timestampToWeek is TobBaseTest {
     function test_WhenTimestampIs0() external tobInit {

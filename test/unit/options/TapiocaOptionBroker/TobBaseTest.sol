@@ -2,6 +2,11 @@
 pragma solidity 0.8.22;
 
 /**
+ * External
+ */
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+/**
  * Core
  */
 import {
@@ -11,7 +16,10 @@ import {
     IPearlmit,
     ICluster
 } from "test/unit/options/TapiocaOptionLiquidityProvision/TolpBaseTest.sol";
+import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
 import {TapiocaOptionBroker, OTAP} from "test/unit/UnitBaseTest.sol";
+import {OracleMock} from "tapioca-mocks/OracleMock.sol";
+import {ERC20Mock} from "tapioca-mocks/ERC20Mock.sol";
 
 /**
  * Tests
@@ -23,8 +31,14 @@ contract TobBaseTest is TolpBaseTest {
     TapTokenMock public tapOFT;
     OTAP public otap;
 
+    ERC20Mock public daiMock;
+    ERC20Mock public usdcMock;
+    OracleMock public tapOracleMock;
+    OracleMock public daiOracleMock;
+
     // Constants
     uint256 public EPOCH_DURATION = 1 weeks;
+    uint256 public TAP_INIT_PRICE = 33e17; // $3.3
 
     // Addresses
     address public PAYMENT_TOKEN_RECEIVER = address(bytes20(keccak256("PAYMENT_TOKEN_RECEIVER")));
@@ -37,6 +51,11 @@ contract TobBaseTest is TolpBaseTest {
 
     function setUp() public virtual override {
         super.setUp();
+
+        tapOracleMock = new OracleMock("TAP_ORACLE", "TAP_ORACLE", TAP_INIT_PRICE);
+        daiOracleMock = new OracleMock("DAI_ORACLE", "DAI_ORACLE", 1e18); // $1
+        daiMock = new ERC20Mock("DAI", "DAI", 100e18, 18, adminAddr);
+        usdcMock = new ERC20Mock("USDC", "USDC", 100e6, 6, adminAddr);
 
         tapOFT = createTapOftInstance(
             EPOCH_DURATION,
@@ -63,6 +82,7 @@ contract TobBaseTest is TolpBaseTest {
         );
         vm.startPrank(adminAddr);
         tob.setCluster(ICluster(address(cluster)));
+        tob.setTapOracle(ITapiocaOracle(address(tapOracleMock)), bytes(""));
         tapOFT.setMinter(address(tob));
         cluster.setRoleForContract(adminAddr, keccak256("NEW_EPOCH"), true);
         vm.stopPrank();
@@ -79,19 +99,42 @@ contract TobBaseTest is TolpBaseTest {
         _;
     }
 
-    modifier tobParticipate() {
-        _tobParticipate();
+    modifier tobParticipate(uint256 _amount) {
+        _tobParticipate(uint200(_amount));
         _;
     }
+
+    modifier setupAndParticipate(uint200 _amount) {
+        _setupAndParticipate(_amount);
+        _;
+    }
+
+    function _setupAndParticipate(uint200 _amount) internal registerSingularityPool tobInit tobParticipate(100) {}
 
     /**
      * @dev Asset ID of the tOLP lock is 1
      */
-    function _tobParticipate() internal registerSingularityPool createLock {
+    function _tobParticipate(uint200 _amount) internal createLock(_amount) {
         vm.startPrank(aliceAddr);
         tolp.approve(address(pearlmit), 1);
         pearlmit.approve(721, address(tolp), 1, address(tob), 1, uint48(block.timestamp + 1));
         tob.participate(1);
         vm.stopPrank();
+    }
+
+    modifier setDaiMockPaymentToken() {
+        vm.prank(adminAddr);
+        tob.setPaymentToken(ERC20(address(daiMock)), ITapiocaOracle(address(daiOracleMock)), bytes(""));
+        _;
+    }
+
+    modifier skipEpochs(uint256 _epochs) {
+        vm.startPrank(adminAddr);
+        for (uint256 i = 0; i < _epochs; i++) {
+            vm.warp(block.timestamp + 1 weeks);
+            tob.newEpoch();
+        }
+        vm.stopPrank();
+        _;
     }
 }
