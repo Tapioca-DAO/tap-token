@@ -135,7 +135,6 @@ contract TobBaseTest is TolpBaseTest {
 
     modifier skipEpochs(uint256 _epochs) {
         vm.startPrank(adminAddr);
-        tob.init();
         for (uint256 i = 0; i < _epochs; i++) {
             vm.warp(block.timestamp + 1 weeks);
             tob.newEpoch();

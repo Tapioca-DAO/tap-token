@@ -5,13 +5,19 @@ import {TobBaseTest, TapiocaOptionBroker} from "test/unit/options/TapiocaOptionB
 import {TapOption} from "contracts/options/oTAP.sol";
 
 contract TOB_participate is TobBaseTest {
-    function test_RevertWhen_LockExpired() external registerSingularityPool createLock(100, 0) skipEpochs(2) {
+    function test_RevertWhen_LockExpired() external registerSingularityPool createLock(100, 0) tobInit skipEpochs(2) {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.LockExpired.selector);
         tob.participate(1);
     }
 
-    function test_RevertWhen_EpochNotAdvanced() external registerSingularityPool createLock(100, 3) skipEpochs(1) {
+    function test_RevertWhen_EpochNotAdvanced()
+        external
+        registerSingularityPool
+        createLock(100, 3)
+        tobInit
+        skipEpochs(1)
+    {
         // it should revert
         skip(tob.EPOCH_DURATION());
 
@@ -47,6 +53,7 @@ contract TOB_participate is TobBaseTest {
         external
         registerSingularityPool
         createLock(100, 2)
+        tobInit
         skipEpochs(1)
     {
         // it should revert
@@ -61,6 +68,7 @@ contract TOB_participate is TobBaseTest {
         external
         registerSingularityPool
         createLock(100, 5)
+        tobInit
         skipEpochs(1)
     {
         // it should revert
@@ -72,7 +80,7 @@ contract TOB_participate is TobBaseTest {
         tob.participate(1);
     }
 
-    function test_ShouldParticipate() external registerSingularityPool createLock(100, 2) skipEpochs(1) {
+    function test_ShouldParticipate() external registerSingularityPool createLock(100, 2) tobInit skipEpochs(1) {
         // it should participate
         vm.startPrank(aliceAddr);
         tolp.approve(address(pearlmit), 1);
@@ -82,10 +90,12 @@ contract TOB_participate is TobBaseTest {
         emit TapiocaOptionBroker.Participate(1, 1, 100, 1, 0, 0);
         tob.participate(1);
 
-        (,,uint128 tolpLockTime,) = tolp.lockPositions(1);
+        (,, uint128 tolpLockTime,) = tolp.lockPositions(1);
         (uint128 entry, uint128 expiry, uint128 discount, uint256 tolpId) = otap.options(1);
         assertEq(entry, block.timestamp, "TOB_participate::test_ShouldParticipate: Invalid entry");
-        assertEq(expiry, tolpLockTime + (2 * tob.EPOCH_DURATION()), "TOB_participate::test_ShouldParticipate: Invalid expiry");
+        assertEq(
+            expiry, tolpLockTime + (2 * tob.EPOCH_DURATION()), "TOB_participate::test_ShouldParticipate: Invalid expiry"
+        );
         assertEq(discount, 500000, "TOB_participate::test_ShouldParticipate: Invalid discount");
         assertEq(tolpId, 1, "TOB_participate::test_ShouldParticipate: Invalid tOLP ID");
     }
