@@ -288,14 +288,17 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     function participate(uint256 _tOLPTokenID) external whenNotPaused nonReentrant returns (uint256 oTAPTokenID) {
         // Compute option parameters
         LockPosition memory lock = tOLP.getLock(_tOLPTokenID);
+        // TODO post-BTT - Lock entry on tOLP and oTAP are different, should lockExpiry use oTAP entry instead of tOLP?
         uint128 lockExpiry = lock.lockTime + lock.lockDuration;
 
         if (block.timestamp >= lockExpiry) revert LockExpired();
         if (_timestampToWeek(block.timestamp) > epoch) revert AdvanceEpochFirst();
 
+        // TODO post-BTT - Check for lock expiry is redundant, as it is checked in `_isPositionActive()`
         bool isPositionActive = _isPositionActive(lock);
         if (!isPositionActive) revert OptionExpired();
 
+        // TODO post-BTT - Check is done within `tOLP.lock()`
         if (lock.lockDuration < EPOCH_DURATION) revert DurationTooShort();
         if (lock.lockDuration % EPOCH_DURATION != 0) revert DurationNotMultiple();
 

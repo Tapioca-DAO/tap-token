@@ -3,22 +3,21 @@ pragma solidity 0.8.22;
 
 import {TobBaseTest, IERC20, TapiocaOptionBroker} from "test/unit/options/TapiocaOptionBroker/TobBaseTest.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "forge-std/console.sol";
 
 contract TOB_getOTCDealDetails is TobBaseTest {
-    function test_RevertWhen_OptionExpired() external setupAndParticipate(100) skipEpochs(2) {
+    function test_RevertWhen_OptionExpired() external setupAndParticipate(100, 0) skipEpochs(2) {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.OptionExpired.selector);
         tob.getOTCDealDetails(1, ERC20(address(0x1)), 1);
     }
 
-    function test_RevertWhen_PaymentTokenNotSupported() external setupAndParticipate(100) {
+    function test_RevertWhen_PaymentTokenNotSupported() external setupAndParticipate(100, 0) {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.PaymentTokenNotSupported.selector);
         tob.getOTCDealDetails(1, ERC20(address(0x1)), 1);
     }
 
-    function test_RevertWhen_InEpochCooldown() external setDaiMockPaymentToken setupAndParticipate(100) {
+    function test_RevertWhen_InEpochCooldown() external setDaiMockPaymentToken setupAndParticipate(100, 0) {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.OneEpochCooldown.selector);
         tob.getOTCDealDetails(1, ERC20(address(daiMock)), 1);
@@ -27,7 +26,7 @@ contract TOB_getOTCDealDetails is TobBaseTest {
     function test_RevertWhen_TapAmountBiggerThanEligible()
         external
         setDaiMockPaymentToken
-        setupAndParticipate(100)
+        setupAndParticipate(100, 0)
         skipEpochs(1)
     {
         // it should revert
@@ -38,7 +37,7 @@ contract TOB_getOTCDealDetails is TobBaseTest {
     function test_RevertWhen_TapAmountLessThan1()
         external
         setDaiMockPaymentToken
-        setupAndParticipate(100)
+        setupAndParticipate(100, 0)
         skipEpochs(1)
     {
         // it should revert
@@ -49,7 +48,7 @@ contract TOB_getOTCDealDetails is TobBaseTest {
     function test_ShouldReturnTheRightOTCDealDetails()
         external
         setDaiMockPaymentToken
-        setupAndParticipate(100)
+        setupAndParticipate(100, 0)
         skipEpochs(1)
     {
         // it should return the right OTC deal details

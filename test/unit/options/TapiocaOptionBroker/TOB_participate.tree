@@ -1,0 +1,16 @@
+TOB_participate
+├── when lock expired
+│   └── it should revert
+├── when epoch not advanced
+│   └── it should revert
+├── when option expired
+│   └── it should revert
+├── when duration too short
+│   └── it should revert
+├── when duration not multiple of epoch duration
+│   └── it should revert
+├── when pearlmit transfer failed
+│   └── it should revert
+├── when lock is longer than max lock duration
+│   └── it should revert
+└── it should participate

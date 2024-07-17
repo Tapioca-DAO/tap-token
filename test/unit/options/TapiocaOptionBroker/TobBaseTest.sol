@@ -99,22 +99,27 @@ contract TobBaseTest is TolpBaseTest {
         _;
     }
 
-    modifier tobParticipate(uint256 _amount) {
-        _tobParticipate(uint200(_amount));
+    modifier tobParticipate(uint256 _amount, uint128 _lockDuration) {
+        _tobParticipate(uint200(_amount), _lockDuration);
         _;
     }
 
-    modifier setupAndParticipate(uint200 _amount) {
-        _setupAndParticipate(_amount);
+    modifier setupAndParticipate(uint200 _amount, uint128 _lockDuration) {
+        _setupAndParticipate(_amount, _lockDuration);
         _;
     }
 
-    function _setupAndParticipate(uint200 _amount) internal registerSingularityPool tobInit tobParticipate(100) {}
+    function _setupAndParticipate(uint200 _amount, uint128 _lockDuration)
+        internal
+        registerSingularityPool
+        tobInit
+        tobParticipate(100, _lockDuration)
+    {}
 
     /**
      * @dev Asset ID of the tOLP lock is 1
      */
-    function _tobParticipate(uint200 _amount) internal createLock(_amount) {
+    function _tobParticipate(uint200 _amount, uint128 _lockDuration) internal createLock(_amount, _lockDuration) {
         vm.startPrank(aliceAddr);
         tolp.approve(address(pearlmit), 1);
         pearlmit.approve(721, address(tolp), 1, address(tob), 1, uint48(block.timestamp + 1));
@@ -130,6 +135,7 @@ contract TobBaseTest is TolpBaseTest {
 
     modifier skipEpochs(uint256 _epochs) {
         vm.startPrank(adminAddr);
+        tob.init();
         for (uint256 i = 0; i < _epochs; i++) {
             vm.warp(block.timestamp + 1 weeks);
             tob.newEpoch();
