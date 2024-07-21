@@ -1,0 +1,8 @@
+TOB_newEpoch
+├── when not authorized
+│   └── it should revert
+├── when too soon
+│   └── it should revert
+├── when no active singularities
+│   └── it should revert
+└── it should advance the epoch

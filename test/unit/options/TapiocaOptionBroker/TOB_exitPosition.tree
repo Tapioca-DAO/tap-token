@@ -1,0 +1,9 @@
+TOB_exitPosition
+├── when otap not existing
+│   └── it should revert
+├── when sgl is in rescue
+│   └── it should not revert
+├── when sgl is not in rescue
+│   └── when lock is not expired
+│       └── it should revert
+└── it should exit the position

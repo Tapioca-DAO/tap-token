@@ -52,6 +52,9 @@ contract TobBaseTest is TolpBaseTest {
     function setUp() public virtual override {
         super.setUp();
 
+        /**
+         * Deploy contracts
+         */
         tapOracleMock = new OracleMock("TAP_ORACLE", "TAP_ORACLE", TAP_INIT_PRICE);
         daiOracleMock = new OracleMock("DAI_ORACLE", "DAI_ORACLE", 1e18); // $1
         daiMock = new ERC20Mock("DAI", "DAI", 100e18, 18, adminAddr);
@@ -80,9 +83,15 @@ contract TobBaseTest is TolpBaseTest {
             IPearlmit(address(pearlmit)),
             adminAddr
         );
+
+        /**
+         * Set up contracts
+         */
         vm.startPrank(adminAddr);
         tob.setCluster(ICluster(address(cluster)));
         tob.setTapOracle(ITapiocaOracle(address(tapOracleMock)), bytes(""));
+        tob.setPaymentToken(ERC20(address(daiMock)), ITapiocaOracle(address(daiOracleMock)), bytes(""));
+        tob.setPaymentToken(ERC20(address(usdcMock)), ITapiocaOracle(address(daiOracleMock)), bytes(""));
         tapOFT.setMinter(address(tob));
         cluster.setRoleForContract(adminAddr, keccak256("NEW_EPOCH"), true);
         vm.stopPrank();

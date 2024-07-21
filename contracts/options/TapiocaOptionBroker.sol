@@ -458,6 +458,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];
         uint256 netAmount = uint256(netDepositedForEpoch[cachedEpoch][tOLPLockPosition.sglAssetID]);
+        // TODO post-BTT - Check is useless, TOLP forces a minimum lock amount
         if (netAmount == 0) revert NoLiquidity();
         uint256 eligibleTapAmount = muldiv(tOLPLockPosition.ybShares, gaugeTotalForEpoch, netAmount);
         eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
@@ -650,6 +651,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
             if (isErr) revert TransferFailed();
         }
         uint256 balAfter = _paymentToken.balanceOf(address(this));
+        // TODO post-BTT - Check is useless, as the transfer will revert if it fails
         if (balAfter - balBefore != discountedPaymentAmount) {
             revert TransferFailed();
         }
