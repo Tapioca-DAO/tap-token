@@ -3,7 +3,6 @@ pragma solidity 0.8.22;
 
 import {twTapBaseTest, TwTAP} from "test/unit/options/twTap/twTapBaseTest.sol";
 
-
 contract twTap_emergencySweepRewards is twTapBaseTest {
     function test_RevertWhen_EmergencyCooldownNotReached() external {
         // it should revert
@@ -21,9 +20,9 @@ contract twTap_emergencySweepRewards is twTapBaseTest {
         twTap.emergencySweepRewards();
     }
 
-    function test_ShouldSweepTheLocks() external  participate(1e20, 1) skipWeeks(1) advanceWeeks(1) distributeRewards {
+    function test_ShouldSweepTheLocks() external participate(1e20, 1) skipWeeks(1) advanceWeeks(1) distributeRewards {
         // it should sweep the locks
-                vm.startPrank(adminAddr);
+        vm.startPrank(adminAddr);
         twTap.setEmergencySweepCooldown(0);
         twTap.activateEmergencySweep();
         cluster.setRoleForContract(adminAddr, keccak256("TWTAP_EMERGENCY_SWEEP"), true);
@@ -38,7 +37,9 @@ contract twTap_emergencySweepRewards is twTapBaseTest {
             daiMock.balanceOf(adminAddr), 1e25, "twTap_emergencySweepRewards::test_ShouldSweepTheLocks: Invalid balance"
         );
         assertEq(
-            daiMock.balanceOf(adminAddr), 1e13, "twTap_emergencySweepRewards::test_ShouldSweepTheLocks: Invalid balance"
+            usdcMock.balanceOf(adminAddr),
+            1e13,
+            "twTap_emergencySweepRewards::test_ShouldSweepTheLocks: Invalid balance"
         );
     }
 }

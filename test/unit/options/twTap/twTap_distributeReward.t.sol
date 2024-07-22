@@ -4,7 +4,7 @@ pragma solidity 0.8.22;
 import {twTapBaseTest, TwTAP} from "test/unit/options/twTap/twTapBaseTest.sol";
 
 contract twTap_distributeReward is twTapBaseTest {
-    function test_RevertWhen_WeekNotAdvanced() external {
+    function test_RevertWhen_WeekNotAdvanced() external skipWeeks(1) {
         // it should revert
         vm.expectRevert(TwTAP.AdvanceWeekFirst.selector);
         twTap.distributeReward(1, 1e18);
@@ -22,12 +22,20 @@ contract twTap_distributeReward is twTapBaseTest {
         twTap.distributeReward(0, 1e18);
     }
 
-    function test_ShouldDistributeTheReward() external participate(100, 1) skipWeeks(1) advanceWeeks(1) {
+    function test_ShouldDistributeTheReward()
+        external
+        addRewardTokens
+        participate(100, 1)
+        skipWeeks(1)
+        advanceWeeks(1)
+    {
         // it should distribute the reward
         vm.startPrank(adminAddr);
         daiMock.mintTo(adminAddr, 1e18);
+        daiMock.approve(address(twTap), type(uint256).max);
+
         vm.expectEmit(true, true, true, true);
-        emit TwTAP.DistributeReward(address(daiMock), adminAddr, 1, 1e18);
+        emit TwTAP.DistributeReward(address(daiMock), adminAddr, 1e18, 1);
         twTap.distributeReward(1, 1e18);
 
         assertEq(

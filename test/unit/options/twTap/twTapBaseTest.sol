@@ -88,6 +88,14 @@ contract twTapBaseTest is UnitBaseTest {
         _;
     }
 
+    modifier addRewardTokens() {
+        vm.startPrank(adminAddr);
+        twTap.addRewardToken(IERC20(address(daiMock)));
+        twTap.addRewardToken(IERC20(address(usdcMock)));
+        vm.stopPrank();
+        _;
+    }
+
     modifier distributeRewards() {
         vm.startPrank(adminAddr);
         daiMock.mintTo(adminAddr, 1e25);
