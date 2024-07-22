@@ -1,0 +1,9 @@
+twTap_exitPosition
+├── when paused
+│   └── it should revert
+├── when lock not expired
+│   └── when not in rescue mode
+│       └── it should revert
+├── when tap already released
+│   └── it should return 0
+└── it should exit the position

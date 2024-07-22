@@ -8,6 +8,7 @@ import {TapiocaOptionLiquidityProvision} from "contracts/options/TapiocaOptionLi
 import {TapiocaOptionBroker} from "contracts/options/TapiocaOptionBroker.sol";
 import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
 import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
+import {TwTAP} from "contracts/governance/TwTAP.sol";
 import {OTAP} from "contracts/options/OTAP.sol";
 /**
  * Peripheral contracts
@@ -135,6 +136,10 @@ contract UnitBaseTest is TestHelper {
 
     function createOtapInstance(IPearlmit _pearlmit, address _owner) internal returns (OTAP) {
         return new OTAP(_pearlmit, _owner);
+    }
+
+    function createTwTap(address payable _tapOft, IPearlmit _pearlmit, address _owner) internal returns (TwTAP) {
+        return new TwTAP(_tapOft, _pearlmit, _owner);
     }
 
     /**
