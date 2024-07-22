@@ -12,9 +12,9 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
-import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
-import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
-import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {IPearlmit, PearlmitHandler} from "tap-utils/pearlmit/PearlmitHandler.sol";
+import {ITapiocaOracle} from "tap-utils/interfaces/periph/ITapiocaOracle.sol";
+import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
 import {TWAML, FullMath} from "contracts/options/twAML.sol";
 import {TapToken} from "contracts/tokens/TapToken.sol";
 import {AOTAP, AirdropTapOption} from "./aoTAP.sol";

@@ -12,9 +12,9 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
 import {TapiocaOptionLiquidityProvision, LockPosition, SingularityPool} from "./TapiocaOptionLiquidityProvision.sol";
-import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
-import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
-import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {IPearlmit, PearlmitHandler} from "tap-utils/pearlmit/PearlmitHandler.sol";
+import {ITapiocaOracle} from "tap-utils/interfaces/periph/ITapiocaOracle.sol";
+import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
 import {TapToken} from "contracts/tokens/TapToken.sol";
 import {OTAP, TapOption} from "./oTAP.sol";
 import {TWAML} from "./twAML.sol";

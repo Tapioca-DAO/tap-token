@@ -7,9 +7,9 @@ import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/Borin
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 // Tapioca
-import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
+import {IPearlmit, PearlmitHandler} from "tap-utils/pearlmit/PearlmitHandler.sol";
 import {ERC721NftLoader} from "contracts/erc721NftLoader/ERC721NftLoader.sol";
-import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol"; // TODO audit
+import {ERC721Permit} from "tap-utils/utils/ERC721Permit.sol"; // TODO audit
 
 /*
 

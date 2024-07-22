@@ -4,7 +4,7 @@ pragma solidity 0.8.22;
 
 // Tapioca
 import {AirdropBroker, ITapiocaOracle} from "contracts/option-airdrop/AirdropBroker.sol";
-import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
+import {IPearlmit, Pearlmit} from "tap-utils/pearlmit/Pearlmit.sol";
 import {ERC20Mock} from "contracts/mocks/ERC20Mock.sol";
 
 import "forge-std/Test.sol";

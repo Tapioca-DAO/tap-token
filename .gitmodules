@@ -7,12 +7,6 @@
 [submodule "gitmodule/tapioca-sdk"]
 	path = gitmodule/tapioca-sdk
 	url = https://github.com/Tapioca-DAO/tapioca-sdk
-[submodule "gitmodule/tapioca-periph"]
-	path = gitmodule/tapioca-periph
-	url = https://github.com/Tapioca-DAO/tapioca-periph.git
-[submodule "gitmodule/tapiocaz"]
-	path = gitmodule/tapiocaz
-	url = https://github.com/Tapioca-DAO/tapiocaz
 [submodule "lib/tap-utils"]
 	path = lib/tap-utils
 	url = https://github.com/Tapioca-DAO/tap-utils
