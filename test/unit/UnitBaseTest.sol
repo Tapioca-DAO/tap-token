@@ -8,8 +8,8 @@ import {TapiocaOptionLiquidityProvision} from "contracts/options/TapiocaOptionLi
 import {TapiocaOptionBroker} from "contracts/options/TapiocaOptionBroker.sol";
 import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
 import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
-import {TwTAP} from "contracts/governance/TwTAP.sol";
-import {OTAP} from "contracts/options/OTAP.sol";
+import {TwTAP} from "contracts/governance/twTAP.sol";
+import {OTAP} from "contracts/options/oTAP.sol";
 /**
  * Peripheral contracts
  */
