@@ -1,0 +1,10 @@
+TOLP_activateSGLPoolRescue
+├── when sgl assetId is 0
+│   └── it should revert
+├── when sgl rescue is true
+│   └── it should revert
+├── when sglRescueRequest is 0
+│   └── it should revert
+├── when rescue cooldown not met
+│   └── it should revert
+└── it should set rescue to true

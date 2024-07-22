@@ -1,0 +1,9 @@
+TOB_exitPosition
+├── when position not existing
+│   └── it should revert
+├── when lock expired
+│   ├── when sgl in rescue
+│   │   └── it should not revert
+│   └── when sgl not in rescue
+│       └── it should revert
+└── it should exit the position

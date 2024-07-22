@@ -1,0 +1,15 @@
+TOLP_ownerActions
+├── when not owner
+│   ├── it should revert on setCluster
+│   ├── it should revert on setPause
+│   ├── it should revert on setEmergencySweepCooldown
+│   ├── it should revert on activateEmergencySweep
+│   └── it should revert on emergencySweep
+├── when no right role
+│   └── it should revert on emergencySweep
+└── when right role
+    ├── it should set the cluster
+    ├── it should set the pause
+    ├── it should set the emergency sweep cooldown
+    ├── it should revert on activateEmergencySweep
+    └── it should set the emergency sweep

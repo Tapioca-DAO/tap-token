@@ -1,0 +1,10 @@
+twTap_participate
+├── when lock not a week long
+│   └── it should revert
+├── when lock too long
+│   └── it should revert
+├── when duration not a multiple of epoch duration
+│   └── it should revert
+├── when week not advanced
+│   └── it should revert
+└── it should participate

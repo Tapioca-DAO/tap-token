@@ -1,0 +1,12 @@
+TOLP_lock
+├── when lock duration is lower than epoch duration
+│   └── it should revert
+├── when lock duration is greater than max lock duration
+│   └── it should revert
+├── when share are 0
+│    └── it should revert
+├── when sgl rescue pool is activated
+│   └── it should revert
+├── when pearlmit transfer fails
+│   └── it should revert
+└── it should lock the tokens

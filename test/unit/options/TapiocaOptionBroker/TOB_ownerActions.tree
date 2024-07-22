@@ -1,0 +1,19 @@
+TOB_ownerActions
+├── when calling init
+│   └── it should revert if called multiple times
+├── when calling setVirtualTotalAmount
+│   └── it should revert if not owner
+├── when calling setMinWeightFactor
+│   └── it should revert if not owner
+├── when calling setTapOracle
+│   └── it should revert if not owner
+├── when calling setPaymentToken
+│   └── it should revert if not owner
+├── when calling setPaymentTokenBeneficiary
+│   └── it should revert if not owner
+├── when calling collectPaymentTokens
+│   └── it should revert if not owner
+├── when calling setCluster
+│   └── it should revert if not owner
+└── when calling setPause
+    └── it should revert if not owner

@@ -1,0 +1,6 @@
+twTap_emergencySweepRewards
+├── when emergency cooldown not reached
+│   └── it should revert
+├── when not owner
+│   └── it should revert
+└── it should sweep the locks

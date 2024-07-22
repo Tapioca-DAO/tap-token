@@ -1,0 +1,12 @@
+TOB_getOTCDealDetails
+├── when option expired
+│   └── it should revert
+├── when payment token not supported
+│   └── it should revert
+├── when in epoch cooldown
+│   └── it should revert
+├── when tap amount bigger than eligible
+│   └── it should revert
+├── when tap amount less than 1
+│   └── it should revert
+└── it should return the right OTC deal details

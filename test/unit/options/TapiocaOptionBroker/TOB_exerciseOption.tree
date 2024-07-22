@@ -1,0 +1,22 @@
+TOB_exerciseOption
+├── when option expired
+│   └── it should revert
+├── when payment token not supported
+│   └── it should revert
+├── when caller not owner or not approved
+│   └── it should revert
+├── when epoch not advanced
+│   └── it should revert
+├── when option is in cooldown
+│   └── it should revert
+├── when no liquidity
+│   └── it should revert
+├── when exercising above the eligible amount
+│   └── it should revert
+├── when exercising below the minimum amount
+│   └── it should revert
+├── when pearlmit transfer failed
+│   └── it should revert
+├── when balance after not matching
+│   └── it should revert
+└── it should exercise the option

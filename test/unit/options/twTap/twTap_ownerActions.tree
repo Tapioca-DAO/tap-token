@@ -1,0 +1,21 @@
+twTap_ownerActions
+├── when advancingWeek and not owner
+│   └── it should revert
+├── when set rescue mode and not owner
+│   └── it should revert
+├── when SetVirtualTotalAmount and not owner
+│   └── it should revert
+├── when setMinWeightFactor and not owner
+│   └── it should revert
+├── when setMaxRewardTokensLength and not owner
+│   └── it should revert
+├── when addRewardToken and not owner
+│   └── it should revert
+├── when setCluster and not owner
+│   └── it should revert
+├── when setPause and not owner
+│   └── it should revert
+├── when setEmergencySweepCooldown and not owner
+│   └── it should revert
+└── when activateEmergencySweep and not owner
+    └── it should revert
