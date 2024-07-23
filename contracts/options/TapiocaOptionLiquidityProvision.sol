@@ -97,6 +97,7 @@ contract TapiocaOptionLiquidityProvision is
     error TobIsHolder();
     error NotValid();
     error EmergencySweepCooldownNotReached();
+    error DurationNotMultiple();
 
     constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
@@ -212,6 +213,7 @@ contract TapiocaOptionLiquidityProvision is
     {
         if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
         if (_lockDuration > MAX_LOCK_DURATION) revert DurationTooLong();
+        if (_lockDuration % EPOCH_DURATION != 0) revert DurationNotMultiple();
 
         if (_ybShares == 0) revert SharesNotValid();
 
