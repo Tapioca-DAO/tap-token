@@ -98,6 +98,7 @@ contract TapiocaOptionLiquidityProvision is
     error NotValid();
     error EmergencySweepCooldownNotReached();
     error DurationNotMultiple();
+    error BrokerAlreadySet();
 
     constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
@@ -286,6 +287,9 @@ contract TapiocaOptionLiquidityProvision is
      * @notice Sets the Tapioca Option Broker address
      */
     function setTapiocaOptionBroker(address _tob) external onlyOwner {
+        if (tapiocaOptionBroker != address(0)) {
+            revert BrokerAlreadySet();
+        }
         tapiocaOptionBroker = _tob;
     }
 
