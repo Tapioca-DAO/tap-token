@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
     - name: Setup Environment
       uses: ./.github/actions/setup-environment
@@ -26,6 +28,8 @@ jobs:
     needs: build
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
     - name: Setup Environment
       uses: ./.github/actions/setup-environment
@@ -40,6 +44,8 @@ jobs:
     needs: lint-check
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
     - name: Setup Environment
       uses: ./.github/actions/setup-environment
