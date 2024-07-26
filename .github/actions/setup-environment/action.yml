@@ -13,17 +13,6 @@ runs:
       node-version: "18.16.0"
       cache: yarn
 
-  - name: Update submodules
-    shell: bash
-    run: git submodule update --init
-
-  - name: Update nested submodules
-    shell: bash
-    run: |
-      cd gitmodule/tapioca-periph
-      git submodule update --init gitmodule/permitc
-      cd -
-
   - name: Install Yarn dependencies
     shell: bash
     run: yarn
