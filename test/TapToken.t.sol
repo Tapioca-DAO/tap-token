@@ -36,14 +36,14 @@ import {
     PrepareLzCallReturn,
     ComposeMsgData
 } from "contracts/tokens/extensions/TapTokenHelper.sol";
-import {TapiocaOmnichainExtExec} from "tapioca-periph/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
-import {IPearlmit, Pearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
+import {TapiocaOmnichainExtExec} from "tap-utils/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
+import {IPearlmit, Pearlmit} from "tap-utils/pearlmit/Pearlmit.sol";
 import {TapTokenReceiver} from "contracts/tokens/TapTokenReceiver.sol";
-import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
 import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
 import {TapTokenSender} from "contracts/tokens/TapTokenSender.sol";
 import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
-import {Cluster} from "tapioca-periph/Cluster/Cluster.sol";
+import {Cluster} from "tap-utils/Cluster/Cluster.sol";
 
 // Tapioca Tests
 import {TapTestHelper} from "./TapTestHelper.t.sol";

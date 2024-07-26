@@ -7,7 +7,7 @@ import {
     PrepareLzCallData,
     PrepareLzCallReturn,
     ComposeMsgData
-} from "tapioca-periph/tapiocaOmnichainEngine/extension/TapiocaOmnichainEngineHelper.sol";
+} from "tap-utils/tapiocaOmnichainEngine/extension/TapiocaOmnichainEngineHelper.sol";
 import {ITapToken, LockTwTapPositionMsg, UnlockTwTapPositionMsg, ClaimTwTapRewardsMsg} from "../ITapToken.sol";
 import {BaseTapTokenMsgType} from "../BaseTapTokenMsgType.sol";
 import {TapTokenCodec} from "../TapTokenCodec.sol";

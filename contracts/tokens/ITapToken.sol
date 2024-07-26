@@ -12,9 +12,9 @@ import {
     ERC20PermitApprovalMsg,
     ERC721PermitApprovalMsg,
     RemoteTransferMsg
-} from "tapioca-periph/interfaces/periph/ITapiocaOmnichainEngine.sol";
-import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
-import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+} from "tap-utils/interfaces/periph/ITapiocaOmnichainEngine.sol";
+import {IPearlmit} from "tap-utils/interfaces/periph/IPearlmit.sol";
+import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
 
 /*
 
