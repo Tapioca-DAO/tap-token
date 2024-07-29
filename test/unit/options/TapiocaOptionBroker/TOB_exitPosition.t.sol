@@ -10,7 +10,7 @@ contract TOB_exitPosition is TobBaseTest {
         tob.exitPosition(1);
     }
 
-    function test_WhenSglIsInRescue() external setupAndParticipate(100, 1) skipEpochs(2) setPoolRescue {
+    function test_WhenSglIsInRescue() external setupAndParticipate(aliceAddr, 100, 1) skipEpochs(2) setPoolRescue {
         // it should not revert
         tob.exitPosition(1);
     }
@@ -19,13 +19,13 @@ contract TOB_exitPosition is TobBaseTest {
         _;
     }
 
-    function test_RevertWhen_LockIsNotExpired() external whenSglIsNotInRescue setupAndParticipate(100, 1) {
+    function test_RevertWhen_LockIsNotExpired() external whenSglIsNotInRescue setupAndParticipate(aliceAddr, 100, 1) {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.LockNotExpired.selector);
         tob.exitPosition(1);
     }
 
-    function test_ShouldExitThePosition() external setupAndParticipate(100, 1) skipEpochs(2) {
+    function test_ShouldExitThePosition() external setupAndParticipate(aliceAddr, 100, 1) skipEpochs(2) {
         // it should exit the position
         vm.expectEmit(true, true, true, false);
         emit TapiocaOptionBroker.ExitPosition(2, 1, 1);

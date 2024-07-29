@@ -5,7 +5,13 @@ import {TobBaseTest, TapiocaOptionBroker} from "test/unit/options/TapiocaOptionB
 import {TapOption} from "contracts/options/oTAP.sol";
 
 contract TOB_participate is TobBaseTest {
-    function test_RevertWhen_LockExpired() external registerSingularityPool createLock(100, 0) tobInit skipEpochs(2) {
+    function test_RevertWhen_LockExpired()
+        external
+        registerSingularityPool
+        createLock(aliceAddr, 100, 0)
+        tobInit
+        skipEpochs(2)
+    {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.LockExpired.selector);
         tob.participate(1);
@@ -14,7 +20,7 @@ contract TOB_participate is TobBaseTest {
     function test_RevertWhen_EpochNotAdvanced()
         external
         registerSingularityPool
-        createLock(100, 3)
+        createLock(aliceAddr, 100, 3)
         tobInit
         skipEpochs(1)
     {
@@ -39,7 +45,7 @@ contract TOB_participate is TobBaseTest {
 
     function test_RevertWhen_DurationNotMultipleOfEpochDuration() external registerSingularityPool {
         // it should revert
-        _createLock(100, uint128(tob.EPOCH_DURATION() + 1));
+        _createLock(aliceAddr, 100, uint128(tob.EPOCH_DURATION() + 1));
         vm.startPrank(adminAddr);
         tob.init();
         skip(tob.EPOCH_DURATION());
@@ -52,7 +58,7 @@ contract TOB_participate is TobBaseTest {
     function test_RevertWhen_PearlmitTransferFailed()
         external
         registerSingularityPool
-        createLock(100, 2)
+        createLock(aliceAddr, 100, 2)
         tobInit
         skipEpochs(1)
     {
@@ -67,7 +73,7 @@ contract TOB_participate is TobBaseTest {
     function test_RevertWhen_LockIsLongerThanMaxLockDuration()
         external
         registerSingularityPool
-        createLock(100, 5)
+        createLock(aliceAddr, 100, 5)
         tobInit
         skipEpochs(1)
     {
@@ -80,7 +86,13 @@ contract TOB_participate is TobBaseTest {
         tob.participate(1);
     }
 
-    function test_ShouldParticipate() external registerSingularityPool createLock(100, 2) tobInit skipEpochs(1) {
+    function test_ShouldParticipate()
+        external
+        registerSingularityPool
+        createLock(aliceAddr, 100, 2)
+        tobInit
+        skipEpochs(1)
+    {
         // it should participate
         vm.startPrank(aliceAddr);
         tolp.approve(address(pearlmit), 1);

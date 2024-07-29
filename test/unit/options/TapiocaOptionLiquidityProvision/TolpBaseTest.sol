@@ -86,19 +86,19 @@ contract TolpBaseTest is UnitBaseTest {
      * @dev Create a lock for with Alice on asset ID 1
      * if _lockDuration is 0, it will use the EPOCH_DURATION, if not, uses a multiple of it.
      */
-    modifier createLock(uint256 _weight, uint128 _lockDuration) {
+    modifier createLock(address _user, uint256 _weight, uint128 _lockDuration) {
         uint128 lockDuration = uint128(tolp.EPOCH_DURATION());
         lockDuration = _lockDuration == 0 ? lockDuration : lockDuration * _lockDuration;
-        _createLock(_weight, lockDuration);
+        _createLock(_user, _weight, lockDuration);
         _;
     }
 
-    function _createLock(uint256 _weight, uint128 _lockDuration) internal {
-        (, uint256 shares) = yieldBox.depositAsset(1, aliceAddr, _weight);
-        vm.startPrank(aliceAddr);
+    function _createLock(address _user, uint256 _weight, uint128 _lockDuration) internal {
+        (, uint256 shares) = yieldBox.depositAsset(1, _user, _weight);
+        vm.startPrank(_user);
         yieldBox.setApprovalForAll(address(pearlmit), true);
         pearlmit.approve(1155, address(yieldBox), 1, address(tolp), type(uint200).max, uint48(block.timestamp + 1));
-        tolp.lock(aliceAddr, IERC20(address(0x1)), _lockDuration, uint128(shares));
+        tolp.lock(_user, IERC20(address(0x1)), _lockDuration, uint128(shares));
         vm.stopPrank();
     }
 

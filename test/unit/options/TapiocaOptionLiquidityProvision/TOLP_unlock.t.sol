@@ -4,7 +4,7 @@ pragma solidity 0.8.22;
 import {TolpBaseTest, IERC20} from "./TolpBaseTest.sol";
 
 contract TOLP_unlock is TolpBaseTest {
-    function test_ShouldUnlockTheTokens() external registerSingularityPool createLock(1, 0) {
+    function test_ShouldUnlockTheTokens() external registerSingularityPool createLock(aliceAddr, 1, 0) {
         // it should unlock the tokens
         vm.startPrank(aliceAddr);
         vm.warp(block.timestamp + 7 days);
@@ -20,7 +20,7 @@ contract TOLP_unlock is TolpBaseTest {
         vm.stopPrank();
     }
 
-    function test_RevertWhen_PositionExpired() external registerSingularityPool createLock(1, 0) {
+    function test_RevertWhen_PositionExpired() external registerSingularityPool createLock(aliceAddr, 1, 0) {
         // it should revert
         vm.startPrank(aliceAddr);
         vm.warp(block.timestamp + 7 days);
@@ -31,7 +31,7 @@ contract TOLP_unlock is TolpBaseTest {
         vm.stopPrank();
     }
 
-    function test_RevertWhen_TokenOwnerIsTob() external registerSingularityPool createLock(1, 0) {
+    function test_RevertWhen_TokenOwnerIsTob() external registerSingularityPool createLock(aliceAddr, 1, 0) {
         // it should revert
         vm.prank(adminAddr);
         tolp.setTapiocaOptionBroker(address(0x22));
@@ -43,7 +43,7 @@ contract TOLP_unlock is TolpBaseTest {
         vm.stopPrank();
     }
 
-    function test_WhenSglIsInRescue() external registerSingularityPool setPoolRescue createLock(1, 0) {
+    function test_WhenSglIsInRescue() external registerSingularityPool setPoolRescue createLock(aliceAddr, 1, 0) {
         // it should make the unlock regarding of time
         vm.startPrank(aliceAddr);
         vm.warp(block.timestamp + 7 days);
@@ -62,7 +62,7 @@ contract TOLP_unlock is TolpBaseTest {
         external
         whenSglIsNotInRescue
         registerSingularityPool
-        createLock(1, 0)
+        createLock(aliceAddr, 1, 0)
     {
         // it should revert
         vm.startPrank(aliceAddr);

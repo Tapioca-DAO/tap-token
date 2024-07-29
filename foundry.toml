@@ -20,6 +20,11 @@ remappings = [
 	"test/=test/"
 ]
 
+[profile.default.fuzz]
+max_test_rejects = 1_000_000
+seed = "0xee1d0f7d9556539a9c0e26aed5e63556"
+runs = 1000
+
 
 [etherscan]
 arbitrum-sepolia = { key = "${ARBITRUM_SEPOLIA_API_KEY}", url = "https://api-sepolia.arbiscan.io/api"}

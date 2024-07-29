@@ -108,28 +108,31 @@ contract TobBaseTest is TolpBaseTest {
         _;
     }
 
-    modifier tobParticipate(uint256 _amount, uint128 _lockDuration) {
-        _tobParticipate(uint200(_amount), _lockDuration);
+    modifier tobParticipate(address _user, uint256 _amount, uint128 _lockDuration) {
+        _tobParticipate(_user, uint200(_amount), _lockDuration);
         _;
     }
 
-    modifier setupAndParticipate(uint200 _amount, uint128 _lockDuration) {
-        _setupAndParticipate(_amount, _lockDuration);
+    modifier setupAndParticipate(address _user, uint256 _amount, uint128 _lockDuration) {
+        _setupAndParticipate(_user, uint200(_amount), _lockDuration);
         _;
     }
 
-    function _setupAndParticipate(uint200 _amount, uint128 _lockDuration)
+    function _setupAndParticipate(address _user, uint256 _amount, uint128 _lockDuration)
         internal
         registerSingularityPool
         tobInit
-        tobParticipate(100, _lockDuration)
+        tobParticipate(_user, _amount, _lockDuration)
     {}
 
     /**
      * @dev Asset ID of the tOLP lock is 1
      */
-    function _tobParticipate(uint200 _amount, uint128 _lockDuration) internal createLock(_amount, _lockDuration) {
-        vm.startPrank(aliceAddr);
+    function _tobParticipate(address _user, uint200 _amount, uint128 _lockDuration)
+        internal
+        createLock(_user, _amount, _lockDuration)
+    {
+        vm.startPrank(_user);
         tolp.approve(address(pearlmit), 1);
         pearlmit.approve(721, address(tolp), 1, address(tob), 1, uint48(block.timestamp + 1));
         tob.participate(1);

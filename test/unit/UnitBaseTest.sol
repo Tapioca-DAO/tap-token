@@ -161,4 +161,22 @@ contract UnitBaseTest is TestHelper {
     function createCluster(uint32 _lzChainId, address _owner) internal returns (Cluster) {
         return new Cluster(_lzChainId, _owner);
     }
+
+    /**
+     * UTILS
+     */
+    function _resetPrank(address caller) internal {
+        vm.stopPrank();
+        vm.startPrank(caller);
+    }
+
+    modifier assumeGt(uint256 a, uint256 b) {
+        vm.assume(a > b);
+        _;
+    }
+
+    modifier assumeLt(uint256 a, uint256 b) {
+        vm.assume(a < b);
+        _;
+    }
 }
