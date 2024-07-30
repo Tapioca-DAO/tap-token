@@ -25,6 +25,7 @@ import {ERC20Mock} from "tapioca-mocks/ERC20Mock.sol";
  * Tests
  */
 import {TapTokenMock} from "test/TapTokenMock.sol";
+import {FailingOracleMock} from "test/mocks/FailingOracleMock.sol";
 
 contract TobBaseTest is TolpBaseTest {
     TapiocaOptionBroker public tob;
@@ -35,6 +36,7 @@ contract TobBaseTest is TolpBaseTest {
     ERC20Mock public usdcMock;
     OracleMock public tapOracleMock;
     OracleMock public daiOracleMock;
+    FailingOracleMock public failingOracleMock;
 
     // Constants
     uint256 public EPOCH_DURATION = 1 weeks;
@@ -55,10 +57,15 @@ contract TobBaseTest is TolpBaseTest {
         /**
          * Deploy contracts
          */
+        failingOracleMock = new FailingOracleMock();
         tapOracleMock = new OracleMock("TAP_ORACLE", "TAP_ORACLE", TAP_INIT_PRICE);
+        vm.label(address(tapOracleMock), "TAP_ORACLE");
         daiOracleMock = new OracleMock("DAI_ORACLE", "DAI_ORACLE", 1e18); // $1
+        vm.label(address(daiOracleMock), "DAI_ORACLE");
         daiMock = new ERC20Mock("DAI", "DAI", 100e18, 18, adminAddr);
+        vm.label(address(daiMock), "DAI");
         usdcMock = new ERC20Mock("USDC", "USDC", 100e6, 6, adminAddr);
+        vm.label(address(usdcMock), "USDC");
 
         tapOFT = createTapOftInstance(
             EPOCH_DURATION,
