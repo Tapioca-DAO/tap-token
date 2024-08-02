@@ -73,7 +73,7 @@ contract TapiocaOptionLiquidityProvision is
 
     uint256 public totalSingularityPoolWeights; // Total weight of all active singularity pools
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
-    uint256 public constant MAX_LOCK_DURATION = 365 days; // 1 year
+    uint256 public  MAX_LOCK_DURATION = 365 days; // 1 year
 
     IPenrose public penrose;
     ICluster public cluster;
@@ -501,6 +501,13 @@ contract TapiocaOptionLiquidityProvision is
     function activateEmergencySweep() external onlyOwner {
         lastEmergencySweep = block.timestamp;
         emit ActivateEmergencySweep();
+    }
+
+    /**
+     * @notice Set the max lock duration.
+     */
+    function setMaxLockDuration(uint256 _maxLockDuration) external onlyOwner {
+        MAX_LOCK_DURATION = _maxLockDuration;
     }
 
     /**

@@ -89,6 +89,7 @@ contract TwTAP is
 
     /// ===== TWAML ======
     TWAMLPool public twAML; // sglAssetId => twAMLPool
+    uint256 private growthCapBps = 15000; // 150%, 1.5x
 
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
@@ -99,7 +100,7 @@ contract TwTAP is
     uint256 constant dMAX = 1_000_000; // 100 * 1e4; 0% - 100% voting power multiplier
     uint256 constant dMIN = 0;
     uint256 public constant EPOCH_DURATION = 7 days;
-    uint256 public constant MAX_LOCK_DURATION = 100 * 365 days; // 100 years
+    uint256 public MAX_LOCK_DURATION = 5 * 365 days; // 5 years
 
     // If we assume 128 bit balances for the reward token -- which fit 1e40
     // "tokens" at the most commonly used 1e18 precision -- then we can use the
@@ -161,8 +162,8 @@ contract TwTAP is
 
         maxRewardTokens = 30;
 
-        // Seed the cumulative with 1 week of magnitude
-        twAML.cumulative = EPOCH_DURATION;
+        // Seed the cumulative with 4 weeks of magnitude
+        twAML.cumulative = 4 * EPOCH_DURATION;
     }
 
     // ==========
@@ -384,7 +385,7 @@ contract TwTAP is
 
         uint256 magnitude = computeMagnitude(_duration, pool.cumulative);
         // Revert if the lock 4x the cumulative
-        if (magnitude >= pool.cumulative * 4) revert NotValid();
+        if (magnitude >= (pool.cumulative * growthCapBps) / 1e4) revert NotValid();
         uint256 multiplier = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Calculate twAML voting weight
@@ -629,6 +630,20 @@ contract TwTAP is
         } else {
             _unpause();
         }
+    }
+
+    /**
+     * @notice Set the growth cap for the twAML pool.
+     */
+    function setGrowthCapBps(uint256 _growthCapBps) external onlyOwner {
+        growthCapBps = _growthCapBps;
+    }
+
+    /**
+     * @notice Set the max lock duration.
+     */
+    function setMaxLockDuration(uint256 _maxLockDuration) external onlyOwner {
+        MAX_LOCK_DURATION = _maxLockDuration;
     }
 
     /**
