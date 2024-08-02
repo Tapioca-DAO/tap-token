@@ -73,7 +73,7 @@ contract TapiocaOptionLiquidityProvision is
 
     uint256 public totalSingularityPoolWeights; // Total weight of all active singularity pools
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
-    uint256 public constant MAX_LOCK_DURATION = 100 * 365 days; // 100 years
+    uint256 public constant MAX_LOCK_DURATION = 365 days; // 1 year
 
     IPenrose public penrose;
     ICluster public cluster;
