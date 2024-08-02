@@ -87,6 +87,9 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
     /// @notice Total amount of participation per epoch
     mapping(uint256 epoch => mapping(uint256 sglAssetID => int256 netAmount)) public netDepositedForEpoch;
+
+    /// @notice 2x growth cap per epoch
+    uint256 private growthCap = 2;
     /// =====-------======
 
     error NotEqualDurations();
@@ -315,8 +318,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
         uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
-        // Revert if the lock 4x the cumulative
-        if (magnitude > pool.cumulative * 4) revert TooLong();
+        // Revert if the lock is x time bigger than the cumulative
+        if (magnitude > pool.cumulative * growthCap) revert TooLong();
 
         bool divergenceForce;
         // Participate in twAMl voting
@@ -591,6 +594,13 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         } else {
             _unpause();
         }
+    }
+
+    /**
+     * @notice Set the growth cap for the next epoch.
+     */
+    function setGrowthCap(uint256 _growthCap) external onlyOwner {
+        growthCap = _growthCap;
     }
 
     // ============
