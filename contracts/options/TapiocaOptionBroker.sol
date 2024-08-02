@@ -371,10 +371,14 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
         bool isSGLInRescueMode = _isSGLInRescueMode(lock);
 
-        // If SGL is in rescue, bypass the lock expiration
-        if (!isSGLInRescueMode) {
-            if (block.timestamp < lock.lockTime + lock.lockDuration) {
-                revert LockNotExpired();
+        // Check if debt ratio is below threshold, if so bypass lock expiration
+        if (tOLP.canLockWithDebt(oTAP.ownerOf(_oTAPTokenID), uint256(lock.sglAssetID), uint256(lock.ybShares))) {
+            // If SGL is in rescue, bypass the lock expiration
+            isSGLInRescueMode = true;
+            if (!isSGLInRescueMode) {
+                if (block.timestamp < lock.lockTime + lock.lockDuration) {
+                    revert LockNotExpired();
+                }
             }
         }
 
@@ -592,6 +596,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     // ============
     //   INTERNAL
     // ============
+
     /// @notice returns week for timestamp
     function _timestampToWeek(uint256 timestamp) internal view returns (uint256) {
         return ((timestamp - emissionsStartTime) / EPOCH_DURATION);
