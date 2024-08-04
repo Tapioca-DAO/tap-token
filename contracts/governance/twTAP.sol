@@ -90,6 +90,13 @@ contract TwTAP is
     /// ===== TWAML ======
     TWAMLPool public twAML; // sglAssetId => twAMLPool
     uint256 private growthCapBps = 15000; // 150%, 1.5x
+    /// @notice The minimum amount of difference between 2 epochs to activate a decay
+    /// If epoch 2 - epoch 1 < decayActivationBps, no decay will be activated
+    uint256 public decayActivationBps;
+    /// @notice The rate of decay per epoch
+    uint256 public decayRateBps;
+    /// @notice Total amount of decay amassed. Can be reset to 0
+    uint256 public decayAmassed;
 
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
@@ -148,6 +155,7 @@ contract TwTAP is
     error AdvanceEpochFirst();
     error DurationNotMultiple(); // Lock duration should be a multiple of 1 EPOCH
     error EmergencySweepCooldownNotReached();
+    error EpochTooLow();
 
     /// =====-------======
     constructor(address payable _tapOFT, IPearlmit _pearlmit, address _owner)
@@ -201,6 +209,8 @@ contract TwTAP is
     event EmergencySweepRewards();
     event SetEmergencySweepCooldown(uint256 emergencySweepCooldown);
     event ActivateEmergencySweep();
+    event DecayCumulative(uint256 amountDecayed);
+    event ResetDecayAmassed(uint256 decayAmassed);
 
     // ==========
     //    READ
@@ -529,6 +539,7 @@ contract TwTAP is
         }
         emit AdvanceEpoch(goal, lastProcessedWeek);
         lastProcessedWeek = goal;
+        _decayCumulative();
     }
 
     /// @notice distributes a reward among all tokens, weighted by voting power
@@ -644,6 +655,15 @@ contract TwTAP is
      */
     function setMaxLockDuration(uint256 _maxLockDuration) external onlyOwner {
         MAX_LOCK_DURATION = _maxLockDuration;
+    }
+
+    /**
+     * @notice Reset the decay by reimbursing it to the cumulative.
+     */
+    function resetDecayAmassed() external onlyOwner {
+        twAML.cumulative += decayAmassed;
+        decayAmassed = 0;
+        emit ResetDecayAmassed(decayAmassed);
     }
 
     /**
@@ -804,6 +824,36 @@ contract TwTAP is
             }
         }
         return false;
+    }
+
+    /// @notice Decays the cumulative if the liquidity is less than a threshold
+    /// @dev Expect the new epoch to be called already
+    function _decayCumulative() internal {
+        if (decayRateBps == 0) return;
+        uint256 _week = currentWeek();
+
+        if (_week < 2) revert EpochTooLow(); // Need at least 2 epochs to be compared
+        if (_timestampToWeek(block.timestamp) > _week) revert AdvanceEpochFirst();
+
+        int256 totalDepositedA = weekTotals[_week - 2].netActiveVotes;
+        int256 totalDepositedB = weekTotals[_week - 1].netActiveVotes;
+
+        int256 delta = totalDepositedA - totalDepositedB; // Check if the liquidity has decreased
+        if (delta > 0) {
+            // If so, check the percentage of decrease
+            delta = int256(muldiv(uint256(delta), 100e4, uint256(totalDepositedA)));
+
+            // Apply the decay if the decrease is more than the threshold
+            // Cast is ok, delta is always positive at this point
+            if (uint256(delta) >= decayActivationBps) {
+                TWAMLPool memory pool = twAML;
+                uint256 decayAmount = muldiv(pool.cumulative, decayRateBps, 100e4);
+                pool.cumulative -= decayAmount; // Update the cumulative
+                decayAmassed += decayAmount; // Save the decay amassed
+                twAML = pool;
+                emit DecayCumulative(decayAmount);
+            }
+        }
     }
 
     /// @notice Returns the chain ID of the current network.

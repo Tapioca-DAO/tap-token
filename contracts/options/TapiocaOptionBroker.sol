@@ -90,6 +90,14 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
     /// @notice 2x growth cap per epoch
     uint256 private growthCap = 2;
+    /// @notice The minimum amount of difference between 2 epochs to activate a decay
+    /// If epoch 2 - epoch 1 < decayActivationBps, no decay will be activated
+    uint256 public decayActivationBps;
+    /// @notice The rate of decay per epoch
+    uint256 public decayRateBps;
+    /// @notice Total amount of decay amassed. Can be reset to 0
+    mapping(uint256 sglAssetID => uint256 decayAmount) public decayAmassed;
+
     /// =====-------======
 
     error NotEqualDurations();
@@ -114,6 +122,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     error AdvanceEpochFirst();
     error DurationNotMultiple();
     error NotValid();
+    error EpochTooLow();
 
     constructor(
         address _tOLP,
@@ -155,6 +164,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     event ExitPosition(uint256 indexed epoch, uint256 indexed otapTokenId, uint256 tolpTokenId);
     event SetPaymentToken(ERC20 indexed paymentToken, ITapiocaOracle oracle, bytes oracleData);
     event SetTapOracle(ITapiocaOracle oracle, bytes oracleData);
+    event DecayCumulative(uint256 amountDecayed);
+    event ResetDecayAmassed(uint256 decayAmassed);
 
     // ==========
     //    READ
@@ -492,6 +503,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (singularities.length == 0) revert NoActiveSingularities();
 
         epoch++;
+        _decayCumulative(); // Decay the cumulative if needed, always called after epoch++
 
         // Extract TAP + emit to gauges
         uint256 epochTAP = tapOFT.emitForWeek();
@@ -607,9 +619,66 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         growthCap = _growthCap;
     }
 
+    /**
+     * @notice Set the decay rate
+     */
+    function setDecayRate(uint256 _decayRateBps) external onlyOwner {
+        decayRateBps = _decayRateBps;
+    }
+
+    /**
+     * @notice Set the decay activation threshold
+     */
+    function setDecayActivationBps(uint256 _decayActivationBps) external onlyOwner {
+        decayActivationBps = _decayActivationBps;
+    }
+
+    /**
+     * @notice Reset the decay by reimbursing it to the cumulative.
+     */
+    function resetDecayAmassed(uint256 sglAssetID) external onlyOwner {
+        twAML[sglAssetID].cumulative += decayAmassed[sglAssetID];
+        decayAmassed[sglAssetID] = 0;
+        emit ResetDecayAmassed(sglAssetID);
+    }
+
     // ============
     //   INTERNAL
     // ============
+
+    /// @notice Decays the cumulative if the liquidity is less than a threshold
+    /// @dev Expect the new epoch to be called already
+    function _decayCumulative() internal {
+        if (decayRateBps == 0) return;
+        uint256 _epoch = epoch;
+        if (_epoch < 2) revert EpochTooLow(); // Need at least 2 epochs to be compared
+        if (_timestampToWeek(block.timestamp) > _epoch) revert AdvanceEpochFirst();
+
+        uint256[] memory singularities = tOLP.getSingularities();
+        uint256 len = singularities.length;
+        for (uint256 i; i < len; ++i) {
+            uint256 sglAssetID = singularities[i];
+            int256 totalDepositedA = netDepositedForEpoch[_epoch - 2][sglAssetID];
+            int256 totalDepositedB = netDepositedForEpoch[_epoch - 1][sglAssetID];
+
+            int256 delta = totalDepositedA - totalDepositedB; // Check if the liquidity has decreased
+            if (delta > 0) {
+                // If so, check the percentage of decrease
+                delta = int256(muldiv(uint256(delta), 100e4, uint256(totalDepositedA)));
+
+                // Apply the decay if the decrease is more than the threshold
+                // Cast is ok, delta is always positive at this point
+                if (uint256(delta) >= decayActivationBps) {
+                    TWAMLPool memory pool = twAML[sglAssetID];
+                    uint256 decayAmount = muldiv(pool.cumulative, decayRateBps, 100e4);
+                    pool.cumulative -= decayAmount;
+                    decayAmassed[sglAssetID] += decayAmount;
+                    twAML[sglAssetID] = pool;
+                    emit DecayCumulative(decayAmount);
+                }
+            }
+        }
+    }
 
     /// @notice returns week for timestamp
     function _timestampToWeek(uint256 timestamp) internal view returns (uint256) {
