@@ -73,8 +73,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /// ===== TWAML ======
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
 
-    /// @dev Virtual total amount to add to the total when computing twAML participation right. Default 10_000 * 1e18.
-    uint256 private VIRTUAL_TOTAL_AMOUNT = 10_000 ether;
+    /// @dev Virtual total amount to add to the total when computing twAML participation right.
+    uint256 private VIRTUAL_TOTAL_AMOUNT = 50_000 ether;
 
     uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
     uint256 constant dMAX = 500_000; // 50 * 1e4; 0% - 50% discount

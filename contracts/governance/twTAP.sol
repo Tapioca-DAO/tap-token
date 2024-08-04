@@ -93,8 +93,8 @@ contract TwTAP is
 
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
-    /// @dev Virtual total amount to add to the total when computing twAML participation right. Default 10_000 * 1e18.
-    uint256 public VIRTUAL_TOTAL_AMOUNT = 10_000 ether;
+    /// @dev Virtual total amount to add to the total when computing twAML participation right.
+    uint256 public VIRTUAL_TOTAL_AMOUNT = 2000 ether;
 
     uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
     uint256 constant dMAX = 1_000_000; // 100 * 1e4; 0% - 100% voting power multiplier
