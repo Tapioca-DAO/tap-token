@@ -386,7 +386,7 @@ contract TwTAP is
         uint256 magnitude = computeMagnitude(_duration, pool.cumulative);
         // Revert if the lock 4x the cumulative
         if (magnitude >= (pool.cumulative * growthCapBps) / 1e4) revert NotValid();
-        uint256 multiplier = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
+        uint256 multiplier = computeTarget(dMIN, dMAX, magnitude * _amount, pool.cumulative * pool.totalDeposited);
 
         // Calculate twAML voting weight
         bool divergenceForce;

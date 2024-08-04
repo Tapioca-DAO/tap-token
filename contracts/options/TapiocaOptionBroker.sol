@@ -316,7 +316,11 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         }
 
         uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
-        uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
+        uint256 target;
+        {
+            (uint256 totalPoolShares,) = tOLP.getTotalPoolDeposited(uint256(lock.sglAssetID));
+            target = computeTarget(dMIN, dMAX, magnitude * uint256(lock.ybShares), pool.cumulative * totalPoolShares);
+        }
 
         // Revert if the lock is x time bigger than the cumulative
         if (magnitude > pool.cumulative * growthCap) revert TooLong();
