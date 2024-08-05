@@ -60,6 +60,11 @@ contract TolpBaseTest is UnitBaseTest {
      * @dev Register 5 singularity pools, and set the last one in rescue mode
      */
     modifier registerSingularityPool() {
+        _registerSingularityPool();
+        _;
+    }
+
+    function _registerSingularityPool() internal {
         vm.startPrank(adminAddr);
         tolp.registerSingularity(IERC20(address(0x1)), 1, 0); // sglAddr, yb assetId, weight
         tolp.registerSingularity(IERC20(address(0x2)), 2, 0);
@@ -67,7 +72,6 @@ contract TolpBaseTest is UnitBaseTest {
         tolp.registerSingularity(IERC20(address(0x4)), 4, 0);
         tolp.registerSingularity(IERC20(address(0x5)), 5, 0);
         vm.stopPrank();
-        _;
     }
 
     /**

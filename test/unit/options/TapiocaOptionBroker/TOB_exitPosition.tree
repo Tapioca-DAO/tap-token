@@ -1,9 +1,16 @@
 TOB_exitPosition
-├── when otap not existing
+├── when position doesn't exist
 │   └── it should revert
-├── when sgl is in rescue
-│   └── it should not revert
-├── when sgl is not in rescue
-│   └── when lock is not expired
-│       └── it should revert
-└── it should exit the position
+└── when position exists
+    ├── when lock is not expired
+    │   ├── when sgl is in rescue mode
+    │   │   ├── it should bypass twAML changes
+    │   │   └── it should continue
+    │   └── when sgl is not in rescue mode
+    │       └── it should revert
+    └── when lock is expired
+                ├── it should emit ExitPosition
+                ├── it should update twAML cumulative
+                ├── it should delete participation mapping
+                ├── it should burn the oTAP
+                └── it should transfer the tOLP to the oTAP owner
