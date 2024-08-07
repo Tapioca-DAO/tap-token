@@ -6,8 +6,6 @@ import {TapOption} from "contracts/options/oTAP.sol";
 import {LockPosition} from "contracts/options/TapiocaOptionLiquidityProvision.sol";
 import {TWAML} from "contracts/options/twAML.sol";
 
-import "forge-std/console.sol";
-
 contract TOB_participate is TobBaseTest, TWAML {
     uint256 constant TOLP_TOKEN_ID = 1;
     uint256 constant SGL_ASSET_ID = 1; // Check TobBaseTest::createLock()
@@ -22,8 +20,6 @@ contract TOB_participate is TobBaseTest, TWAML {
      */
     modifier initTestsAndCreateLock(uint128 _lockAmount, uint128 _lockDuration) {
         _lockDuration = uint128(tob.EPOCH_DURATION() * WEEK_LONG * bound(_lockDuration, 1, 4));
-        console.log("Lock duration: %d", _lockDuration);
-
         _lockAmount = uint128(bound(_lockAmount, 1, type(uint128).max));
         _initTestsAndCreateLock(_lockAmount, _lockDuration);
         _;
