@@ -91,9 +91,7 @@ contract TolpBaseTest is UnitBaseTest {
      * if _lockDuration is 0, it will use the EPOCH_DURATION, if not, uses a multiple of it.
      */
     modifier createLock(address _user, uint256 _weight, uint128 _lockDuration) {
-        uint128 lockDuration = uint128(tolp.EPOCH_DURATION());
-        lockDuration = _lockDuration == 0 ? lockDuration : lockDuration * _lockDuration;
-        _createLock(_user, _weight, lockDuration);
+        _createLock(_user, _weight, _lockDuration);
         _;
     }
 
