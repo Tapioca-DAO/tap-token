@@ -87,6 +87,17 @@ contract TolpBaseTest is UnitBaseTest {
     }
 
     /**
+     * @notice Create a lock for with Alice on asset ID 1
+     */
+    modifier initAndCreateLock(address _user, uint256 _weight, uint128 _lockDuration) {
+        _registerSingularityPool();
+        vm.assume(_lockDuration == uint128(bound(_lockDuration, tolp.EPOCH_DURATION(), tolp.MAX_LOCK_DURATION())));
+        vm.assume(_weight != 0);
+        _createLock(_user, _weight, _lockDuration);
+        _;
+    }
+
+    /**
      * @dev Create a lock for with Alice on asset ID 1
      * if _lockDuration is 0, it will use the EPOCH_DURATION, if not, uses a multiple of it.
      */

@@ -1,11 +1,25 @@
 TOLP_unlock
-├── when position expired
+├── when paused
 │   └── it should revert
-├── when token owner is Tob
-│   └── it should revert
-├── when sgl is in rescue
-│   └── it should make the unlock regarding of time
-├── when sgl is not in rescue
-│   └── when lock is not expired
-│       └── it should revert
-└── it should unlock the tokens
+└── when not paused
+    ├── when position is expired
+    │   └── it should revert
+    └── when position is not expired
+        ├── when tob is holder of the token
+        │   └── it should revert
+        └── when user is holder of the token
+            ├── when lock is not expired
+            │   ├── when sgl is not in rescue
+            │   │   └── it should revert
+            │   └── when sgl is in rescue
+            │       └── it should continue
+            └── when lock is expired
+                └── when continuing
+                    ├── when sgl asset id doesnt match
+                    │   └── it should revert
+                    └── when sgl asset id matches
+                        ├── it should emit Burn
+                        ├── it should burn the token
+                        ├── it should delete the lock position
+                        ├── it should transfer the yieldbox sgl shares
+                        └── it should decrement total deposited

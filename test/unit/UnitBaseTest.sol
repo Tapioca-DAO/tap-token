@@ -36,6 +36,8 @@ contract UnitBaseTest is TestHelper {
     address public adminAddr = vm.addr(adminPKey);
     uint256 internal alicePKey = 0x2;
     address public aliceAddr = vm.addr(alicePKey);
+    uint256 internal bobPKey = 0x3;
+    address public bobAddr = vm.addr(bobPKey);
 
     // Peripheral contracts
     YieldBox1155Mock public yieldBox;
