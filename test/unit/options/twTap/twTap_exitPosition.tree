@@ -1,9 +1,23 @@
-twTap_exitPosition
+TWTAP_exitPosition
 ├── when paused
 │   └── it should revert
-├── when lock not expired
-│   └── when not in rescue mode
-│       └── it should revert
-├── when tap already released
-│   └── it should return 0
-└── it should exit the position
+└── when not paused
+    ├── when lock not expired
+    │   ├── when not in rescue mode
+    │   │   └── it should revert
+    │   └── when in rescue mode
+    │       └── it should continue
+    └── when lock expired
+        ├── when tap released
+        │   └── it should stop execution and return 0
+        └── when tap was not released
+            ├── when user has no voting power
+            │   ├── it should not change AML
+            │   └── it should continue
+            ├── when user has voting power
+            │   ├── it should update the AML with the inverse recorded
+            │   └── it should continue
+            └── when it should continue
+                ├── it should emit ExitPosition
+                ├── it should mark the participant tap as released
+                └── it should transfer the Tap tokens to the owner of the lock
