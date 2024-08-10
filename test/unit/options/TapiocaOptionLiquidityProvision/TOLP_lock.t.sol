@@ -38,7 +38,8 @@ contract TOLP_lock is TolpBaseTest {
         whenNotPaused
         whenDurationIsNotTooShort
     {
-        _lockDuration = uint128(bound(_lockDuration, tolp.MAX_LOCK_DURATION(), type(uint128).max));
+        _lockDuration = uint128(bound(_lockDuration, tolp.MAX_LOCK_DURATION() + 1, type(uint128).max));
+        vm.assume(_ybShares != 0);
         // it should revert
         vm.expectRevert(TapiocaOptionLiquidityProvision.DurationTooLong.selector);
         tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);

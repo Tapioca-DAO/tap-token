@@ -7,6 +7,8 @@ import {TWAML} from "contracts/options/twAML.sol";
 
 contract twTap_participate is twTapBaseTest, TWAML {
     uint256 constant TWTAP_TOKEN_ID = 1;
+    uint256 constant dMIN = 0;
+    uint256 constant dMAX = 1_000_000;
 
     function test_RevertWhen_Paused(uint256 _lockAmount, uint256 _lockDuration) external {
         vm.prank(adminAddr);
@@ -31,61 +33,56 @@ contract twTap_participate is twTapBaseTest, TWAML {
     }
 
     /// @notice We use _assume to avoid running a lot of `vm.assume` in future tests
-    modifier whenLockDurationIsMoreThanAWeek(uint256 _lockDuration, bool _assume) {
-        if (_assume) {
-            vm.assume(_lockDuration == bound(_lockDuration, twTap.EPOCH_DURATION(), type(uint256).max));
-        }
+    modifier whenLockDurationIsMoreThanAWeek() {
         _;
     }
 
     function test_RevertWhen_LockDurationIsMoreThanMaxDuration(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
-        whenLockDurationIsMoreThanAWeek(_lockDuration, true)
+        whenLockDurationIsMoreThanAWeek
     {
+        (_lockAmount,) = _boundValues(_lockAmount, _lockDuration);
+        _lockDuration = twTap.EPOCH_DURATION() * bound(_lockDuration, twTap.MAX_LOCK_DURATION(), type(uint88).max);
+
         // it should revert
         vm.expectRevert(TwTAP.LockTooLong.selector);
         twTap.participate(aliceAddr, _lockAmount, _lockDuration);
     }
 
     /// @notice We use _assume to avoid running a lot of `vm.assume` in future tests
-    modifier whenLockDurationIsLessThanMaxDuration(uint256 _lockDuration, bool _assume) {
-        if (_assume) {
-            vm.assume(_lockDuration == bound(_lockDuration, twTap.EPOCH_DURATION(), twTap.MAX_LOCK_DURATION()));
-        }
+    modifier whenLockDurationIsLessThanMaxDuration() {
         _;
     }
 
     function test_RevertWhen_LockDurationIsNotAMultipleOfEpochDuration(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
-        whenLockDurationIsMoreThanAWeek(_lockDuration, true)
-        whenLockDurationIsLessThanMaxDuration(_lockDuration, true)
+        whenLockDurationIsMoreThanAWeek
+        whenLockDurationIsLessThanMaxDuration
     {
-        vm.assume(_lockDuration % twTap.EPOCH_DURATION() != 0);
+        (_lockAmount, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
+        _lockDuration = _lockDuration == twTap.EPOCH_DURATION() ? _lockDuration + 1 : _lockDuration - 1;
+
         // it should revert
         vm.expectRevert(TwTAP.DurationNotMultiple.selector);
         twTap.participate(aliceAddr, _lockAmount, _lockDuration);
     }
 
-    /// @notice vm.assume won't work, use `_whenLockDurationIsAMultipleOfEpochDuration()` instead
     modifier whenLockDurationIsAMultipleOfEpochDuration() {
         _;
-    }
-
-    function _whenLockDurationIsAMultipleOfEpochDuration(uint256 _lockDuration) internal returns (uint256) {
-        return twTap.EPOCH_DURATION() * bound(_lockDuration, 1, 4);
     }
 
     function test_RevertWhen_WeekWasNotAdvanced(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
-        whenLockDurationIsMoreThanAWeek(_lockDuration, false)
-        whenLockDurationIsLessThanMaxDuration(_lockDuration, false)
+        whenLockDurationIsMoreThanAWeek
+        whenLockDurationIsLessThanMaxDuration
         whenLockDurationIsAMultipleOfEpochDuration
     {
-        _lockDuration = _whenLockDurationIsAMultipleOfEpochDuration(_lockDuration);
+        (_lockAmount, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
         skip(twTap.EPOCH_DURATION());
+
         // it should revert
         vm.expectRevert(TwTAP.AdvanceWeekFirst.selector);
         twTap.participate(aliceAddr, _lockAmount, _lockDuration);
@@ -98,12 +95,12 @@ contract twTap_participate is twTapBaseTest, TWAML {
     function test_RevertWhen_PearlmitTransferFails(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
-        whenLockDurationIsMoreThanAWeek(_lockDuration, false)
-        whenLockDurationIsLessThanMaxDuration(_lockDuration, false)
+        whenLockDurationIsMoreThanAWeek
+        whenLockDurationIsLessThanMaxDuration
         whenLockDurationIsAMultipleOfEpochDuration
         whenWeekWasAdvanced
     {
-        _lockDuration = _whenLockDurationIsAMultipleOfEpochDuration(_lockDuration);
+        (_lockAmount, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
 
         // it should revert
         // It should be TwTap.TransferFailed.selector,
@@ -124,15 +121,15 @@ contract twTap_participate is twTapBaseTest, TWAML {
     function test_WhenLockerDoesNotHaveVotingPower(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
-        whenLockDurationIsMoreThanAWeek(_lockDuration, false)
-        whenLockDurationIsLessThanMaxDuration(_lockDuration, false)
+        whenLockDurationIsMoreThanAWeek
+        whenLockDurationIsLessThanMaxDuration
         whenLockDurationIsAMultipleOfEpochDuration
         whenWeekWasAdvanced
         whenPearlmitTransferSucceed
     {
-        _lockDuration = _whenLockDurationIsAMultipleOfEpochDuration(_lockDuration);
+        (, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
         _lockAmount =
-            bound(_lockAmount, 0, computeMinWeight(twTap.VIRTUAL_TOTAL_AMOUNT(), twTap.MIN_WEIGHT_FACTOR()) - 1);
+            bound(_lockAmount, 1, computeMinWeight(twTap.VIRTUAL_TOTAL_AMOUNT(), twTap.MIN_WEIGHT_FACTOR()) - 1);
 
         _resetPrank({caller: aliceAddr});
         tapOFT.freeMint(aliceAddr, _lockAmount);
@@ -160,22 +157,23 @@ contract twTap_participate is twTapBaseTest, TWAML {
     function test_WhenLockHasVotingPower(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
-        whenLockDurationIsMoreThanAWeek(_lockDuration, false)
-        whenLockDurationIsLessThanMaxDuration(_lockDuration, false)
+        whenLockDurationIsMoreThanAWeek
+        whenLockDurationIsLessThanMaxDuration
         whenLockDurationIsAMultipleOfEpochDuration
         whenWeekWasAdvanced
         whenPearlmitTransferSucceed
     {
-        _lockDuration = _whenLockDurationIsAMultipleOfEpochDuration(_lockDuration);
-        _lockAmount = bound(_lockAmount, 0, type(uint88).max);
+        (, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
+        _lockAmount = bound(
+            _lockAmount, computeMinWeight(twTap.VIRTUAL_TOTAL_AMOUNT(), twTap.MIN_WEIGHT_FACTOR()), type(uint88).max
+        );
+
         _resetPrank({caller: aliceAddr});
         tapOFT.freeMint(aliceAddr, _lockAmount);
 
         // it should participate and change AML
         test_WhenItShouldParticipate(_lockAmount, _lockDuration, true);
     }
-
-    uint256 constant EXPECTED_MULTIPLIER = 1e6;
 
     function test_WhenItShouldParticipate(uint256 _lockAmount, uint256 _lockDuration, bool _hasVotingPower) internal {
         // it should emit Participate
@@ -207,38 +205,60 @@ contract twTap_participate is twTapBaseTest, TWAML {
         }
 
         // it should create a participation entry
-        (
-            uint256 averageMagnitudeParticipation,
-            bool hasVotingPower,
-            bool divergenceForce,
-            bool tapReleased,
-            uint56 lockedAt,
-            uint56 expiry,
-            uint88 tapAmount,
-            uint24 multiplier,
-            ,
-        ) = twTap.participants(TWTAP_TOKEN_ID);
-        assertEq(
-            averageMagnitudeParticipation,
-            _hasVotingPower ? expectedAverageMagnitude : 0,
-            "twTap_participate::test_WhenItShouldParticipate: Invalid averageMagnitude"
-        );
-        assertEq(
-            hasVotingPower, _hasVotingPower, "twTap_participate::test_WhenItShouldParticipate: Invalid hasVotingPower"
-        );
-        assertEq(
-            divergenceForce, _hasVotingPower, "twTap_participate::test_WhenItShouldParticipate: Invalid divergenceForce"
-        );
-        assertEq(tapReleased, false, "twTap_participate::test_WhenItShouldParticipate: Invalid tapReleased");
-        assertEq(lockedAt, block.timestamp, "twTap_participate::test_WhenItShouldParticipate: Invalid lockedAt");
-        assertEq(
-            expiry, _lockDuration + block.timestamp, "twTap_participate::test_WhenItShouldParticipate: Invalid expiry"
-        );
-        assertEq(tapAmount, _lockAmount, "twTap_participate::test_WhenItShouldParticipate: Invalid tapAmount");
-        assertEq(multiplier, EXPECTED_MULTIPLIER, "twTap_participate::test_WhenItShouldParticipate: Invalid multiplier");
+        uint56 expiry;
+        uint256 expectedMultiplier;
+
+        // We're splitting the following code into two blocks to avoid stack too deep error
+        {
+            (
+                uint256 averageMagnitudeParticipation,
+                bool hasVotingPower,
+                bool divergenceForce,
+                bool tapReleased,
+                uint56 lockedAt,
+                ,
+                ,
+                ,
+                ,
+            ) = twTap.participants(TWTAP_TOKEN_ID);
+            assertEq(
+                averageMagnitudeParticipation,
+                _hasVotingPower ? expectedAverageMagnitude : 0,
+                "twTap_participate::test_WhenItShouldParticipate: Invalid averageMagnitude"
+            );
+            assertEq(
+                hasVotingPower,
+                _hasVotingPower,
+                "twTap_participate::test_WhenItShouldParticipate: Invalid hasVotingPower"
+            );
+            assertEq(
+                divergenceForce,
+                _hasVotingPower,
+                "twTap_participate::test_WhenItShouldParticipate: Invalid divergenceForce"
+            );
+            assertEq(tapReleased, false, "twTap_participate::test_WhenItShouldParticipate: Invalid tapReleased");
+            assertEq(lockedAt, block.timestamp, "twTap_participate::test_WhenItShouldParticipate: Invalid lockedAt");
+        }
+
+        {
+            (,,,,, uint56 _expiry, uint88 tapAmount, uint24 multiplier,,) = twTap.participants(TWTAP_TOKEN_ID);
+            expiry = _expiry;
+
+            assertEq(
+                expiry,
+                _lockDuration + block.timestamp,
+                "twTap_participate::test_WhenItShouldParticipate: Invalid expiry"
+            );
+            assertEq(tapAmount, _lockAmount, "twTap_participate::test_WhenItShouldParticipate: Invalid tapAmount");
+
+            expectedMultiplier = computeTarget(dMIN, dMAX, expectedMagnitude, twTap.EPOCH_DURATION());
+            assertEq(
+                multiplier, expectedMultiplier, "twTap_participate::test_WhenItShouldParticipate: Invalid multiplier"
+            );
+        }
 
         // it should update weekTotals
-        uint256 vote = _lockAmount * EXPECTED_MULTIPLIER;
+        uint256 vote = _lockAmount * expectedMultiplier;
         int256 netActiveVotesFirstWeek = twTap.weekTotals(1);
         int256 netActiveVotesLastWeek = twTap.weekTotals(_timestampToWeek(expiry) + 1);
         assertEq(
@@ -260,5 +280,11 @@ contract twTap_participate is twTapBaseTest, TWAML {
 
     function _timestampToWeek(uint256 _timestamp) internal view returns (uint256) {
         return (_timestamp - twTap.creation()) / twTap.EPOCH_DURATION();
+    }
+
+    function _boundValues(uint256 _lockAmount, uint256 _lockDuration) internal returns (uint256, uint256) {
+        _lockAmount = bound(_lockAmount, 1, type(uint88).max);
+        _lockDuration = twTap.EPOCH_DURATION() * bound(_lockDuration, 1, 4);
+        return (_lockAmount, _lockDuration);
     }
 }
