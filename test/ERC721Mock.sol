@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 import {ERC721PermitStruct} from "contracts/tokens/ITapToken.sol";
-import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol";
+import {ERC721Permit} from "tap-utils/utils/ERC721Permit.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract ERC721Mock is ERC721, ERC721Permit {

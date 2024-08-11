@@ -19,7 +19,7 @@ import {
     RemoteTransferMsg
 } from "./ITapToken.sol";
 
-import {TapiocaOmnichainEngineCodec} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
+import {TapiocaOmnichainEngineCodec} from "tap-utils/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
 
 /*
 

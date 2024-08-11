@@ -32,7 +32,7 @@ import {
 } from "contracts/tokens/extensions/TapTokenHelper.sol";
 import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
 import {TapiocaOmnichainEngineCodec as ToeCodec} from
-    "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
+    "tap-utils/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
 import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
 
 // Tapioca test

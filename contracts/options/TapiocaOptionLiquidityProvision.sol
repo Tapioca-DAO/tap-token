@@ -10,12 +10,12 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol";
+import {ERC721Permit} from "tap-utils/utils/ERC721Permit.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
-import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
-import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {IPearlmit, PearlmitHandler} from "tap-utils/pearlmit/PearlmitHandler.sol";
+import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
 import {IYieldBox} from "contracts/interfaces/IYieldBox.sol";
 
 /*
@@ -97,6 +97,8 @@ contract TapiocaOptionLiquidityProvision is
     error TobIsHolder();
     error NotValid();
     error EmergencySweepCooldownNotReached();
+    error DurationNotMultiple();
+    error BrokerAlreadySet();
 
     constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
@@ -212,6 +214,7 @@ contract TapiocaOptionLiquidityProvision is
     {
         if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
         if (_lockDuration > MAX_LOCK_DURATION) revert DurationTooLong();
+        if (_lockDuration % EPOCH_DURATION != 0) revert DurationNotMultiple();
 
         if (_ybShares == 0) revert SharesNotValid();
 
@@ -286,6 +289,9 @@ contract TapiocaOptionLiquidityProvision is
      * @notice Sets the Tapioca Option Broker address
      */
     function setTapiocaOptionBroker(address _tob) external onlyOwner {
+        if (tapiocaOptionBroker != address(0)) {
+            revert BrokerAlreadySet();
+        }
         tapiocaOptionBroker = _tob;
     }
 

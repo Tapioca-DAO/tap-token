@@ -25,10 +25,10 @@ import {
     RemoteTransferMsg,
     LZSendParam
 } from "./ITapToken.sol";
-import {TapiocaOmnichainReceiver} from "tapioca-periph/tapiocaOmnichainEngine/TapiocaOmnichainReceiver.sol";
-import {IPearlmit} from "tapioca-periph/interfaces/periph/IPearlmit.sol";
-import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
-import {ITOFT} from "tapioca-periph/interfaces/oft/ITOFT.sol";
+import {TapiocaOmnichainReceiver} from "tap-utils/tapiocaOmnichainEngine/TapiocaOmnichainReceiver.sol";
+import {IPearlmit} from "tap-utils/interfaces/periph/IPearlmit.sol";
+import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
+import {ITOFT} from "tap-utils/interfaces/oft/ITOFT.sol";
 import {TapTokenSender} from "./TapTokenSender.sol";
 import {TapTokenCodec} from "./TapTokenCodec.sol";
 import {BaseTapToken} from "./BaseTapToken.sol";

@@ -11,10 +11,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
-import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
+import {ITwTapMagnitudeMultiplier} from "contracts/interfaces/IMagnitudeMultiplier.sol";
+import {IPearlmit, PearlmitHandler} from "tap-utils/pearlmit/PearlmitHandler.sol";
 import {ERC721NftLoader} from "contracts/erc721NftLoader/ERC721NftLoader.sol";
-import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
-import {ERC721Permit} from "tapioca-periph/utils/ERC721Permit.sol";
+import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
+import {ERC721Permit} from "tap-utils/utils/ERC721Permit.sol";
 import {ERC721PermitStruct} from "contracts/tokens/ITapToken.sol";
 import {TapToken} from "contracts/tokens/TapToken.sol";
 import {TWAML} from "contracts/options/twAML.sol";
@@ -89,6 +90,7 @@ contract TwTAP is
 
     /// ===== TWAML ======
     TWAMLPool public twAML; // sglAssetId => twAMLPool
+    uint256 public lastEpochCumulative; // Last cumulative for the last epoch
 
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
@@ -133,6 +135,10 @@ contract TwTAP is
     bool public rescueMode;
     uint256 public emergencySweepCooldown = 2 days;
     uint256 public lastEmergencySweep;
+
+    uint256 maxEpochCoeff = 4; // Maximum epoch coefficient for the cumulative
+    ITwTapMagnitudeMultiplier public twTapMagnitudeMultiplier;
+    uint256 constant MULTIPLIER_PRECISION = 1e18;
 
     error NotAuthorized();
     error AdvanceWeekFirst();
@@ -383,8 +389,15 @@ contract TwTAP is
         TWAMLPool memory pool = twAML;
 
         uint256 magnitude = computeMagnitude(_duration, pool.cumulative);
-        // Revert if the lock 4x the cumulative
-        if (magnitude >= pool.cumulative * 4) revert NotValid();
+
+        {
+            uint256 _lastEpochCumulative = lastEpochCumulative;
+            if (_lastEpochCumulative == 0) {
+                _lastEpochCumulative = EPOCH_DURATION;
+            }
+            // Revert if the lock 4x the cumulative
+            if (magnitude >= lastEpochCumulative * maxEpochCoeff) revert NotValid();
+        }
         uint256 multiplier = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
         // Calculate twAML voting weight
@@ -398,10 +411,25 @@ contract TwTAP is
             divergenceForce = _duration >= pool.cumulative;
 
             if (divergenceForce) {
-                pool.cumulative += pool.averageMagnitude;
+                uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;
+                if (address(twTapMagnitudeMultiplier) != address(0)) {
+                    aMagnitudeMultiplier =
+                        twTapMagnitudeMultiplier.getPositiveMagnitudeMultiplier(_participant, _amount, _duration);
+                }
+
+                pool.cumulative += (pool.averageMagnitude * aMagnitudeMultiplier / MULTIPLIER_PRECISION);
             } else {
                 if (pool.cumulative > pool.averageMagnitude) {
-                    pool.cumulative -= pool.averageMagnitude;
+                    uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;
+                    if (address(twTapMagnitudeMultiplier) != address(0)) {
+                        aMagnitudeMultiplier =
+                            twTapMagnitudeMultiplier.getNegativeMagnitudeMultiplier(_participant, _amount, _duration);
+                    }
+
+                    pool.cumulative -= (pool.averageMagnitude * aMagnitudeMultiplier / MULTIPLIER_PRECISION);
+                    if (pool.cumulative < EPOCH_DURATION) {
+                        pool.cumulative = EPOCH_DURATION;
+                    }
                 } else {
                     pool.cumulative = EPOCH_DURATION;
                 }
@@ -506,6 +534,8 @@ contract TwTAP is
     function advanceWeek(uint256 _limit) public nonReentrant {
         if (!cluster.hasRole(msg.sender, keccak256("NEW_EPOCH"))) revert NotAuthorized();
 
+        lastEpochCumulative = twAML.cumulative;
+
         uint256 week = lastProcessedWeek;
         uint256 goal = currentWeek();
         unchecked {
@@ -558,6 +588,15 @@ contract TwTAP is
     // =========
     //   OWNER
     // =========
+
+    function setMaxEpochCoeff(uint256 _maxEpochCoeff) external onlyOwner {
+        maxEpochCoeff = _maxEpochCoeff;
+    }
+
+    function setTwTapMagnitudeMultiplier(ITwTapMagnitudeMultiplier _twTapMagnitudeMultiplier) external onlyOwner {
+        twTapMagnitudeMultiplier = _twTapMagnitudeMultiplier;
+    }
+
     /**
      * @notice Set the rescue mode.
      */
