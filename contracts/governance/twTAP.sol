@@ -12,7 +12,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
 import {ITwTapMagnitudeMultiplier} from "contracts/interfaces/IMagnitudeMultiplier.sol";
-import {IPearlmit, PearlmitHandler} from "tapioca-periph/pearlmit/PearlmitHandler.sol";
+import {IPearlmit, PearlmitHandler} from "tap-utils/pearlmit/PearlmitHandler.sol";
 import {ERC721NftLoader} from "contracts/erc721NftLoader/ERC721NftLoader.sol";
 import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
 import {ERC721Permit} from "tap-utils/utils/ERC721Permit.sol";

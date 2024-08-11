@@ -15,6 +15,7 @@ remappings = [
 	"tapioca-sdk/=gitmodule/tapioca-sdk/contracts/",
 	"tap-utils/=lib/tap-utils/contracts/",
 	"permitc/=lib/tap-utils/lib/permitc/src/", # Needs to be init in the periph repo
+	"tapioca-mocks/=gitmodule/tapioca-mocks/contracts/",
 ]
 
 
