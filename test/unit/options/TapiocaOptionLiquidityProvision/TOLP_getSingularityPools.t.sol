@@ -14,6 +14,6 @@ contract TOLP_getSingularityPools is TolpBaseTest {
     function test_WhenThereIsAPoolInRescue() external registerSingularityPool setPoolRescue {
         // it should return the array without the rescue pool
         SingularityPool[] memory pools = tolp.getSingularityPools();
-        assertEq(pools[4].sglAssetID, 0, "TOLP_getSingularityPools: Invalid pools length in rescue mode");
+        assertEq(pools[0].sglAssetID, 0, "TOLP_getSingularityPools: Invalid pools length in rescue mode");
     }
 }

@@ -10,6 +10,8 @@ import {
 } from "test/unit/options/TapiocaOptionBroker/TobBaseTest.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import "forge-std/console.sol";
+
 contract TOB_exerciseOption is TobBaseTest {
     address constant NON_EXISTING_PAYMENT_TOKEN = address(0x1);
 
@@ -21,11 +23,7 @@ contract TOB_exerciseOption is TobBaseTest {
         _;
     }
 
-    modifier whenAmountToExerciseCapped(uint256 _amount) {
-        (uint256 eligibleAmount,,) = tob.getOTCDealDetails(1, ERC20(address(daiMock)), 0);
-
-        vm.assume(_amount < eligibleAmount);
-        vm.assume(_amount > 0);
+    modifier whenAmountToExerciseCapped() {
         _;
     }
 
@@ -54,13 +52,14 @@ contract TOB_exerciseOption is TobBaseTest {
         _;
     }
 
-    function test_RevertWhen_OptionIsExpired(uint256 __tOLPLockAmount, uint256 amountToExercise)
+    function test_RevertWhen_OptionIsExpired(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, 1)
+        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         skipEpochs(2)
         whenNotPaused
     {
+        console.log(__tOLPLockAmount);
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.OptionExpired.selector);
         tob.exerciseOption({_oTAPTokenID: 1, _paymentToken: ERC20(address(daiMock)), _tapAmount: amountToExercise});
@@ -70,10 +69,10 @@ contract TOB_exerciseOption is TobBaseTest {
         _;
     }
 
-    function test_RevertWhen_PaymentTokenOracleIsNotSet(uint256 __tOLPLockAmount, uint256 amountToExercise)
+    function test_RevertWhen_PaymentTokenOracleIsNotSet(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, 1)
+        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
     {
@@ -92,10 +91,10 @@ contract TOB_exerciseOption is TobBaseTest {
         _;
     }
 
-    function test_RevertWhen_CallerIsNotAuthorized(uint256 __tOLPLockAmount, uint256 amountToExercise)
+    function test_RevertWhen_CallerIsNotAuthorized(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, 1)
         assumeGt(__tOLPLockAmount, 0)
+        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
@@ -110,10 +109,10 @@ contract TOB_exerciseOption is TobBaseTest {
         _;
     }
 
-    function test_RevertWhen_EpochIsNotAdvanced(uint256 __tOLPLockAmount, uint256 amountToExercise)
+    function test_RevertWhen_EpochIsNotAdvanced(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, 1)
         assumeGt(__tOLPLockAmount, 0)
+        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
@@ -130,10 +129,10 @@ contract TOB_exerciseOption is TobBaseTest {
         _;
     }
 
-    function test_RevertWhen_OptionIsInCooldown(uint256 __tOLPLockAmount, uint256 amountToExercise)
+    function test_RevertWhen_OptionIsInCooldown(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, 1)
         assumeGt(__tOLPLockAmount, 0)
+        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
@@ -159,10 +158,10 @@ contract TOB_exerciseOption is TobBaseTest {
         _;
     }
 
-    function test_RevertWhen_TapAmountToBuyIsLowerThan1e18(uint256 __tOLPLockAmount, uint256 amountToExercise)
+    function test_RevertWhen_TapAmountToBuyIsLowerThan1e18(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, 1)
         assumeGt(__tOLPLockAmount, 0)
+        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
@@ -176,9 +175,10 @@ contract TOB_exerciseOption is TobBaseTest {
         tob.exerciseOption({_oTAPTokenID: 1, _paymentToken: ERC20(address(daiMock)), _tapAmount: amountToExercise});
     }
 
-    function test_WhenTapAmountIsEqualTo0(uint256 __tOLPLockAmount)
+    function test_WhenTapAmountIsEqualTo0(uint128 __tOLPLockAmount)
         external
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, 1)
+        assumeGt(__tOLPLockAmount, 0)
+        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
@@ -199,24 +199,24 @@ contract TOB_exerciseOption is TobBaseTest {
         tob.exerciseOption({_oTAPTokenID: 1, _paymentToken: ERC20(address(daiMock)), _tapAmount: amountToExercise});
     }
 
-    modifier whenTapAmountToBuyIsBiggerThan1e18(uint256 value) {
-        vm.assume(value >= 1e18);
+    modifier whenTapAmountToBuyIsBiggerThan1e18() {
         _;
     }
 
-    function test_WhenPaymentTokenOracleFailsToFetch(uint256 __tOLPLockAmount, uint256 amountToExercise)
+    function test_WhenPaymentTokenOracleFailsToFetch(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, 1)
+        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
         whenOptionIsNotInCooldown
         whenEpochIsAdvanced
-        whenTapAmountToBuyIsBiggerThan1e18(amountToExercise)
-        whenAmountToExerciseCapped(amountToExercise)
+        whenTapAmountToBuyIsBiggerThan1e18
+        whenAmountToExerciseCapped
         whenCallerIsAuthorized
     {
+        amountToExercise = _boundTapAmount(amountToExercise);
         // it reverts
         _resetPrank({caller: adminAddr});
         tob.setPaymentToken(ERC20(address(daiMock)), ITapiocaOracle(address(failingOracleMock)), bytes("420"));
@@ -226,19 +226,21 @@ contract TOB_exerciseOption is TobBaseTest {
         tob.exerciseOption({_oTAPTokenID: 1, _paymentToken: ERC20(address(daiMock)), _tapAmount: amountToExercise});
     }
 
-    function test_WhenPaymentTokenOracleSucceedToFetch(uint256 __tOLPLockAmount, uint256 amountToExercise)
+    function test_WhenPaymentTokenOracleSucceedToFetch(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, 1)
+        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
         whenEpochIsAdvanced
         whenOptionIsNotInCooldown
-        whenTapAmountToBuyIsBiggerThan1e18(amountToExercise)
-        whenAmountToExerciseCapped(amountToExercise)
+        whenTapAmountToBuyIsBiggerThan1e18
+        whenAmountToExerciseCapped
         whenCallerIsAuthorized
     {
+        amountToExercise = _boundTapAmount(amountToExercise);
+
         (uint256 eligibleAmount, uint256 paymentTokenAmount,) =
             tob.getOTCDealDetails(1, ERC20(address(daiMock)), amountToExercise);
         _paymentTokenMintAndApprove(aliceAddr, daiMock, paymentTokenAmount);
@@ -265,5 +267,10 @@ contract TOB_exerciseOption is TobBaseTest {
         _resetPrank({caller: adminAddr});
         daiMock.mintTo(_user, _amount);
         vm.startPrank(_user); // Caller is authorized
+    }
+
+    function _boundTapAmount(uint256 _tapAmount) internal returns (uint256) {
+        (uint256 eligibleAmount,,) = tob.getOTCDealDetails(1, ERC20(address(daiMock)), 0);
+        return bound(_tapAmount, 1e18, eligibleAmount);
     }
 }

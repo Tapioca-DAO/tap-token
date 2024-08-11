@@ -2,11 +2,13 @@
 pragma solidity 0.8.22;
 
 import {TobBaseTest, TapiocaOptionBroker, IERC20} from "test/unit/options/TapiocaOptionBroker/TobBaseTest.sol";
+import {TWAML} from "contracts/options/twAML.sol";
 
-contract TOB_exitPosition is TobBaseTest {
-    uint128 public constant TOLP_LOCK_DURATION = 1; // in weeks
+contract TOB_exitPosition is TobBaseTest, TWAML {
+    uint128 public TOLP_LOCK_DURATION = uint128(1 weeks); // in weeks
     uint256 public constant OTAP_TOKEN_ID = 1;
     uint256 public constant TOLP_TOKEN_ID = 1;
+    uint256 public constant VIRTUAL_TOTAL_AMOUNT = 10_000 ether; // See @TapiocaOptionBroker
 
     function test_RevertWhen_PositionDoesntExist() external {
         // it should revert
@@ -14,9 +16,7 @@ contract TOB_exitPosition is TobBaseTest {
         tob.exitPosition(OTAP_TOKEN_ID);
     }
 
-    modifier whenPositionExists(uint256 __tOLPLockAmount) {
-        _setupAndParticipate(aliceAddr, __tOLPLockAmount, TOLP_LOCK_DURATION);
-        vm.assume(__tOLPLockAmount > 0);
+    modifier whenPositionExists() {
         _;
     }
 
@@ -24,12 +24,11 @@ contract TOB_exitPosition is TobBaseTest {
         _;
     }
 
-    function test_WhenSglIsInRescueMode(uint256 __tOLPLockAmount)
-        external
-        whenPositionExists(__tOLPLockAmount)
-        whenLockIsNotExpired
-        setSglInRescue(IERC20(address(0x1)), 1)
-    {
+    function test_WhenSglIsInRescueMode(uint256 __tOLPLockAmount) external whenPositionExists whenLockIsNotExpired {
+        __tOLPLockAmount = bound(__tOLPLockAmount, 1, type(uint128).max);
+        _setupAndParticipate(aliceAddr, __tOLPLockAmount, TOLP_LOCK_DURATION);
+        _setSglInRescue(IERC20(address(0x1)), 1);
+
         (,,, uint256 cumulativeBefore) = tob.twAML(1);
         // it should continue
         tob.exitPosition(OTAP_TOKEN_ID);
@@ -40,19 +39,23 @@ contract TOB_exitPosition is TobBaseTest {
 
     function test_RevertWhen_SglIsNotInRescueMode(uint256 __tOLPLockAmount)
         external
-        whenPositionExists(__tOLPLockAmount)
+        whenPositionExists
         whenLockIsNotExpired
     {
+        __tOLPLockAmount = bound(__tOLPLockAmount, 1, type(uint128).max);
+        _setupAndParticipate(aliceAddr, __tOLPLockAmount, TOLP_LOCK_DURATION);
+
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.LockNotExpired.selector);
         tob.exitPosition(OTAP_TOKEN_ID);
     }
 
-    function test_WhenLockIsExpired(uint256 __tOLPLockAmount)
-        external
-        whenPositionExists(__tOLPLockAmount)
-        skipEpochs(1)
-    {
+    function test_WhenLockIsExpired(uint256 __tOLPLockAmount) external whenPositionExists {
+        __tOLPLockAmount =
+            bound(__tOLPLockAmount, computeMinWeight(VIRTUAL_TOTAL_AMOUNT, tob.MIN_WEIGHT_FACTOR()), type(uint128).max); // We make the min to get the min weight factor and participate in twAML
+        _setupAndParticipate(aliceAddr, __tOLPLockAmount, TOLP_LOCK_DURATION);
+        _skipEpochs(1);
+
         uint256 epoch = 1;
         address paymentToken = address(daiMock);
         (,,, uint256 cumulativeBefore) = tob.twAML(1);

@@ -11,6 +11,7 @@ contract TOB_participate is TobBaseTest, TWAML {
     uint256 constant SGL_ASSET_ID = 1; // Check TobBaseTest::createLock()
     uint128 constant WEEK_LONG = 1;
     uint128 constant LOCK_AMOUNT_100 = 100;
+    uint256 constant VIRTUAL_TOTAL_AMOUNT = 10_000 ether; // @See TapiocaOptionBroker
 
     /**
      * @notice Initialize the tests and create a lock
@@ -20,7 +21,9 @@ contract TOB_participate is TobBaseTest, TWAML {
      */
     modifier initTestsAndCreateLock(uint128 _lockAmount, uint128 _lockDuration) {
         _lockDuration = uint128(tob.EPOCH_DURATION() * WEEK_LONG * bound(_lockDuration, 1, 4));
-        _lockAmount = uint128(bound(_lockAmount, 1, type(uint128).max));
+        _lockAmount = uint128(
+            bound(_lockAmount, computeMinWeight(VIRTUAL_TOTAL_AMOUNT, tob.MIN_WEIGHT_FACTOR()), type(uint128).max)
+        );
         _initTestsAndCreateLock(_lockAmount, _lockDuration);
         _;
     }
@@ -45,11 +48,15 @@ contract TOB_participate is TobBaseTest, TWAML {
      * @notice Calls different approvals for the Pearlmit contract
      */
     modifier setupPearlmitApproval() {
+        _setupPearlmitApproval();
+        _;
+    }
+
+    function _setupPearlmitApproval() internal {
         _resetPrank({caller: aliceAddr});
         yieldBox.setApprovalForAll(address(pearlmit), true);
         tolp.approve(address(pearlmit), TOLP_TOKEN_ID);
         pearlmit.approve(721, address(tolp), TOLP_TOKEN_ID, address(tob), 1, uint48(block.timestamp + 1));
-        _;
     }
 
     function test_RevertWhen_Paused() external {
@@ -185,7 +192,7 @@ contract TOB_participate is TobBaseTest, TWAML {
     uint128 public constant NO_VOTING_POWER_DEPOSIT_AMOUNT = 1;
     uint256 public constant ENDING_EPOCH = 3;
 
-    function test_WhenLockerDoesNotHaveVotingPower(uint128 _lockDuration)
+    function test_WhenLockerDoesNotHaveVotingPower()
         external
         whenNotPaused
         whenLockNotExpired
@@ -195,9 +202,10 @@ contract TOB_participate is TobBaseTest, TWAML {
         whenLockDurationIsAMultipleOfEpochDuration
         whenPearlmitTransferSucceed
         whenMagnitudeIsInRange
-        initTestsAndCreateLock(NO_VOTING_POWER_DEPOSIT_AMOUNT, WEEK_LONG * uint128(ENDING_EPOCH))
-        setupPearlmitApproval
     {
+        uint128 _lockDuration = uint128(tob.EPOCH_DURATION() * WEEK_LONG * ENDING_EPOCH);
+        _initTestsAndCreateLock(NO_VOTING_POWER_DEPOSIT_AMOUNT, _lockDuration);
+        _setupPearlmitApproval();
         _resetPrank({caller: aliceAddr});
 
         // it should participate
@@ -228,6 +236,11 @@ contract TOB_participate is TobBaseTest, TWAML {
         initTestsAndCreateLock(_lockAmount, WEEK_LONG * uint128(ENDING_EPOCH))
         setupPearlmitApproval
     {
+        _lockDuration = uint128(tob.EPOCH_DURATION() * WEEK_LONG * bound(_lockDuration, 1, 4));
+        _lockAmount = uint128(
+            bound(_lockAmount, computeMinWeight(VIRTUAL_TOTAL_AMOUNT, tob.MIN_WEIGHT_FACTOR()), type(uint128).max)
+        );
+
         _resetPrank({caller: aliceAddr});
         uint256 cumulativeBefore = tob.EPOCH_DURATION();
 

@@ -45,8 +45,7 @@ contract TOLP_lock is TolpBaseTest {
         tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
     }
 
-    modifier whenDurationIsRight(uint128 _lockDuration) {
-        vm.assume(_lockDuration == _whenDurationIsRight(_lockDuration));
+    modifier whenDurationIsRight() {
         _;
     }
 
@@ -58,8 +57,9 @@ contract TOLP_lock is TolpBaseTest {
         external
         whenNotPaused
         whenDurationIsNotTooShort
-        whenDurationIsRight(_lockDuration)
+        whenDurationIsRight
     {
+        _lockDuration = _whenDurationIsRight(_lockDuration);
         uint128 _ybShares = 0;
         // it should revert
         vm.expectRevert(TapiocaOptionLiquidityProvision.SharesNotValid.selector);
@@ -76,10 +76,11 @@ contract TOLP_lock is TolpBaseTest {
         whenNotPaused
         whenDurationIsNotTooShort
         whenSharesBiggerThan0(_ybShares)
-        whenDurationIsRight(_lockDuration)
+        whenDurationIsRight
         registerSingularityPool
         setPoolRescue
     {
+        _lockDuration = _whenDurationIsRight(_lockDuration);
         // it should revert
         vm.expectRevert(TapiocaOptionLiquidityProvision.SingularityInRescueMode.selector);
         tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
@@ -93,10 +94,11 @@ contract TOLP_lock is TolpBaseTest {
         external
         whenNotPaused
         whenDurationIsNotTooShort
-        whenDurationIsRight(_lockDuration)
+        whenDurationIsRight
         whenSharesBiggerThan0(_ybShares)
         whenSglNotInRescueMode
     {
+        _lockDuration = _whenDurationIsRight(_lockDuration);
         // it should revert
         vm.expectRevert(TapiocaOptionLiquidityProvision.SingularityNotActive.selector);
         tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
@@ -111,11 +113,12 @@ contract TOLP_lock is TolpBaseTest {
         external
         whenNotPaused
         whenDurationIsNotTooShort
-        whenDurationIsRight(_lockDuration)
+        whenDurationIsRight
         whenSharesBiggerThan0(_ybShares)
         whenSglNotInRescueMode
         whenSglIsActive
     {
+        _lockDuration = _whenDurationIsRight(_lockDuration);
         // it should revert
         // It should be TapiocaOptionLiquidityProvision.TransferFailed.selector,
         // for simplicity we use vm.expectRevert() if we don't permit it
@@ -137,12 +140,13 @@ contract TOLP_lock is TolpBaseTest {
         external
         whenNotPaused
         whenDurationIsNotTooShort
-        whenDurationIsRight(_lockDuration)
+        whenDurationIsRight
         whenSharesBiggerThan0(_ybShares)
         whenSglNotInRescueMode
         whenSglIsActive
         whenTransferSucceeds(_ybShares)
     {
+        _lockDuration = _whenDurationIsRight(_lockDuration);
         // it should emit Mint event
         vm.expectEmit(true, true, true, false);
         emit Mint(aliceAddr, SGL_ASSET_ID, address(SGL_TO_LOCK), EXPECTED_TOKEN_ID, _lockDuration, _ybShares);

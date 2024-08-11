@@ -13,6 +13,7 @@ contract TOLP_unlock is TolpBaseTest {
         external
         initAndCreateLock(aliceAddr, _weight, _lockDuration)
     {
+        _lockDuration = _boundLockDuration(_lockDuration);
         vm.prank(adminAddr);
         tolp.setPause(true);
         // it should revert
@@ -29,6 +30,7 @@ contract TOLP_unlock is TolpBaseTest {
         whenNotPaused
         initAndCreateLock(aliceAddr, _weight, _lockDuration)
     {
+        _lockDuration = _boundLockDuration(_lockDuration);
         skip(_lockDuration);
         tolp.unlock(TOLP_TOKEN_ID, SGL_ADDRESS);
         // it should revert
@@ -102,6 +104,7 @@ contract TOLP_unlock is TolpBaseTest {
     }
 
     modifier whenLockIsExpired(uint128 _lockDuration) {
+        _lockDuration = _boundLockDuration(_lockDuration);
         skip(_lockDuration);
         _;
     }

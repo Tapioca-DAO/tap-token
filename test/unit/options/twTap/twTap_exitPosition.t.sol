@@ -46,6 +46,8 @@ contract twTap_exitPosition is twTapBaseTest, TWAML {
         whenLockNotExpired
         whenParticipating(_lockAmount, _lockDuration)
     {
+        vm.prank(adminAddr);
+        twTap.setRescueMode(true);
         // it should continue
         twTap.exitPosition(TWTAP_TOKEN_ID);
     }
@@ -83,7 +85,8 @@ contract twTap_exitPosition is twTapBaseTest, TWAML {
     {
         (, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
         // Less than the minimum weight
-        _lockAmount = bound(_lockAmount, 1, computeMinWeight(twTap.VIRTUAL_TOTAL_AMOUNT(), twTap.MIN_WEIGHT_FACTOR()));
+        _lockAmount =
+            bound(_lockAmount, 1, computeMinWeight(twTap.VIRTUAL_TOTAL_AMOUNT(), twTap.MIN_WEIGHT_FACTOR()) - 1);
         _participate(_lockAmount, _lockDuration);
         return (_lockAmount, _lockDuration);
     }

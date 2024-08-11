@@ -10,7 +10,7 @@ contract TOB_getOptionPosition is TobBaseTest {
         external
         tobInit
         registerSingularityPool
-        tobParticipate(aliceAddr, 1, 0)
+        tobParticipate(aliceAddr, 1, uint128(tob.EPOCH_DURATION()))
     {
         // it should return the right option position
         (LockPosition memory tOLPLockPosition, TapOption memory oTAPPosition,) = tob.getOptionPosition(1, 0);

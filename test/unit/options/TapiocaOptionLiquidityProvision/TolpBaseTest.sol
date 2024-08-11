@@ -91,10 +91,14 @@ contract TolpBaseTest is UnitBaseTest {
      */
     modifier initAndCreateLock(address _user, uint256 _weight, uint128 _lockDuration) {
         _registerSingularityPool();
-        vm.assume(_lockDuration == uint128(bound(_lockDuration, tolp.EPOCH_DURATION(), tolp.MAX_LOCK_DURATION())));
+        _lockDuration = _boundLockDuration(_lockDuration);
         vm.assume(_weight != 0);
         _createLock(_user, _weight, _lockDuration);
         _;
+    }
+
+    function _boundLockDuration(uint128 _lockDuration) internal returns (uint128) {
+        return uint128(bound(_lockDuration, tolp.EPOCH_DURATION(), tolp.MAX_LOCK_DURATION()));
     }
 
     /**
@@ -116,11 +120,15 @@ contract TolpBaseTest is UnitBaseTest {
     }
 
     modifier setSglInRescue(IERC20 sgl, uint256 assetId) {
+        _setSglInRescue(sgl, assetId);
+        _;
+    }
+
+    function _setSglInRescue(IERC20 sgl, uint256 assetId) internal {
         vm.startPrank(adminAddr);
         tolp.requestSglPoolRescue(assetId);
         vm.warp(block.timestamp + tolp.rescueCooldown());
         tolp.activateSGLPoolRescue(sgl);
         vm.stopPrank();
-        _;
     }
 }

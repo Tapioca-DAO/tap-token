@@ -153,12 +153,22 @@ contract TobBaseTest is TolpBaseTest {
     }
 
     modifier skipEpochs(uint256 _epochs) {
+        _skipEpochs(_epochs);
+        _;
+    }
+
+    function _skipEpochs(uint256 _epochs) internal {
         vm.startPrank(adminAddr);
         for (uint256 i = 0; i < _epochs; i++) {
             vm.warp(block.timestamp + 1 weeks);
             tob.newEpoch();
         }
         vm.stopPrank();
-        _;
+    }
+
+    function _boundValues(uint128 _lockAmount, uint128 _lockDuration) internal returns (uint128, uint128) {
+        _lockAmount = uint128(bound(_lockAmount, 1e18, 1e40));
+        _lockDuration = uint128(tob.EPOCH_DURATION() * bound(_lockDuration, 1, 4));
+        return (_lockAmount, _lockDuration);
     }
 }
