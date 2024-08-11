@@ -98,7 +98,9 @@ contract TolpBaseTest is UnitBaseTest {
     }
 
     function _boundLockDuration(uint128 _lockDuration) internal returns (uint128) {
-        return uint128(bound(_lockDuration, tolp.EPOCH_DURATION(), tolp.MAX_LOCK_DURATION()));
+        uint256 epochDuration = tolp.EPOCH_DURATION();
+        uint256 maxLockDuration = tolp.MAX_LOCK_DURATION();
+        return uint128(bound(_lockDuration, 1, maxLockDuration / epochDuration) * epochDuration);
     }
 
     /**

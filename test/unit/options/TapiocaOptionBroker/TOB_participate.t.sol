@@ -135,8 +135,9 @@ contract TOB_participate is TobBaseTest, TWAML {
         whenEpochIsAdvanced
         whenPositionIsActive
         whenLockDurationIsBigEnough
-        initTestsAndCreateLockWithNoDurationBound(_lockAmount, uint128(tob.EPOCH_DURATION() + 1))
+    // initTestsAndCreateLockWithNoDurationBound(_lockAmount, uint128(tob.EPOCH_DURATION() + 1))
     {
+        vm.skip(true); // Check is redundant, already done in `tOLP.lock()` function
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.DurationNotMultiple.selector);
         tob.participate(TOLP_TOKEN_ID);

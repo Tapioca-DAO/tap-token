@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 import {twTapBaseTest, TwTAP} from "test/unit/options/twTap/twTapBaseTest.sol";
-import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract twTap_ownerActions is twTapBaseTest {

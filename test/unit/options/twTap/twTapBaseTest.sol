@@ -9,8 +9,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /**
  * Core
  */
-import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
-import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {ITapiocaOracle} from "tap-utils/interfaces/periph/ITapiocaOracle.sol";
+import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
 
 /**
  * Tests

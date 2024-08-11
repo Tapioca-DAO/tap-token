@@ -16,7 +16,7 @@ import {
     IPearlmit,
     ICluster
 } from "test/unit/options/TapiocaOptionLiquidityProvision/TolpBaseTest.sol";
-import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
+import {ITapiocaOracle} from "tap-utils/interfaces/periph/ITapiocaOracle.sol";
 import {TapiocaOptionBroker, OTAP} from "test/unit/UnitBaseTest.sol";
 import {OracleMock} from "tapioca-mocks/OracleMock.sol";
 import {ERC20Mock} from "tapioca-mocks/ERC20Mock.sol";

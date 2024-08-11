@@ -2,8 +2,8 @@
 pragma solidity 0.8.22;
 
 import {TobBaseTest, TapiocaOptionBroker} from "test/unit/options/TapiocaOptionBroker/TobBaseTest.sol";
-import {ITapiocaOracle} from "tapioca-periph/interfaces/periph/ITapiocaOracle.sol";
-import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {ITapiocaOracle} from "tap-utils/interfaces/periph/ITapiocaOracle.sol";
+import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract TOB_ownerActions is TobBaseTest {

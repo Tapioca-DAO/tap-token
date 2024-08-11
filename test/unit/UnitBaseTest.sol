@@ -13,13 +13,13 @@ import {OTAP} from "contracts/options/oTAP.sol";
 /**
  * Peripheral contracts
  */
-import {TapiocaOmnichainExtExec} from "tapioca-periph/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
-import {Pearlmit, IPearlmit} from "tapioca-periph/pearlmit/Pearlmit.sol";
-import {ICluster} from "tapioca-periph/interfaces/periph/ICluster.sol";
+import {TapiocaOmnichainExtExec} from "tap-utils/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
+import {Pearlmit, IPearlmit} from "tap-utils/pearlmit/Pearlmit.sol";
+import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
 import {IWrappedNative} from "yieldbox/interfaces/IWrappedNative.sol";
 import {YieldBox1155Mock} from "tapioca-mocks/YieldBox1155Mock.sol";
 import {YieldBoxURIBuilder} from "yieldbox/YieldBoxURIBuilder.sol";
-import {Cluster} from "tapioca-periph/Cluster/Cluster.sol";
+import {Cluster} from "tap-utils/Cluster/Cluster.sol";
 import {ITapToken} from "contracts/tokens/ITapToken.sol";
 import {YieldBox} from "yieldbox/YieldBox.sol";
 
