@@ -1,0 +1,12 @@
+TOLP_unregisterSingularity
+├── when not owner
+│   └── it should revert
+├── when assetId 0
+│   └── it should revert
+├── when not in rescue
+│   └── it should revert
+└── it should unregister the singularity
+    ├── delete the activeSingularities
+    ├── delete sglAssetIDToAddress
+    ├── delete sglRescueRequest
+    └── delete singularities array

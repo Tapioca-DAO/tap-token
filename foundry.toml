@@ -13,9 +13,16 @@ optimizer_runs = 9999
 remappings = [
 	"solidity-bytes-utils/=node_modules/@layerzerolabs/solidity-bytes-utils/",
 	"tapioca-sdk/=gitmodule/tapioca-sdk/contracts/",
+	"yieldbox/=lib/tap-yieldbox/contracts/",
 	"tap-utils/=lib/tap-utils/contracts/",
 	"permitc/=lib/tap-utils/lib/permitc/src/", # Needs to be init in the periph repo
+	"tapioca-mocks/=gitmodule/tapioca-mocks/contracts/",
 ]
+
+[profile.default.fuzz]
+max_test_rejects = 10_000
+seed = "0xee1d0f7d9556539a9c0e26aed5e63556"
+runs = 1000
 
 
 [etherscan]

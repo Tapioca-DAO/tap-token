@@ -11,6 +11,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
+import {ITwTapMagnitudeMultiplier} from "contracts/interfaces/IMagnitudeMultiplier.sol";
 import {IPearlmit, PearlmitHandler} from "tap-utils/pearlmit/PearlmitHandler.sol";
 import {ERC721NftLoader} from "contracts/erc721NftLoader/ERC721NftLoader.sol";
 import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
@@ -97,6 +98,7 @@ contract TwTAP is
     uint256 public decayRateBps;
     /// @notice Total amount of decay amassed. Can be reset to 0
     uint256 public decayAmassed;
+    uint256 public lastEpochCumulative; // Last cumulative for the last epoch
 
     mapping(uint256 => Participation) public participants; // tokenId => part.
 
@@ -138,9 +140,12 @@ contract TwTAP is
 
     ICluster public cluster;
 
-    bool rescueMode;
+    bool public rescueMode;
     uint256 public emergencySweepCooldown = 2 days;
     uint256 public lastEmergencySweep;
+
+    ITwTapMagnitudeMultiplier public twTapMagnitudeMultiplier;
+    uint256 constant MULTIPLIER_PRECISION = 1e18;
 
     error NotAuthorized();
     error AdvanceWeekFirst();
@@ -156,6 +161,7 @@ contract TwTAP is
     error DurationNotMultiple(); // Lock duration should be a multiple of 1 EPOCH
     error EmergencySweepCooldownNotReached();
     error EpochTooLow();
+    error MaxLockCapReached();
 
     /// =====-------======
     constructor(address payable _tapOFT, IPearlmit _pearlmit, address _owner)
@@ -394,8 +400,15 @@ contract TwTAP is
         TWAMLPool memory pool = twAML;
 
         uint256 magnitude = computeMagnitude(_duration, pool.cumulative);
-        // Revert if the lock 4x the cumulative
-        if (magnitude >= (pool.cumulative * growthCapBps) / 1e4) revert NotValid();
+
+        {
+            uint256 _lastEpochCumulative = lastEpochCumulative;
+            if (_lastEpochCumulative == 0) {
+                _lastEpochCumulative = EPOCH_DURATION;
+            }
+            // Revert if the lock is x time bigger than the cumulative
+            if (magnitude >= (_lastEpochCumulative * growthCapBps) / 1e4) revert NotValid();
+        }
         uint256 multiplier = computeTarget(dMIN, dMAX, magnitude * _amount, pool.cumulative * pool.totalDeposited);
 
         // Calculate twAML voting weight
@@ -409,10 +422,25 @@ contract TwTAP is
             divergenceForce = _duration >= pool.cumulative;
 
             if (divergenceForce) {
-                pool.cumulative += pool.averageMagnitude;
+                uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;
+                if (address(twTapMagnitudeMultiplier) != address(0)) {
+                    aMagnitudeMultiplier =
+                        twTapMagnitudeMultiplier.getPositiveMagnitudeMultiplier(_participant, _amount, _duration);
+                }
+
+                pool.cumulative += (pool.averageMagnitude * aMagnitudeMultiplier / MULTIPLIER_PRECISION);
             } else {
                 if (pool.cumulative > pool.averageMagnitude) {
-                    pool.cumulative -= pool.averageMagnitude;
+                    uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;
+                    if (address(twTapMagnitudeMultiplier) != address(0)) {
+                        aMagnitudeMultiplier =
+                            twTapMagnitudeMultiplier.getNegativeMagnitudeMultiplier(_participant, _amount, _duration);
+                    }
+
+                    pool.cumulative -= (pool.averageMagnitude * aMagnitudeMultiplier / MULTIPLIER_PRECISION);
+                    if (pool.cumulative < EPOCH_DURATION) {
+                        pool.cumulative = EPOCH_DURATION;
+                    }
                 } else {
                     pool.cumulative = EPOCH_DURATION;
                 }
@@ -517,6 +545,8 @@ contract TwTAP is
     function advanceWeek(uint256 _limit) public nonReentrant {
         if (!cluster.hasRole(msg.sender, keccak256("NEW_EPOCH"))) revert NotAuthorized();
 
+        lastEpochCumulative = twAML.cumulative;
+
         uint256 week = lastProcessedWeek;
         uint256 goal = currentWeek();
         unchecked {
@@ -570,6 +600,11 @@ contract TwTAP is
     // =========
     //   OWNER
     // =========
+
+    function setTwTapMagnitudeMultiplier(ITwTapMagnitudeMultiplier _twTapMagnitudeMultiplier) external onlyOwner {
+        twTapMagnitudeMultiplier = _twTapMagnitudeMultiplier;
+    }
+
     /**
      * @notice Set the rescue mode.
      */
@@ -689,10 +724,17 @@ contract TwTAP is
      * @dev Only the owner with role `TWTAP_EMERGENCY_SWEEP` can call this function.
      */
     function emergencySweepLocks() external onlyOwner {
-        if (block.timestamp < lastEmergencySweep + emergencySweepCooldown) revert EmergencySweepCooldownNotReached();
+        if (lastEmergencySweep == 0 || block.timestamp < lastEmergencySweep + emergencySweepCooldown) {
+            revert EmergencySweepCooldownNotReached();
+        }
+        // TODO post-BTT: Already using onlyOwner, do we need role check?
         if (!cluster.hasRole(msg.sender, keccak256("TWTAP_EMERGENCY_SWEEP"))) revert NotAuthorized();
 
         tapOFT.transfer(owner(), tapOFT.balanceOf(address(this)));
+
+        // TODO post-BTT: Do we need lastEmergencySweep? It's reset in 2 emergency funcs,
+        // if used with a cooldown, will have to wait double the time
+        lastEmergencySweep = 0;
     }
 
     /**
@@ -702,7 +744,10 @@ contract TwTAP is
      * @dev Only the owner with role `TWTAP_EMERGENCY_SWEEP` can call this function.
      */
     function emergencySweepRewards() external onlyOwner {
-        if (block.timestamp < lastEmergencySweep + emergencySweepCooldown) revert EmergencySweepCooldownNotReached();
+        if (lastEmergencySweep == 0 || block.timestamp < lastEmergencySweep + emergencySweepCooldown) {
+            revert EmergencySweepCooldownNotReached();
+        }
+        // TODO post-BTT: Already using onlyOwner, do we need role check?
         if (!cluster.hasRole(msg.sender, keccak256("TWTAP_EMERGENCY_SWEEP"))) revert NotAuthorized();
 
         uint256 len = rewardTokens.length;
@@ -713,6 +758,9 @@ contract TwTAP is
                 token.safeTransfer(owner(), token.balanceOf(address(this)));
             }
         }
+        // TODO post-BTT: Do we need lastEmergencySweep? It's reset in 2 emergency funcs,
+        // if used with a cooldown, will have to wait double the time
+        lastEmergencySweep = 0;
     }
 
     // ============

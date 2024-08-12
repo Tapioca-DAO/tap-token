@@ -12,6 +12,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // Tapioca
 import {TapiocaOptionLiquidityProvision, LockPosition, SingularityPool} from "./TapiocaOptionLiquidityProvision.sol";
+import {ITobMagnitudeMultiplier} from "contracts/interfaces/IMagnitudeMultiplier.sol";
 import {IPearlmit, PearlmitHandler} from "tap-utils/pearlmit/PearlmitHandler.sol";
 import {ITapiocaOracle} from "tap-utils/interfaces/periph/ITapiocaOracle.sol";
 import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
@@ -81,6 +82,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     uint256 constant dMIN = 0;
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
 
+    uint256 public maxEpochCoeff = 4; // Maximum epoch coefficient for the cumulative
+
     /// @notice starts time for emissions
     /// @dev initialized in the constructor with block.timestamp
     uint256 public emissionsStartTime;
@@ -89,7 +92,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     mapping(uint256 epoch => mapping(uint256 sglAssetID => int256 netAmount)) public netDepositedForEpoch;
 
     /// @notice 2x growth cap per epoch
-    uint256 private growthCap = 2;
+    uint256 private growthCapBps = 20000; // 150%, 2x
     /// @notice The minimum amount of difference between 2 epochs to activate a decay
     /// If epoch 2 - epoch 1 < decayActivationBps, no decay will be activated
     uint256 public decayActivationBps;
@@ -97,6 +100,12 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     uint256 public decayRateBps;
     /// @notice Total amount of decay amassed. Can be reset to 0
     mapping(uint256 sglAssetID => uint256 decayAmount) public decayAmassed;
+    /// @notice Cumulative for each epoch
+    mapping(uint256 sglAssetID => uint256 cumulative) public lastEpochCumulativeForSgl;
+
+    /// @notice The maximum epoch coefficient for the cumulative
+    ITobMagnitudeMultiplier public tobMagnitudeMultiplier;
+    uint256 constant MULTIPLIER_PRECISION = 1e18;
 
     /// =====-------======
 
@@ -302,14 +311,17 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     function participate(uint256 _tOLPTokenID) external whenNotPaused nonReentrant returns (uint256 oTAPTokenID) {
         // Compute option parameters
         LockPosition memory lock = tOLP.getLock(_tOLPTokenID);
+        // TODO post-BTT - Lock entry on tOLP and oTAP are different, should lockExpiry use oTAP entry instead of tOLP?
         uint128 lockExpiry = lock.lockTime + lock.lockDuration;
 
         if (block.timestamp >= lockExpiry) revert LockExpired();
         if (_timestampToWeek(block.timestamp) > epoch) revert AdvanceEpochFirst();
 
+        // TODO post-BTT - Check for lock expiry is redundant, as it is checked in `_isPositionActive()`
         bool isPositionActive = _isPositionActive(lock);
         if (!isPositionActive) revert OptionExpired();
 
+        // TODO post-BTT - Check is redundant, already done in `tOLP.lock()`
         if (lock.lockDuration < EPOCH_DURATION) revert DurationTooShort();
         if (lock.lockDuration % EPOCH_DURATION != 0) revert DurationNotMultiple();
 
@@ -333,8 +345,16 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
             target = computeTarget(dMIN, dMAX, magnitude * uint256(lock.ybShares), pool.cumulative * totalPoolShares);
         }
 
-        // Revert if the lock is x time bigger than the cumulative
-        if (magnitude > pool.cumulative * growthCap) revert TooLong();
+        // Revert if the lock 4x the last epoch cumulative
+        {
+            uint256 lastEpochCumulative = lastEpochCumulativeForSgl[lock.sglAssetID]; // Get the last epoch cumulative
+            if (lastEpochCumulative == 0) {
+                lastEpochCumulative = EPOCH_DURATION;
+            }
+
+            // Revert if the lock is x time bigger than the cumulative
+            if (magnitude > (lastEpochCumulative * growthCapBps) / 1e4) revert TooLong();
+        }
 
         bool divergenceForce;
         // Participate in twAMl voting
@@ -347,10 +367,23 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
             // Compute and save new cumulative
             divergenceForce = lock.lockDuration >= pool.cumulative;
             if (divergenceForce) {
-                pool.cumulative += pool.averageMagnitude;
+                uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;
+                if (address(tobMagnitudeMultiplier) != address(0)) {
+                    aMagnitudeMultiplier = tobMagnitudeMultiplier.getPositiveMagnitudeMultiplier(_tOLPTokenID);
+                }
+
+                pool.cumulative += (pool.averageMagnitude * aMagnitudeMultiplier / MULTIPLIER_PRECISION);
             } else {
                 if (pool.cumulative > pool.averageMagnitude) {
-                    pool.cumulative -= pool.averageMagnitude;
+                    uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;
+                    if (address(tobMagnitudeMultiplier) != address(0)) {
+                        aMagnitudeMultiplier = tobMagnitudeMultiplier.getNegativeMagnitudeMultiplier(_tOLPTokenID);
+                    }
+
+                    pool.cumulative -= (pool.averageMagnitude * aMagnitudeMultiplier / MULTIPLIER_PRECISION);
+                    if (pool.cumulative < EPOCH_DURATION) {
+                        pool.cumulative = EPOCH_DURATION;
+                    }
                 } else {
                     pool.cumulative = EPOCH_DURATION;
                 }
@@ -477,6 +510,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         // Get eligible OTC amount
         uint256 gaugeTotalForEpoch = singularityGauges[cachedEpoch][tOLPLockPosition.sglAssetID];
         uint256 netAmount = uint256(netDepositedForEpoch[cachedEpoch][tOLPLockPosition.sglAssetID]);
+        // TODO post-BTT - Check is useless, TOLP forces a minimum lock amount
         if (netAmount == 0) revert NoLiquidity();
         uint256 eligibleTapAmount = muldiv(tOLPLockPosition.ybShares, gaugeTotalForEpoch, netAmount);
         eligibleTapAmount -= oTAPCalls[_oTAPTokenID][cachedEpoch]; // Subtract already exercised amount
@@ -500,10 +534,18 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (_timestampToWeek(block.timestamp) <= epoch) revert TooSoon();
 
         uint256[] memory singularities = tOLP.getSingularities();
-        if (singularities.length == 0) revert NoActiveSingularities();
+        uint256 sglLen = singularities.length;
+        if (sglLen == 0) revert NoActiveSingularities();
 
         epoch++;
         _decayCumulative(); // Decay the cumulative if needed, always called after epoch++
+
+        // Update the lastEpochCumulativeForSgl on each active singularity
+        for (uint256 i; i < sglLen; i++) {
+            uint256 sglAssetId = singularities[i];
+            TWAMLPool memory twAMLPool = twAML[sglAssetId];
+            lastEpochCumulativeForSgl[sglAssetId] = twAMLPool.cumulative;
+        }
 
         // Extract TAP + emit to gauges
         uint256 epochTAP = tapOFT.emitForWeek();
@@ -528,6 +570,14 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     // =========
     //   OWNER
     // =========
+
+    function setTobMagnitudeMultiplier(ITobMagnitudeMultiplier _tobMagnitudeMultiplier) external onlyOwner {
+        tobMagnitudeMultiplier = _tobMagnitudeMultiplier;
+    }
+
+    function setMaxEpochCoeff(uint256 _maxEpochCoeff) external onlyOwner {
+        maxEpochCoeff = _maxEpochCoeff;
+    }
 
     /**
      * @notice Set the `VIRTUAL_TOTAL_AMOUNT` state variable.
@@ -615,8 +665,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /**
      * @notice Set the growth cap for the next epoch.
      */
-    function setGrowthCap(uint256 _growthCap) external onlyOwner {
-        growthCap = _growthCap;
+    function setGrowthCapBps(uint256 _growthCapBps) external onlyOwner {
+        growthCapBps = _growthCapBps;
     }
 
     /**
@@ -735,6 +785,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
             if (isErr) revert TransferFailed();
         }
         uint256 balAfter = _paymentToken.balanceOf(address(this));
+        // TODO post-BTT - Check is useless, as the transfer will revert if it fails
         if (balAfter - balBefore != discountedPaymentAmount) {
             revert TransferFailed();
         }

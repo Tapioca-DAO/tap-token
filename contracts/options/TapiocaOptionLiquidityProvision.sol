@@ -111,6 +111,8 @@ contract TapiocaOptionLiquidityProvision is
     error NotValid();
     error EmergencySweepCooldownNotReached();
     error TooBig();
+    error DurationNotMultiple();
+    error BrokerAlreadySet();
 
     constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _penrose, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
@@ -241,6 +243,7 @@ contract TapiocaOptionLiquidityProvision is
 
         if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
         if (_lockDuration > MAX_LOCK_DURATION) revert DurationTooLong();
+        if (_lockDuration % EPOCH_DURATION != 0) revert DurationNotMultiple();
 
         if (_ybShares == 0) revert SharesNotValid();
 
@@ -296,6 +299,7 @@ contract TapiocaOptionLiquidityProvision is
             }
         }
 
+        // TODO remove? This is an assertion, and should never happen
         if (sgl.sglAssetID != lockPosition.sglAssetID) {
             revert InvalidSingularity();
         }
@@ -325,6 +329,9 @@ contract TapiocaOptionLiquidityProvision is
      * @notice Sets the Tapioca Option Broker address
      */
     function setTapiocaOptionBroker(address _tob) external onlyOwner {
+        if (tapiocaOptionBroker != address(0)) {
+            revert BrokerAlreadySet();
+        }
         tapiocaOptionBroker = _tob;
     }
 

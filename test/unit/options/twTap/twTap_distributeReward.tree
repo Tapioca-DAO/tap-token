@@ -1,0 +1,8 @@
+twTap_distributeReward
+├── when week not advanced
+│   └── it should revert
+├── when amount is zero
+│   └── it should revert
+├── when reward token is zero
+│   └── it should revert
+└── it should distribute the reward
