@@ -53,7 +53,7 @@ contract TolpBaseTest is UnitBaseTest {
     function setUp() public virtual override {
         super.setUp();
 
-        tolp = createTolpInstance(address(yieldBox), 7 days, IPearlmit(address(pearlmit)), adminAddr);
+        tolp = createTolpInstance(address(yieldBox), 7 days, IPearlmit(address(pearlmit)), address(0x0), adminAddr);
     }
 
     /**

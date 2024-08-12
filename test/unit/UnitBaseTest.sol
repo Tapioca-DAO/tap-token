@@ -70,12 +70,15 @@ contract UnitBaseTest is TestHelper {
     /**
      * Tap Token core contracts
      */
-    function createTolpInstance(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _owner)
-        internal
-        returns (TapiocaOptionLiquidityProvision)
-    {
+    function createTolpInstance(
+        address _yieldBox,
+        uint256 _epochDuration,
+        IPearlmit _pearlmit,
+        address _penrose,
+        address _owner
+    ) internal returns (TapiocaOptionLiquidityProvision) {
         TapiocaOptionLiquidityProvision tolp =
-            new TapiocaOptionLiquidityProvision(_yieldBox, _epochDuration, _pearlmit, _owner);
+            new TapiocaOptionLiquidityProvision(_yieldBox, _epochDuration, _pearlmit, _penrose, _owner);
 
         vm.startPrank(_owner);
         tolp.setCluster(ICluster(address(new Cluster(0, _owner))));

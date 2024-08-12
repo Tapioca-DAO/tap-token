@@ -407,7 +407,7 @@ contract TwTAP is
                 _lastEpochCumulative = EPOCH_DURATION;
             }
             // Revert if the lock is x time bigger than the cumulative
-            if (magnitude >= (_lastEpochCumulative * growthCapBps) / 1e4) revert NotValid();
+            if (magnitude > (_lastEpochCumulative * growthCapBps) / 1e4) revert NotValid();
         }
         uint256 multiplier = computeTarget(dMIN, dMAX, magnitude * _amount, pool.cumulative * pool.totalDeposited);
 
