@@ -13,3 +13,6 @@
 [submodule "lib/tap-utils"]
 	path = lib/tap-utils
 	url = https://github.com/Tapioca-DAO/tap-utils
+[submodule "lib/tap-yieldbox"]
+	path = lib/tap-yieldbox
+	url = https://github.com/Tapioca-DAO/tap-yieldbox
