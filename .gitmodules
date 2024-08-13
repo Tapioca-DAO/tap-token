@@ -16,3 +16,6 @@
 [submodule "lib/tap-yieldbox"]
 	path = lib/tap-yieldbox
 	url = https://github.com/Tapioca-DAO/tap-yieldbox
+[submodule "lib/Tapioca-bar"]
+	path = lib/Tapioca-bar
+	url = https://github.com/Tapioca-DAO/Tapioca-bar
