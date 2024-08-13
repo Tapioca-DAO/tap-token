@@ -177,7 +177,9 @@ contract TwTAP is
         maxRewardTokens = 30;
 
         // Seed the cumulative with 4 weeks of magnitude
-        twAML.cumulative = 4 * EPOCH_DURATION;
+        uint256 seedEpochDuration = 4 * EPOCH_DURATION;
+        twAML.cumulative = seedEpochDuration;
+        lastEpochCumulative = seedEpochDuration;
     }
 
     // ==========
@@ -401,14 +403,8 @@ contract TwTAP is
 
         uint256 magnitude = computeMagnitude(_duration, pool.cumulative);
 
-        {
-            uint256 _lastEpochCumulative = lastEpochCumulative;
-            if (_lastEpochCumulative == 0) {
-                _lastEpochCumulative = EPOCH_DURATION;
-            }
-            // Revert if the lock is x time bigger than the cumulative
-            if (magnitude > (_lastEpochCumulative * growthCapBps) / 1e4) revert NotValid();
-        }
+        // Revert if the lock is x time bigger than the cumulative
+        if (magnitude > (lastEpochCumulative * growthCapBps) / 1e4) revert NotValid();
         uint256 multiplier = computeTarget(dMIN, dMAX, magnitude * _amount, pool.cumulative * pool.totalDeposited);
 
         // Calculate twAML voting weight
