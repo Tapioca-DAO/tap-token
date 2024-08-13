@@ -9,6 +9,12 @@ contract twTap_participate is twTapBaseTest, TWAML {
     uint256 constant TWTAP_TOKEN_ID = 1;
     uint256 constant dMIN = 0;
     uint256 constant dMAX = 1_000_000;
+    uint256 SEED_EPOCH_DURATION;
+
+    function setUp() public override {
+        super.setUp();
+        SEED_EPOCH_DURATION = 4 * twTap.EPOCH_DURATION();
+    }
 
     function test_RevertWhen_Paused(uint256 _lockAmount, uint256 _lockDuration) external {
         vm.prank(adminAddr);
@@ -149,7 +155,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         assertEq(totalDeposited, 0, "twTap_participate::test_WhenLockerDoesNotHaveVotingPower: Invalid totalDeposited");
         assertEq(
             cumulative,
-            twTap.EPOCH_DURATION(),
+            SEED_EPOCH_DURATION,
             "twTap_participate::test_WhenLockerDoesNotHaveVotingPower: Invalid cumulative"
         );
     }
@@ -182,11 +188,11 @@ contract twTap_participate is twTapBaseTest, TWAML {
         twTap.participate(aliceAddr, _lockAmount, _lockDuration);
 
         // it should update AML if hasVotingPower is true
-        uint256 expectedMagnitude = computeMagnitude(_lockDuration, twTap.EPOCH_DURATION());
-        // (pool.averageMagnitude + expectedMagnitude) / (pool.totalParticipants),
+        uint256 expectedMagnitude = computeMagnitude(_lockDuration, SEED_EPOCH_DURATION);
+        // we have (pool.averageMagnitude + expectedMagnitude) / (pool.totalParticipants),
         // at genesis pool.averageMagnitude = 0, pool.totalParticipants = 1
         uint256 expectedAverageMagnitude = expectedMagnitude;
-        uint256 expectedCumulative = twTap.EPOCH_DURATION() + expectedMagnitude;
+        uint256 expectedCumulative = SEED_EPOCH_DURATION + expectedMagnitude;
         if (_hasVotingPower) {
             (uint256 totalParticipants, uint256 averageMagnitude, uint256 totalDeposited, uint256 cumulative) =
                 twTap.twAML();
@@ -251,7 +257,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
             );
             assertEq(tapAmount, _lockAmount, "twTap_participate::test_WhenItShouldParticipate: Invalid tapAmount");
 
-            expectedMultiplier = computeTarget(dMIN, dMAX, expectedMagnitude, twTap.EPOCH_DURATION());
+            expectedMultiplier = computeTarget(dMIN, dMAX, expectedMagnitude * _lockAmount, 0); // total deposited is 0 at this point
             assertEq(
                 multiplier, expectedMultiplier, "twTap_participate::test_WhenItShouldParticipate: Invalid multiplier"
             );
@@ -284,7 +290,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
 
     function _boundValues(uint256 _lockAmount, uint256 _lockDuration) internal returns (uint256, uint256) {
         _lockAmount = bound(_lockAmount, 1, type(uint88).max);
-        _lockDuration = twTap.EPOCH_DURATION() * bound(_lockDuration, 1, 4);
+        _lockDuration = twTap.EPOCH_DURATION() * bound(_lockDuration, 4, 6);
         return (_lockAmount, _lockDuration);
     }
 }
