@@ -12,11 +12,11 @@ optimizer_runs = 9999
 
 remappings = [
 	"solidity-bytes-utils/=node_modules/@layerzerolabs/solidity-bytes-utils/",
-	"tapioca-sdk/=gitmodule/tapioca-sdk/contracts/",
+	"tapioca-sdk/=lib/tapioca-sdk/contracts/",
 	"yieldbox/=lib/tap-yieldbox/contracts/",
 	"tap-utils/=lib/tap-utils/contracts/",
 	"permitc/=lib/tap-utils/lib/permitc/src/", # Needs to be init in the periph repo
-	"tapioca-mocks/=gitmodule/tapioca-mocks/contracts/",
+	"tapioca-mocks/=lib/tapioca-mocks/contracts/",
 ]
 
 [profile.default.fuzz]
