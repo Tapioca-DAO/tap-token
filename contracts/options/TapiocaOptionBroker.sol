@@ -92,7 +92,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     mapping(uint256 epoch => mapping(uint256 sglAssetID => int256 netAmount)) public netDepositedForEpoch;
 
     /// @notice 2x growth cap per epoch
-    uint256 private growthCapBps = 20000; // 150%, 2x
+    uint256 private growthCapBps = 20000; // 200%
     /// @notice The minimum amount of difference between 2 epochs to activate a decay
     /// If epoch 2 - epoch 1 < decayActivationBps, no decay will be activated
     uint256 public decayActivationBps;
@@ -425,7 +425,6 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         // Check if debt ratio is below threshold, if so bypass lock expiration
         if (tOLP.canLockWithDebt(oTAP.ownerOf(_oTAPTokenID), uint256(lock.sglAssetID), uint256(lock.ybShares))) {
             // If SGL is in rescue, bypass the lock expiration
-            isSGLInRescueMode = true;
             if (!isSGLInRescueMode) {
                 if (block.timestamp < lock.lockTime + lock.lockDuration) {
                     revert LockNotExpired();
