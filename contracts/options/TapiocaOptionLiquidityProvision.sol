@@ -113,6 +113,7 @@ contract TapiocaOptionLiquidityProvision is
     error TooBig();
     error DurationNotMultiple();
     error BrokerAlreadySet();
+    error NotEnoughBigBangLiquidity();
 
     constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _penrose, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
@@ -236,11 +237,6 @@ contract TapiocaOptionLiquidityProvision is
         whenNotPaused
         returns (uint256 tokenId)
     {
-        // Reverts if user debt doesn't cover the lock
-        if (!_canLockWithDebt(msg.sender, _singularity, _ybShares)) {
-            revert NotAuthorized();
-        }
-
         if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
         if (_lockDuration > MAX_LOCK_DURATION) revert DurationTooLong();
         if (_lockDuration % EPOCH_DURATION != 0) revert DurationNotMultiple();
@@ -252,6 +248,11 @@ contract TapiocaOptionLiquidityProvision is
 
         uint256 sglAssetID = sgl.sglAssetID;
         if (sglAssetID == 0) revert SingularityNotActive();
+
+        // Reverts if user debt doesn't cover the lock
+        if (!_canLockWithDebt(_to, _singularity, _ybShares)) {
+            revert NotEnoughBigBangLiquidity();
+        }
 
         // Transfer the Singularity position to this contract
         // yieldBox.transfer(msg.sender, address(this), sglAssetID, _ybShares);
@@ -577,11 +578,11 @@ contract TapiocaOptionLiquidityProvision is
      * @param _userShare Amount of YieldBox shares to lock
      */
     function _canLockWithDebt(address _user, IERC20 _singularity, uint256 _userShare) internal view returns (bool) {
-        uint256 usdoTotalDebt = _getTotalBigBangDebtInUSDO(_user);
+        uint256 totalUserUsdoDebt = _getTotalBigBangDebtInUSDO(_user);
         uint256 amountToLock = _getUsdoAmountFromTolpShare(_singularity, _userShare);
 
-        usdoTotalDebt = usdoTotalDebt + (usdoTotalDebt * maxDebtBuffer) / 1e4; // total debt  +
-        if (amountToLock + userLockedUsdo[_user] > usdoTotalDebt) {
+        totalUserUsdoDebt = totalUserUsdoDebt + (totalUserUsdoDebt * maxDebtBuffer) / 1e4; // total debt + buffer
+        if (amountToLock + userLockedUsdo[_user] > totalUserUsdoDebt) {
             return false;
         }
 
@@ -591,7 +592,7 @@ contract TapiocaOptionLiquidityProvision is
     /**
      * @notice Get the USDO total debt of a user in the BigBang markets
      */
-    function _getTotalBigBangDebtInUSDO(address _user) internal view returns (uint256 usdoTotalDebt) {
+    function _getTotalBigBangDebtInUSDO(address _user) internal view returns (uint256 totalUserUsdoDebt) {
         address[] memory markets = penrose.bigBangMarkets();
 
         // Loop over the markets, get user debt and sum it
@@ -600,7 +601,7 @@ contract TapiocaOptionLiquidityProvision is
             IBigBang bigBang = IBigBang(markets[i]);
             (uint128 elastic, uint128 base) = bigBang._totalBorrow();
             uint256 userBorrowPart = bigBang._userBorrowPart(_user);
-            usdoTotalDebt += RebaseLibrary.toBase(Rebase(elastic, base), userBorrowPart, false);
+            totalUserUsdoDebt += RebaseLibrary.toBase(Rebase(elastic, base), userBorrowPart, false);
         }
     }
 
