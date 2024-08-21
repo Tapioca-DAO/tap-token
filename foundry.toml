@@ -17,6 +17,7 @@ remappings = [
 	"tap-utils/=lib/tap-utils/contracts/",
 	"permitc/=lib/tap-utils/lib/permitc/src/", # Needs to be init in the periph repo
 	"tapioca-mocks/=lib/tapioca-mocks/contracts/",
+	"tapioca-bar/=lib/tapioca-bar/contracts/",
 ]
 
 [profile.default.fuzz]
