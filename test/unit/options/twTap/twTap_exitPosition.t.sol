@@ -6,6 +6,12 @@ import {TWAML} from "contracts/options/twAML.sol";
 
 contract twTap_exitPosition is twTapBaseTest, TWAML {
     uint256 constant TWTAP_TOKEN_ID = 1;
+    uint256 LOCK_TIME;
+
+    function setUp() public virtual override {
+        super.setUp();
+        LOCK_TIME = twTap.EPOCH_DURATION() * 4;
+    }
 
     function test_RevertWhen_Paused() external {
         vm.prank(adminAddr);
@@ -149,9 +155,7 @@ contract twTap_exitPosition is twTapBaseTest, TWAML {
             twTap.twAML();
         assertEq(totalParticipants, 0, "twTap_exitPosition::test_WhenUserHasVotingPower: Invalid totalParticipants");
         assertEq(totalDeposited, 0, "twTap_exitPosition::test_WhenUserHasVotingPower: Invalid totalDeposited");
-        assertEq(
-            cumulative, twTap.EPOCH_DURATION(), "twTap_exitPosition::test_WhenUserHasVotingPower: Invalid cumulative"
-        );
+        assertEq(cumulative, LOCK_TIME, "twTap_exitPosition::test_WhenUserHasVotingPower: Invalid cumulative");
     }
 
     function test_WhenItShouldContinue(uint256 _lockAmount, uint256 _lockDuration) internal {
