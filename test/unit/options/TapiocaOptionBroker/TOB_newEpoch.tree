@@ -1,0 +1,16 @@
+TOB_newEpoch
+├── when not authorized
+│   └── it should revert
+└── when authorized
+    ├── when epoch not over
+    │   └── it should revert
+    └── when epoch is over
+        ├── when not active singularities
+        │   └── it should revert
+        └── when active singularities exist
+            ├── when tap oracle fails to query
+            │   └── it should revert
+            └── when tap oracle query works
+                ├── it should emit new epoch event
+                ├── it should increment `epoch` by 1
+                └── it should extract and emit tap to gauges

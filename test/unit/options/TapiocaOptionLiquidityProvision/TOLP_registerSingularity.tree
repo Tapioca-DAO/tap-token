@@ -1,0 +1,13 @@
+TOLP_registerSingularity
+├── when not owner
+│   └── it should revert
+├── when assetId not valid
+│   └── it should revert
+├── when assetId already registered
+│   └── it should revert
+├── when sgl is already registered
+│   └── it should revert
+└── it should register the singularity
+    ├── update the activeSingularities
+    ├── register sglAssetIDToAddress
+    └── updateTotalSGLPoolWeights

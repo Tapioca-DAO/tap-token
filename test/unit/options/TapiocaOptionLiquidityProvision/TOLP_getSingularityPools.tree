@@ -1,0 +1,4 @@
+TOLP_getSingularityPools
+├── it should return the right array of pools
+└── when there is a pool in rescue
+    └── it should return the array without the rescue pool

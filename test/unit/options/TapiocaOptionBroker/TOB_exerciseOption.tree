@@ -1,0 +1,33 @@
+TOB_exerciseOption
+├── when paused
+│   └── it should revert
+└── when not paused
+    ├── when option is expired
+    │   └── it should revert
+    └── when option is not expired
+        ├── when payment token oracle is not set
+        │   └── it should revert
+        └── when payment token oracle is set
+            ├── when caller is not authorized
+            │   └── it should revert
+            └── when caller is authorized
+                ├── when epoch is not advanced
+                │   └── it should revert
+                └── when epoch is advanced
+                    ├── when option is in cooldown
+                    │   └── it should revert
+                    └── when option is not in cooldown
+                        ├── when tap amount to buy is lower than 1e18
+                        │   ├── it should revert
+                        │   └── when tap amount is equal to 0
+                        │       ├── it should not revert
+                        │       └── it should emits `ExerciseOption` with max eligible tap as chosen amount
+                        └── when tap amount to buy is bigger than 1e18
+                            ├── when payment token oracle fails to fetch
+                            │   └── it reverts
+                            └── when payment token oracle succeed to fetch
+                                ├── when tap amount is 0
+                                │   └── it continues
+                                ├── it update the exercised amount of the option for the epoch
+                                ├── it sends TAP from the tOB to the `msg.sender`
+                                └── it emits `ExerciseOption`

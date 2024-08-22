@@ -1,0 +1,29 @@
+TWTAP_participate
+├── when paused
+│   └── it should revert
+└── when not paused
+    ├── when lock duration is less than a week
+    │   └── it should revert
+    └── when lock duration is more than a week
+        ├── when lock duration is more than max duration
+        │   └── it should revert
+        └── when lock duration is less than max duration
+            ├── when lock duration is not a multiple of epoch duration
+            │   └── it should revert
+            └── when lock duration is a multiple of epoch duration
+                ├── when week was not advanced
+                │   └── it should revert
+                └── when week was advanced
+                    ├── when pearlmit transfer fails
+                    │   └── it should revert
+                    └── when pearlmit transfer succeed
+                        ├── when locker does not have voting power
+                        │   └── it should participate without changing AML
+                        ├── when lock has voting power
+                        │   └── it should participate and change AML
+                        └── when it should participate
+                            ├── it should emit Participate
+                            ├── it should update AML if hasVotingPower is true
+                            ├── it should create a participation entry
+                            ├── it should update weekTotals
+                            └── it should mint a twTAP token

@@ -132,7 +132,7 @@ contract TwTAP is
 
     ICluster public cluster;
 
-    bool rescueMode;
+    bool public rescueMode;
     uint256 public emergencySweepCooldown = 2 days;
     uint256 public lastEmergencySweep;
 
@@ -396,7 +396,7 @@ contract TwTAP is
                 _lastEpochCumulative = EPOCH_DURATION;
             }
             // Revert if the lock 4x the cumulative
-            if (magnitude >= lastEpochCumulative * maxEpochCoeff) revert NotValid();
+            if (magnitude >= _lastEpochCumulative * maxEpochCoeff) revert NotValid();
         }
         uint256 multiplier = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
 
@@ -693,10 +693,17 @@ contract TwTAP is
      * @dev Only the owner with role `TWTAP_EMERGENCY_SWEEP` can call this function.
      */
     function emergencySweepLocks() external onlyOwner {
-        if (block.timestamp < lastEmergencySweep + emergencySweepCooldown) revert EmergencySweepCooldownNotReached();
+        if (lastEmergencySweep == 0 || block.timestamp < lastEmergencySweep + emergencySweepCooldown) {
+            revert EmergencySweepCooldownNotReached();
+        }
+        // TODO post-BTT: Already using onlyOwner, do we need role check?
         if (!cluster.hasRole(msg.sender, keccak256("TWTAP_EMERGENCY_SWEEP"))) revert NotAuthorized();
 
         tapOFT.transfer(owner(), tapOFT.balanceOf(address(this)));
+
+        // TODO post-BTT: Do we need lastEmergencySweep? It's reset in 2 emergency funcs,
+        // if used with a cooldown, will have to wait double the time
+        lastEmergencySweep = 0;
     }
 
     /**
@@ -706,7 +713,10 @@ contract TwTAP is
      * @dev Only the owner with role `TWTAP_EMERGENCY_SWEEP` can call this function.
      */
     function emergencySweepRewards() external onlyOwner {
-        if (block.timestamp < lastEmergencySweep + emergencySweepCooldown) revert EmergencySweepCooldownNotReached();
+        if (lastEmergencySweep == 0 || block.timestamp < lastEmergencySweep + emergencySweepCooldown) {
+            revert EmergencySweepCooldownNotReached();
+        }
+        // TODO post-BTT: Already using onlyOwner, do we need role check?
         if (!cluster.hasRole(msg.sender, keccak256("TWTAP_EMERGENCY_SWEEP"))) revert NotAuthorized();
 
         uint256 len = rewardTokens.length;
@@ -717,6 +727,9 @@ contract TwTAP is
                 token.safeTransfer(owner(), token.balanceOf(address(this)));
             }
         }
+        // TODO post-BTT: Do we need lastEmergencySweep? It's reset in 2 emergency funcs,
+        // if used with a cooldown, will have to wait double the time
+        lastEmergencySweep = 0;
     }
 
     // ============
