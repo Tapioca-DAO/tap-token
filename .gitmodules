@@ -1,18 +1,24 @@
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+	branch = master
 [submodule "lib/tapioca-sdk"]
 	path = lib/tapioca-sdk
 	url = https://github.com/Tapioca-DAO/tapioca-sdk
+	branch = main
 [submodule "lib/tap-utils"]
 	path = lib/tap-utils
 	url = https://github.com/Tapioca-DAO/tap-utils
+	branch = main
 [submodule "lib/tap-yieldbox"]
 	path = lib/tap-yieldbox
 	url = https://github.com/Tapioca-DAO/tap-yieldbox
+	branch = main
 [submodule "lib/tapioca-bar"]
 	path = lib/tapioca-bar
 	url = https://github.com/Tapioca-DAO/Tapioca-bar
+	branch = master
 [submodule "lib/tapioca-mocks"]
 	path = lib/tapioca-mocks
 	url = https://github.com/Tapioca-DAO/tapioca-mocks
+	branch = main
