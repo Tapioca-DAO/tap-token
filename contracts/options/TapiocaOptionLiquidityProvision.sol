@@ -292,6 +292,9 @@ contract TapiocaOptionLiquidityProvision is
         // Mint the tOLP NFT position
         _safeMint(_to, tokenId);
 
+        // Keep track of BB debt
+        userLockedUsdo[_to] += _ybShares;
+
         emit Mint(_to, sglAssetID, address(_singularity), tokenId, _lockDuration, _ybShares);
     }
 
@@ -320,6 +323,9 @@ contract TapiocaOptionLiquidityProvision is
         if (sgl.sglAssetID != lockPosition.sglAssetID) {
             revert InvalidSingularity();
         }
+
+        // Keep track of BB debt
+        userLockedUsdo[tokenOwner] -= lockPosition.ybShares;
 
         _burn(_tokenId);
         delete lockPositions[_tokenId];
