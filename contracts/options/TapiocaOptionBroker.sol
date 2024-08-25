@@ -321,10 +321,6 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         bool isPositionActive = _isPositionActive(lock);
         if (!isPositionActive) revert OptionExpired();
 
-        // TODO post-BTT - Check is redundant, already done in `tOLP.lock()`
-        if (lock.lockDuration < EPOCH_DURATION) revert DurationTooShort();
-        if (lock.lockDuration % EPOCH_DURATION != 0) revert DurationNotMultiple();
-
         TWAMLPool memory pool = twAML[lock.sglAssetID];
 
         if (pool.cumulative == 0) {
