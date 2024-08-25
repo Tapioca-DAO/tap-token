@@ -175,6 +175,17 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     event SetTapOracle(ITapiocaOracle oracle, bytes oracleData);
     event DecayCumulative(uint256 amountDecayed);
     event ResetDecayAmassed(uint256 decayAmassed);
+    event SetTobMagnitudeMultiplier(ITobMagnitudeMultiplier tobMagnitudeMultiplier);
+    event SetMaxEpochCoeff(uint256 maxEpochCoeff);
+    event SetVirtualTotalAmount(uint256 virtualTotalAmount);
+    event SetMinWeightFactor(uint256 minWeightFactor);
+    event SetPaymentTokenBeneficiary(address paymentTokenBeneficiary);
+    event CollectPaymentTokens(address[] paymentTokens);
+    event SetCluster(ICluster cluster);
+    event Pause(bool pauseState);
+    event SetGrowthCapBps(uint256 growthCapBps);
+    event SetDecayRate(uint256 decayRateBps);
+    event SetDecayActivationBps(uint256 decayActivationBps);
 
     // ==========
     //    READ
@@ -568,10 +579,12 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
     function setTobMagnitudeMultiplier(ITobMagnitudeMultiplier _tobMagnitudeMultiplier) external onlyOwner {
         tobMagnitudeMultiplier = _tobMagnitudeMultiplier;
+        emit SetTobMagnitudeMultiplier(_tobMagnitudeMultiplier);
     }
 
     function setMaxEpochCoeff(uint256 _maxEpochCoeff) external onlyOwner {
         maxEpochCoeff = _maxEpochCoeff;
+        emit SetMaxEpochCoeff(_maxEpochCoeff);
     }
 
     /**
@@ -580,6 +593,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
      */
     function setVirtualTotalAmount(uint256 _virtualTotalAmount) external onlyOwner {
         VIRTUAL_TOTAL_AMOUNT = _virtualTotalAmount;
+        emit SetVirtualTotalAmount(_virtualTotalAmount);
     }
 
     /**
@@ -588,6 +602,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
      */
     function setMinWeightFactor(uint256 _minWeightFactor) external onlyOwner {
         MIN_WEIGHT_FACTOR = _minWeightFactor;
+        emit SetMinWeightFactor(_minWeightFactor);
     }
 
     /// @notice Set the TapOFT Oracle address and data
@@ -616,6 +631,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /// @param _paymentTokenBeneficiary The new payment token beneficiary
     function setPaymentTokenBeneficiary(address _paymentTokenBeneficiary) external onlyOwner {
         paymentTokenBeneficiary = _paymentTokenBeneficiary;
+        emit SetPaymentTokenBeneficiary(_paymentTokenBeneficiary);
     }
 
     /// @notice Collect the payment tokens from the OTC deals
@@ -633,6 +649,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
                 paymentToken.safeTransfer(_paymentTokenBeneficiary, paymentToken.balanceOf(address(this)));
             }
         }
+        emit CollectPaymentTokens(_paymentTokens);
     }
 
     /**
@@ -643,6 +660,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     function setCluster(ICluster _cluster) external onlyOwner {
         if (address(_cluster) == address(0)) revert NotValid();
         cluster = _cluster;
+        emit SetCluster(_cluster);
     }
 
     /**
@@ -655,6 +673,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         } else {
             _unpause();
         }
+        emit Pause(_pauseState);
     }
 
     /**
@@ -662,6 +681,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
      */
     function setGrowthCapBps(uint256 _growthCapBps) external onlyOwner {
         growthCapBps = _growthCapBps;
+        emit SetGrowthCapBps(_growthCapBps);
     }
 
     /**
@@ -669,6 +689,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
      */
     function setDecayRate(uint256 _decayRateBps) external onlyOwner {
         decayRateBps = _decayRateBps;
+        emit SetDecayRate(_decayRateBps);
     }
 
     /**
@@ -676,6 +697,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
      */
     function setDecayActivationBps(uint256 _decayActivationBps) external onlyOwner {
         decayActivationBps = _decayActivationBps;
+        emit SetDecayActivationBps(_decayActivationBps);
     }
 
     /**

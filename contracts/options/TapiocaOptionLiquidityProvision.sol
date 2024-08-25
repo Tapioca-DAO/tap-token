@@ -147,6 +147,13 @@ contract TapiocaOptionLiquidityProvision is
     event SetEmergencySweepCooldown(uint256 emergencySweepCooldown);
     event ActivateEmergencySweep();
     event HarvestPenalties(address to, uint256 amount);
+    event SetCluster(ICluster cluster);
+    event SetPenrose(IPenrose penrose);
+    event SetPause(bool pause);
+    event SetMaxDebtBuffer(uint256 maxDebtBuffer);
+    event SetMaxDebtPenalty(uint256 maxDebtPenalty);
+    event SetMinDebtPenalty(uint256 minDebtPenalty);
+    event SetMaxLockDuration(uint256 maxLockDuration);
 
     // ===============
     //    MODIFIERS
@@ -443,6 +450,7 @@ contract TapiocaOptionLiquidityProvision is
     function setCluster(ICluster _cluster) external onlyOwner {
         if (address(_cluster) == address(0)) revert NotValid();
         cluster = _cluster;
+        emit SetCluster(_cluster);
     }
 
     /**
@@ -451,6 +459,7 @@ contract TapiocaOptionLiquidityProvision is
     function setPenrose(IPenrose _penrose) external onlyOwner {
         if (address(_penrose) == address(0)) revert NotValid();
         penrose = _penrose;
+        emit SetPenrose(_penrose);
     }
 
     /**
@@ -463,21 +472,25 @@ contract TapiocaOptionLiquidityProvision is
         } else {
             _unpause();
         }
+        emit SetPause(_pauseState);
     }
 
     /// @notice Set the max debt buffer
     function setMaxDebtBuffer(uint256 _maxDebtBuffer) external onlyOwner {
         maxDebtBuffer = _maxDebtBuffer;
+        emit SetMaxDebtBuffer(_maxDebtBuffer);
     }
 
     /// @notice Set the max debt penalty
     function setMaxDebtPenalty(uint256 _maxDebtPenalty) external onlyOwner {
         maxDebtPenalty = _maxDebtPenalty;
+        emit SetMaxDebtPenalty(_maxDebtPenalty);
     }
 
     /// @notice Set the min debt penalty
     function setMinDebtPenalty(uint256 _minDebtPenalty) external onlyOwner {
         minDebtPenalty = _minDebtPenalty;
+        emit SetMinDebtPenalty(_minDebtPenalty);
     }
 
     /**
@@ -516,6 +529,7 @@ contract TapiocaOptionLiquidityProvision is
      */
     function setMaxLockDuration(uint256 _maxLockDuration) external onlyOwner {
         MAX_LOCK_DURATION = _maxLockDuration;
+        emit SetMaxLockDuration(_maxLockDuration);
     }
 
     /**
