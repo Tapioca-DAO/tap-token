@@ -153,7 +153,6 @@ contract TwTAP is
     error Registered();
     error TokenLimitReached();
     error NotApproved(uint256 tokenId, address spender);
-    error Duplicate();
     error LockNotExpired();
     error LockNotAWeek();
     error LockTooLong();
@@ -898,12 +897,6 @@ contract TwTAP is
                 emit DecayCumulative(decayAmount);
             }
         }
-    }
-
-    /// @notice Returns the chain ID of the current network.
-    /// @dev Used for dev purposes.
-    function _getChainId() internal view virtual returns (uint256) {
-        return block.chainid;
     }
 
     function _baseURI() internal view override(ERC721, ERC721NftLoader) returns (string memory) {
