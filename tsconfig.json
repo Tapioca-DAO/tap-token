@@ -13,11 +13,11 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@tapioca-sdk/*": ["gitmodule/tapioca-sdk/src/*"],
+      "@tapioca-sdk/*": ["lib/tapioca-sdk/src/*"],
       "@typechain/*": ["gen/typechain/*"],
-      "@tapioca-periph/config":["gitmodule/tapioca-periph/tasks/deploy/DEPLOY_CONFIG.ts"],
-      "@tapioca-bar/config":["gitmodule/tapioca-bar/tasks/deploy/DEPLOY_CONFIG.ts"],
-      "@tapiocaz/config":["gitmodule/tapiocaz/tasks/deploy/DEPLOY_CONFIG.ts"],
+      "@tapioca-periph/config":["lib/tap-utils/tasks/deploy/DEPLOY_CONFIG.ts"],
+      "@tapioca-bar/config":["lib/tapioca-bar/tasks/deploy/DEPLOY_CONFIG.ts"],
+      "@tapiocaz/config":["lib/tapiocaz/tasks/deploy/DEPLOY_CONFIG.ts"],
     }
   },
   "include": [

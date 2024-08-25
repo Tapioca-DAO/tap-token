@@ -7,8 +7,14 @@ import {LockPosition, SingularityPool} from "contracts/options/TapiocaOptionLiqu
 import "forge-std/console.sol";
 
 contract TOLP_lock is TolpBaseTest {
-    IERC20 constant SGL_TO_LOCK = IERC20(address(0x1));
-    uint256 constant SGL_ASSET_ID = 1;
+    IERC20 public SGL_TO_LOCK;
+    uint256 public SGL_ASSET_ID;
+
+    function setUp() public virtual override {
+        super.setUp();
+        SGL_TO_LOCK = IERC20(address(singularityEthMarket));
+        SGL_ASSET_ID = singularityEthMarketAssetId;
+    }
 
     function test_RevertWhen_PausedPaused(uint128 _lockDuration, uint128 _ybShares) external {
         vm.prank(adminAddr);
@@ -130,9 +136,16 @@ contract TOLP_lock is TolpBaseTest {
 
     modifier whenTransferSucceeds(uint128 _ybShares) {
         _resetPrank({caller: aliceAddr});
+        (_ybShares,) = _boundValues(_ybShares, 0);
         yieldBox.depositAsset(SGL_ASSET_ID, aliceAddr, _ybShares);
         yieldBox.setApprovalForAll(address(pearlmit), true);
         pearlmit.approve(1155, address(yieldBox), SGL_ASSET_ID, address(tolp), _ybShares, uint48(block.timestamp + 1));
+        _;
+    }
+
+    modifier depositingCollateralToBigBang(uint128 _ybShares) {
+        (_ybShares,) = _boundValues(_ybShares, 0);
+        depositCollateral(aliceAddr, _ybShares);
         _;
     }
 
@@ -146,9 +159,12 @@ contract TOLP_lock is TolpBaseTest {
         whenSharesBiggerThan0(_ybShares)
         whenSglNotInRescueMode
         whenSglIsActive
+        depositingCollateralToBigBang(_ybShares)
         whenTransferSucceeds(_ybShares)
     {
         _lockDuration = _whenDurationIsRight(_lockDuration);
+        (_ybShares,) = _boundValues(_ybShares, 0);
+
         // it should emit Mint event
         vm.expectEmit(true, true, true, false);
         emit Mint(aliceAddr, SGL_ASSET_ID, address(SGL_TO_LOCK), EXPECTED_TOKEN_ID, _lockDuration, _ybShares);

@@ -8,10 +8,14 @@ import {TWAML} from "contracts/options/twAML.sol";
 
 contract TOB_participate is TobBaseTest, TWAML {
     uint256 constant TOLP_TOKEN_ID = 1;
-    uint256 constant SGL_ASSET_ID = 1; // Check TobBaseTest::createLock()
     uint128 constant WEEK_LONG = 1;
-    uint128 constant LOCK_AMOUNT_100 = 100;
-    uint256 constant VIRTUAL_TOTAL_AMOUNT = 10_000 ether; // @See TapiocaOptionBroker
+    uint256 constant VIRTUAL_TOTAL_AMOUNT = 50_000 ether; // @See TapiocaOptionBroker
+    uint256 SGL_ASSET_ID; // Check TobBaseTest::createLock()
+
+    function setUp() public virtual override {
+        super.setUp();
+        SGL_ASSET_ID = singularityEthMarketAssetId;
+    }
 
     /**
      * @notice Initialize the tests and create a lock
@@ -20,16 +24,20 @@ contract TOB_participate is TobBaseTest, TWAML {
      * - Create a tOLP lock
      */
     modifier initTestsAndCreateLock(uint128 _lockAmount, uint128 _lockDuration) {
-        _lockDuration = uint128(tob.EPOCH_DURATION() * WEEK_LONG * bound(_lockDuration, 1, 4));
+        (, _lockDuration) = _boundValues(0, _lockDuration);
         _lockAmount = uint128(
-            bound(_lockAmount, computeMinWeight(VIRTUAL_TOTAL_AMOUNT, tob.MIN_WEIGHT_FACTOR()), type(uint128).max)
+            bound(
+                _lockAmount,
+                computeMinWeight(VIRTUAL_TOTAL_AMOUNT, tob.MIN_WEIGHT_FACTOR()),
+                MAX_USDO_PARTICIPATION_BOUNDARY
+            )
         );
         _initTestsAndCreateLock(_lockAmount, _lockDuration);
         _;
     }
 
     modifier initTestsAndCreateLockWithNoDurationBound(uint128 _lockAmount, uint128 _lockDuration) {
-        _lockAmount = uint128(bound(_lockAmount, 1, type(uint128).max));
+        (_lockAmount,) = _boundValues(_lockAmount, 0);
         _initTestsAndCreateLock(_lockAmount, _lockDuration);
         _;
     }
@@ -191,7 +199,7 @@ contract TOB_participate is TobBaseTest, TWAML {
     }
 
     uint128 public constant NO_VOTING_POWER_DEPOSIT_AMOUNT = 1;
-    uint256 public constant ENDING_EPOCH = 3;
+    uint256 public constant ENDING_EPOCH = 2;
 
     function test_WhenLockerDoesNotHaveVotingPower()
         external
@@ -205,12 +213,12 @@ contract TOB_participate is TobBaseTest, TWAML {
         whenMagnitudeIsInRange
     {
         uint128 _lockDuration = uint128(tob.EPOCH_DURATION() * WEEK_LONG * ENDING_EPOCH);
-        _initTestsAndCreateLock(NO_VOTING_POWER_DEPOSIT_AMOUNT, _lockDuration);
+        _initTestsAndCreateLock(uint128(MIN_USDO_PARTICIPATION_BOUNDARY), _lockDuration);
         _setupPearlmitApproval();
         _resetPrank({caller: aliceAddr});
 
         // it should participate
-        whenItShouldParticipate(NO_VOTING_POWER_DEPOSIT_AMOUNT, _lockDuration, ENDING_EPOCH, false, false);
+        whenItShouldParticipate(uint128(MIN_USDO_PARTICIPATION_BOUNDARY), _lockDuration, ENDING_EPOCH, false, false);
 
         // it should not update cumulative
         (uint256 totalParticipants, uint256 averageMagnitude, uint256 totalDeposited, uint256 cumulative) = tob.twAML(1);
@@ -239,7 +247,11 @@ contract TOB_participate is TobBaseTest, TWAML {
     {
         _lockDuration = uint128(tob.EPOCH_DURATION() * WEEK_LONG * bound(_lockDuration, 1, 4));
         _lockAmount = uint128(
-            bound(_lockAmount, computeMinWeight(VIRTUAL_TOTAL_AMOUNT, tob.MIN_WEIGHT_FACTOR()), type(uint128).max)
+            bound(
+                _lockAmount,
+                computeMinWeight(VIRTUAL_TOTAL_AMOUNT, tob.MIN_WEIGHT_FACTOR()),
+                MAX_USDO_PARTICIPATION_BOUNDARY
+            )
         );
 
         _resetPrank({caller: aliceAddr});

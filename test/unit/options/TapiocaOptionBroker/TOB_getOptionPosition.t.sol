@@ -6,12 +6,13 @@ import {LockPosition} from "contracts/options/TapiocaOptionLiquidityProvision.so
 import {TapOption} from "contracts/options/oTAP.sol";
 
 contract TOB_getOptionPosition is TobBaseTest {
-    function test_ShouldReturnTheRightOptionPosition()
+    function test_ShouldReturnTheRightOptionPosition(uint128 _amount, uint128 _lockDuration)
         external
         tobInit
         registerSingularityPool
-        tobParticipate(aliceAddr, 1, uint128(tob.EPOCH_DURATION()))
     {
+        (_amount, _lockDuration) = _boundValues(_amount, _lockDuration);
+        _tobParticipate(aliceAddr, _amount, _lockDuration);
         // it should return the right option position
         (LockPosition memory tOLPLockPosition, TapOption memory oTAPPosition,) = tob.getOptionPosition(1, 0);
         assertEq(tOLPLockPosition.sglAssetID, 1, "TOB_getOptionPosition: Invalid sglAssetID");

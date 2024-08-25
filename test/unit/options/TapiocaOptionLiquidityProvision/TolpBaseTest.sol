@@ -15,8 +15,13 @@ import {
 } from "../../UnitBaseTest.sol";
 import {SingularityPool} from "contracts/options/TapiocaOptionLiquidityProvision.sol";
 
+import "forge-std/console.sol";
+
 contract TolpBaseTest is UnitBaseTest {
     TapiocaOptionLiquidityProvision public tolp;
+
+    uint256 public MIN_USDO_PARTICIPATION_BOUNDARY = 1e18;
+    uint256 public MAX_USDO_PARTICIPATION_BOUNDARY = 1e27;
 
     event Mint(
         address indexed to,
@@ -53,7 +58,7 @@ contract TolpBaseTest is UnitBaseTest {
     function setUp() public virtual override {
         super.setUp();
 
-        tolp = createTolpInstance(address(yieldBox), 7 days, IPearlmit(address(pearlmit)), adminAddr);
+        tolp = createTolpInstance(address(yieldBox), 7 days, IPearlmit(address(pearlmit)), address(penrose), adminAddr);
     }
 
     /**
@@ -66,7 +71,7 @@ contract TolpBaseTest is UnitBaseTest {
 
     function _registerSingularityPool() internal {
         vm.startPrank(adminAddr);
-        tolp.registerSingularity(IERC20(address(0x1)), 1, 0); // sglAddr, yb assetId, weight
+        tolp.registerSingularity(IERC20(address(singularityEthMarket)), singularityEthMarketAssetId, 0); // sglAddr, yb assetId, weight
         tolp.registerSingularity(IERC20(address(0x2)), 2, 0);
         tolp.registerSingularity(IERC20(address(0x3)), 3, 0);
         tolp.registerSingularity(IERC20(address(0x4)), 4, 0);
@@ -81,7 +86,7 @@ contract TolpBaseTest is UnitBaseTest {
         vm.startPrank(adminAddr);
         tolp.setRescueCooldown(0);
         tolp.requestSglPoolRescue(1);
-        tolp.activateSGLPoolRescue(IERC20(address(0x1)));
+        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
         vm.stopPrank();
         _;
     }
@@ -89,18 +94,12 @@ contract TolpBaseTest is UnitBaseTest {
     /**
      * @notice Create a lock for with Alice on asset ID 1
      */
-    modifier initAndCreateLock(address _user, uint256 _weight, uint128 _lockDuration) {
+    modifier initAndCreateLock(address _user, uint128 _weight, uint128 _lockDuration) {
         _registerSingularityPool();
-        _lockDuration = _boundLockDuration(_lockDuration);
-        vm.assume(_weight != 0);
+        (_weight, _lockDuration) = _boundValues(_weight, _lockDuration);
+
         _createLock(_user, _weight, _lockDuration);
         _;
-    }
-
-    function _boundLockDuration(uint128 _lockDuration) internal returns (uint128) {
-        uint256 epochDuration = tolp.EPOCH_DURATION();
-        uint256 maxLockDuration = tolp.MAX_LOCK_DURATION();
-        return uint128(bound(_lockDuration, 1, maxLockDuration / epochDuration) * epochDuration);
     }
 
     /**
@@ -113,11 +112,20 @@ contract TolpBaseTest is UnitBaseTest {
     }
 
     function _createLock(address _user, uint256 _weight, uint128 _lockDuration) internal {
-        (, uint256 shares) = yieldBox.depositAsset(1, _user, _weight);
+        depositCollateral(_user, _weight);
+
+        (, uint256 shares) = yieldBox.depositAsset(singularityEthMarketAssetId, _user, _weight);
         vm.startPrank(_user);
         yieldBox.setApprovalForAll(address(pearlmit), true);
-        pearlmit.approve(1155, address(yieldBox), 1, address(tolp), type(uint200).max, uint48(block.timestamp + 1));
-        tolp.lock(_user, IERC20(address(0x1)), _lockDuration, uint128(shares));
+        pearlmit.approve(
+            1155,
+            address(yieldBox),
+            singularityEthMarketAssetId,
+            address(tolp),
+            type(uint200).max,
+            uint48(block.timestamp + 1)
+        );
+        tolp.lock(_user, IERC20(address(singularityEthMarket)), _lockDuration, uint128(shares));
         vm.stopPrank();
     }
 
@@ -132,5 +140,11 @@ contract TolpBaseTest is UnitBaseTest {
         vm.warp(block.timestamp + tolp.rescueCooldown());
         tolp.activateSGLPoolRescue(sgl);
         vm.stopPrank();
+    }
+
+    function _boundValues(uint128 _lockAmount, uint128 _lockDuration) internal returns (uint128, uint128) {
+        _lockAmount = uint128(bound(_lockAmount, MIN_USDO_PARTICIPATION_BOUNDARY, MAX_USDO_PARTICIPATION_BOUNDARY));
+        _lockDuration = uint128(tolp.EPOCH_DURATION() * bound(_lockDuration, 1, 2));
+        return (_lockAmount, _lockDuration);
     }
 }

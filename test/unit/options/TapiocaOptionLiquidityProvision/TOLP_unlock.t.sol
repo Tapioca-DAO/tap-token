@@ -6,14 +6,19 @@ import {LockPosition} from "contracts/options/TapiocaOptionLiquidityProvision.so
 
 contract TOLP_unlock is TolpBaseTest {
     uint256 constant TOLP_TOKEN_ID = 1;
-    IERC20 constant SGL_ADDRESS = IERC20(address(0x1));
-    uint256 constant SGL_ASSET_ID = 1;
+    IERC20 SGL_ADDRESS;
+    uint256 SGL_ASSET_ID;
+
+    function setUp() public virtual override {
+        super.setUp();
+        SGL_ADDRESS = IERC20(address(singularityEthMarket));
+        SGL_ASSET_ID = singularityEthMarketAssetId;
+    }
 
     function test_RevertWhen_Paused(uint128 _weight, uint128 _lockDuration)
         external
         initAndCreateLock(aliceAddr, _weight, _lockDuration)
     {
-        _lockDuration = _boundLockDuration(_lockDuration);
         vm.prank(adminAddr);
         tolp.setPause(true);
         // it should revert
@@ -30,7 +35,7 @@ contract TOLP_unlock is TolpBaseTest {
         whenNotPaused
         initAndCreateLock(aliceAddr, _weight, _lockDuration)
     {
-        _lockDuration = _boundLockDuration(_lockDuration);
+        (_weight, _lockDuration) = _boundValues(_weight, _lockDuration);
         skip(_lockDuration);
         tolp.unlock(TOLP_TOKEN_ID, SGL_ADDRESS);
         // it should revert
@@ -104,7 +109,7 @@ contract TOLP_unlock is TolpBaseTest {
     }
 
     modifier whenLockIsExpired(uint128 _lockDuration) {
-        _lockDuration = _boundLockDuration(_lockDuration);
+        (, _lockDuration) = _boundValues(0, _lockDuration);
         skip(_lockDuration);
         _;
     }
@@ -135,6 +140,8 @@ contract TOLP_unlock is TolpBaseTest {
         initAndCreateLock(aliceAddr, _weight, _lockDuration)
         whenLockIsExpired(_lockDuration)
     {
+        (_weight,) = _boundValues(_weight, _lockDuration);
+
         // it should emit Burn
         vm.expectEmit(true, true, true, true);
         emit TapiocaOptionLiquidityProvision.Burn(aliceAddr, SGL_ASSET_ID, address(SGL_ADDRESS), TOLP_TOKEN_ID);

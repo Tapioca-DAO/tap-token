@@ -7,7 +7,7 @@ contract TOLP_registerSingularity is TolpBaseTest {
     function test_RevertWhen_NotOwner() external {
         // it should revert
         vm.expectRevert("Ownable: caller is not the owner");
-        tolp.registerSingularity(IERC20(address(0x1)), 1, 0);
+        tolp.registerSingularity(IERC20(address(singularityEthMarket)), singularityEthMarketAssetId, 0);
     }
 
     function test_RevertWhen_AssetIdNotValid() external {
@@ -15,7 +15,7 @@ contract TOLP_registerSingularity is TolpBaseTest {
         vm.startPrank(adminAddr);
 
         vm.expectRevert(AssetIdNotValid.selector);
-        tolp.registerSingularity(IERC20(address(0x1)), 0, 0);
+        tolp.registerSingularity(IERC20(address(singularityEthMarket)), 0, 0);
     }
 
     function test_RevertWhen_AssetIdAlreadyRegistered() external registerSingularityPool {
@@ -23,7 +23,7 @@ contract TOLP_registerSingularity is TolpBaseTest {
         vm.startPrank(adminAddr);
 
         vm.expectRevert(DuplicateAssetId.selector);
-        tolp.registerSingularity(IERC20(address(0x1)), 1, 0);
+        tolp.registerSingularity(IERC20(address(singularityEthMarket)), singularityEthMarketAssetId, 0);
     }
 
     function test_RevertWhen_SglIsAlreadyRegistered() external registerSingularityPool {
@@ -31,7 +31,7 @@ contract TOLP_registerSingularity is TolpBaseTest {
         vm.startPrank(adminAddr);
 
         vm.expectRevert(AlreadyRegistered.selector);
-        tolp.registerSingularity(IERC20(address(0x1)), 10, 0);
+        tolp.registerSingularity(IERC20(address(singularityEthMarket)), 10, 0);
     }
 
     function test_ShouldRegisterTheSingularity() external registerSingularityPool {

@@ -8,7 +8,7 @@ contract TOB_exitPosition is TobBaseTest, TWAML {
     uint128 public TOLP_LOCK_DURATION = uint128(1 weeks); // in weeks
     uint256 public constant OTAP_TOKEN_ID = 1;
     uint256 public constant TOLP_TOKEN_ID = 1;
-    uint256 public constant VIRTUAL_TOTAL_AMOUNT = 10_000 ether; // See @TapiocaOptionBroker
+    uint256 public constant VIRTUAL_TOTAL_AMOUNT = 50_000 ether; // See @TapiocaOptionBroker
 
     function test_RevertWhen_PositionDoesntExist() external {
         // it should revert
@@ -24,10 +24,10 @@ contract TOB_exitPosition is TobBaseTest, TWAML {
         _;
     }
 
-    function test_WhenSglIsInRescueMode(uint256 __tOLPLockAmount) external whenPositionExists whenLockIsNotExpired {
-        __tOLPLockAmount = bound(__tOLPLockAmount, 1, type(uint128).max);
+    function test_WhenSglIsInRescueMode(uint128 __tOLPLockAmount) external whenPositionExists whenLockIsNotExpired {
+        (__tOLPLockAmount,) = _boundValues(__tOLPLockAmount, 0);
         _setupAndParticipate(aliceAddr, __tOLPLockAmount, TOLP_LOCK_DURATION);
-        _setSglInRescue(IERC20(address(0x1)), 1);
+        _setSglInRescue(IERC20(address(singularityEthMarket)), singularityEthMarketAssetId);
 
         (,,, uint256 cumulativeBefore) = tob.twAML(1);
         // it should continue
@@ -37,12 +37,12 @@ contract TOB_exitPosition is TobBaseTest, TWAML {
         assertEq(cumulativeBefore, cumulativeAfter, "TOB_exitPosition::test_WhenSglIsInRescueMode: Invalid cumulative");
     }
 
-    function test_RevertWhen_SglIsNotInRescueMode(uint256 __tOLPLockAmount)
+    function test_RevertWhen_SglIsNotInRescueMode(uint128 __tOLPLockAmount)
         external
         whenPositionExists
         whenLockIsNotExpired
     {
-        __tOLPLockAmount = bound(__tOLPLockAmount, 1, type(uint128).max);
+        (__tOLPLockAmount,) = _boundValues(__tOLPLockAmount, 0);
         _setupAndParticipate(aliceAddr, __tOLPLockAmount, TOLP_LOCK_DURATION);
 
         // it should revert
@@ -51,8 +51,11 @@ contract TOB_exitPosition is TobBaseTest, TWAML {
     }
 
     function test_WhenLockIsExpired(uint256 __tOLPLockAmount) external whenPositionExists {
-        __tOLPLockAmount =
-            bound(__tOLPLockAmount, computeMinWeight(VIRTUAL_TOTAL_AMOUNT, tob.MIN_WEIGHT_FACTOR()), type(uint128).max); // We make the min to get the min weight factor and participate in twAML
+        __tOLPLockAmount = bound(
+            __tOLPLockAmount,
+            computeMinWeight(VIRTUAL_TOTAL_AMOUNT, tob.MIN_WEIGHT_FACTOR()),
+            MAX_USDO_PARTICIPATION_BOUNDARY
+        ); // We make the min to get the min weight factor and participate in twAML
         _setupAndParticipate(aliceAddr, __tOLPLockAmount, TOLP_LOCK_DURATION);
         _skipEpochs(1);
 

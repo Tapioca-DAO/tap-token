@@ -27,6 +27,12 @@ contract TOB_exerciseOption is TobBaseTest {
         _;
     }
 
+    modifier boundedSetupAndParticipate(address _user, uint128 _tOLPLockAmount, uint128 _epochDuration) {
+        (_tOLPLockAmount,) = _boundValues(_tOLPLockAmount, 0);
+        _setupAndParticipate(_user, _tOLPLockAmount, _epochDuration);
+        _;
+    }
+
     function _whenPearlmitTransferApproved(address _user, address _paymentToken, uint256 _amount) internal {
         vm.startPrank(_user);
         ERC20(_paymentToken).approve(address(pearlmit), _amount);
@@ -55,7 +61,7 @@ contract TOB_exerciseOption is TobBaseTest {
     function test_RevertWhen_OptionIsExpired(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
+        boundedSetupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         skipEpochs(2)
         whenNotPaused
     {
@@ -72,7 +78,7 @@ contract TOB_exerciseOption is TobBaseTest {
     function test_RevertWhen_PaymentTokenOracleIsNotSet(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
+        boundedSetupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
     {
@@ -94,7 +100,7 @@ contract TOB_exerciseOption is TobBaseTest {
     function test_RevertWhen_CallerIsNotAuthorized(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
+        boundedSetupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
@@ -112,7 +118,7 @@ contract TOB_exerciseOption is TobBaseTest {
     function test_RevertWhen_EpochIsNotAdvanced(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
+        boundedSetupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
@@ -132,7 +138,7 @@ contract TOB_exerciseOption is TobBaseTest {
     function test_RevertWhen_OptionIsInCooldown(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
+        boundedSetupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
@@ -161,7 +167,7 @@ contract TOB_exerciseOption is TobBaseTest {
     function test_RevertWhen_TapAmountToBuyIsLowerThan1e18(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
+        boundedSetupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
@@ -178,7 +184,7 @@ contract TOB_exerciseOption is TobBaseTest {
     function test_WhenTapAmountIsEqualTo0(uint128 __tOLPLockAmount)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
+        boundedSetupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
@@ -206,7 +212,7 @@ contract TOB_exerciseOption is TobBaseTest {
     function test_WhenPaymentTokenOracleFailsToFetch(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
+        boundedSetupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet
@@ -229,7 +235,7 @@ contract TOB_exerciseOption is TobBaseTest {
     function test_WhenPaymentTokenOracleSucceedToFetch(uint128 __tOLPLockAmount, uint256 amountToExercise)
         external
         assumeGt(__tOLPLockAmount, 0)
-        setupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
+        boundedSetupAndParticipate(aliceAddr, __tOLPLockAmount, uint128(tob.EPOCH_DURATION()))
         whenNotPaused
         whenOptionIsNotExpired
         whenPaymentTokenOracleIsSet

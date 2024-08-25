@@ -8,15 +8,15 @@ contract TOLP_setSGLPoolWeight is TolpBaseTest {
         // it should revert
         vm.startPrank(adminAddr);
         vm.expectRevert(NotRegistered.selector);
-        tolp.setSGLPoolWeight(IERC20(address(0x1)), 1);
+        tolp.setSGLPoolWeight(IERC20(address(singularityEthMarket)), singularityEthMarketAssetId);
     }
 
     function test_ShouldSetTheWeightOfThePool() external registerSingularityPool {
         // it should set the weight of the pool
         vm.startPrank(adminAddr);
-        tolp.setSGLPoolWeight(IERC20(address(0x1)), 3);
+        tolp.setSGLPoolWeight(IERC20(address(singularityEthMarket)), 3);
 
-        (,, uint256 poolWeight,) = tolp.activeSingularities(IERC20(address(0x1)));
+        (,, uint256 poolWeight,) = tolp.activeSingularities(IERC20(address(singularityEthMarket)));
         assertEq(poolWeight, 3, "TOLP_setSGLPoolWeight: Invalid weight");
         //     and also update the total weights
         assertEq(tolp.totalSingularityPoolWeights(), 7, "TOLP_setSGLPoolWeight: Invalid total weight");

@@ -10,8 +10,8 @@ contract TOLP_activateSGLPoolRescue is TolpBaseTest {
 
         tolp.requestSglPoolRescue(1);
         vm.warp(block.timestamp + tolp.rescueCooldown());
-        tolp.activateSGLPoolRescue(IERC20(address(0x1)));
-        (,,, bool rescue) = tolp.activeSingularities(IERC20(address(0x1)));
+        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
+        (,,, bool rescue) = tolp.activeSingularities(IERC20(address(singularityEthMarket)));
         assertEq(rescue, true, "TOLP_activateSGLPoolRescue: Invalid rescue");
     }
 
@@ -20,7 +20,7 @@ contract TOLP_activateSGLPoolRescue is TolpBaseTest {
         vm.startPrank(adminAddr);
 
         vm.expectRevert(NotRegistered.selector);
-        tolp.activateSGLPoolRescue(IERC20(address(0x1)));
+        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
     }
 
     function test_RevertWhen_SglRescueIsTrue() external registerSingularityPool {
@@ -29,9 +29,9 @@ contract TOLP_activateSGLPoolRescue is TolpBaseTest {
 
         tolp.requestSglPoolRescue(1);
         vm.warp(block.timestamp + tolp.rescueCooldown());
-        tolp.activateSGLPoolRescue(IERC20(address(0x1)));
+        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
         vm.expectRevert(AlreadyActive.selector);
-        tolp.activateSGLPoolRescue(IERC20(address(0x1)));
+        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
     }
 
     function test_RevertWhen_SglRescueRequestIs0() external registerSingularityPool {
@@ -39,7 +39,7 @@ contract TOLP_activateSGLPoolRescue is TolpBaseTest {
         vm.startPrank(adminAddr);
 
         vm.expectRevert(NotActive.selector);
-        tolp.activateSGLPoolRescue(IERC20(address(0x1)));
+        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
     }
 
     function test_RevertWhen_RescueCooldownNotMet() external registerSingularityPool {
@@ -48,6 +48,6 @@ contract TOLP_activateSGLPoolRescue is TolpBaseTest {
 
         tolp.requestSglPoolRescue(1);
         vm.expectRevert(RescueCooldownNotReached.selector);
-        tolp.activateSGLPoolRescue(IERC20(address(0x1)));
+        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
     }
 }

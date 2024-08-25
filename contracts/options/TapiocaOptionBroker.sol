@@ -74,8 +74,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /// ===== TWAML ======
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
 
-    /// @dev Virtual total amount to add to the total when computing twAML participation right. Default 10_000 * 1e18.
-    uint256 private VIRTUAL_TOTAL_AMOUNT = 10_000 ether;
+    /// @dev Virtual total amount to add to the total when computing twAML participation right.
+    uint256 private VIRTUAL_TOTAL_AMOUNT = 50_000 ether;
 
     uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
     uint256 constant dMAX = 500_000; // 50 * 1e4; 0% - 50% discount
@@ -91,6 +91,15 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /// @notice Total amount of participation per epoch
     mapping(uint256 epoch => mapping(uint256 sglAssetID => int256 netAmount)) public netDepositedForEpoch;
 
+    /// @notice 2x growth cap per epoch
+    uint256 private growthCapBps = 20000; // 200%
+    /// @notice The minimum amount of difference between 2 epochs to activate a decay
+    /// If epoch 2 - epoch 1 < decayActivationBps, no decay will be activated
+    uint256 public decayActivationBps;
+    /// @notice The rate of decay per epoch
+    uint256 public decayRateBps;
+    /// @notice Total amount of decay amassed. Can be reset to 0
+    mapping(uint256 sglAssetID => uint256 decayAmount) public decayAmassed;
     /// @notice Cumulative for each epoch
     mapping(uint256 sglAssetID => uint256 cumulative) public lastEpochCumulativeForSgl;
 
@@ -122,6 +131,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     error AdvanceEpochFirst();
     error DurationNotMultiple();
     error NotValid();
+    error EpochTooLow();
 
     constructor(
         address _tOLP,
@@ -163,6 +173,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     event ExitPosition(uint256 indexed epoch, uint256 indexed otapTokenId, uint256 tolpTokenId);
     event SetPaymentToken(ERC20 indexed paymentToken, ITapiocaOracle oracle, bytes oracleData);
     event SetTapOracle(ITapiocaOracle oracle, bytes oracleData);
+    event DecayCumulative(uint256 amountDecayed);
+    event ResetDecayAmassed(uint256 decayAmassed);
 
     // ==========
     //    READ
@@ -327,7 +339,11 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         }
 
         uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
-        uint256 target = computeTarget(dMIN, dMAX, magnitude, pool.cumulative);
+        uint256 target;
+        {
+            (uint256 totalPoolShares,) = tOLP.getTotalPoolDeposited(uint256(lock.sglAssetID));
+            target = computeTarget(dMIN, dMAX, magnitude * uint256(lock.ybShares), pool.cumulative * totalPoolShares);
+        }
 
         // Revert if the lock 4x the last epoch cumulative
         {
@@ -336,7 +352,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
                 lastEpochCumulative = EPOCH_DURATION;
             }
 
-            if (magnitude > lastEpochCumulative * maxEpochCoeff) revert TooLong();
+            // Revert if the lock is x time bigger than the cumulative
+            if (magnitude > (lastEpochCumulative * growthCapBps) / 1e4) revert TooLong();
         }
 
         bool divergenceForce;
@@ -405,10 +422,13 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
         bool isSGLInRescueMode = _isSGLInRescueMode(lock);
 
-        // If SGL is in rescue, bypass the lock expiration
-        if (!isSGLInRescueMode) {
-            if (block.timestamp < lock.lockTime + lock.lockDuration) {
-                revert LockNotExpired();
+        // Check if debt ratio is below threshold, if so bypass lock expiration
+        if (tOLP.canLockWithDebt(oTAP.ownerOf(_oTAPTokenID), uint256(lock.sglAssetID), uint256(lock.ybShares))) {
+            // If SGL is in rescue, bypass the lock expiration
+            if (!isSGLInRescueMode) {
+                if (block.timestamp < lock.lockTime + lock.lockDuration) {
+                    revert LockNotExpired();
+                }
             }
         }
 
@@ -517,6 +537,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (sglLen == 0) revert NoActiveSingularities();
 
         epoch++;
+        _decayCumulative(); // Decay the cumulative if needed, always called after epoch++
 
         // Update the lastEpochCumulativeForSgl on each active singularity
         for (uint256 i; i < sglLen; i++) {
@@ -640,9 +661,74 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         }
     }
 
+    /**
+     * @notice Set the growth cap for the next epoch.
+     */
+    function setGrowthCapBps(uint256 _growthCapBps) external onlyOwner {
+        growthCapBps = _growthCapBps;
+    }
+
+    /**
+     * @notice Set the decay rate
+     */
+    function setDecayRate(uint256 _decayRateBps) external onlyOwner {
+        decayRateBps = _decayRateBps;
+    }
+
+    /**
+     * @notice Set the decay activation threshold
+     */
+    function setDecayActivationBps(uint256 _decayActivationBps) external onlyOwner {
+        decayActivationBps = _decayActivationBps;
+    }
+
+    /**
+     * @notice Reset the decay by reimbursing it to the cumulative.
+     */
+    function resetDecayAmassed(uint256 sglAssetID) external onlyOwner {
+        twAML[sglAssetID].cumulative += decayAmassed[sglAssetID];
+        decayAmassed[sglAssetID] = 0;
+        emit ResetDecayAmassed(sglAssetID);
+    }
+
     // ============
     //   INTERNAL
     // ============
+
+    /// @notice Decays the cumulative if the liquidity is less than a threshold
+    /// @dev Expect the new epoch to be called already
+    function _decayCumulative() internal {
+        if (decayRateBps == 0) return;
+        uint256 _epoch = epoch;
+        if (_epoch < 2) revert EpochTooLow(); // Need at least 2 epochs to be compared
+        if (_timestampToWeek(block.timestamp) > _epoch) revert AdvanceEpochFirst();
+
+        uint256[] memory singularities = tOLP.getSingularities();
+        uint256 len = singularities.length;
+        for (uint256 i; i < len; ++i) {
+            uint256 sglAssetID = singularities[i];
+            int256 totalDepositedA = netDepositedForEpoch[_epoch - 2][sglAssetID];
+            int256 totalDepositedB = netDepositedForEpoch[_epoch - 1][sglAssetID];
+
+            int256 delta = totalDepositedA - totalDepositedB; // Check if the liquidity has decreased
+            if (delta > 0) {
+                // If so, check the percentage of decrease
+                delta = int256(muldiv(uint256(delta), 100e4, uint256(totalDepositedA)));
+
+                // Apply the decay if the decrease is more than the threshold
+                // Cast is ok, delta is always positive at this point
+                if (uint256(delta) >= decayActivationBps) {
+                    TWAMLPool memory pool = twAML[sglAssetID];
+                    uint256 decayAmount = muldiv(pool.cumulative, decayRateBps, 100e4);
+                    pool.cumulative -= decayAmount;
+                    decayAmassed[sglAssetID] += decayAmount;
+                    twAML[sglAssetID] = pool;
+                    emit DecayCumulative(decayAmount);
+                }
+            }
+        }
+    }
+
     /// @notice returns week for timestamp
     function _timestampToWeek(uint256 timestamp) internal view returns (uint256) {
         return ((timestamp - emissionsStartTime) / EPOCH_DURATION);

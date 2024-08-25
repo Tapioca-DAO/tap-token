@@ -5,7 +5,6 @@ import {TobBaseTest, IERC20, TapiocaOptionBroker} from "test/unit/options/Tapioc
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {TWAML} from "contracts/options/twAML.sol";
 
-
 contract TOB_getOTCDealDetails is TobBaseTest, TWAML {
     modifier whenLockingAndParticipating(uint128 _lockAmount, uint128 _lockDuration) {
         (_lockAmount, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
@@ -29,7 +28,7 @@ contract TOB_getOTCDealDetails is TobBaseTest, TWAML {
     {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.PaymentTokenNotSupported.selector);
-        tob.getOTCDealDetails(1, ERC20(address(0x1)), 0);
+        tob.getOTCDealDetails(1, ERC20(address(singularityEthMarket)), 0);
     }
 
     function test_RevertWhen_InEpochCooldown(uint128 _lockAmount, uint128 _lockDuration)

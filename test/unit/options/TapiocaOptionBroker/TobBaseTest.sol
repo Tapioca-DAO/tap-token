@@ -165,10 +165,4 @@ contract TobBaseTest is TolpBaseTest {
         }
         vm.stopPrank();
     }
-
-    function _boundValues(uint128 _lockAmount, uint128 _lockDuration) internal returns (uint128, uint128) {
-        _lockAmount = uint128(bound(_lockAmount, 1e18, 1e40));
-        _lockDuration = uint128(tob.EPOCH_DURATION() * bound(_lockDuration, 1, 4));
-        return (_lockAmount, _lockDuration);
-    }
 }
