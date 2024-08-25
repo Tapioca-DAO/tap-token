@@ -714,7 +714,6 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (decayRateBps == 0) return;
         uint256 _epoch = epoch;
         if (_epoch < 2) revert EpochTooLow(); // Need at least 2 epochs to be compared
-        if (_timestampToWeek(block.timestamp) > _epoch) revert AdvanceEpochFirst();
 
         uint256[] memory singularities = tOLP.getSingularities();
         uint256 len = singularities.length;

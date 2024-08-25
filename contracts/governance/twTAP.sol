@@ -857,7 +857,6 @@ contract TwTAP is
         uint256 _week = currentWeek();
 
         if (_week < 2) revert EpochTooLow(); // Need at least 2 epochs to be compared
-        if (_timestampToWeek(block.timestamp) > _week) revert AdvanceEpochFirst();
 
         int256 totalDepositedA = weekTotals[_week - 2].netActiveVotes;
         int256 totalDepositedB = weekTotals[_week - 1].netActiveVotes;
