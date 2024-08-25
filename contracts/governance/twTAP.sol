@@ -562,10 +562,10 @@ contract TwTAP is
                     ++i;
                 }
             }
+            _decayCumulative(); // Always called after updating the week
         }
         emit AdvanceEpoch(goal, lastProcessedWeek);
         lastProcessedWeek = goal;
-        _decayCumulative();
     }
 
     /// @notice distributes a reward among all tokens, weighted by voting power
