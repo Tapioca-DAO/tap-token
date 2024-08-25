@@ -82,8 +82,6 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     uint256 constant dMIN = 0;
     uint256 public immutable EPOCH_DURATION; // 7 days = 604800
 
-    uint256 public maxEpochCoeff = 4; // Maximum epoch coefficient for the cumulative
-
     /// @notice starts time for emissions
     /// @dev initialized in the constructor with block.timestamp
     uint256 public emissionsStartTime;
@@ -176,7 +174,6 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     event DecayCumulative(uint256 amountDecayed);
     event ResetDecayAmassed(uint256 decayAmassed);
     event SetTobMagnitudeMultiplier(ITobMagnitudeMultiplier tobMagnitudeMultiplier);
-    event SetMaxEpochCoeff(uint256 maxEpochCoeff);
     event SetVirtualTotalAmount(uint256 virtualTotalAmount);
     event SetMinWeightFactor(uint256 minWeightFactor);
     event SetPaymentTokenBeneficiary(address paymentTokenBeneficiary);
@@ -575,11 +572,6 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     function setTobMagnitudeMultiplier(ITobMagnitudeMultiplier _tobMagnitudeMultiplier) external onlyOwner {
         tobMagnitudeMultiplier = _tobMagnitudeMultiplier;
         emit SetTobMagnitudeMultiplier(_tobMagnitudeMultiplier);
-    }
-
-    function setMaxEpochCoeff(uint256 _maxEpochCoeff) external onlyOwner {
-        maxEpochCoeff = _maxEpochCoeff;
-        emit SetMaxEpochCoeff(_maxEpochCoeff);
     }
 
     /**
