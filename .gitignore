@@ -8,5 +8,6 @@ docs
 
 #Hardhat & forge files
 gen
+cache
 
 .DS_Store
