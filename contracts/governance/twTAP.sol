@@ -75,7 +75,6 @@ struct WeekTotals {
 
 contract TwTAP is
     TWAML,
-    ERC721,
     ERC721Permit,
     ERC721Enumerable,
     Ownable,

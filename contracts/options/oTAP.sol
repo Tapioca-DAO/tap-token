@@ -29,7 +29,7 @@ struct TapOption {
     uint256 tOLP; // tOLP token ID
 }
 
-contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, PearlmitHandler, BaseBoringBatchable {
+contract OTAP is ERC721Permit, ERC721Enumerable, ERC721NftLoader, PearlmitHandler, BaseBoringBatchable {
     uint256 public mintedOTAP; // total number of OTAP minted
     address public broker; // address of the onlyBroker
 
