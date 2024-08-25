@@ -221,11 +221,20 @@ contract TapiocaOptionLiquidityProvision is
     }
 
     /// @notice Check if a user can lock with debt. Takes into account past locks.
+    /// Does account for accrued debt in BigBang markets. Result might be different from `_canLockWithDebt()`
     /// @param _user User address
     /// @param _sglAssetId Singularity asset id
     /// @param _userShare Amount of YieldBox shares to lock
     function canLockWithDebt(address _user, uint256 _sglAssetId, uint256 _userShare) external view returns (bool) {
-        return _canLockWithDebt(_user, sglAssetIDToAddress[_sglAssetId], _userShare);
+        uint256 totalUserUsdoDebt = _getTotalBigBangDebtInUSDOView(_user);
+        uint256 amountToLock = _getUsdoAmountFromTolpShare(sglAssetIDToAddress[_sglAssetId], _userShare);
+
+        totalUserUsdoDebt = totalUserUsdoDebt + (totalUserUsdoDebt * maxDebtBuffer) / 1e4; // total debt + buffer
+        if (amountToLock + userLockedUsdo[_user] > totalUserUsdoDebt) {
+            return false;
+        }
+
+        return true;
     }
 
     // ==========
@@ -591,7 +600,7 @@ contract TapiocaOptionLiquidityProvision is
      * @param _singularity Singularity market address
      * @param _userShare Amount of YieldBox shares to lock
      */
-    function _canLockWithDebt(address _user, IERC20 _singularity, uint256 _userShare) internal view returns (bool) {
+    function _canLockWithDebt(address _user, IERC20 _singularity, uint256 _userShare) internal returns (bool) {
         uint256 totalUserUsdoDebt = _getTotalBigBangDebtInUSDO(_user);
         uint256 amountToLock = _getUsdoAmountFromTolpShare(_singularity, _userShare);
 
@@ -604,9 +613,28 @@ contract TapiocaOptionLiquidityProvision is
     }
 
     /**
-     * @notice Get the USDO total debt of a user in the BigBang markets
+     * @notice Get the USDO total debt of a user in the BigBang markets.
+     * @dev Accrue each market before getting the debt
      */
-    function _getTotalBigBangDebtInUSDO(address _user) internal view returns (uint256 totalUserUsdoDebt) {
+    function _getTotalBigBangDebtInUSDO(address _user) internal returns (uint256 totalUserUsdoDebt) {
+        address[] memory markets = penrose.bigBangMarkets();
+
+        // Loop over the markets, get user debt and sum it
+        uint256 len = markets.length;
+        for (uint256 i = 0; i < len; i++) {
+            IBigBang bigBang = IBigBang(markets[i]);
+            bigBang.accrue();
+            (uint128 elastic, uint128 base) = bigBang._totalBorrow();
+            uint256 userBorrowPart = bigBang._userBorrowPart(_user);
+            totalUserUsdoDebt += RebaseLibrary.toBase(Rebase(elastic, base), userBorrowPart, false);
+        }
+    }
+    /**
+     * @notice Get the USDO total debt of a user in the BigBang markets
+     * @dev Does not accrue the markets
+     */
+
+    function _getTotalBigBangDebtInUSDOView(address _user) internal view returns (uint256 totalUserUsdoDebt) {
         address[] memory markets = penrose.bigBangMarkets();
 
         // Loop over the markets, get user debt and sum it
