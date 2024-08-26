@@ -287,10 +287,4 @@ contract twTap_participate is twTapBaseTest, TWAML {
     function _timestampToWeek(uint256 _timestamp) internal view returns (uint256) {
         return (_timestamp - twTap.creation()) / twTap.EPOCH_DURATION();
     }
-
-    function _boundValues(uint256 _lockAmount, uint256 _lockDuration) internal returns (uint256, uint256) {
-        _lockAmount = bound(_lockAmount, 1, type(uint88).max);
-        _lockDuration = twTap.EPOCH_DURATION() * bound(_lockDuration, 4, 6);
-        return (_lockAmount, _lockDuration);
-    }
 }
