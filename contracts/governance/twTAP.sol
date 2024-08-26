@@ -218,6 +218,10 @@ contract TwTAP is
     event ActivateEmergencySweep();
     event DecayCumulative(uint256 amountDecayed);
     event ResetDecayAmassed(uint256 decayAmassed);
+    event SetDecayActivationBps(uint256 decayActivationBps);
+    event SetGrowthCapBps(uint256 growthCapBps);
+    event SetDecayRateBps(uint256 decayRateBps);
+    event SetMaxLockDuration(uint256 maxLockDuration);
 
     // ==========
     //    READ
@@ -679,6 +683,7 @@ contract TwTAP is
      */
     function setGrowthCapBps(uint256 _growthCapBps) external onlyOwner {
         growthCapBps = _growthCapBps;
+        emit SetGrowthCapBps(_growthCapBps);
     }
 
     /**
@@ -686,6 +691,7 @@ contract TwTAP is
      */
     function setMaxLockDuration(uint256 _maxLockDuration) external onlyOwner {
         MAX_LOCK_DURATION = _maxLockDuration;
+        emit SetMaxLockDuration(_maxLockDuration);
     }
 
     /**
@@ -703,6 +709,22 @@ contract TwTAP is
     function setEmergencySweepCooldown(uint256 _emergencySweepCooldown) external onlyOwner {
         emergencySweepCooldown = _emergencySweepCooldown;
         emit SetEmergencySweepCooldown(_emergencySweepCooldown);
+    }
+
+    /**
+     * @notice Set the decay activation bps
+     */
+    function setDecayActivationBps(uint256 _decayActivationBps) external onlyOwner {
+        decayActivationBps = _decayActivationBps;
+        emit SetDecayActivationBps(_decayActivationBps);
+    }
+
+    /**
+     * @notice Set the decay rate bps
+     */
+    function setDecayRateBps(uint256 _decayRateBps) external onlyOwner {
+        decayRateBps = _decayRateBps;
+        emit SetDecayRateBps(_decayRateBps);
     }
 
     /**
