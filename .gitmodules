@@ -22,3 +22,6 @@
 	path = dep/tapioca-mocks
 	url = https://github.com/Tapioca-DAO/tapioca-mocks
 	branch = main
+[submodule "dep/tapiocaz"]
+	path = dep/tapiocaz
+	url = https://github.com/Tapioca-DAO/tapiocaz
