@@ -124,6 +124,28 @@ const POST_LBP: TPostLbp = {
             SUPPORTERS_PERIOD: 46656000, // 18 months vesting
         },
     },
+    [EChainID.BASE_SEPOLIA]: {
+        TAP: {
+            DAO_ADDRESS: '',
+        },
+        ADB: {
+            PAYMENT_TOKEN_BENEFICIARY: '',
+        },
+        PCNFT: {
+            ADDRESS: '0x52b4B758d0dC4039747a2BD52F87e4448511158d',
+        },
+        VESTING: {
+            // Contributors
+            CONTRIBUTORS_CLIFF: 31104000, // 12 months cliff
+            CONTRIBUTORS_PERIOD: 93312000, // 36 months vesting
+            // Early supporters
+            EARLY_SUPPORTERS_CLIFF: 0,
+            EARLY_SUPPORTERS_PERIOD: 62208000, // 24 months vesting
+            // Supporters
+            SUPPORTERS_CLIFF: 0,
+            SUPPORTERS_PERIOD: 46656000, // 18 months vesting
+        },
+    },
     [EChainID.FUJI_AVALANCHE]: {
         PCNFT: {
             ADDRESS: '',
@@ -182,6 +204,7 @@ FINAL[EChainID.ARBITRUM_SEPOLIA] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitr
 FINAL[EChainID.FUJI_AVALANCHE] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
 FINAL[EChainID.SEPOLIA] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
 FINAL[EChainID.OPTIMISM_SEPOLIA] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
+FINAL[EChainID.BASE_SEPOLIA] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
 FINAL['31337' as EChainID] = FINAL[EChainID.ARBITRUM]; // Copy from Arbitrum
 
 type TMisc = {

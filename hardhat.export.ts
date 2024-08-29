@@ -94,7 +94,17 @@ const config: HardhatUserConfig & { dodoc: any } = {
                     evmVersion: 'paris', // Latest before Shanghai
                     optimizer: {
                         enabled: true,
-                        runs: 5000,
+                        runs: 1000,
+                    },
+                },
+            },
+            'contracts/options/TapiocaOptionLiquidityProvision.sol': {
+                version: '0.8.22',
+                settings: {
+                    evmVersion: 'paris', // Latest before Shanghai
+                    optimizer: {
+                        enabled: true,
+                        runs: 200,
                     },
                 },
             },
