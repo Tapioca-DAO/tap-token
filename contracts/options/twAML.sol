@@ -154,4 +154,20 @@ abstract contract TWAML is FullMath {
             z = 1;
         }
     }
+
+    /**
+     * @notice Will ceil/floor the reward amount to the nearest number by increment of `_multiplier`.
+     * @dev e.g: tOB: 1, multiplier: 5, cap: 2
+     *           twTap: 1, multiplier: 10, cap: 5
+     */
+    function capCumulativeReward(uint256 _amount, uint256 _multiplier, uint256 _cap) internal pure returns (uint256) {
+        uint256 remainder = _amount % _multiplier;
+        if (remainder == 0) {
+            return _amount;
+        }
+        if (remainder > _cap) {
+            return _amount + _multiplier - remainder;
+        }
+        return _amount - remainder;
+    }
 }

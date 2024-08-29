@@ -146,6 +146,9 @@ contract TwTAP is
     ITwTapMagnitudeMultiplier public twTapMagnitudeMultiplier;
     uint256 constant MULTIPLIER_PRECISION = 1e18;
 
+    uint256 public constant REWARD_MULTIPLIER_BRACKET = 100_000; // 10% brackets
+    uint256 public constant REWARD_CAP_BRACKET = 50_000; // 5% cap to floor/ceil the reward
+
     error NotAuthorized();
     error AdvanceWeekFirst();
     error NotValid();
@@ -409,7 +412,11 @@ contract TwTAP is
 
         // Revert if the lock is x time bigger than the cumulative
         if (magnitude > (lastEpochCumulative * growthCapBps) / 1e4) revert NotValid();
-        uint256 multiplier = computeTarget(dMIN, dMAX, magnitude * _amount, pool.cumulative * pool.totalDeposited);
+        uint256 multiplier = capCumulativeReward(
+            computeTarget(dMIN, dMAX, magnitude * _amount, pool.cumulative * pool.totalDeposited),
+            REWARD_MULTIPLIER_BRACKET,
+            REWARD_CAP_BRACKET
+        );
 
         // Calculate twAML voting weight
         bool divergenceForce;

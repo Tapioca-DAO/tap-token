@@ -105,6 +105,9 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     ITobMagnitudeMultiplier public tobMagnitudeMultiplier;
     uint256 constant MULTIPLIER_PRECISION = 1e18;
 
+    uint256 public constant REWARD_MULTIPLIER_BRACKET = 50_000; // 5% brackets
+    uint256 public constant REWARD_CAP_BRACKET = 20_000; // 2% cap to floor/ceil the reward
+
     /// =====-------======
 
     error NotEqualDurations();
@@ -344,7 +347,11 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         uint256 target;
         {
             (uint256 totalPoolShares,) = tOLP.getTotalPoolDeposited(uint256(lock.sglAssetID));
-            target = computeTarget(dMIN, dMAX, magnitude * uint256(lock.ybShares), pool.cumulative * totalPoolShares);
+            target = capCumulativeReward(
+                computeTarget(dMIN, dMAX, magnitude * uint256(lock.ybShares), pool.cumulative * totalPoolShares),
+                REWARD_MULTIPLIER_BRACKET,
+                REWARD_CAP_BRACKET
+            );
         }
 
         // Revert if the lock 4x the last epoch cumulative
