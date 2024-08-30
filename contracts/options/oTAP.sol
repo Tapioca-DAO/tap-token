@@ -159,6 +159,11 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, Pearlm
         return baseURI;
     }
 
+    /// @notice Checks if the contract supports a given interface
+    /// @dev Overrides function from both ERC721Enumerable and ERC721
+    /// @param interfaceId The interface identifier
+    /// @return bool True if the contract supports the interface, false otherwise
+
     function supportsInterface(bytes4 interfaceId)
         public
         view
