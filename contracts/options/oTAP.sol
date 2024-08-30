@@ -180,7 +180,7 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, Pearlm
     /// @param to Address tokens are transferred to
     /// @param firstTokenId The first token ID in the batch being transferred
     /// @param batchSize The number of tokens being transferred in the batch
-    
+
     function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
         internal
         override(ERC721, ERC721Enumerable)
@@ -188,6 +188,13 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, Pearlm
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
 
+    /// @notice Hook that is called after any token transfer
+    /// @dev Overrides function from both ERC721 and ERC721Permit
+    /// @param from Address tokens are transferred from
+    /// @param to Address tokens are transferred to
+    /// @param firstTokenId The first token ID in the batch being transferred
+    /// @param batchSize The number of tokens being transferred in the batch
+    
     function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
         internal
         virtual
