@@ -132,11 +132,12 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, Pearlm
         option.tOLP = _tOLP;
 
         _safeMint(_to, tokenId);
-        emit Mint(_to, tokenId, option);
+        emit Mint(_to, tokenId, option)
     }
 
-    /// @notice burns an OTAP
-    /// @param _tokenId tokenId to burn
+    /// @notice Burns an existing OTAP token
+    /// @dev Only the broker can burn tokens
+    /// @param _tokenId ID of the token to burn
     function burn(uint256 _tokenId) external {
         if (msg.sender != broker) revert OnlyBroker();
         _burn(_tokenId);
