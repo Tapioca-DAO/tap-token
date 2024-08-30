@@ -552,8 +552,6 @@ contract TwTAP is
     function advanceWeek(uint256 _limit) public nonReentrant {
         if (!cluster.hasRole(msg.sender, keccak256("NEW_EPOCH"))) revert NotAuthorized();
 
-        lastEpochCumulative = twAML.cumulative;
-
         uint256 week = lastProcessedWeek;
         uint256 goal = currentWeek();
         unchecked {
@@ -577,6 +575,7 @@ contract TwTAP is
         }
         emit AdvanceEpoch(goal, lastProcessedWeek);
         lastProcessedWeek = goal;
+        lastEpochCumulative = twAML.cumulative;
     }
 
     /// @notice distributes a reward among all tokens, weighted by voting power
