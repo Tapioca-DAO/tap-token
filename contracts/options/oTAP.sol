@@ -58,7 +58,17 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, Pearlm
     // ==========
     //   EVENTS
     // ==========
+
+    /// @notice Emitted when a new OTAP token is minted
+    /// @param to Address receiving the minted token
+    /// @param tokenId ID of the minted token
+    /// @param option Details of the option associated with the token
     event Mint(address indexed to, uint256 indexed tokenId, TapOption indexed option);
+
+    /// @notice Emitted when an OTAP token is burned
+    /// @param from Address from which the token is burned
+    /// @param tokenId ID of the burned token
+    /// @param option Details of the option associated with the burned token
     event Burn(address indexed from, uint256 indexed tokenId, TapOption indexed option);
 
     error NotAuthorized();
