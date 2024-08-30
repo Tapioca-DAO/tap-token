@@ -71,8 +71,17 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, Pearlm
     /// @param option Details of the option associated with the burned token
     event Burn(address indexed from, uint256 indexed tokenId, TapOption indexed option);
 
+    // ==========
+    //   ERRORS
+    // ==========
+
+    /// @notice Error thrown when an action is not authorized
     error NotAuthorized();
+
+    /// @notice Error thrown when a function restricted to the broker is called by another address
     error OnlyBroker();
+
+    /// @notice Error thrown when an action that can only be performed once is attempted again
     error OnlyOnce();
 
     // =========
