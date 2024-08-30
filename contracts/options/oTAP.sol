@@ -31,6 +31,10 @@ struct TapOption {
     uint256 tOLP; // tOLP token ID
 }
 
+/// @title OTAP (Option TAP) Token Contract
+/// @notice This contract manages Option TAP tokens, representing options on TAP tokens
+/// @dev Implements ERC721 standard with additional option features
+
 contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, PearlmitHandler, BaseBoringBatchable {
     uint256 public mintedOTAP; // total number of OTAP minted
     address public broker; // address of the onlyBroker
