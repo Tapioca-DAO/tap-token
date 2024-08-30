@@ -36,10 +36,18 @@ struct TapOption {
 /// @dev Implements ERC721 standard with additional option features
 
 contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, PearlmitHandler, BaseBoringBatchable {
-    uint256 public mintedOTAP; // total number of OTAP minted
-    address public broker; // address of the onlyBroker
+    /// @notice Total number of OTAP tokens minted
+    uint256 public mintedOTAP;
 
-    mapping(uint256 => TapOption) public options; // tokenId => Option
+    /// @notice Address of the broker who has special privileges
+    address public broker;
+
+    /// @notice Mapping of token IDs to their corresponding option details
+    mapping(uint256 => TapOption) public options;
+
+    /// @notice Initializes the OTAP contract
+    /// @param _pearlmit Address of the Pearlmit contract for permit functionality
+    /// @param _owner Address of the contract owner
 
     constructor(IPearlmit _pearlmit, address _owner)
         ERC721NftLoader("Option TAP", "oTAP", _owner)
