@@ -114,11 +114,13 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, Pearlm
     //    WRITE
     // ==========
 
-    /// @notice mints an OTAP
-    /// @param _to address to mint to
-    /// @param _expiry timestamp
-    /// @param _discount TAP discount in basis points
-    /// @param _tOLP tOLP token ID
+    /// @notice Mints a new OTAP token
+    /// @dev Only the broker can mint tokens
+    /// @param _to Address to receive the minted token
+    /// @param _expiry Timestamp when the option expires
+    /// @param _discount Discount in basis points
+    /// @param _tOLP tOLP token ID associated with this option
+    /// @return tokenId The ID of the newly minted token
     function mint(address _to, uint128 _expiry, uint128 _discount, uint256 _tOLP) external returns (uint256 tokenId) {
         if (msg.sender != broker) revert OnlyBroker();
 
