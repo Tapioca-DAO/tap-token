@@ -145,7 +145,8 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, Pearlm
         emit Burn(msg.sender, _tokenId, options[_tokenId]);
     }
 
-    /// @notice tOB claim
+    /// @notice Allows the initial claim of the broker role
+    /// @dev Can only be called once to set the broker
     function brokerClaim() external {
         if (broker != address(0)) revert OnlyOnce();
         broker = msg.sender;
