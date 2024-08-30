@@ -23,6 +23,7 @@ import {ERC721Permit} from "tap-utils/utils/ERC721Permit.sol"; // TODO audit
 */
 
 // TODO naming
+/// @notice Struct representing the details of a TAP option
 struct TapOption {
     uint128 entry; // time when the option position was created
     uint128 expiry; // timestamp, as once one wise man said, the sun will go dark before this overflows
