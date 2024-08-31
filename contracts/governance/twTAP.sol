@@ -85,7 +85,7 @@ contract TwTAP is
 {
     using SafeERC20 for IERC20;
 
-    TapToken public immutable tapOFT;
+    TapToken public tapOFT;
 
     /// ===== TWAML ======
     TWAMLPool public twAML; // sglAssetId => twAMLPool
@@ -145,6 +145,9 @@ contract TwTAP is
 
     ITwTapMagnitudeMultiplier public twTapMagnitudeMultiplier;
     uint256 constant MULTIPLIER_PRECISION = 1e18;
+
+    /// @notice The minimum amount of weeks to start decaying the cumulative
+    uint256 public minWeeksToDecay = 2;
 
     error NotAuthorized();
     error AdvanceWeekFirst();
@@ -727,6 +730,20 @@ contract TwTAP is
     }
 
     /**
+     * @notice Set the tapOFT address
+     */
+    function setTapOFT(address payable _tapOFT) external onlyOwner {
+        tapOFT = TapToken(_tapOFT);
+    }
+
+    /**
+    * @notice Set the minimum amount of weeks to start decaying the cumulative
+     */
+    function setMinWeeksToDecay(uint256 _minWeeksToDecay) external onlyOwner {
+        minWeeksToDecay = _minWeeksToDecay;
+    }
+
+    /**
      * @notice Activate the emergency sweep cooldown
      */
     function activateEmergencySweep() external onlyOwner {
@@ -877,7 +894,7 @@ contract TwTAP is
         if (decayRateBps == 0) return;
         uint256 _week = currentWeek();
 
-        if (_week < 2) revert EpochTooLow(); // Need at least 2 epochs to be compared
+        if (_week < minWeeksToDecay) revert EpochTooLow(); // Need at least 2 epochs to be compared
 
         int256 totalDepositedA = weekTotals[_week - 2].netActiveVotes;
         int256 totalDepositedB = weekTotals[_week - 1].netActiveVotes;
