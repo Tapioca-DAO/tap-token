@@ -67,8 +67,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         whenLockDurationIsMoreThanAWeek
         whenLockDurationIsLessThanMaxDuration
     {
-        (_lockAmount, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
-        _lockDuration = _lockDuration == twTap.EPOCH_DURATION() ? _lockDuration + 1 : _lockDuration - 1;
+        _lockDuration = twTap.EPOCH_DURATION() + 1;
 
         // it should revert
         vm.expectRevert(TwTAP.DurationNotMultiple.selector);
@@ -87,9 +86,10 @@ contract twTap_participate is twTapBaseTest, TWAML {
         whenLockDurationIsAMultipleOfEpochDuration
     {
         (_lockAmount, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
-        skip(twTap.EPOCH_DURATION());
+        skip(twTap.EPOCH_DURATION() * _lockDuration);
 
         // it should revert
+        uint256 _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
         vm.expectRevert(TwTAP.AdvanceWeekFirst.selector);
         twTap.participate(aliceAddr, _lockAmount, _lockDuration);
     }
@@ -111,8 +111,8 @@ contract twTap_participate is twTapBaseTest, TWAML {
         // it should revert
         // It should be TwTap.TransferFailed.selector,
         // for simplicity we use vm.expectRevert() if we don't permit it
+        uint256 _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
         vm.expectRevert();
-        vm.expectRevert(TwTAP.AdvanceWeekFirst.selector);
         twTap.participate(aliceAddr, _lockAmount, _lockDuration);
     }
 
@@ -141,6 +141,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         tapOFT.freeMint(aliceAddr, _lockAmount);
 
         // it should participate without changing AML
+        uint256 _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
         test_WhenItShouldParticipate(_lockAmount, _lockDuration, false);
 
         (uint256 totalParticipants, uint256 averageMagnitude, uint256 totalDeposited, uint256 cumulative) =
@@ -178,6 +179,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         tapOFT.freeMint(aliceAddr, _lockAmount);
 
         // it should participate and change AML
+        uint256 _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
         test_WhenItShouldParticipate(_lockAmount, _lockDuration, true);
     }
 
@@ -286,11 +288,5 @@ contract twTap_participate is twTapBaseTest, TWAML {
 
     function _timestampToWeek(uint256 _timestamp) internal view returns (uint256) {
         return (_timestamp - twTap.creation()) / twTap.EPOCH_DURATION();
-    }
-
-    function _boundValues(uint256 _lockAmount, uint256 _lockDuration) internal returns (uint256, uint256) {
-        _lockAmount = bound(_lockAmount, 1, type(uint88).max);
-        _lockDuration = twTap.EPOCH_DURATION() * bound(_lockDuration, 4, 6);
-        return (_lockAmount, _lockDuration);
     }
 }

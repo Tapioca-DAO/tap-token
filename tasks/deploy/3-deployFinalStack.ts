@@ -1,4 +1,5 @@
 import * as TAPIOCA_PERIPH_DEPLOY_CONFIG from '@tapioca-periph/config';
+import * as TAPIOCA_BAR_DEPLOY_CONFIG from '@tapioca-bar/config';
 import { TAPIOCA_PROJECTS_NAME } from '@tapioca-sdk/api/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import {
@@ -11,6 +12,7 @@ import { buildTOB } from '../deployBuilds/finalStack/options/buildTOB';
 import { buildTolp } from '../deployBuilds/finalStack/options/buildTOLP';
 import { buildTwTap } from '../deployBuilds/finalStack/options/deployTwTap';
 import { DEPLOYMENT_NAMES, DEPLOY_CONFIG } from './DEPLOY_CONFIG';
+import { loadGlobalContract } from 'tapioca-sdk';
 
 /**
  * @notice Called after deployPostLbpStack_2__task & tapioca-periph final task & tapioca-bar final task
@@ -61,9 +63,11 @@ async function tapiocaDeployTask(params: TTapiocaDeployerVmPass<object>) {
     const { tag } = taskArgs;
     const owner = tapiocaMulticallAddr;
 
-    const { pearlmit, yieldBox } = await getContracts(hre, tag);
+    const { pearlmit, yieldBox, penrose } = await getContracts(hre, tag);
 
-    VM.add(await getTolp(hre, owner, yieldBox.address, pearlmit.address))
+    VM.add(
+        await getTolp(hre, owner, yieldBox.address, pearlmit.address, penrose),
+    )
         .add(await getOtap(hre, pearlmit.address, owner))
         .add(await getTob(hre, tag, owner, pearlmit.address))
         .add(await getTwTap(hre, tag, owner, pearlmit.address));
@@ -92,9 +96,18 @@ async function getContracts(hre: HardhatRuntimeEnvironment, tag: string) {
         throw '[-] Pearlmit not found';
     }
 
+    const penrose = loadGlobalContract(
+        hre,
+        TAPIOCA_PROJECTS_NAME.TapiocaBar,
+        hre.SDK.chainInfo.chainId,
+        TAPIOCA_BAR_DEPLOY_CONFIG.DEPLOYMENT_NAMES.PENROSE,
+        tag,
+    ).address;
+
     return {
         yieldBox,
         pearlmit,
+        penrose,
     };
 }
 
@@ -103,6 +116,7 @@ async function getTolp(
     owner: string,
     yieldBoxAddress: string,
     pearlmit: string,
+    penrose: string,
 ) {
     return await buildTolp(
         hre,
@@ -111,6 +125,7 @@ async function getTolp(
             yieldBoxAddress, // Yieldbox
             DEPLOY_CONFIG.FINAL[hre.SDK.eChainId]!.TOLP.EPOCH_DURATION, // Epoch duration
             pearlmit,
+            penrose,
             owner, // Owner
         ],
     );

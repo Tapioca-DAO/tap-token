@@ -35,6 +35,8 @@ contract twTapBaseTest is UnitBaseTest {
 
     // Constants
     uint256 public EPOCH_DURATION = 1 weeks;
+    uint256 public MIN_LOCK_DURATION = 4;
+    uint256 public MAX_LOCK_DURATION = 6;
 
     // Addresses
     address public PAYMENT_TOKEN_RECEIVER = address(bytes20(keccak256("PAYMENT_TOKEN_RECEIVER")));
@@ -123,5 +125,24 @@ contract twTapBaseTest is UnitBaseTest {
         pearlmit.approve(20, address(tapOFT), 0, address(twTap), uint200(_amount), uint48(block.timestamp + 1));
         twTap.participate(aliceAddr, _amount, _duration * twTap.EPOCH_DURATION());
         vm.stopPrank();
+    }
+
+    function _participate(address _to, uint256 _amount, uint256 _duration) internal {
+        vm.startPrank(_to);
+        tapOFT.freeMint(_to, _amount);
+        tapOFT.approve(address(pearlmit), _amount);
+        pearlmit.approve(20, address(tapOFT), 0, address(twTap), uint200(_amount), uint48(block.timestamp + 1));
+        twTap.participate(_to, _amount, _duration * twTap.EPOCH_DURATION());
+        vm.stopPrank();
+    }
+
+    function _boundValues(uint256 _lockAmount, uint256 _lockDuration) internal returns (uint256, uint256) {
+        _lockAmount = bound(_lockAmount, 1, type(uint88).max);
+        _lockDuration = bound(_lockDuration, MIN_LOCK_DURATION, MAX_LOCK_DURATION);
+        return (_lockAmount, _lockDuration);
+    }
+
+    function _toWeek(uint256 _timestamp) internal returns (uint256) {
+        return (_timestamp - twTap.creation()) / twTap.EPOCH_DURATION();
     }
 }

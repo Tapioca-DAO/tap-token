@@ -126,7 +126,9 @@ contract UnitBaseTest is TestHelper {
     address public ENDPOINT_B;
 
     function setUp() public virtual override {
+        vm.label(adminAddr, "Admin");
         vm.label(aliceAddr, "Alice");
+        vm.label(bobAddr, "Bob");
 
         // Peripheral contracts
         pearlmit = createPearlmit(adminAddr);
@@ -280,14 +282,14 @@ contract UnitBaseTest is TestHelper {
         address _mainToken,
         IPearlmit _pearlmit,
         address _owner
-    ) internal returns (Penrose penrose, BigBang bbMasterContract, Singularity sglMasterContract) {
+    ) internal returns (Penrose _penrose, BigBang bbMasterContract, Singularity sglMasterContract) {
         address tapStrat = address(createYieldBoxEmptyStrategy(_yb, _tap));
         address mainTokenStrat = address(createYieldBoxEmptyStrategy(_yb, _mainToken));
 
         uint256 tapAssetId = IYieldBox(_yb).registerAsset(TokenType.ERC20, _tap, tapStrat, 0);
         uint256 mainTokenAssetId = IYieldBox(_yb).registerAsset(TokenType.ERC20, _mainToken, mainTokenStrat, 0);
 
-        penrose = new Penrose(
+        _penrose = new Penrose(
             IYieldBox(_yb),
             ICluster(_cluster),
             BoringIERC20(_tap),
@@ -301,9 +303,9 @@ contract UnitBaseTest is TestHelper {
         bbMasterContract = new BigBang();
         sglMasterContract = new Singularity();
         vm.startPrank(adminAddr);
-        penrose.registerBigBangMasterContract(address(bbMasterContract), IPenrose.ContractType.mediumRisk);
-        penrose.registerSingularityMasterContract(address(sglMasterContract), IPenrose.ContractType.mediumRisk);
-        penrose.setUsdoToken(address(usdoMock), usdoMockTokenId);
+        _penrose.registerBigBangMasterContract(address(bbMasterContract), IPenrose.ContractType.mediumRisk);
+        _penrose.registerSingularityMasterContract(address(sglMasterContract), IPenrose.ContractType.mediumRisk);
+        _penrose.setUsdoToken(address(usdoMock), usdoMockTokenId);
         vm.stopPrank();
     }
 

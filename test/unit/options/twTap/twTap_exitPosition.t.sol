@@ -173,10 +173,4 @@ contract twTap_exitPosition is twTapBaseTest, TWAML {
             tapOFT.balanceOf(aliceAddr), _lockAmount, "twTap_exitPosition::test_WhenItShouldContinue: Invalid balance"
         );
     }
-
-    function _boundValues(uint256 _lockAmount, uint256 _lockDuration) internal pure returns (uint256, uint256) {
-        _lockAmount = bound(_lockAmount, 1, type(uint88).max);
-        _lockDuration = bound(_lockDuration, 1, 4);
-        return (_lockAmount, _lockDuration);
-    }
 }

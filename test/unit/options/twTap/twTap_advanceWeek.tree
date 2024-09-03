@@ -1,0 +1,23 @@
+twTap_advanceWeek
+├── when caller does not have role
+│   └── it should revert
+└── when caller has role
+    ├── when time did not advance enough to advance week
+    │   └── it should do nothing
+    └── when time advanced enough
+        ├── it should emit AdvanceEpoch
+        ├── it should pass week net active votes
+        ├── it should update lastProcessedWeek
+        ├── when decay rate is not set
+        │   └── it should do nothing
+        └── when decay rate is bigger than 0
+            ├── when epoch smaller than 2
+            │   └── it should revert
+            └── when epoch bigger or equal 2
+                ├── when liquidity decreased
+                │   ├── when liquidity decreased more than the decay activation
+                │   │   └── it should decay
+                │   └── when liquidity did not decreased more than he decay activation
+                │       └── it should not decay
+                └── when liquidity did not decrease
+                    └── it should not decay

@@ -190,6 +190,61 @@ export const buildFinalStackPostDepSetup_2 = async (
     //     );
     // }
 
+    if (isTestnet) {
+        // Arbitrum USDC Mock
+        const tSglUsdcMock = loadGlobalContract(
+            hre,
+            TAPIOCA_PROJECTS_NAME.TapiocaZ,
+            hre.SDK.eChainId,
+            TAPIOCA_Z_CONFIG.DEPLOYMENT_NAMES.T_SGL_USDC_MOCK_MARKET,
+            tag,
+        );
+        const ybStrategyTSglUsdcMock = loadGlobalContract(
+            hre,
+            TAPIOCA_PROJECTS_NAME.TapiocaBar,
+            hre.SDK.eChainId,
+            TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES
+                .YB_T_SGL_USDC_MOCK_ASSET_WITHOUT_STRATEGY,
+            tag,
+        );
+
+        /**
+         * Register Arb SGL USDC MOCK in TOLP
+         */
+        const sglUsdcMockYbAsset = await yieldbox.ids(
+            1,
+            tSglUsdcMock.address,
+            ybStrategyTSglUsdcMock.address,
+            0,
+        );
+
+        // If SGL Usdc Mock is not registered in TOLP, register it
+        if (
+            (
+                await tOlp.sglAssetIDToAddress(sglUsdcMockYbAsset)
+            ).toLowerCase() !== tSglUsdcMock.address.toLowerCase()
+        ) {
+            console.log('[+] +Call queue: register SGL Usdc Mock in TOLP');
+            calls.push({
+                target: tOlp.address,
+                allowFailure: false,
+                callData: tOlp.interface.encodeFunctionData(
+                    'registerSingularity',
+                    [tSglUsdcMock.address, sglUsdcMockYbAsset, 0],
+                ),
+            });
+            console.log(
+                '\t- Parameters',
+                'SGL address',
+                tSglUsdcMock.address,
+                'YB asset ID',
+                sglUsdcMockYbAsset,
+                'Weight',
+                0,
+            );
+        }
+    }
+
     /**
      * Set tOB as minter for TapOFT
      */
