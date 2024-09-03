@@ -54,7 +54,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
     TapiocaOptionLiquidityProvision public immutable tOLP;
     bytes public tapOracleData;
-    TapToken public immutable tapOFT;
+    TapToken public tapOFT;
     OTAP public immutable oTAP;
     ITapiocaOracle public tapOracle;
 
@@ -107,6 +107,8 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
 
     uint256 public constant REWARD_MULTIPLIER_BRACKET = 50_000; // 5% brackets
     uint256 public constant REWARD_CAP_BRACKET = 20_000; // 2% cap to floor/ceil the reward
+    /// @notice The minimum amount of weeks to start decaying the cumulative
+    uint256 public minWeeksToDecay = 2;
 
     /// =====-------======
 
@@ -695,6 +697,20 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     }
 
     /**
+     * @notice Set the TapOFT address
+     */
+    function setTapOft(address payable _tapOFT) external onlyOwner {
+        tapOFT = TapToken(_tapOFT);
+    }
+
+    /**
+     * @notice Set the minimum amount of weeks to start decaying the cumulative
+     */
+    function setMinWeeksToDecay(uint256 _minWeeksToDecay) external onlyOwner {
+        minWeeksToDecay = _minWeeksToDecay;
+    }
+
+    /**
      * @notice Reset the decay by reimbursing it to the cumulative.
      */
     function resetDecayAmassed(uint256 sglAssetID) external onlyOwner {
@@ -712,7 +728,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     function _decayCumulative() internal {
         if (decayRateBps == 0) return;
         uint256 _epoch = epoch;
-        if (_epoch < 2) revert EpochTooLow(); // Need at least 2 epochs to be compared
+        if (_epoch < minWeeksToDecay) revert EpochTooLow(); // Need at least 2 epochs to be compared
 
         uint256[] memory singularities = tOLP.getSingularities();
         uint256 len = singularities.length;
