@@ -9,7 +9,7 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 // Tapioca
 import {IPearlmit, PearlmitHandler} from "tap-utils/pearlmit/PearlmitHandler.sol";
 import {ERC721NftLoader} from "contracts/erc721NftLoader/ERC721NftLoader.sol";
-import {ERC721Permit} from "tap-utils/utils/ERC721Permit.sol"; // TODO audit
+import {ERC721Permit} from "tap-utils/utils/ERC721Permit.sol";
 
 /*
 
@@ -22,7 +22,6 @@ import {ERC721Permit} from "tap-utils/utils/ERC721Permit.sol"; // TODO audit
    
 */
 
-// TODO naming
 struct TapOption {
     uint128 entry; // time when the option position was created
     uint128 expiry; // timestamp, as once one wise man said, the sun will go dark before this overflows
@@ -30,7 +29,7 @@ struct TapOption {
     uint256 tOLP; // tOLP token ID
 }
 
-contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, PearlmitHandler, BaseBoringBatchable {
+contract OTAP is ERC721Permit, ERC721Enumerable, ERC721NftLoader, PearlmitHandler, BaseBoringBatchable {
     uint256 public mintedOTAP; // total number of OTAP minted
     address public broker; // address of the onlyBroker
 
@@ -48,7 +47,6 @@ contract OTAP is ERC721, ERC721Permit, ERC721Enumerable, ERC721NftLoader, Pearlm
     event Mint(address indexed to, uint256 indexed tokenId, TapOption indexed option);
     event Burn(address indexed from, uint256 indexed tokenId, TapOption indexed option);
 
-    error NotAuthorized();
     error OnlyBroker();
     error OnlyOnce();
 

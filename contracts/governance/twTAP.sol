@@ -75,7 +75,6 @@ struct WeekTotals {
 
 contract TwTAP is
     TWAML,
-    ERC721,
     ERC721Permit,
     ERC721Enumerable,
     Ownable,
@@ -86,7 +85,7 @@ contract TwTAP is
 {
     using SafeERC20 for IERC20;
 
-    TapToken public immutable tapOFT;
+    TapToken public tapOFT;
 
     /// ===== TWAML ======
     TWAMLPool public twAML; // sglAssetId => twAMLPool
@@ -147,13 +146,15 @@ contract TwTAP is
     ITwTapMagnitudeMultiplier public twTapMagnitudeMultiplier;
     uint256 constant MULTIPLIER_PRECISION = 1e18;
 
+    /// @notice The minimum amount of weeks to start decaying the cumulative
+    uint256 public minWeeksToDecay = 2;
+
     error NotAuthorized();
     error AdvanceWeekFirst();
     error NotValid();
     error Registered();
     error TokenLimitReached();
     error NotApproved(uint256 tokenId, address spender);
-    error Duplicate();
     error LockNotExpired();
     error LockNotAWeek();
     error LockTooLong();
@@ -162,6 +163,7 @@ contract TwTAP is
     error EmergencySweepCooldownNotReached();
     error EpochTooLow();
     error MaxLockCapReached();
+    error RescueModeActive();
 
     /// =====-------======
     constructor(address payable _tapOFT, IPearlmit _pearlmit, address _owner)
@@ -219,6 +221,10 @@ contract TwTAP is
     event ActivateEmergencySweep();
     event DecayCumulative(uint256 amountDecayed);
     event ResetDecayAmassed(uint256 decayAmassed);
+    event SetDecayActivationBps(uint256 decayActivationBps);
+    event SetGrowthCapBps(uint256 growthCapBps);
+    event SetDecayRateBps(uint256 decayRateBps);
+    event SetMaxLockDuration(uint256 maxLockDuration);
 
     // ==========
     //    READ
@@ -386,6 +392,7 @@ contract TwTAP is
         nonReentrant
         returns (uint256 tokenId)
     {
+        if (rescueMode) revert RescueModeActive();
         if (_duration < EPOCH_DURATION) revert LockNotAWeek();
         if (_duration > MAX_LOCK_DURATION) revert LockTooLong();
         if (_duration % EPOCH_DURATION != 0) revert DurationNotMultiple();
@@ -541,8 +548,6 @@ contract TwTAP is
     function advanceWeek(uint256 _limit) public nonReentrant {
         if (!cluster.hasRole(msg.sender, keccak256("NEW_EPOCH"))) revert NotAuthorized();
 
-        lastEpochCumulative = twAML.cumulative;
-
         uint256 week = lastProcessedWeek;
         uint256 goal = currentWeek();
         unchecked {
@@ -562,10 +567,11 @@ contract TwTAP is
                     ++i;
                 }
             }
+            _decayCumulative(); // Always called after updating the week
         }
         emit AdvanceEpoch(goal, lastProcessedWeek);
         lastProcessedWeek = goal;
-        _decayCumulative();
+        lastEpochCumulative = twAML.cumulative;
     }
 
     /// @notice distributes a reward among all tokens, weighted by voting power
@@ -679,6 +685,7 @@ contract TwTAP is
      */
     function setGrowthCapBps(uint256 _growthCapBps) external onlyOwner {
         growthCapBps = _growthCapBps;
+        emit SetGrowthCapBps(_growthCapBps);
     }
 
     /**
@@ -686,6 +693,7 @@ contract TwTAP is
      */
     function setMaxLockDuration(uint256 _maxLockDuration) external onlyOwner {
         MAX_LOCK_DURATION = _maxLockDuration;
+        emit SetMaxLockDuration(_maxLockDuration);
     }
 
     /**
@@ -706,6 +714,36 @@ contract TwTAP is
     }
 
     /**
+     * @notice Set the decay activation bps
+     */
+    function setDecayActivationBps(uint256 _decayActivationBps) external onlyOwner {
+        decayActivationBps = _decayActivationBps;
+        emit SetDecayActivationBps(_decayActivationBps);
+    }
+
+    /**
+     * @notice Set the decay rate bps
+     */
+    function setDecayRateBps(uint256 _decayRateBps) external onlyOwner {
+        decayRateBps = _decayRateBps;
+        emit SetDecayRateBps(_decayRateBps);
+    }
+
+    /**
+     * @notice Set the tapOFT address
+     */
+    function setTapOFT(address payable _tapOFT) external onlyOwner {
+        tapOFT = TapToken(_tapOFT);
+    }
+
+    /**
+    * @notice Set the minimum amount of weeks to start decaying the cumulative
+     */
+    function setMinWeeksToDecay(uint256 _minWeeksToDecay) external onlyOwner {
+        minWeeksToDecay = _minWeeksToDecay;
+    }
+
+    /**
      * @notice Activate the emergency sweep cooldown
      */
     function activateEmergencySweep() external onlyOwner {
@@ -717,35 +755,16 @@ contract TwTAP is
      * @notice Emergency sweep of all tokens in case of a critical issue.
      * Strategy is to sweep tokens, then recreate positions with them on a new contract.
      *
-     * @dev Only the owner with role `TWTAP_EMERGENCY_SWEEP` can call this function.
      */
-    function emergencySweepLocks() external onlyOwner {
+    function emergencySweep() external onlyOwner {
         if (lastEmergencySweep == 0 || block.timestamp < lastEmergencySweep + emergencySweepCooldown) {
             revert EmergencySweepCooldownNotReached();
         }
-        // TODO post-BTT: Already using onlyOwner, do we need role check?
-        if (!cluster.hasRole(msg.sender, keccak256("TWTAP_EMERGENCY_SWEEP"))) revert NotAuthorized();
 
+        // 1. Transfer the locks
         tapOFT.transfer(owner(), tapOFT.balanceOf(address(this)));
 
-        // TODO post-BTT: Do we need lastEmergencySweep? It's reset in 2 emergency funcs,
-        // if used with a cooldown, will have to wait double the time
-        lastEmergencySweep = 0;
-    }
-
-    /**
-     * @notice Emergency sweep of all rewards in case of a critical issue.
-     * Strategy is to sweep tokens, then distribute reward on a new contract.
-     *
-     * @dev Only the owner with role `TWTAP_EMERGENCY_SWEEP` can call this function.
-     */
-    function emergencySweepRewards() external onlyOwner {
-        if (lastEmergencySweep == 0 || block.timestamp < lastEmergencySweep + emergencySweepCooldown) {
-            revert EmergencySweepCooldownNotReached();
-        }
-        // TODO post-BTT: Already using onlyOwner, do we need role check?
-        if (!cluster.hasRole(msg.sender, keccak256("TWTAP_EMERGENCY_SWEEP"))) revert NotAuthorized();
-
+        // 2. Transfer the rewards
         uint256 len = rewardTokens.length;
         // Index starts at 1, see constructor
         for (uint256 i = 1; i < len; ++i) {
@@ -754,8 +773,7 @@ contract TwTAP is
                 token.safeTransfer(owner(), token.balanceOf(address(this)));
             }
         }
-        // TODO post-BTT: Do we need lastEmergencySweep? It's reset in 2 emergency funcs,
-        // if used with a cooldown, will have to wait double the time
+
         lastEmergencySweep = 0;
     }
 
@@ -876,8 +894,7 @@ contract TwTAP is
         if (decayRateBps == 0) return;
         uint256 _week = currentWeek();
 
-        if (_week < 2) revert EpochTooLow(); // Need at least 2 epochs to be compared
-        if (_timestampToWeek(block.timestamp) > _week) revert AdvanceEpochFirst();
+        if (_week < minWeeksToDecay) revert EpochTooLow(); // Need at least 2 epochs to be compared
 
         int256 totalDepositedA = weekTotals[_week - 2].netActiveVotes;
         int256 totalDepositedB = weekTotals[_week - 1].netActiveVotes;
@@ -898,12 +915,6 @@ contract TwTAP is
                 emit DecayCumulative(decayAmount);
             }
         }
-    }
-
-    /// @notice Returns the chain ID of the current network.
-    /// @dev Used for dev purposes.
-    function _getChainId() internal view virtual returns (uint256) {
-        return block.chainid;
     }
 
     function _baseURI() internal view override(ERC721, ERC721NftLoader) returns (string memory) {
