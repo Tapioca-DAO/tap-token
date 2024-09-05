@@ -139,6 +139,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     error DurationNotMultiple();
     error NotValid();
     error EpochTooLow();
+    error MinRewardTooLow(uint256 minReward, uint256 target);
 
     constructor(
         address _tOLP,
@@ -334,7 +335,14 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     ///         Exercising the option is not possible on participation week.
     ///         Lock duration should be a multiple of 1 EPOCH, and have a minimum of 1 EPOCH.
     /// @param _tOLPTokenID The tokenId of the tOLP position
-    function participate(uint256 _tOLPTokenID) external whenNotPaused nonReentrant returns (uint256 oTAPTokenID) {
+    /// @param _minReward The minimum reward to be received
+    /// @return oTAPTokenID The tokenId of the oTAP position
+    function participate(uint256 _tOLPTokenID, uint256 _minReward)
+        external
+        whenNotPaused
+        nonReentrant
+        returns (uint256 oTAPTokenID)
+    {
         // Compute option parameters
         LockPosition memory lock = tOLP.getLock(_tOLPTokenID);
         uint128 lockExpiry = lock.lockTime + lock.lockDuration;
@@ -342,9 +350,10 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         if (block.timestamp >= lockExpiry) revert LockExpired();
         if (_timestampToWeek(block.timestamp) > epoch) revert AdvanceEpochFirst();
 
-        bool isPositionActive = _isPositionActive(lock);
-        if (!isPositionActive) revert OptionExpired();
-
+        {
+            bool isPositionActive = _isPositionActive(lock);
+            if (!isPositionActive) revert OptionExpired();
+        }
         TWAMLPool memory pool = twAML[lock.sglAssetID];
 
         if (pool.cumulative == 0) {
@@ -367,6 +376,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
                 REWARD_MULTIPLIER_BRACKET,
                 REWARD_CAP_BRACKET
             );
+            if (target < _minReward) revert MinRewardTooLow(_minReward, target);
         }
 
         // Revert if the lock 4x the last epoch cumulative

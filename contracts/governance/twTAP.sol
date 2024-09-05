@@ -171,6 +171,7 @@ contract TwTAP is
     error EpochTooLow();
     error MaxLockCapReached();
     error RescueModeActive();
+    error MinRewardTooLow(uint256 minReward, uint256 target);
 
     /// =====-------======
     constructor(address payable _tapOFT, IPearlmit _pearlmit, address _owner)
@@ -396,7 +397,8 @@ contract TwTAP is
     /// @param _participant The address of the participant
     /// @param _amount The amount of TAP to participate with
     /// @param _duration The duration of the lock
-    function participate(address _participant, uint256 _amount, uint256 _duration)
+    /// @param _minReward The minimum reward multiplier
+    function participate(address _participant, uint256 _amount, uint256 _duration, uint256 _minReward)
         external
         whenNotPaused
         nonReentrant
@@ -431,6 +433,7 @@ contract TwTAP is
                 REWARD_MULTIPLIER_BRACKET,
                 REWARD_CAP_BRACKET
             );
+            if (multiplier < _minReward) revert MinRewardTooLow(_minReward, multiplier);
             hasVotingPower = _amount >= computeMinWeight(poolTotalDeposited + VIRTUAL_TOTAL_AMOUNT, MIN_WEIGHT_FACTOR);
         }
 
@@ -475,41 +478,42 @@ contract TwTAP is
             emit AMLDivergence(pool.cumulative, pool.averageMagnitude, pool.totalParticipants);
         }
 
-        uint256 expiry = block.timestamp + _duration;
-        // Eligibility starts NEXT week, and lasts until the week that the lock
-        // expires. This is guaranteed to be at least one week later by the
-        // check on `_duration`.
-        // If a user locks right before the current week ends, and have a
-        // duration slightly over one week, straddling the two starting points,
-        // then that user is eligible for the rewards during both weeks; the
-        // price for this maneuver is a lower multiplier, and loss of voting
-        // power in the DAO after the lock expires.
-        uint256 w0 = currentWeek();
-        uint256 w1 = (expiry - creation) / EPOCH_DURATION;
+        {
+            uint256 expiry = block.timestamp + _duration;
+            // Eligibility starts NEXT week, and lasts until the week that the lock
+            // expires. This is guaranteed to be at least one week later by the
+            // check on `_duration`.
+            // If a user locks right before the current week ends, and have a
+            // duration slightly over one week, straddling the two starting points,
+            // then that user is eligible for the rewards during both weeks; the
+            // price for this maneuver is a lower multiplier, and loss of voting
+            // power in the DAO after the lock expires.
+            uint256 w0 = currentWeek();
+            uint256 w1 = (expiry - creation) / EPOCH_DURATION;
 
-        // Save twAML participation
-        // Casts are safe: see struct definition
-        tokenId = ++mintedTWTap;
-        uint256 votes = _amount * multiplier;
-        participants[tokenId] = Participation({
-            averageMagnitude: pool.averageMagnitude,
-            hasVotingPower: hasVotingPower,
-            divergenceForce: divergenceForce,
-            tapReleased: false,
-            lockedAt: uint56(block.timestamp),
-            expiry: uint56(expiry),
-            tapAmount: uint88(_amount),
-            multiplier: uint24(multiplier),
-            lastInactive: uint40(w0),
-            lastActive: uint40(w1)
-        });
+            // Save twAML participation
+            // Casts are safe: see struct definition
+            tokenId = ++mintedTWTap;
+            uint256 votes = _amount * multiplier;
+            participants[tokenId] = Participation({
+                averageMagnitude: pool.averageMagnitude,
+                hasVotingPower: hasVotingPower,
+                divergenceForce: divergenceForce,
+                tapReleased: false,
+                lockedAt: uint56(block.timestamp),
+                expiry: uint56(expiry),
+                tapAmount: uint88(_amount),
+                multiplier: uint24(multiplier),
+                lastInactive: uint40(w0),
+                lastActive: uint40(w1)
+            });
 
-        // w0 + 1 = lastInactive + 1 = first active
-        // w1 + 1 = lastActive + 1 = first inactive
-        // Cast is safe: `votes` is the product of a uint88 and a uint24
-        weekTotals[w0 + 1].netActiveVotes += int256(votes);
-        weekTotals[w1 + 1].netActiveVotes -= int256(votes);
-
+            // w0 + 1 = lastInactive + 1 = first active
+            // w1 + 1 = lastActive + 1 = first inactive
+            // Cast is safe: `votes` is the product of a uint88 and a uint24
+            weekTotals[w0 + 1].netActiveVotes += int256(votes);
+            weekTotals[w1 + 1].netActiveVotes -= int256(votes);
+        }
         // Mint twTAP position
         _safeMint(_participant, tokenId);
 

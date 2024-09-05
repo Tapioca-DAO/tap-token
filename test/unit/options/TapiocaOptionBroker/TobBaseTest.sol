@@ -142,7 +142,7 @@ contract TobBaseTest is TolpBaseTest {
         vm.startPrank(_user);
         tolp.approve(address(pearlmit), 1);
         pearlmit.approve(721, address(tolp), 1, address(tob), 1, uint48(block.timestamp + 1));
-        tob.participate(1);
+        tob.participate(1, 0);
         vm.stopPrank();
     }
 
@@ -153,7 +153,7 @@ contract TobBaseTest is TolpBaseTest {
         vm.startPrank(_user);
         tolp.approve(address(pearlmit), _assetId);
         pearlmit.approve(721, address(tolp), _assetId, address(tob), 1, uint48(block.timestamp + 1));
-        tob.participate(_assetId);
+        tob.participate(_assetId, 0);
         vm.stopPrank();
     }
 

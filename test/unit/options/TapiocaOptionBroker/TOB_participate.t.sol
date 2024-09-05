@@ -72,7 +72,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         tob.setPause(true);
         // it should revert
         vm.expectRevert("Pausable: paused");
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
     }
 
     modifier whenNotPaused() {
@@ -87,7 +87,7 @@ contract TOB_participate is TobBaseTest, TWAML {
     {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.LockExpired.selector);
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
     }
 
     modifier whenLockNotExpired() {
@@ -103,7 +103,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         skip(tob.EPOCH_DURATION());
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.AdvanceEpochFirst.selector);
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
     }
 
     modifier whenEpochIsAdvanced() {
@@ -148,7 +148,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         vm.skip(true); // Check is redundant, already done in `tOLP.lock()` function
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.DurationNotMultiple.selector);
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
     }
 
     modifier whenLockDurationIsAMultipleOfEpochDuration() {
@@ -170,7 +170,7 @@ contract TOB_participate is TobBaseTest, TWAML {
 
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.TransferFailed.selector);
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
     }
 
     modifier whenPearlmitTransferSucceed() {
@@ -191,7 +191,7 @@ contract TOB_participate is TobBaseTest, TWAML {
     {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.TooLong.selector);
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
     }
 
     modifier whenMagnitudeIsInRange() {
@@ -298,7 +298,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         // it should emit Participate
         vm.expectEmit(true, true, false, false);
         emit TapiocaOptionBroker.Participate(tob.epoch(), TOLP_TOKEN_ID, _lockAmount, 1, 0, 0);
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
         // it should save the twAML participation
         (bool hasVotingPower, bool divergenceForce, uint256 averageMagnitude) = tob.participants(1);
         assertEq(hasVotingPower, _hasVotingPower, "TOB_participate::whenItShouldParticipate: Invalid hasVotingPower");

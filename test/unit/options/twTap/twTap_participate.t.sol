@@ -21,7 +21,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         twTap.setPause(true);
         // it should revert
         vm.expectRevert("Pausable: paused");
-        twTap.participate(aliceAddr, _lockAmount, _lockDuration);
+        twTap.participate(aliceAddr, _lockAmount, _lockDuration, 0);
     }
 
     modifier whenNotPaused() {
@@ -35,7 +35,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         _lockDuration = bound(_lockDuration, 0, twTap.EPOCH_DURATION() - 1);
         // it should revert
         vm.expectRevert(TwTAP.LockNotAWeek.selector);
-        twTap.participate(aliceAddr, _lockAmount, _lockDuration);
+        twTap.participate(aliceAddr, _lockAmount, _lockDuration, 0);
     }
 
     /// @notice We use _assume to avoid running a lot of `vm.assume` in future tests
@@ -53,7 +53,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
 
         // it should revert
         vm.expectRevert(TwTAP.LockTooLong.selector);
-        twTap.participate(aliceAddr, _lockAmount, _lockDuration);
+        twTap.participate(aliceAddr, _lockAmount, _lockDuration, 0);
     }
 
     /// @notice We use _assume to avoid running a lot of `vm.assume` in future tests
@@ -71,7 +71,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
 
         // it should revert
         vm.expectRevert(TwTAP.DurationNotMultiple.selector);
-        twTap.participate(aliceAddr, _lockAmount, _lockDuration);
+        twTap.participate(aliceAddr, _lockAmount, _lockDuration, 0);
     }
 
     modifier whenLockDurationIsAMultipleOfEpochDuration() {
@@ -91,7 +91,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         // it should revert
         _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
         vm.expectRevert(TwTAP.AdvanceWeekFirst.selector);
-        twTap.participate(aliceAddr, _lockAmount, _lockDuration);
+        twTap.participate(aliceAddr, _lockAmount, _lockDuration, 0);
     }
 
     modifier whenWeekWasAdvanced() {
@@ -113,7 +113,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         // for simplicity we use vm.expectRevert() if we don't permit it
         _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
         vm.expectRevert();
-        twTap.participate(aliceAddr, _lockAmount, _lockDuration);
+        twTap.participate(aliceAddr, _lockAmount, _lockDuration, 0);
     }
 
     modifier whenPearlmitTransferSucceed() {
@@ -187,7 +187,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         // it should emit Participate
         vm.expectEmit(true, true, true, false);
         emit TwTAP.Participate(aliceAddr, TWTAP_TOKEN_ID, _lockAmount, 0, _lockDuration);
-        twTap.participate(aliceAddr, _lockAmount, _lockDuration);
+        twTap.participate(aliceAddr, _lockAmount, _lockDuration, 0);
 
         // it should update AML if hasVotingPower is true
         uint256 expectedMagnitude = computeMagnitude(_lockDuration, SEED_EPOCH_DURATION);
