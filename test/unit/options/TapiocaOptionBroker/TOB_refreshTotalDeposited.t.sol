@@ -47,7 +47,7 @@ contract TOB_refreshTotalDeposited is TobBaseTest {
         );
         assertEq(
             tob.lastTotalDepositRefreshSgl(1),
-            tob.EPOCH_DURATION(),
+            block.timestamp,
             "TOB_refreshTotalDeposited::test_WhenRefreshCooldownIsNotMet: Invalid lastTotalDepositRefreshSgl"
         );
     }
