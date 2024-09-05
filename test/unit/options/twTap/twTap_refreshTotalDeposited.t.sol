@@ -40,7 +40,7 @@ contract twTap_refreshTotalDeposited is twTapBaseTest {
     }
 
     function test_WhenRefreshCooldownIsMet() external whenParamArrayIsSet {
-        skip(twTap.refreshCooldown());
+        skip(twTap.refreshCooldown() + 1);
 
         // Setup previous value
         uint256 returnVal = twTap.refreshTotalDeposited();
@@ -58,7 +58,7 @@ contract twTap_refreshTotalDeposited is twTapBaseTest {
         // Update values to new value
         skip(twTap.EPOCH_DURATION() / 2); // Arbitrary value to simulate time passing
         _participateUser(bobAddr);
-        skip(twTap.refreshCooldown());
+        skip(twTap.refreshCooldown() + 1);
         returnVal = twTap.refreshTotalDeposited();
 
         // it should update lastTotalDeposited with the newly fetch value
