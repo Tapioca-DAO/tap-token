@@ -139,7 +139,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     error DurationNotMultiple();
     error NotValid();
     error EpochTooLow();
-    error MinRewardTooLow(uint256 minReward, uint256 target);
+    error MinRewardTooLow();
 
     constructor(
         address _tOLP,
@@ -376,7 +376,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
                 REWARD_MULTIPLIER_BRACKET,
                 REWARD_CAP_BRACKET
             );
-            if (target < _minReward) revert MinRewardTooLow(_minReward, target);
+            if (target < _minReward) revert MinRewardTooLow();
         }
 
         // Revert if the lock 4x the last epoch cumulative
