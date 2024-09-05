@@ -177,6 +177,37 @@ contract TOB_participate is TobBaseTest, TWAML {
         _;
     }
 
+    uint256 public constant MAX_REWARD = 500_001; // See @TapiocaOptionBroker::dMax
+
+    function test_RevertWhen_RewardsAreLowerThanMinReward(uint128 _lockAmount, uint128 _lockDuration)
+        external
+        whenNotPaused
+        whenLockNotExpired
+        whenEpochIsAdvanced
+        whenPositionIsActive
+        whenLockDurationIsBigEnough
+        whenLockDurationIsAMultipleOfEpochDuration
+        whenPearlmitTransferSucceed
+        initTestsAndCreateLock(_lockAmount, WEEK_LONG * uint128(ENDING_EPOCH))
+    {
+        _lockDuration = uint128(tob.EPOCH_DURATION() * WEEK_LONG * bound(_lockDuration, 1, 4));
+        _lockAmount = uint128(
+            bound(
+                _lockAmount,
+                computeMinWeight(VIRTUAL_TOTAL_AMOUNT, tob.MIN_WEIGHT_FACTOR()),
+                MAX_USDO_PARTICIPATION_BOUNDARY
+            )
+        );
+        _setupPearlmitApproval();
+        // it should revert
+        vm.expectRevert(TapiocaOptionBroker.MinRewardTooLow.selector);
+        tob.participate(TOLP_TOKEN_ID, MAX_REWARD);
+    }
+
+    modifier whenRewardsAreBiggerThanMinReward() {
+        _;
+    }
+
     function test_RevertWhen_MagnitudeBiggerThanTheMaxCap(uint128 _lockAmount, uint128 _lockDuration)
         external
         whenNotPaused
@@ -186,6 +217,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         whenLockDurationIsBigEnough
         whenLockDurationIsAMultipleOfEpochDuration
         whenPearlmitTransferSucceed
+        whenRewardsAreBiggerThanMinReward
         initTestsAndCreateLockWithNoDurationBound(_lockAmount, uint128(tob.EPOCH_DURATION() * WEEK_LONG * 5))
         setupPearlmitApproval
     {
@@ -210,6 +242,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         whenLockDurationIsBigEnough
         whenLockDurationIsAMultipleOfEpochDuration
         whenPearlmitTransferSucceed
+        whenRewardsAreBiggerThanMinReward
         whenMagnitudeIsInRange
     {
         uint128 _lockDuration = uint128(tob.EPOCH_DURATION() * WEEK_LONG * ENDING_EPOCH);
@@ -241,6 +274,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         whenLockDurationIsBigEnough
         whenLockDurationIsAMultipleOfEpochDuration
         whenPearlmitTransferSucceed
+        whenRewardsAreBiggerThanMinReward
         whenMagnitudeIsInRange
         initTestsAndCreateLock(_lockAmount, WEEK_LONG * uint128(ENDING_EPOCH))
         setupPearlmitApproval

@@ -171,7 +171,7 @@ contract TwTAP is
     error EpochTooLow();
     error MaxLockCapReached();
     error RescueModeActive();
-    error MinRewardTooLow(uint256 minReward, uint256 target);
+    error MinRewardTooLow();
 
     /// =====-------======
     constructor(address payable _tapOFT, IPearlmit _pearlmit, address _owner)
@@ -433,7 +433,7 @@ contract TwTAP is
                 REWARD_MULTIPLIER_BRACKET,
                 REWARD_CAP_BRACKET
             );
-            if (multiplier < _minReward) revert MinRewardTooLow(_minReward, multiplier);
+            if (multiplier < _minReward) revert MinRewardTooLow();
             hasVotingPower = _amount >= computeMinWeight(poolTotalDeposited + VIRTUAL_TOTAL_AMOUNT, MIN_WEIGHT_FACTOR);
         }
 

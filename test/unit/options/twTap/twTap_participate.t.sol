@@ -124,6 +124,31 @@ contract twTap_participate is twTapBaseTest, TWAML {
         _;
     }
 
+    uint256 public constant MAX_REWARD = 1_000_001; // See @TwTap::dMax
+
+    function test_RevertWhen_MinRewardIsNotMet(uint256 _lockAmount, uint256 _lockDuration)
+        external
+        whenNotPaused
+        whenLockDurationIsMoreThanAWeek
+        whenLockDurationIsLessThanMaxDuration
+        whenLockDurationIsAMultipleOfEpochDuration
+        whenWeekWasAdvanced
+        whenPearlmitTransferSucceed
+    {
+        (, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
+        _lockAmount =
+            bound(_lockAmount, 1, computeMinWeight(twTap.VIRTUAL_TOTAL_AMOUNT(), twTap.MIN_WEIGHT_FACTOR()) - 1);
+        _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
+        tapOFT.freeMint(aliceAddr, _lockAmount);
+        // it should revert
+        vm.expectRevert(TwTAP.MinRewardTooLow.selector);
+        twTap.participate(aliceAddr, _lockAmount, _lockDuration, MAX_REWARD);
+    }
+
+    modifier whenMinRewardIsMet() {
+        _;
+    }
+
     function test_WhenLockerDoesNotHaveVotingPower(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
@@ -132,6 +157,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         whenLockDurationIsAMultipleOfEpochDuration
         whenWeekWasAdvanced
         whenPearlmitTransferSucceed
+        whenMinRewardIsMet
     {
         (, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
         _lockAmount =
@@ -169,6 +195,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         whenLockDurationIsAMultipleOfEpochDuration
         whenWeekWasAdvanced
         whenPearlmitTransferSucceed
+        whenMinRewardIsMet
     {
         (, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
         _lockAmount = bound(
