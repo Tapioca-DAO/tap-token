@@ -100,6 +100,10 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     mapping(uint256 sglAssetID => uint256 decayAmount) public decayAmassed;
     /// @notice Cumulative for each epoch
     mapping(uint256 sglAssetID => uint256 cumulative) public lastEpochCumulativeForSgl;
+    /// @notice Last snapshot of the total value deposited in a pool, and the last time it was deposited
+    mapping(uint256 sglAssetID => uint256 totalDeposited) public lastTotalDepositedForSgl;
+    mapping(uint256 sglAssetID => uint256 refreshTimestamp) public lastTotalDepositRefreshSgl;
+    uint256 public totalDepositRefreshCooldown = 12 hours;
 
     /// @notice The maximum epoch coefficient for the cumulative
     ITobMagnitudeMultiplier public tobMagnitudeMultiplier;
@@ -188,6 +192,9 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     event SetGrowthCapBps(uint256 growthCapBps);
     event SetDecayRate(uint256 decayRateBps);
     event SetDecayActivationBps(uint256 decayActivationBps);
+    event SetTapOft(address tapOFT);
+    event SetMinWeeksToDecay(uint256 minWeeksToDecay);
+    event SetTotalDepositRefreshCooldown(uint256 refreshCooldown);
 
     // ==========
     //    READ
@@ -351,9 +358,9 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
         uint256 target;
         {
-            (uint256 totalPoolShares,) = tOLP.getTotalPoolDeposited(uint256(lock.sglAssetID));
+            uint256 totalPoolDeposited = _snapshotTotalDepositedForSgl(lock.sglAssetID);
             target = capCumulativeReward(
-                computeTarget(dMIN, dMAX, magnitude * uint256(lock.ybShares), pool.cumulative * totalPoolShares),
+                computeTarget(dMIN, dMAX, magnitude * uint256(lock.ybShares), pool.cumulative * totalPoolDeposited),
                 REWARD_MULTIPLIER_BRACKET,
                 REWARD_CAP_BRACKET
             );
@@ -537,6 +544,17 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         emit ExerciseOption(cachedEpoch, msg.sender, _paymentToken, _oTAPTokenID, chosenAmount);
     }
 
+    /**
+     * @notice Refresh the total deposited amount for the given SGL assets
+     */
+    function refreshTotalDeposited(uint256[] calldata sglAssetId) external returns (uint256[] memory totalDeposited) {
+        uint256 len = sglAssetId.length;
+        totalDeposited = new uint256[](len);
+        for (uint256 i; i < len; i++) {
+            totalDeposited[i] = _snapshotTotalDepositedForSgl(sglAssetId[i]);
+        }
+    }
+
     /// @notice Start a new epoch, extract TAP from the TapOFT contract,
     ///         emit it to the active singularities and get the price of TAP for the epoch.
     function newEpoch() external {
@@ -704,6 +722,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
      */
     function setTapOft(address payable _tapOFT) external onlyOwner {
         tapOFT = TapToken(_tapOFT);
+        emit SetTapOft(_tapOFT);
     }
 
     /**
@@ -711,6 +730,15 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
      */
     function setMinWeeksToDecay(uint256 _minWeeksToDecay) external onlyOwner {
         minWeeksToDecay = _minWeeksToDecay;
+        emit SetMinWeeksToDecay(_minWeeksToDecay);
+    }
+
+    /**
+     * @notice Set the refresh cooldown
+     */
+    function setRefreshCooldown(uint256 _refreshCooldown) external onlyOwner {
+        totalDepositRefreshCooldown = _refreshCooldown;
+        emit SetTotalDepositRefreshCooldown(_refreshCooldown);
     }
 
     /**
@@ -869,6 +897,20 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
                 curr[sglAssetID] += prev[sglAssetID];
             }
         }
+    }
+
+    /// @notice Store the total pool deposited for a given Singularity
+    /// @param sglAssetID The Singularity asset ID
+    /// @return totalDeposited The total deposited amount in the pool
+    function _snapshotTotalDepositedForSgl(uint256 sglAssetID) internal returns (uint256 totalDeposited) {
+        totalDeposited = lastTotalDepositedForSgl[sglAssetID];
+        if (block.timestamp > lastTotalDepositRefreshSgl[sglAssetID] + totalDepositRefreshCooldown) {
+            (totalDeposited,) = tOLP.getTotalPoolDeposited(sglAssetID);
+            lastTotalDepositedForSgl[sglAssetID] = totalDeposited;
+            lastTotalDepositRefreshSgl[sglAssetID] = block.timestamp;
+        }
+
+        return totalDeposited;
     }
 
     function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {

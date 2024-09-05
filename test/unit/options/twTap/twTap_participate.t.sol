@@ -89,7 +89,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         skip(twTap.EPOCH_DURATION() * _lockDuration);
 
         // it should revert
-        uint256 _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
+        _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
         vm.expectRevert(TwTAP.AdvanceWeekFirst.selector);
         twTap.participate(aliceAddr, _lockAmount, _lockDuration);
     }
@@ -111,7 +111,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         // it should revert
         // It should be TwTap.TransferFailed.selector,
         // for simplicity we use vm.expectRevert() if we don't permit it
-        uint256 _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
+        _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
         vm.expectRevert();
         twTap.participate(aliceAddr, _lockAmount, _lockDuration);
     }
@@ -141,7 +141,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         tapOFT.freeMint(aliceAddr, _lockAmount);
 
         // it should participate without changing AML
-        uint256 _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
+        _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
         test_WhenItShouldParticipate(_lockAmount, _lockDuration, false);
 
         (uint256 totalParticipants, uint256 averageMagnitude, uint256 totalDeposited, uint256 cumulative) =
@@ -179,7 +179,7 @@ contract twTap_participate is twTapBaseTest, TWAML {
         tapOFT.freeMint(aliceAddr, _lockAmount);
 
         // it should participate and change AML
-        uint256 _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
+        _lockDuration = _lockDuration * twTap.EPOCH_DURATION();
         test_WhenItShouldParticipate(_lockAmount, _lockDuration, true);
     }
 
