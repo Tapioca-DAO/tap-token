@@ -225,16 +225,23 @@ contract TapiocaOptionLiquidityProvision is
     /// @param _user User address
     /// @param _sglAssetId Singularity asset id
     /// @param _userShare Amount of YieldBox shares to lock
-    function canLockWithDebt(address _user, uint256 _sglAssetId, uint256 _userShare) external view returns (bool) {
-        uint256 totalUserUsdoDebt = _getTotalBigBangDebtInUSDOView(_user);
-        uint256 amountToLock = _getUsdoAmountFromTolpShare(sglAssetIDToAddress[_sglAssetId], _userShare);
+    /// @return canLock If the user can lock with debt
+    /// @return totalUserUsdoDebt Total BB USDO debt of the user
+    /// @return usdoAmountFromTolpShare USDO amount from the YieldBox share
+    function canLockWithDebt(address _user, uint256 _sglAssetId, uint256 _userShare)
+        external
+        view
+        returns (bool canLock, uint256 totalUserUsdoDebt, uint256 usdoAmountFromTolpShare)
+    {
+        totalUserUsdoDebt = _getTotalBigBangDebtInUSDOView(_user);
+        usdoAmountFromTolpShare = _getUsdoAmountFromTolpShare(sglAssetIDToAddress[_sglAssetId], _userShare);
 
         totalUserUsdoDebt = totalUserUsdoDebt + (totalUserUsdoDebt * maxDebtBuffer) / 1e4; // total debt + buffer
-        if (amountToLock + userLockedUsdo[_user] > totalUserUsdoDebt) {
-            return false;
+        if (usdoAmountFromTolpShare + userLockedUsdo[_user] > totalUserUsdoDebt) {
+            return (false, totalUserUsdoDebt, usdoAmountFromTolpShare);
         }
 
-        return true;
+        return (true, totalUserUsdoDebt, usdoAmountFromTolpShare);
     }
 
     // ==========
