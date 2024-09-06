@@ -21,6 +21,7 @@ import {ICluster} from "tap-utils/interfaces/periph/ICluster.sol";
 import {IBigBang} from "tap-utils/interfaces/bar/IBigBang.sol";
 import {IPenrose} from "tap-utils/interfaces/bar/IPenrose.sol";
 import {IYieldBox} from "contracts/interfaces/IYieldBox.sol";
+import {ITOFT} from "tap-utils/interfaces/oft/ITOFT.sol";
 
 /*
 
@@ -593,7 +594,7 @@ contract TapiocaOptionLiquidityProvision is
         returns (uint256 usdoAmount)
     {
         SingularityPool memory sglPool = activeSingularities[_singularity];
-        ISingularity sgl = ISingularity(address(_singularity));
+        ISingularity sgl = ISingularity(ITOFT(address(_singularity)).erc20());
 
         // YB shares to SGL ERC20 amount
         uint256 sglERC20Amount = yieldBox.toAmount(sglPool.sglAssetID, _share, false);
