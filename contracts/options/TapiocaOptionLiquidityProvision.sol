@@ -287,6 +287,7 @@ contract TapiocaOptionLiquidityProvision is
                 revert TransferFailed();
             }
         }
+
         activeSingularities[_singularity].totalDeposited += _ybShares;
 
         // Create the lock position
@@ -297,11 +298,9 @@ contract TapiocaOptionLiquidityProvision is
         lockPosition.lockDuration = _lockDuration;
         lockPosition.ybShares = _ybShares;
 
-        // Mint the tOLP NFT position
+        // Mint the tOLP NFT position & Keep track of BB debt
+        // userLockedUsdo[_to] += _ybShares; This is done in `_beforeTokenTransfer`
         _safeMint(_to, tokenId);
-
-        // Keep track of BB debt
-        userLockedUsdo[_to] += _ybShares;
 
         emit Mint(_to, sglAssetID, address(_singularity), tokenId, _lockDuration, _ybShares);
     }
@@ -332,9 +331,8 @@ contract TapiocaOptionLiquidityProvision is
             revert InvalidSingularity();
         }
 
-        // Keep track of BB debt
-        userLockedUsdo[tokenOwner] -= lockPosition.ybShares;
-
+        // Burn & Keep track of BB debt
+        // userLockedUsdo[_to] += _ybShares; This is done in `_beforeTokenTransfer`
         _burn(_tokenId);
         delete lockPositions[_tokenId];
 
@@ -622,7 +620,6 @@ contract TapiocaOptionLiquidityProvision is
         if (amountToLock + userLockedUsdo[_user] > totalUserUsdoDebt) {
             return false;
         }
-
         return true;
     }
 
@@ -706,6 +703,18 @@ contract TapiocaOptionLiquidityProvision is
         override(ERC721, ERC721Enumerable)
     {
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+
+        // Transfer the locked USDO accounting from the sender to the receiver
+        for (uint256 i = 0; i < batchSize; i++) {
+            LockPosition memory lockPosition = lockPositions[firstTokenId + i];
+            if (from != address(0)) {
+                userLockedUsdo[from] -= lockPosition.ybShares;
+            }
+
+            if (to != address(0)) {
+                userLockedUsdo[to] += lockPosition.ybShares;
+            }
+        }
     }
 
     function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {
