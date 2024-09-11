@@ -1,0 +1,8 @@
+twTap_refreshTotalDeposited
+└── when param array is set
+    ├── when refresh cooldown is not met
+    │   └── it should return the previously set value
+    └── when refresh cooldown is met
+        ├── it should update lastTotalDeposited with the newly fetch value
+        ├── it should update lastTotalDepositRefresh to block.timestamp
+        └── it should return the new value of lastTotalDeposited

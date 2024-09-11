@@ -151,6 +151,11 @@ contract TwTAP is
     /// @notice The minimum amount of weeks to start decaying the cumulative
     uint256 public minWeeksToDecay = 2;
 
+    /// @notice Last snapshot of the total value deposited in a pool, and the last time it was deposited
+    uint256 public lastTotalDeposited;
+    uint256 public lastTotalDepositRefresh;
+    uint256 public refreshCooldown = 12 hours;
+
     error NotAuthorized();
     error AdvanceWeekFirst();
     error NotValid();
@@ -227,6 +232,9 @@ contract TwTAP is
     event SetGrowthCapBps(uint256 growthCapBps);
     event SetDecayRateBps(uint256 decayRateBps);
     event SetMaxLockDuration(uint256 maxLockDuration);
+    event SetTapOft(address tapOFT);
+    event SetMinWeeksToDecay(uint256 minWeeksToDecay);
+    event SetRefreshCooldown(uint256 refreshCooldown);
 
     // ==========
     //    READ
@@ -414,15 +422,20 @@ contract TwTAP is
 
         // Revert if the lock is x time bigger than the cumulative
         if (magnitude > (lastEpochCumulative * growthCapBps) / 1e4) revert NotValid();
-        uint256 multiplier = capCumulativeReward(
-            computeTarget(dMIN, dMAX, magnitude * _amount, pool.cumulative * pool.totalDeposited),
-            REWARD_MULTIPLIER_BRACKET,
-            REWARD_CAP_BRACKET
-        );
+        uint256 multiplier;
+        bool hasVotingPower;
+        {
+            uint256 poolTotalDeposited = _snapshotTotalDepositedForSgl();
+            multiplier = capCumulativeReward(
+                computeTarget(dMIN, dMAX, magnitude * _amount, pool.cumulative * poolTotalDeposited),
+                REWARD_MULTIPLIER_BRACKET,
+                REWARD_CAP_BRACKET
+            );
+            hasVotingPower = _amount >= computeMinWeight(poolTotalDeposited + VIRTUAL_TOTAL_AMOUNT, MIN_WEIGHT_FACTOR);
+        }
 
         // Calculate twAML voting weight
         bool divergenceForce;
-        bool hasVotingPower = _amount >= computeMinWeight(pool.totalDeposited + VIRTUAL_TOTAL_AMOUNT, MIN_WEIGHT_FACTOR);
         if (hasVotingPower) {
             pool.totalParticipants++; // Save participation
             pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
@@ -605,6 +618,12 @@ contract TwTAP is
         emit DistributeReward(address(rewardToken), msg.sender, _amount, _rewardTokenId);
     }
 
+    /// @notice Refresh the total deposited amount in the pool
+    /// @return totalDeposited The newly fetched total amount deposited in the pool
+    function refreshTotalDeposited() external returns (uint256 totalDeposited) {
+        return _snapshotTotalDepositedForSgl();
+    }
+
     // =========
     //   OWNER
     // =========
@@ -740,6 +759,7 @@ contract TwTAP is
      */
     function setTapOFT(address payable _tapOFT) external onlyOwner {
         tapOFT = TapToken(_tapOFT);
+        emit SetTapOft(_tapOFT);
     }
 
     /**
@@ -747,6 +767,15 @@ contract TwTAP is
      */
     function setMinWeeksToDecay(uint256 _minWeeksToDecay) external onlyOwner {
         minWeeksToDecay = _minWeeksToDecay;
+        emit SetMinWeeksToDecay(_minWeeksToDecay);
+    }
+
+    /**
+     * @notice Set the refresh cooldown
+     */
+    function setRefreshCooldown(uint256 _refreshCooldown) external onlyOwner {
+        refreshCooldown = _refreshCooldown;
+        emit SetRefreshCooldown(_refreshCooldown);
     }
 
     /**
@@ -921,6 +950,20 @@ contract TwTAP is
                 emit DecayCumulative(decayAmount);
             }
         }
+    }
+
+    /// @notice Store the total pool deposited
+    /// @return totalDeposited The total deposited amount in the pool
+    function _snapshotTotalDepositedForSgl() internal returns (uint256 totalDeposited) {
+        totalDeposited = lastTotalDeposited;
+        if (block.timestamp > lastTotalDepositRefresh + refreshCooldown) {
+            TWAMLPool memory pool = twAML;
+            totalDeposited = pool.totalDeposited;
+            lastTotalDeposited = totalDeposited;
+            lastTotalDepositRefresh = block.timestamp;
+        }
+
+        return totalDeposited;
     }
 
     function _baseURI() internal view override(ERC721, ERC721NftLoader) returns (string memory) {

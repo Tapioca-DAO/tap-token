@@ -146,7 +146,7 @@ contract twTap_exitPosition is twTapBaseTest, TWAML {
         whenParticipating(_lockAmount, _lockDuration)
         whenLockExpired(_lockDuration)
     {
-        (uint256 _lockAmount, uint256 _lockDuration) = _boundValues(_lockAmount, _lockDuration);
+        (_lockAmount, _lockDuration) = _boundValues(_lockAmount, _lockDuration);
         // it should continue
         test_WhenItShouldContinue(_lockAmount, _lockDuration);
 
