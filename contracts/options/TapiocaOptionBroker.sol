@@ -372,7 +372,12 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         {
             uint256 totalPoolDeposited = _snapshotTotalDepositedForSgl(lock.sglAssetID);
             target = capCumulativeReward(
-                computeTarget(dMIN, dMAX, magnitude * uint256(lock.ybShares), pool.cumulative * totalPoolDeposited),
+                computeTarget(
+                    dMIN,
+                    dMAX,
+                    magnitude * uint256(lock.ybShares),
+                    lastEpochCumulativeForSgl[lock.sglAssetID] * totalPoolDeposited
+                ),
                 REWARD_MULTIPLIER_BRACKET,
                 REWARD_CAP_BRACKET
             );
