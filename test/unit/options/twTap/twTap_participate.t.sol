@@ -28,9 +28,39 @@ contract twTap_participate is twTapBaseTest, TWAML {
         _;
     }
 
+    function test_RevertWhen_RescueModeIsActive(uint256 _lockAmount, uint256 _lockDuration) external whenNotPaused {
+        vm.prank(adminAddr);
+        twTap.setRescueMode(true);
+        // it should revert
+        vm.expectRevert(TwTAP.RescueModeActive.selector);
+        twTap.participate(aliceAddr, _lockAmount, _lockDuration, 0);
+    }
+
+    modifier whenRescueModeIsNotActive() {
+        _;
+    }
+
+    function test_RevertWhen_EmergencySweepActive(uint256 _lockAmount, uint256 _lockDuration)
+        external
+        whenNotPaused
+        whenRescueModeIsNotActive
+    {
+        vm.prank(adminAddr);
+        twTap.activateEmergencySweep();
+        // it should revert
+        vm.expectRevert(TwTAP.EmergencySweepActivated.selector);
+        twTap.participate(aliceAddr, _lockAmount, _lockDuration, 0);
+    }
+
+    modifier whenEmergencySweepNotActive() {
+        _;
+    }
+
     function test_RevertWhen_LockDurationIsLessThanAWeek(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
+        whenRescueModeIsNotActive
+        whenEmergencySweepNotActive
     {
         _lockDuration = bound(_lockDuration, 0, twTap.EPOCH_DURATION() - 1);
         // it should revert
@@ -46,6 +76,8 @@ contract twTap_participate is twTapBaseTest, TWAML {
     function test_RevertWhen_LockDurationIsMoreThanMaxDuration(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
+        whenRescueModeIsNotActive
+        whenEmergencySweepNotActive
         whenLockDurationIsMoreThanAWeek
     {
         (_lockAmount,) = _boundValues(_lockAmount, _lockDuration);
@@ -64,6 +96,8 @@ contract twTap_participate is twTapBaseTest, TWAML {
     function test_RevertWhen_LockDurationIsNotAMultipleOfEpochDuration(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
+        whenRescueModeIsNotActive
+        whenEmergencySweepNotActive
         whenLockDurationIsMoreThanAWeek
         whenLockDurationIsLessThanMaxDuration
     {
@@ -81,6 +115,8 @@ contract twTap_participate is twTapBaseTest, TWAML {
     function test_RevertWhen_WeekWasNotAdvanced(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
+        whenRescueModeIsNotActive
+        whenEmergencySweepNotActive
         whenLockDurationIsMoreThanAWeek
         whenLockDurationIsLessThanMaxDuration
         whenLockDurationIsAMultipleOfEpochDuration
@@ -101,6 +137,8 @@ contract twTap_participate is twTapBaseTest, TWAML {
     function test_RevertWhen_PearlmitTransferFails(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
+        whenRescueModeIsNotActive
+        whenEmergencySweepNotActive
         whenLockDurationIsMoreThanAWeek
         whenLockDurationIsLessThanMaxDuration
         whenLockDurationIsAMultipleOfEpochDuration
@@ -129,6 +167,8 @@ contract twTap_participate is twTapBaseTest, TWAML {
     function test_RevertWhen_MinRewardIsNotMet(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
+        whenRescueModeIsNotActive
+        whenEmergencySweepNotActive
         whenLockDurationIsMoreThanAWeek
         whenLockDurationIsLessThanMaxDuration
         whenLockDurationIsAMultipleOfEpochDuration
@@ -152,6 +192,8 @@ contract twTap_participate is twTapBaseTest, TWAML {
     function test_WhenLockerDoesNotHaveVotingPower(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
+        whenRescueModeIsNotActive
+        whenEmergencySweepNotActive
         whenLockDurationIsMoreThanAWeek
         whenLockDurationIsLessThanMaxDuration
         whenLockDurationIsAMultipleOfEpochDuration
@@ -190,6 +232,8 @@ contract twTap_participate is twTapBaseTest, TWAML {
     function test_WhenLockHasVotingPower(uint256 _lockAmount, uint256 _lockDuration)
         external
         whenNotPaused
+        whenRescueModeIsNotActive
+        whenEmergencySweepNotActive
         whenLockDurationIsMoreThanAWeek
         whenLockDurationIsLessThanMaxDuration
         whenLockDurationIsAMultipleOfEpochDuration

@@ -172,6 +172,7 @@ contract TwTAP is
     error MaxLockCapReached();
     error RescueModeActive();
     error MinRewardTooLow();
+    error EmergencySweepActivated();
 
     /// =====-------======
     constructor(address payable _tapOFT, IPearlmit _pearlmit, address _owner)
@@ -405,6 +406,7 @@ contract TwTAP is
         returns (uint256 tokenId)
     {
         if (rescueMode) revert RescueModeActive();
+        if (lastEmergencySweep != 0) revert EmergencySweepActivated();
         if (_duration < EPOCH_DURATION) revert LockNotAWeek();
         if (_duration > MAX_LOCK_DURATION) revert LockTooLong();
         if (_duration % EPOCH_DURATION != 0) revert DurationNotMultiple();
