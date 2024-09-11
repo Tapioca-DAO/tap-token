@@ -303,8 +303,8 @@ export const buildFinalStackPostDepSetup_2 = async (
      * Set twTAP in TapOFT
      */
     if (
-        (await tapToken.twTap()).toLocaleLowerCase() !==
-        twTap.address.toLocaleLowerCase()
+        (await tapToken.twTap()).toLocaleLowerCase() ===
+        hre.ethers.constants.AddressZero.toLocaleLowerCase()
     ) {
         console.log('[+] +Call queue: set twTAP in TapToken');
         calls.push({
