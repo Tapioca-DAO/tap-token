@@ -15,7 +15,7 @@ contract TOB_getOptionPosition is TobBaseTest {
         _tobParticipate(aliceAddr, _amount, _lockDuration);
         // it should return the right option position
         (LockPosition memory tOLPLockPosition, TapOption memory oTAPPosition,) = tob.getOptionPosition(1, 0);
-        assertEq(tOLPLockPosition.sglAssetID, 1, "TOB_getOptionPosition: Invalid sglAssetID");
+        assertEq(tOLPLockPosition.sglAssetID, 102, "TOB_getOptionPosition: Invalid sglAssetID");
         assertEq(oTAPPosition.tOLP, 1, "TOB_getOptionPosition: Invalid tOLP");
     }
 }

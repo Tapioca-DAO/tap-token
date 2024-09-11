@@ -7,7 +7,7 @@ contract TOLP_unregisterSingularity is TolpBaseTest {
     function test_RevertWhen_NotOwner() external {
         // it should revert
         vm.expectRevert("Ownable: caller is not the owner");
-        tolp.unregisterSingularity(IERC20(address(singularityEthMarket)));
+        tolp.unregisterSingularity(IERC20(address(toftSglEthMarket)));
     }
 
     function test_RevertWhen_AssetId0() external {
@@ -15,7 +15,7 @@ contract TOLP_unregisterSingularity is TolpBaseTest {
         vm.startPrank(adminAddr);
 
         vm.expectRevert(NotRegistered.selector);
-        tolp.unregisterSingularity(IERC20(address(singularityEthMarket)));
+        tolp.unregisterSingularity(IERC20(address(toftSglEthMarket)));
     }
 
     function test_RevertWhen_NotInRescue() external registerSingularityPool {
@@ -23,27 +23,31 @@ contract TOLP_unregisterSingularity is TolpBaseTest {
         vm.startPrank(adminAddr);
 
         vm.expectRevert(NotInRescueMode.selector);
-        tolp.unregisterSingularity(IERC20(address(singularityEthMarket)));
+        tolp.unregisterSingularity(IERC20(address(toftSglEthMarket)));
     }
 
     function test_ShouldUnregisterTheSingularity()
         external
         registerSingularityPool
-        setSglInRescue(IERC20(address(singularityEthMarket)), singularityEthMarketAssetId)
+        setSglInRescue(IERC20(address(toftSglEthMarket)), ybAssetIdToftSglEthMarket)
     {
         // it should unregister the singularity
         vm.startPrank(adminAddr);
 
-        tolp.unregisterSingularity(IERC20(address(singularityEthMarket)));
+        tolp.unregisterSingularity(IERC20(address(toftSglEthMarket)));
         //     delete the activeSingularities
-        (uint256 assetId,,,) = tolp.activeSingularities(IERC20(address(singularityEthMarket)));
+        (uint256 assetId,,,) = tolp.activeSingularities(IERC20(address(toftSglEthMarket)));
         assertEq(assetId, 0, "TOLP_unregisterSingularity: Invalid assetId");
         //     delete sglAssetIDToAddress
         assertEq(
-            address(tolp.sglAssetIDToAddress(singularityEthMarketAssetId)), address(0), "TOLP_unregisterSingularity: Invalid sglAssetToAddress"
+            address(tolp.sglAssetIDToAddress(ybAssetIdToftSglEthMarket)),
+            address(0),
+            "TOLP_unregisterSingularity: Invalid sglAssetToAddress"
         );
         //     delete sglRescueRequest
-        assertEq(tolp.sglRescueRequest(singularityEthMarketAssetId), 0, "TOLP_unregisterSingularity: Invalid sglRescueRequest");
+        assertEq(
+            tolp.sglRescueRequest(ybAssetIdToftSglEthMarket), 0, "TOLP_unregisterSingularity: Invalid sglRescueRequest"
+        );
         //     delete singularities array
         assertEq(tolp.getSingularities().length, 4, "TOLP_unregisterSingularity: Invalid singularities array");
     }

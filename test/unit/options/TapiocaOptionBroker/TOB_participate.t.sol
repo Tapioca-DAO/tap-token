@@ -14,7 +14,7 @@ contract TOB_participate is TobBaseTest, TWAML {
 
     function setUp() public virtual override {
         super.setUp();
-        SGL_ASSET_ID = singularityEthMarketAssetId;
+        SGL_ASSET_ID = ybAssetIdToftSglEthMarket;
     }
 
     /**
@@ -296,7 +296,8 @@ contract TOB_participate is TobBaseTest, TWAML {
         whenItShouldParticipate(_lockAmount, _lockDuration, ENDING_EPOCH, true, true);
 
         // it should update cumulative
-        (uint256 totalParticipants, uint256 averageMagnitude, uint256 totalDeposited, uint256 cumulative) = tob.twAML(1);
+        (uint256 totalParticipants, uint256 averageMagnitude, uint256 totalDeposited, uint256 cumulative) =
+            tob.twAML(SGL_ASSET_ID);
         assertEq(
             totalParticipants, 1, "TOB_participate::test_WhenLockerDoesNotHaveVotingPower: Invalid totalParticipants"
         );
@@ -331,7 +332,7 @@ contract TOB_participate is TobBaseTest, TWAML {
     ) internal {
         // it should emit Participate
         vm.expectEmit(true, true, false, false);
-        emit TapiocaOptionBroker.Participate(tob.epoch(), TOLP_TOKEN_ID, _lockAmount, 1, 0, 0);
+        emit TapiocaOptionBroker.Participate(tob.epoch(), SGL_ASSET_ID, _lockAmount, 1, 0, 0);
         tob.participate(TOLP_TOKEN_ID, 0);
         // it should save the twAML participation
         (bool hasVotingPower, bool divergenceForce, uint256 averageMagnitude) = tob.participants(1);

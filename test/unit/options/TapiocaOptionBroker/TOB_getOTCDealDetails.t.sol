@@ -28,7 +28,7 @@ contract TOB_getOTCDealDetails is TobBaseTest, TWAML {
     {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.PaymentTokenNotSupported.selector);
-        tob.getOTCDealDetails(1, ERC20(address(singularityEthMarket)), 0);
+        tob.getOTCDealDetails(1, ERC20(address(toftSglEthMarket)), 0);
     }
 
     function test_RevertWhen_InEpochCooldown(uint128 _lockAmount, uint128 _lockDuration)

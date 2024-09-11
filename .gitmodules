@@ -25,3 +25,4 @@
 [submodule "dep/tapiocaz"]
 	path = dep/tapiocaz
 	url = https://github.com/Tapioca-DAO/tapiocaz
+	branch = master

@@ -8,10 +8,10 @@ contract TOLP_activateSGLPoolRescue is TolpBaseTest {
         // it should set rescue to true
         vm.startPrank(adminAddr);
 
-        tolp.requestSglPoolRescue(1);
+        tolp.requestSglPoolRescue(ybAssetIdToftSglEthMarket);
         vm.warp(block.timestamp + tolp.rescueCooldown());
-        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
-        (,,, bool rescue) = tolp.activeSingularities(IERC20(address(singularityEthMarket)));
+        tolp.activateSGLPoolRescue(IERC20(address(toftSglEthMarket)));
+        (,,, bool rescue) = tolp.activeSingularities(IERC20(address(toftSglEthMarket)));
         assertEq(rescue, true, "TOLP_activateSGLPoolRescue: Invalid rescue");
     }
 
@@ -20,18 +20,18 @@ contract TOLP_activateSGLPoolRescue is TolpBaseTest {
         vm.startPrank(adminAddr);
 
         vm.expectRevert(NotRegistered.selector);
-        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
+        tolp.activateSGLPoolRescue(IERC20(address(toftSglEthMarket)));
     }
 
     function test_RevertWhen_SglRescueIsTrue() external registerSingularityPool {
         // it should revert
         vm.startPrank(adminAddr);
 
-        tolp.requestSglPoolRescue(1);
+        tolp.requestSglPoolRescue(ybAssetIdToftSglEthMarket);
         vm.warp(block.timestamp + tolp.rescueCooldown());
-        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
+        tolp.activateSGLPoolRescue(IERC20(address(toftSglEthMarket)));
         vm.expectRevert(AlreadyActive.selector);
-        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
+        tolp.activateSGLPoolRescue(IERC20(address(toftSglEthMarket)));
     }
 
     function test_RevertWhen_SglRescueRequestIs0() external registerSingularityPool {
@@ -39,15 +39,15 @@ contract TOLP_activateSGLPoolRescue is TolpBaseTest {
         vm.startPrank(adminAddr);
 
         vm.expectRevert(NotActive.selector);
-        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
+        tolp.activateSGLPoolRescue(IERC20(address(toftSglEthMarket)));
     }
 
     function test_RevertWhen_RescueCooldownNotMet() external registerSingularityPool {
         // it should revert
         vm.startPrank(adminAddr);
 
-        tolp.requestSglPoolRescue(1);
+        tolp.requestSglPoolRescue(ybAssetIdToftSglEthMarket);
         vm.expectRevert(RescueCooldownNotReached.selector);
-        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
+        tolp.activateSGLPoolRescue(IERC20(address(toftSglEthMarket)));
     }
 }
