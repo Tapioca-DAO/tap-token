@@ -98,6 +98,27 @@ contract TOLP_lock is TolpBaseTest {
         _;
     }
 
+    function test_RevertWhen_RescueCooldownActivated(uint128 _lockDuration, uint128 _ybShares)
+        external
+        whenNotPaused
+        whenDurationIsNotTooShort
+        whenSharesBiggerThan0(_ybShares)
+        whenDurationIsRight
+        whenSglNotInRescueMode
+        registerSingularityPool
+    {
+        _lockDuration = _whenDurationIsRight(_lockDuration);
+        vm.prank(adminAddr);
+        tolp.activateEmergencySweep();
+        // it should revert
+        vm.expectRevert(TapiocaOptionLiquidityProvision.EmergencySweepActivated.selector);
+        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
+    }
+
+    modifier whenRescueCooldownNotActivated() {
+        _;
+    }
+
     function test_RevertWhen_SglNotActive(uint128 _lockDuration, uint128 _ybShares)
         external
         whenNotPaused
@@ -105,6 +126,7 @@ contract TOLP_lock is TolpBaseTest {
         whenDurationIsRight
         whenSharesBiggerThan0(_ybShares)
         whenSglNotInRescueMode
+        whenRescueCooldownNotActivated
     {
         _lockDuration = _whenDurationIsRight(_lockDuration);
         // it should revert
@@ -124,6 +146,7 @@ contract TOLP_lock is TolpBaseTest {
         whenDurationIsRight
         whenSharesBiggerThan0(_ybShares)
         whenSglNotInRescueMode
+        whenRescueCooldownNotActivated
         whenSglIsActive
     {
         _lockDuration = _whenDurationIsRight(_lockDuration);
@@ -158,6 +181,7 @@ contract TOLP_lock is TolpBaseTest {
         whenDurationIsRight
         whenSharesBiggerThan0(_ybShares)
         whenSglNotInRescueMode
+        whenRescueCooldownNotActivated
         whenSglIsActive
         depositingCollateralToBigBang(_ybShares)
         whenTransferSucceeds(_ybShares)
