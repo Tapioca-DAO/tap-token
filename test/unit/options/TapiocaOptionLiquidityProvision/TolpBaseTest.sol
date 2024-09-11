@@ -113,7 +113,7 @@ contract TolpBaseTest is UnitBaseTest {
     modifier setPoolRescue() {
         vm.startPrank(adminAddr);
         tolp.setRescueCooldown(0);
-        tolp.requestSglPoolRescue(1);
+        tolp.requestSglPoolRescue(ybAssetIdToftSglEthMarket);
         tolp.activateSGLPoolRescue(IERC20(address(toftSglEthMarket)));
         vm.stopPrank();
         _;

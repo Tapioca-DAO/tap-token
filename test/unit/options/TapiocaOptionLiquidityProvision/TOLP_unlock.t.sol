@@ -11,8 +11,8 @@ contract TOLP_unlock is TolpBaseTest {
 
     function setUp() public virtual override {
         super.setUp();
-        SGL_ADDRESS = IERC20(address(singularityEthMarket));
-        SGL_ASSET_ID = singularityEthMarketAssetId;
+        SGL_ADDRESS = IERC20(address(toftSglEthMarket));
+        SGL_ASSET_ID = ybAssetIdToftSglEthMarket;
     }
 
     function test_RevertWhen_Paused(uint128 _weight, uint128 _lockDuration)
