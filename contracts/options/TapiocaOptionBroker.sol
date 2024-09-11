@@ -235,6 +235,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     /// @return weight The weight of the pool
     /// @return isInRescue True if the singularity is in rescue mode
     /// @return tapEmittedInCurrentEpoch The amount of TAP emitted in the current epoch
+    /// @return lastEpochCumulative The last epoch cumulative for the pool
     /// @return twAMLPool The twAML Pool details
     function getSingularityPoolInfo(IERC20 _singularity, uint256 epochId)
         external
@@ -245,6 +246,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
             uint256 weight,
             bool isInRescue,
             uint256 tapEmittedInCurrentEpoch,
+            uint256 lastEpochCumulative,
             TWAMLPool memory twAMLPool
         )
     {
@@ -255,6 +257,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         (assetId, totalDeposited, weight, isInRescue) = tOLP.activeSingularities(_singularity);
         twAMLPool = twAML[assetId];
         tapEmittedInCurrentEpoch = singularityGauges[epochId][assetId];
+        lastEpochCumulative = lastEpochCumulativeForSgl[assetId];
     }
 
     /// @notice Returns the details of an OTC deal for a given oTAP token ID and a payment token.
