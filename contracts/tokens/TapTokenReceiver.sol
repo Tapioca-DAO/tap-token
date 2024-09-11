@@ -128,7 +128,7 @@ contract TapTokenReceiver is BaseTapToken, TapiocaOmnichainReceiver, ReentrancyG
         pearlmit.approve(
             20, address(this), 0, address(twTap), uint200(lockTwTapPositionMsg_.amount), uint48(block.timestamp + 1)
         );
-        twTap.participate(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.amount, lockTwTapPositionMsg_.duration);
+        twTap.participate(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.amount, lockTwTapPositionMsg_.duration, 0);
         _approve(address(this), address(pearlmit), 0);
 
         emit LockTwTapReceived(lockTwTapPositionMsg_.user, lockTwTapPositionMsg_.duration, lockTwTapPositionMsg_.amount);

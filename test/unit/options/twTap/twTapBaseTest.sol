@@ -123,7 +123,7 @@ contract twTapBaseTest is UnitBaseTest {
         tapOFT.freeMint(aliceAddr, _amount);
         tapOFT.approve(address(pearlmit), _amount);
         pearlmit.approve(20, address(tapOFT), 0, address(twTap), uint200(_amount), uint48(block.timestamp + 1));
-        twTap.participate(aliceAddr, _amount, _duration * twTap.EPOCH_DURATION());
+        twTap.participate(aliceAddr, _amount, _duration * twTap.EPOCH_DURATION(), 0);
         vm.stopPrank();
     }
 
@@ -132,7 +132,7 @@ contract twTapBaseTest is UnitBaseTest {
         tapOFT.freeMint(_to, _amount);
         tapOFT.approve(address(pearlmit), _amount);
         pearlmit.approve(20, address(tapOFT), 0, address(twTap), uint200(_amount), uint48(block.timestamp + 1));
-        twTap.participate(_to, _amount, _duration * twTap.EPOCH_DURATION());
+        twTap.participate(_to, _amount, _duration * twTap.EPOCH_DURATION(), 0);
         vm.stopPrank();
     }
 

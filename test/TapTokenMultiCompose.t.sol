@@ -31,8 +31,7 @@ import {
     ComposeMsgData
 } from "contracts/tokens/extensions/TapTokenHelper.sol";
 import {TapTokenCodec} from "contracts/tokens/TapTokenCodec.sol";
-import {TapiocaOmnichainEngineCodec as ToeCodec} from
-    "tap-utils/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
+import {TapiocaOmnichainEngineCodec as ToeCodec} from "tap-utils/tapiocaOmnichainEngine/TapiocaOmnichainEngineCodec.sol";
 import {TwTAP, Participation} from "contracts/governance/twTAP.sol";
 
 // Tapioca test
@@ -167,7 +166,7 @@ contract TapTokenMultiComposeTest is TapTokenTest {
             pearlmit.approve(
                 20, address(bTapOFT), 0, address(twTap), uint200(amountToSendLD_), uint48(block.timestamp + 1)
             );
-            twTap.participate(userA, amountToSendLD_, lockDuration_);
+            twTap.participate(userA, amountToSendLD_, lockDuration_, 0);
             skip(lockDuration_);
         }
 

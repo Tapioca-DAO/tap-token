@@ -20,17 +20,20 @@ TOB_participate
                         ├── when Pearlmit transfer fails
                         │   └── it should revert
                         └── when Pearlmit transfer succeed
-                            ├── when magnitude bigger than the max cap
+                            ├── when rewards are lower than minReward
                             │   └── it should revert
-                            └── when magnitude is in range
-                                ├── when locker does not have voting power
-                                │   ├── it should not update cumulative
-                                │   └── it should participate
-                                ├── when locker have voting power
-                                │   ├── it should update cumulative
-                                │   └── it should participate
-                                └── when it should participate
-                                    ├── it should emit Participate
-                                    ├── it should save the twAML participation
-                                    ├── it should record the amount for next epoch and decrease it on the last
-                                    └── it should mint a new oTAP
+                            └── when rewards are bigger than minReward
+                                ├── when magnitude bigger than the max cap
+                                │   └── it should revert
+                                └── when magnitude is in range
+                                    ├── when locker does not have voting power
+                                    │   ├── it should not update cumulative
+                                    │   └── it should participate
+                                    ├── when locker have voting power
+                                    │   ├── it should update cumulative
+                                    │   └── it should participate
+                                    └── when it should participate
+                                        ├── it should emit Participate
+                                        ├── it should save the twAML participation
+                                        ├── it should record the amount for next epoch and decrease it on the last
+                                        └── it should mint a new oTAP

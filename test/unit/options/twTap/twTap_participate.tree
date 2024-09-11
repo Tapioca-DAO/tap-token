@@ -17,13 +17,16 @@ TWTAP_participate
                     ├── when pearlmit transfer fails
                     │   └── it should revert
                     └── when pearlmit transfer succeed
-                        ├── when locker does not have voting power
-                        │   └── it should participate without changing AML
-                        ├── when lock has voting power
-                        │   └── it should participate and change AML
-                        └── when it should participate
-                            ├── it should emit Participate
-                            ├── it should update AML if hasVotingPower is true
-                            ├── it should create a participation entry
-                            ├── it should update weekTotals
-                            └── it should mint a twTAP token
+                        ├── when minReward is not met
+                        │   └── it should revert
+                        └── when minReward is met
+                            ├── when locker does not have voting power
+                            │   └── it should participate without changing AML
+                            ├── when lock has voting power
+                            │   └── it should participate and change AML
+                            └── when it should participate
+                                ├── it should emit Participate
+                                ├── it should update AML if hasVotingPower is true
+                                ├── it should create a participation entry
+                                ├── it should update weekTotals
+                                └── it should mint a twTAP token

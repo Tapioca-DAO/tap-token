@@ -72,7 +72,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         tob.setPause(true);
         // it should revert
         vm.expectRevert("Pausable: paused");
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
     }
 
     modifier whenNotPaused() {
@@ -87,7 +87,7 @@ contract TOB_participate is TobBaseTest, TWAML {
     {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.LockExpired.selector);
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
     }
 
     modifier whenLockNotExpired() {
@@ -103,7 +103,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         skip(tob.EPOCH_DURATION());
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.AdvanceEpochFirst.selector);
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
     }
 
     modifier whenEpochIsAdvanced() {
@@ -148,7 +148,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         vm.skip(true); // Check is redundant, already done in `tOLP.lock()` function
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.DurationNotMultiple.selector);
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
     }
 
     modifier whenLockDurationIsAMultipleOfEpochDuration() {
@@ -170,10 +170,41 @@ contract TOB_participate is TobBaseTest, TWAML {
 
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.TransferFailed.selector);
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
     }
 
     modifier whenPearlmitTransferSucceed() {
+        _;
+    }
+
+    uint256 public constant MAX_REWARD = 500_001; // See @TapiocaOptionBroker::dMax
+
+    function test_RevertWhen_RewardsAreLowerThanMinReward(uint128 _lockAmount, uint128 _lockDuration)
+        external
+        whenNotPaused
+        whenLockNotExpired
+        whenEpochIsAdvanced
+        whenPositionIsActive
+        whenLockDurationIsBigEnough
+        whenLockDurationIsAMultipleOfEpochDuration
+        whenPearlmitTransferSucceed
+        initTestsAndCreateLock(_lockAmount, WEEK_LONG * uint128(ENDING_EPOCH))
+    {
+        _lockDuration = uint128(tob.EPOCH_DURATION() * WEEK_LONG * bound(_lockDuration, 1, 4));
+        _lockAmount = uint128(
+            bound(
+                _lockAmount,
+                computeMinWeight(VIRTUAL_TOTAL_AMOUNT, tob.MIN_WEIGHT_FACTOR()),
+                MAX_USDO_PARTICIPATION_BOUNDARY
+            )
+        );
+        _setupPearlmitApproval();
+        // it should revert
+        vm.expectRevert(TapiocaOptionBroker.MinRewardTooLow.selector);
+        tob.participate(TOLP_TOKEN_ID, MAX_REWARD);
+    }
+
+    modifier whenRewardsAreBiggerThanMinReward() {
         _;
     }
 
@@ -186,12 +217,13 @@ contract TOB_participate is TobBaseTest, TWAML {
         whenLockDurationIsBigEnough
         whenLockDurationIsAMultipleOfEpochDuration
         whenPearlmitTransferSucceed
+        whenRewardsAreBiggerThanMinReward
         initTestsAndCreateLockWithNoDurationBound(_lockAmount, uint128(tob.EPOCH_DURATION() * WEEK_LONG * 5))
         setupPearlmitApproval
     {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.TooLong.selector);
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
     }
 
     modifier whenMagnitudeIsInRange() {
@@ -210,6 +242,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         whenLockDurationIsBigEnough
         whenLockDurationIsAMultipleOfEpochDuration
         whenPearlmitTransferSucceed
+        whenRewardsAreBiggerThanMinReward
         whenMagnitudeIsInRange
     {
         uint128 _lockDuration = uint128(tob.EPOCH_DURATION() * WEEK_LONG * ENDING_EPOCH);
@@ -241,6 +274,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         whenLockDurationIsBigEnough
         whenLockDurationIsAMultipleOfEpochDuration
         whenPearlmitTransferSucceed
+        whenRewardsAreBiggerThanMinReward
         whenMagnitudeIsInRange
         initTestsAndCreateLock(_lockAmount, WEEK_LONG * uint128(ENDING_EPOCH))
         setupPearlmitApproval
@@ -298,7 +332,7 @@ contract TOB_participate is TobBaseTest, TWAML {
         // it should emit Participate
         vm.expectEmit(true, true, false, false);
         emit TapiocaOptionBroker.Participate(tob.epoch(), TOLP_TOKEN_ID, _lockAmount, 1, 0, 0);
-        tob.participate(TOLP_TOKEN_ID);
+        tob.participate(TOLP_TOKEN_ID, 0);
         // it should save the twAML participation
         (bool hasVotingPower, bool divergenceForce, uint256 averageMagnitude) = tob.participants(1);
         assertEq(hasVotingPower, _hasVotingPower, "TOB_participate::whenItShouldParticipate: Invalid hasVotingPower");
