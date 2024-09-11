@@ -14,13 +14,16 @@ TOLP_lock
                 ├── when sgl is in rescue mode
                 │   └── it should revert
                 └── when sgl not in rescue mode
-                    ├── when sgl not active
+                    ├── when rescue cooldown activated
                     │   └── it should revert
-                    └── when sgl is active
-                        ├── when Pearlmit transfer fails
+                    └── when rescue cooldown not activated
+                        ├── when sgl not active
                         │   └── it should revert
-                        └── when Pearlmit transfer succeed
-                            ├── it should emit Mint event
-                            ├── it should mint a tOLP position
-                            ├── it should add shares to the sgl total deposited
-                            └── it should create a lock position with the right data
+                        └── when sgl is active
+                            ├── when Pearlmit transfer fails
+                            │   └── it should revert
+                            └── when Pearlmit transfer succeed
+                                ├── it should emit Mint event
+                                ├── it should mint a tOLP position
+                                ├── it should add shares to the sgl total deposited
+                                └── it should create a lock position with the right data

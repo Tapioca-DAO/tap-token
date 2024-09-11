@@ -115,6 +115,7 @@ contract TapiocaOptionLiquidityProvision is
     error DurationNotMultiple();
     error BrokerAlreadySet();
     error NotEnoughBigBangLiquidity();
+    error EmergencySweepActivated();
 
     constructor(address _yieldBox, uint256 _epochDuration, IPearlmit _pearlmit, address _penrose, address _owner)
         ERC721("TapiocaOptionLiquidityProvision", "tOLP")
@@ -269,6 +270,7 @@ contract TapiocaOptionLiquidityProvision is
 
         SingularityPool memory sgl = activeSingularities[_singularity];
         if (sgl.rescue) revert SingularityInRescueMode();
+        if (lastEmergencySweep != 0) revert EmergencySweepActivated();
 
         uint256 sglAssetID = sgl.sglAssetID;
         if (sglAssetID == 0) revert SingularityNotActive();
