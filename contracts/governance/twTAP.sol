@@ -431,7 +431,7 @@ contract TwTAP is
         {
             uint256 poolTotalDeposited = _snapshotTotalDepositedForSgl();
             multiplier = capCumulativeReward(
-                computeTarget(dMIN, dMAX, magnitude * _amount, pool.cumulative * poolTotalDeposited),
+                computeTarget(dMIN, dMAX, magnitude * _amount, lastEpochCumulative * poolTotalDeposited),
                 REWARD_MULTIPLIER_BRACKET,
                 REWARD_CAP_BRACKET
             );
