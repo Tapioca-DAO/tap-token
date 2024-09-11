@@ -10,8 +10,8 @@ contract getSingularityPoolInfo is TobBaseTest {
 
         // it should return the right values
         (uint256 assetId, uint256 totalDeposited, uint256 weight, bool isInRescue,,,,) =
-            tob.getSingularityPoolInfo(IERC20(address(singularityEthMarket)), 1);
-        assertEq(assetId, 1, "TOB_getSingularityPoolInfo: Invalid assetId");
+            tob.getSingularityPoolInfo(IERC20(address(toftSglEthMarket)), 1);
+        assertEq(assetId, ybAssetIdToftSglEthMarket, "TOB_getSingularityPoolInfo: Invalid assetId");
         assertEq(totalDeposited, _lockAmount, "TOB_getSingularityPoolInfo: Invalid totalDeposited");
         assertEq(weight, 1, "TOB_getSingularityPoolInfo: Invalid weight");
         assertEq(isInRescue, false, "TOB_getSingularityPoolInfo: Invalid isInRescue");
