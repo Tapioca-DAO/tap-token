@@ -523,10 +523,10 @@ contract TapiocaOptionLiquidityProvision is
      * @param _to Address to send the penalties to
      * @param _amount Amount of penalties to harvest
      */
-    function harvestPenalties(address _to, uint256 _amount) external {
+    function harvestPenalties(address _to, uint256 _amount, uint256 _sglAssetId) external {
         if (!cluster.hasRole(msg.sender, keccak256("HARVEST_TOLP")) && msg.sender != owner()) revert NotAuthorized();
         totalPenalties -= _amount;
-        yieldBox.transfer(address(this), _to, 0, _amount);
+        yieldBox.transfer(address(this), _to,  _sglAssetId, _amount);
 
         emit HarvestPenalties(_to, _amount);
     }
