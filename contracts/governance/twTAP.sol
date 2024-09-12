@@ -107,7 +107,7 @@ contract TwTAP is
     uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
     uint256 constant dMAX = 1_000_000; // 100 * 1e4; 0% - 100% voting power multiplier
     uint256 constant dMIN = 0;
-    uint256 public constant EPOCH_DURATION = 10 minutes;
+    uint256 public constant EPOCH_DURATION = 7 days;
     uint256 public MAX_LOCK_DURATION = 5 * 365 days; // 5 years
 
     // If we assume 128 bit balances for the reward token -- which fit 1e40
@@ -154,7 +154,7 @@ contract TwTAP is
     /// @notice Last snapshot of the total value deposited in a pool, and the last time it was deposited
     uint256 public lastTotalDeposited;
     uint256 public lastTotalDepositRefresh;
-    uint256 public refreshCooldown = 2 minutes; // For test only
+    uint256 public refreshCooldown = 12 hours;
 
     error NotAuthorized();
     error AdvanceWeekFirst();
