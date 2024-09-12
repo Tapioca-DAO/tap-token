@@ -340,7 +340,8 @@ contract TapiocaOptionLiquidityProvision is
 
         // Transfer the YieldBox position back to the owner
         {
-            if (isLockedWithDebt) {
+            // No debt penalty if the pool is in rescue mode
+            if (isLockedWithDebt || sgl.rescue) {
                 yieldBox.transfer(address(this), tokenOwner, lockPosition.sglAssetID, lockPosition.ybShares);
             } else {
                 uint256 penalty = _getDebtPenaltyAmount(lockPosition);
@@ -526,7 +527,7 @@ contract TapiocaOptionLiquidityProvision is
     function harvestPenalties(address _to, uint256 _amount, uint256 _sglAssetId) external {
         if (!cluster.hasRole(msg.sender, keccak256("HARVEST_TOLP")) && msg.sender != owner()) revert NotAuthorized();
         totalPenalties -= _amount;
-        yieldBox.transfer(address(this), _to,  _sglAssetId, _amount);
+        yieldBox.transfer(address(this), _to, _sglAssetId, _amount);
 
         emit HarvestPenalties(_to, _amount);
     }
