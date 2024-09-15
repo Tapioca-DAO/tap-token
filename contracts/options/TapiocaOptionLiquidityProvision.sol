@@ -88,7 +88,7 @@ contract TapiocaOptionLiquidityProvision is
     // Debt penalty starts from 10% and goes down to 0.5% linearly
     uint256 public maxDebtPenalty = 1000;
     uint256 public minDebtPenalty = 500;
-    uint256 public totalPenalties; // Total amount of penalties paid
+    mapping(uint256 sglId => uint256 penalty) public totalPenalties; // Total amount of penalties paid
 
     error NotRegistered();
     error InvalidSingularity();
@@ -345,6 +345,7 @@ contract TapiocaOptionLiquidityProvision is
                 yieldBox.transfer(address(this), tokenOwner, lockPosition.sglAssetID, lockPosition.ybShares);
             } else {
                 uint256 penalty = _getDebtPenaltyAmount(lockPosition);
+                totalPenalties[sgl.sglAssetID] += penalty;
                 yieldBox.transfer(address(this), tokenOwner, lockPosition.sglAssetID, lockPosition.ybShares - penalty);
             }
         }
@@ -526,7 +527,7 @@ contract TapiocaOptionLiquidityProvision is
      */
     function harvestPenalties(address _to, uint256 _amount, uint256 _sglAssetId) external {
         if (!cluster.hasRole(msg.sender, keccak256("HARVEST_TOLP")) && msg.sender != owner()) revert NotAuthorized();
-        totalPenalties -= _amount;
+        totalPenalties[_sglAssetId] -= _amount;
         yieldBox.transfer(address(this), _to, _sglAssetId, _amount);
 
         emit HarvestPenalties(_to, _amount);
