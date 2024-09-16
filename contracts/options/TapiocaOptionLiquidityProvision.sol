@@ -621,7 +621,7 @@ contract TapiocaOptionLiquidityProvision is
         uint256 amountToLock = _getUsdoAmountFromTolpShare(_singularity, _userShare);
 
         totalUserUsdoDebt = totalUserUsdoDebt + (totalUserUsdoDebt * maxDebtBuffer) / 1e4; // total debt + buffer
-        if (amountToLock + userLockedUsdo[_user] > totalUserUsdoDebt) {
+        if (amountToLock + _getUsdoAmountFromTolpShare(_singularity, userLockedUsdo[_user]) > totalUserUsdoDebt) {
             return false;
         }
         return true;
