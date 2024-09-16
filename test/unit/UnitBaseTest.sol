@@ -496,7 +496,7 @@ contract UnitBaseTest is TestHelper {
         vm.stopPrank();
     }
 
-    function depositCollateral(address to, uint256 amount) public {
+    function depositBBCollateral(address to, uint256 amount) public {
         vm.startPrank(to);
 
         // approvals
@@ -529,6 +529,30 @@ contract UnitBaseTest is TestHelper {
         uint256 amountUsd = (amount * rate * 50) / 1e21;
         (modules, calls) = marketHelper.borrow(to, to, amountUsd);
         bigBangEthMarket.execute(modules, calls, true);
+        vm.stopPrank();
+    }
+
+    function depositSGLCollateral(address to, uint256 amount) public {
+        vm.startPrank(to);
+        deal(address(ethTokenPenrose), to, amount);
+        BoringIERC20(ethTokenPenrose).approve(address(yieldBox), type(uint256).max);
+        BoringIERC20(ethTokenPenrose).approve(address(pearlmit), type(uint256).max);
+        yieldBox.setApprovalForAll(address(singularityEthMarket), true);
+        yieldBox.setApprovalForAll(address(pearlmit), true);
+        pearlmit.approve(
+            1155,
+            address(yieldBox),
+            ethTokenPenroseId,
+            address(singularityEthMarket),
+            type(uint200).max,
+            uint48(block.timestamp)
+        );
+
+        uint256 share = yieldBox.toShare(ethTokenPenroseId, amount, false);
+        yieldBox.depositAsset(ethTokenPenroseId, to, to, 0, share);
+
+        (BBModule[] memory modules, bytes[] memory calls) = marketHelper.addCollateral(to, to, false, 0, share);
+        singularityEthMarket.execute(modules, calls, true);
         vm.stopPrank();
     }
 
