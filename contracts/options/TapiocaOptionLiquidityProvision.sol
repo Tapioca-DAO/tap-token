@@ -239,7 +239,10 @@ contract TapiocaOptionLiquidityProvision is
         usdoAmountFromTolpShare = _getUsdoAmountFromTolpShare(sglAssetIDToAddress[_sglAssetId], _userShare);
 
         totalUserUsdoDebt = totalUserUsdoDebt + (totalUserUsdoDebt * maxDebtBuffer) / 1e4; // total debt + buffer
-        if (usdoAmountFromTolpShare + userLockedUsdo[_user] > totalUserUsdoDebt) {
+        if (
+            usdoAmountFromTolpShare
+                + _getUsdoAmountFromTolpShare(sglAssetIDToAddress[_sglAssetId], userLockedUsdo[_user]) > totalUserUsdoDebt
+        ) {
             return (false, totalUserUsdoDebt, usdoAmountFromTolpShare);
         }
 
