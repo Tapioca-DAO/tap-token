@@ -74,7 +74,7 @@ const config: HardhatUserConfig & { dodoc: any } = {
                     evmVersion: 'paris', // Latest before Shanghai
                     optimizer: {
                         enabled: true,
-                        runs: 1800,
+                        runs: 1000,
                     },
                 },
             },
@@ -104,7 +104,17 @@ const config: HardhatUserConfig & { dodoc: any } = {
                     evmVersion: 'paris', // Latest before Shanghai
                     optimizer: {
                         enabled: true,
-                        runs: 200,
+                        runs: 800,
+                    },
+                },
+            },
+            'contracts/options/TapiocaOptionBroker.sol': {
+                version: '0.8.22',
+                settings: {
+                    evmVersion: 'paris', // Latest before Shanghai
+                    optimizer: {
+                        enabled: true,
+                        runs: 6000,
                     },
                 },
             },
