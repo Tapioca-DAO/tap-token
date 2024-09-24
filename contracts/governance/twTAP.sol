@@ -431,9 +431,7 @@ contract TwTAP is
         {
             uint256 poolTotalDeposited = _snapshotTotalDepositedForSgl();
             multiplier = capCumulativeReward(
-                computeTarget(dMIN, dMAX, magnitude * _amount, lastEpochCumulative * poolTotalDeposited),
-                REWARD_MULTIPLIER_BRACKET,
-                REWARD_CAP_BRACKET
+                computeTarget(dMIN, dMAX, magnitude, lastEpochCumulative), REWARD_MULTIPLIER_BRACKET, REWARD_CAP_BRACKET
             );
             if (multiplier < _minReward) revert MinRewardTooLow();
             hasVotingPower = _amount >= computeMinWeight(poolTotalDeposited + VIRTUAL_TOTAL_AMOUNT, MIN_WEIGHT_FACTOR);
