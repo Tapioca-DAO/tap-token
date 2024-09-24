@@ -532,27 +532,27 @@ contract UnitBaseTest is TestHelper {
         vm.stopPrank();
     }
 
-    function depositSGLCollateral(address to, uint256 amount) public {
+    function depositSGLAsset(address to, uint256 amount) public {
         vm.startPrank(to);
-        deal(address(ethTokenPenrose), to, amount);
-        BoringIERC20(ethTokenPenrose).approve(address(yieldBox), type(uint256).max);
-        BoringIERC20(ethTokenPenrose).approve(address(pearlmit), type(uint256).max);
+        deal(address(usdoMock), to, amount);
+        usdoMock.approve(address(yieldBox), type(uint256).max);
+        usdoMock.approve(address(pearlmit), type(uint256).max);
         yieldBox.setApprovalForAll(address(singularityEthMarket), true);
         yieldBox.setApprovalForAll(address(pearlmit), true);
         pearlmit.approve(
             1155,
             address(yieldBox),
-            ethTokenPenroseId,
+            usdoMockTokenId,
             address(singularityEthMarket),
             type(uint200).max,
             uint48(block.timestamp)
         );
 
-        uint256 share = yieldBox.toShare(ethTokenPenroseId, amount, false);
-        yieldBox.depositAsset(ethTokenPenroseId, to, to, 0, share);
+        uint256 share = yieldBox.toShare(usdoMockTokenId, amount, false);
+        yieldBox.depositAsset(usdoMockTokenId, to, to, 0, share);
 
-        (BBModule[] memory modules, bytes[] memory calls) = marketHelper.addCollateral(to, to, false, 0, share);
-        singularityEthMarket.execute(modules, calls, true);
+        singularityEthMarket.addAsset(to, to, false, share);
+
         vm.stopPrank();
     }
 
@@ -566,8 +566,8 @@ contract UnitBaseTest is TestHelper {
         singularityEthMarket = createSingularity(
             SingularityInitData({
                 penrose: address(penrose),
-                asset: BoringIERC20(ethTokenPenrose),
-                assetId: ethTokenPenroseId,
+                asset: BoringIERC20(address(usdoMock)),
+                assetId: usdoMockTokenId,
                 collateral: BoringIERC20(ethTokenPenrose),
                 collateralId: ethTokenPenroseId,
                 oracle: bigBangEthOracle,
