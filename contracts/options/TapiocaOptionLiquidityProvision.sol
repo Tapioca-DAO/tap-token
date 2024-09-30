@@ -349,7 +349,6 @@ contract TapiocaOptionLiquidityProvision is
         }
 
         // Burn & Keep track of BB debt
-        // userLockedUsdo[_to] += _ybShares; This is done in `_beforeTokenTransfer`
         _burn(_tokenId);
         delete lockPositions[_tokenId];
 
@@ -725,7 +724,7 @@ contract TapiocaOptionLiquidityProvision is
         override(ERC721, ERC721Enumerable)
     {
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
-        if (to == tapiocaOptionBroker || to == address(this)) {
+        if (to == tapiocaOptionBroker || from == tapiocaOptionBroker) {
             return;
         }
 
