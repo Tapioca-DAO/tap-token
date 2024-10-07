@@ -168,7 +168,7 @@ contract TOLP_lock is TolpBaseTest {
 
     modifier depositingCollateralToBigBang(uint128 _ybShares) {
         (_ybShares,) = _boundValues(_ybShares, 0);
-        depositCollateral(aliceAddr, _ybShares);
+        depositBBCollateral(aliceAddr, _ybShares);
         _;
     }
 
