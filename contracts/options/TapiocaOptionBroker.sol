@@ -428,12 +428,12 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         participants[_tOLPTokenID] = Participation(hasVotingPower, divergenceForce, pool.averageMagnitude);
 
         // Record amount for next epoch exercise
-        netDepositedForEpoch[epoch + 1][lock.sglAssetID] += int256(uint256(lock.ybShares));
+        netDepositedForEpoch[epoch + 1][lock.sglAssetID] += int256(lock.ybShares);
 
         uint256 lastEpoch = _timestampToWeek(lockExpiry);
         // And remove it from last epoch
         // Math is safe, check `_emitToGauges()`
-        netDepositedForEpoch[lastEpoch + 1][lock.sglAssetID] -= int256(uint256(lock.ybShares));
+        netDepositedForEpoch[lastEpoch + 1][lock.sglAssetID] -= int256(lock.ybShares);
 
         // Mint oTAP position
         oTAPTokenID = oTAP.mint(msg.sender, lockExpiry, uint128(target), _tOLPTokenID);
@@ -452,8 +452,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         bool isSGLInRescueMode = _isSGLInRescueMode(lock);
 
         // Check if debt ratio is below threshold, if so bypass lock expiration
-        (bool canLock,,) =
-            tOLP.canLockWithDebt(oTAP.ownerOf(_oTAPTokenID), uint256(lock.sglAssetID), uint256(lock.ybShares));
+        (bool canLock,,) = tOLP.canLockWithDebt(oTAP.ownerOf(_oTAPTokenID), uint256(lock.sglAssetID), lock.ybShares);
         if (canLock) {
             // If SGL is in rescue, bypass the lock expiration
             if (!isSGLInRescueMode) {
