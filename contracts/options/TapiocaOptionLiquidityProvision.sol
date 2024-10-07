@@ -35,9 +35,9 @@ import {ITOFT} from "tap-utils/interfaces/oft/ITOFT.sol";
 
 struct LockPosition {
     uint128 sglAssetID; // Singularity market YieldBox asset ID
+    uint256 ybShares; // amount of YieldBox shares locked.
     uint128 lockTime; // time when the tokens were locked
     uint128 lockDuration; // duration of the lock
-    uint256 ybShares; // amount of YieldBox shares locked.
 }
 
 struct SingularityPool {
