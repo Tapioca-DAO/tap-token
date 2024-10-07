@@ -21,7 +21,7 @@ contract TOLP_lock is TolpBaseTest {
         tolp.setPause(true);
         // it should revert
         vm.expectRevert("Pausable: paused");
-        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
+        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares, aliceAddr);
     }
 
     modifier whenNotPaused() {
@@ -32,7 +32,7 @@ contract TOLP_lock is TolpBaseTest {
         _lockDuration = uint128(bound(_lockDuration, 0, tolp.EPOCH_DURATION() - 1));
         // it should revert
         vm.expectRevert(TapiocaOptionLiquidityProvision.DurationTooShort.selector);
-        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
+        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares, aliceAddr);
     }
 
     modifier whenDurationIsNotTooShort() {
@@ -48,7 +48,7 @@ contract TOLP_lock is TolpBaseTest {
         vm.assume(_ybShares != 0);
         // it should revert
         vm.expectRevert(TapiocaOptionLiquidityProvision.DurationTooLong.selector);
-        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
+        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares, aliceAddr);
     }
 
     modifier whenDurationIsRight() {
@@ -71,7 +71,7 @@ contract TOLP_lock is TolpBaseTest {
         uint128 _ybShares = 0;
         // it should revert
         vm.expectRevert(TapiocaOptionLiquidityProvision.SharesNotValid.selector);
-        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
+        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares, aliceAddr);
     }
 
     modifier whenSharesBiggerThan0(uint128 _ybShares) {
@@ -91,7 +91,7 @@ contract TOLP_lock is TolpBaseTest {
         _lockDuration = _whenDurationIsRight(_lockDuration);
         // it should revert
         vm.expectRevert(TapiocaOptionLiquidityProvision.SingularityInRescueMode.selector);
-        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
+        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares, aliceAddr);
     }
 
     modifier whenSglNotInRescueMode() {
@@ -112,7 +112,7 @@ contract TOLP_lock is TolpBaseTest {
         tolp.activateEmergencySweep();
         // it should revert
         vm.expectRevert(TapiocaOptionLiquidityProvision.EmergencySweepActivated.selector);
-        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
+        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares, aliceAddr);
     }
 
     modifier whenRescueCooldownNotActivated() {
@@ -131,7 +131,7 @@ contract TOLP_lock is TolpBaseTest {
         _lockDuration = _whenDurationIsRight(_lockDuration);
         // it should revert
         vm.expectRevert(TapiocaOptionLiquidityProvision.SingularityNotActive.selector);
-        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
+        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares, aliceAddr);
     }
 
     modifier whenSglIsActive() {
@@ -154,7 +154,7 @@ contract TOLP_lock is TolpBaseTest {
         // It should be TapiocaOptionLiquidityProvision.TransferFailed.selector,
         // for simplicity we use vm.expectRevert() if we don't permit it
         vm.expectRevert();
-        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
+        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares, aliceAddr);
     }
 
     modifier whenTransferSucceeds(uint128 _ybShares) {
@@ -192,7 +192,7 @@ contract TOLP_lock is TolpBaseTest {
         // it should emit Mint event
         vm.expectEmit(true, true, true, false);
         emit Mint(aliceAddr, SGL_ASSET_ID, address(SGL_TO_LOCK), EXPECTED_TOKEN_ID, _lockDuration, _ybShares);
-        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares);
+        tolp.lock(aliceAddr, SGL_TO_LOCK, _lockDuration, _ybShares, aliceAddr);
 
         // it should mint a tOLP position
         assertEq(tolp.balanceOf(aliceAddr), 1, "TOLP_lock::test_WhenPearlmitTransferSucceed: Invalid balance");
