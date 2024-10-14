@@ -146,6 +146,17 @@ contract TobBaseTest is TolpBaseTest {
         vm.stopPrank();
     }
 
+    function _tobParticipate(address _user, uint200 _amount, uint128 _lockDuration, uint256 _assetId)
+        internal
+        createLock(_user, _amount, _lockDuration)
+    {
+        vm.startPrank(_user);
+        tolp.approve(address(pearlmit), _assetId);
+        pearlmit.approve(721, address(tolp), _assetId, address(tob), 1, uint48(block.timestamp + 1));
+        tob.participate(_assetId);
+        vm.stopPrank();
+    }
+
     modifier setDaiMockPaymentToken() {
         vm.prank(adminAddr);
         tob.setPaymentToken(ERC20(address(daiMock)), ITapiocaOracle(address(daiOracleMock)), bytes(""));
