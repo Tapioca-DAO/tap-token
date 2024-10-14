@@ -35,7 +35,7 @@ import {ITOFT} from "tap-utils/interfaces/oft/ITOFT.sol";
 
 struct LockPosition {
     uint128 sglAssetID; // Singularity market YieldBox asset ID
-    uint128 ybShares; // amount of YieldBox shares locked.
+    uint256 ybShares; // amount of YieldBox shares locked.
     uint128 lockTime; // time when the tokens were locked
     uint128 lockDuration; // duration of the lock
 }
@@ -135,7 +135,7 @@ contract TapiocaOptionLiquidityProvision is
         address sglAddress,
         uint256 tolpTokenId,
         uint128 lockDuration,
-        uint128 ybShares
+        uint256 ybShares
     );
     event Burn(address indexed from, uint256 indexed sglAssetId, address sglAddress, uint256 tolpTokenId);
     event UpdateTotalSingularityPoolWeights(uint256 totalSingularityPoolWeights);
@@ -259,7 +259,7 @@ contract TapiocaOptionLiquidityProvision is
     /// @param _ybShares Amount of YieldBox shares to lock
     /// @param _for Address to check the debt for
     /// @return tokenId The ID of the minted NFT
-    function lock(address _to, IERC20 _singularity, uint128 _lockDuration, uint128 _ybShares, address _for)
+    function lock(address _to, IERC20 _singularity, uint128 _lockDuration, uint256 _ybShares, address _for)
         external
         nonReentrant
         whenNotPaused
@@ -334,7 +334,7 @@ contract TapiocaOptionLiquidityProvision is
         SingularityPool memory sgl = activeSingularities[_singularity];
 
         // Check if debt ratio is below threshold, if so bypass lock expiration
-        bool isLockedWithDebt = _canLockWithDebt(tokenOwner, _singularity, uint128(lockPosition.ybShares));
+        bool isLockedWithDebt = _canLockWithDebt(tokenOwner, _singularity, lockPosition.ybShares);
         if (isLockedWithDebt) {
             // If the singularity is in rescue, the lock can be unlocked at any time
             if (!sgl.rescue) {
@@ -349,7 +349,6 @@ contract TapiocaOptionLiquidityProvision is
         }
 
         // Burn & Keep track of BB debt
-        // userLockedUsdo[_to] += _ybShares; This is done in `_beforeTokenTransfer`
         _burn(_tokenId);
         delete lockPositions[_tokenId];
 
@@ -725,7 +724,7 @@ contract TapiocaOptionLiquidityProvision is
         override(ERC721, ERC721Enumerable)
     {
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
-        if (to == tapiocaOptionBroker || to == address(this)) {
+        if (to == tapiocaOptionBroker || from == tapiocaOptionBroker) {
             return;
         }
 

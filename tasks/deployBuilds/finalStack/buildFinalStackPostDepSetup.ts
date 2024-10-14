@@ -41,8 +41,10 @@ export const buildFinalStackPostDepSetup_2 = async (
         tapOracleTobDeployment,
         usdoOracleDeployment,
         usdcOracleDeployment,
-        tSglSGlp,
-        ybStrategyTSglSGlp,
+        tSglStgUsdcV2,
+        ybStrategyTSglStgUsdcV2,
+        // tSglSGlp,
+        // ybStrategyTSglSGlp,
         // tSglDai,
         // ybStrategyTSglSDai,
     } = await loadContract__arb(hre, tag, isTestnet);
@@ -121,34 +123,40 @@ export const buildFinalStackPostDepSetup_2 = async (
     /**
      * Register Arb SGL GLP in TOLP
      */
-    const sglGlpYbAsset = await yieldbox.ids(
+    // const sglGlpYbAsset = await yieldbox.ids(
+    //     1,
+    //     tSglSGlp.address,
+    //     ybStrategyTSglSGlp.address,
+    //     0,
+    // );
+    const sglStgUsdcV2YbAsset = await yieldbox.ids(
         1,
-        tSglSGlp.address,
-        ybStrategyTSglSGlp.address,
+        tSglStgUsdcV2.address,
+        ybStrategyTSglStgUsdcV2.address,
         0,
     );
 
     // If SGL_GLP is not registered in TOLP, register it
     if (
-        (await tOlp.sglAssetIDToAddress(sglGlpYbAsset)).toLowerCase() !==
-        tSglSGlp.address.toLowerCase()
+        (await tOlp.sglAssetIDToAddress(sglStgUsdcV2YbAsset)).toLowerCase() !==
+        tSglStgUsdcV2.address.toLowerCase()
     ) {
         console.log('[+] +Call queue: register SGL_GLP in TOLP');
         calls.push({
             target: tOlp.address,
             allowFailure: false,
             callData: tOlp.interface.encodeFunctionData('registerSingularity', [
-                tSglSGlp.address,
-                sglGlpYbAsset,
+                tSglStgUsdcV2.address,
+                sglStgUsdcV2YbAsset,
                 0,
             ]),
         });
         console.log(
             '\t- Parameters',
             'SGL address',
-            tSglSGlp.address,
+            tSglStgUsdcV2.address,
             'YB asset ID',
-            sglGlpYbAsset,
+            sglStgUsdcV2YbAsset,
             'Weight',
             0,
         );
@@ -191,58 +199,56 @@ export const buildFinalStackPostDepSetup_2 = async (
     // }
 
     if (isTestnet) {
-        // Arbitrum USDC Mock
-        const tSglUsdcMock = loadGlobalContract(
-            hre,
-            TAPIOCA_PROJECTS_NAME.TapiocaZ,
-            hre.SDK.eChainId,
-            TAPIOCA_Z_CONFIG.DEPLOYMENT_NAMES.T_SGL_USDC_MOCK_MARKET,
-            tag,
-        );
-        const ybStrategyTSglUsdcMock = loadGlobalContract(
-            hre,
-            TAPIOCA_PROJECTS_NAME.TapiocaBar,
-            hre.SDK.eChainId,
-            TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES
-                .YB_T_SGL_USDC_MOCK_ASSET_WITHOUT_STRATEGY,
-            tag,
-        );
-
-        /**
-         * Register Arb SGL USDC MOCK in TOLP
-         */
-        const sglUsdcMockYbAsset = await yieldbox.ids(
-            1,
-            tSglUsdcMock.address,
-            ybStrategyTSglUsdcMock.address,
-            0,
-        );
-
-        // If SGL Usdc Mock is not registered in TOLP, register it
-        if (
-            (
-                await tOlp.sglAssetIDToAddress(sglUsdcMockYbAsset)
-            ).toLowerCase() !== tSglUsdcMock.address.toLowerCase()
-        ) {
-            console.log('[+] +Call queue: register SGL Usdc Mock in TOLP');
-            calls.push({
-                target: tOlp.address,
-                allowFailure: false,
-                callData: tOlp.interface.encodeFunctionData(
-                    'registerSingularity',
-                    [tSglUsdcMock.address, sglUsdcMockYbAsset, 0],
-                ),
-            });
-            console.log(
-                '\t- Parameters',
-                'SGL address',
-                tSglUsdcMock.address,
-                'YB asset ID',
-                sglUsdcMockYbAsset,
-                'Weight',
-                0,
-            );
-        }
+        // // Arbitrum USDC Mock
+        // const tSglUsdcMock = loadGlobalContract(
+        //     hre,
+        //     TAPIOCA_PROJECTS_NAME.TapiocaZ,
+        //     hre.SDK.eChainId,
+        //     TAPIOCA_Z_CONFIG.DEPLOYMENT_NAMES.T_SGL_USDC_MOCK_MARKET,
+        //     tag,
+        // );
+        // const ybStrategyTSglUsdcMock = loadGlobalContract(
+        //     hre,
+        //     TAPIOCA_PROJECTS_NAME.TapiocaBar,
+        //     hre.SDK.eChainId,
+        //     TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES
+        //         .YB_T_SGL_USDC_MOCK_ASSET_WITHOUT_STRATEGY,
+        //     tag,
+        // );
+        // /**
+        //  * Register Arb SGL USDC MOCK in TOLP
+        //  */
+        // const sglUsdcMockYbAsset = await yieldbox.ids(
+        //     1,
+        //     tSglUsdcMock.address,
+        //     ybStrategyTSglUsdcMock.address,
+        //     0,
+        // );
+        // // If SGL Usdc Mock is not registered in TOLP, register it
+        // if (
+        //     (
+        //         await tOlp.sglAssetIDToAddress(sglUsdcMockYbAsset)
+        //     ).toLowerCase() !== tSglUsdcMock.address.toLowerCase()
+        // ) {
+        //     console.log('[+] +Call queue: register SGL Usdc Mock in TOLP');
+        //     calls.push({
+        //         target: tOlp.address,
+        //         allowFailure: false,
+        //         callData: tOlp.interface.encodeFunctionData(
+        //             'registerSingularity',
+        //             [tSglUsdcMock.address, sglUsdcMockYbAsset, 0],
+        //         ),
+        //     });
+        //     console.log(
+        //         '\t- Parameters',
+        //         'SGL address',
+        //         tSglUsdcMock.address,
+        //         'YB asset ID',
+        //         sglUsdcMockYbAsset,
+        //         'Weight',
+        //         0,
+        //     );
+        // }
     }
 
     /**
@@ -491,19 +497,34 @@ async function loadContract__arb(
     );
 
     // Arbitrum SGL-GLP
-    const tSglSGlp = loadGlobalContract(
+    // const tSglSGlp = loadGlobalContract(
+    //     hre,
+    //     TAPIOCA_PROJECTS_NAME.TapiocaZ,
+    //     hre.SDK.eChainId,
+    //     TAPIOCA_Z_CONFIG.DEPLOYMENT_NAMES.T_SGL_GLP_MARKET,
+    //     tag,
+    // );
+    // const ybStrategyTSglSGlp = loadGlobalContract(
+    //     hre,
+    //     TAPIOCA_PROJECTS_NAME.TapiocaBar,
+    //     hre.SDK.eChainId,
+    //     TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES
+    //         .YB_T_SGL_SGLP_ASSET_WITHOUT_STRATEGY,
+    //     tag,
+    // );
+    const tSglStgUsdcV2 = loadGlobalContract(
         hre,
         TAPIOCA_PROJECTS_NAME.TapiocaZ,
         hre.SDK.eChainId,
-        TAPIOCA_Z_CONFIG.DEPLOYMENT_NAMES.T_SGL_GLP_MARKET,
+        TAPIOCA_Z_CONFIG.DEPLOYMENT_NAMES.T_SGL_STG_USDC_V2_MARKET,
         tag,
     );
-    const ybStrategyTSglSGlp = loadGlobalContract(
+    const ybStrategyTSglStgUsdcV2 = loadGlobalContract(
         hre,
         TAPIOCA_PROJECTS_NAME.TapiocaBar,
         hre.SDK.eChainId,
         TAPIOCA_BAR_CONFIG.DEPLOYMENT_NAMES
-            .YB_T_SGL_SGLP_ASSET_WITHOUT_STRATEGY,
+            .YB_T_SGL_STG_USDC_V2_ASSET_WITHOUT_STRATEGY,
         tag,
     );
 
@@ -536,8 +557,10 @@ async function loadContract__arb(
         tapOracleTobDeployment,
         usdoOracleDeployment,
         usdcOracleDeployment,
-        tSglSGlp,
-        ybStrategyTSglSGlp,
+        // tSglSGlp,
+        // ybStrategyTSglSGlp,
+        tSglStgUsdcV2,
+        ybStrategyTSglStgUsdcV2,
         // tSglDai,
         // ybStrategyTSglSDai,
     };
