@@ -89,7 +89,7 @@ contract TwTAP is
 
     /// ===== TWAML ======
     TWAMLPool public twAML; // sglAssetId => twAMLPool
-    uint256 private growthCapBps = 15000; // 150%, 1.5x
+    uint256 public growthCapBps = 15000; // 150%, 1.5x
     /// @notice The minimum amount of difference between 2 epochs to activate a decay
     /// If epoch 2 - epoch 1 < decayActivationBps, no decay will be activated
     uint256 public decayActivationBps;
@@ -422,7 +422,7 @@ contract TwTAP is
         // Copy to memory
         TWAMLPool memory pool = twAML;
 
-        uint256 magnitude = computeMagnitude(_duration, pool.cumulative);
+        uint256 magnitude = computeMagnitude(_duration, lastEpochCumulative);
 
         // Revert if the lock is x time bigger than the cumulative
         if (magnitude > (lastEpochCumulative * growthCapBps) / 1e4) revert NotValid();
@@ -431,7 +431,7 @@ contract TwTAP is
         {
             uint256 poolTotalDeposited = _snapshotTotalDepositedForSgl();
             multiplier = capCumulativeReward(
-                computeTarget(dMIN, dMAX, magnitude * _amount, pool.cumulative * poolTotalDeposited),
+                computeTarget(dMIN, dMAX, magnitude * _amount, lastEpochCumulative * poolTotalDeposited),
                 REWARD_MULTIPLIER_BRACKET,
                 REWARD_CAP_BRACKET
             );
@@ -446,7 +446,7 @@ contract TwTAP is
             pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
 
             // Compute and save new cumulative
-            divergenceForce = _duration >= pool.cumulative;
+            divergenceForce = _duration >= lastEpochCumulative;
 
             if (divergenceForce) {
                 uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;

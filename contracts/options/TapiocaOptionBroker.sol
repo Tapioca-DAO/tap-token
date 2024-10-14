@@ -75,7 +75,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     mapping(uint256 => TWAMLPool) public twAML; // sglAssetId => twAMLPool
 
     /// @dev Virtual total amount to add to the total when computing twAML participation right.
-    uint256 private VIRTUAL_TOTAL_AMOUNT = 50_000 ether;
+    uint256 public VIRTUAL_TOTAL_AMOUNT = 50_000 ether;
 
     uint256 public MIN_WEIGHT_FACTOR = 1000; // In BPS, default 10%
     uint256 constant dMAX = 500_000; // 50 * 1e4; 0% - 50% discount
@@ -90,7 +90,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
     mapping(uint256 epoch => mapping(uint256 sglAssetID => int256 netAmount)) public netDepositedForEpoch;
 
     /// @notice 2x growth cap per epoch
-    uint256 private growthCapBps = 20000; // 200%
+    uint256 public growthCapBps = 20000; // 200%
     /// @notice The minimum amount of difference between 2 epochs to activate a decay
     /// If epoch 2 - epoch 1 < decayActivationBps, no decay will be activated
     uint256 public decayActivationBps;
@@ -367,28 +367,29 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
             if (isErr) revert TransferFailed();
         }
 
-        uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), pool.cumulative);
+        if (lastEpochCumulativeForSgl[lock.sglAssetID] == 0) {
+            lastEpochCumulativeForSgl[lock.sglAssetID] = EPOCH_DURATION;
+        }
+
+        uint256 magnitude = computeMagnitude(uint256(lock.lockDuration), lastEpochCumulativeForSgl[lock.sglAssetID]);
         uint256 target;
         {
             uint256 totalPoolDeposited = _snapshotTotalDepositedForSgl(lock.sglAssetID);
             target = capCumulativeReward(
-                computeTarget(dMIN, dMAX, magnitude * uint256(lock.ybShares), pool.cumulative * totalPoolDeposited),
+                computeTarget(
+                    dMIN,
+                    dMAX,
+                    magnitude * uint256(lock.ybShares),
+                    lastEpochCumulativeForSgl[lock.sglAssetID] * totalPoolDeposited
+                ),
                 REWARD_MULTIPLIER_BRACKET,
                 REWARD_CAP_BRACKET
             );
             if (target < _minReward) revert MinRewardTooLow();
         }
 
-        // Revert if the lock 4x the last epoch cumulative
-        {
-            uint256 lastEpochCumulative = lastEpochCumulativeForSgl[lock.sglAssetID]; // Get the last epoch cumulative
-            if (lastEpochCumulative == 0) {
-                lastEpochCumulative = EPOCH_DURATION;
-            }
-
-            // Revert if the lock is x time bigger than the cumulative
-            if (magnitude > (lastEpochCumulative * growthCapBps) / 1e4) revert TooLong();
-        }
+        // Revert if the lock is x time bigger than the cumulative
+        if (magnitude > (lastEpochCumulativeForSgl[lock.sglAssetID] * growthCapBps) / 1e4) revert TooLong();
 
         bool divergenceForce;
         // Participate in twAMl voting
@@ -399,7 +400,7 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
             pool.averageMagnitude = (pool.averageMagnitude + magnitude) / pool.totalParticipants; // compute new average magnitude
 
             // Compute and save new cumulative
-            divergenceForce = lock.lockDuration >= pool.cumulative;
+            divergenceForce = lock.lockDuration >= lastEpochCumulativeForSgl[lock.sglAssetID];
             if (divergenceForce) {
                 uint256 aMagnitudeMultiplier = MULTIPLIER_PRECISION;
                 if (address(tobMagnitudeMultiplier) != address(0)) {
