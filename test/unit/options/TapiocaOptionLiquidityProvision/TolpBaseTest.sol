@@ -140,7 +140,8 @@ contract TolpBaseTest is UnitBaseTest {
     }
 
     function _createLock(address _user, uint256 _weight, uint128 _lockDuration) internal {
-        depositCollateral(_user, _weight);
+        depositBBCollateral(_user, _weight);
+        depositSGLCollateral(_user, _weight);
 
         (, uint256 shares) = yieldBox.depositAsset(ybAssetIdToftSglEthMarket, _user, _weight);
         vm.startPrank(_user);
