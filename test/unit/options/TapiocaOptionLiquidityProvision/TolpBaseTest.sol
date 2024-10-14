@@ -15,10 +15,25 @@ import {
 } from "../../UnitBaseTest.sol";
 import {SingularityPool} from "contracts/options/TapiocaOptionLiquidityProvision.sol";
 
+import {TapiocaOmnichainExtExec} from "tap-utils/tapiocaOmnichainEngine/extension/TapiocaOmnichainExtExec.sol";
+import {TOFTOptionsReceiverModule} from "tapiocaz/tOFT/modules/TOFTOptionsReceiverModule.sol";
+import {TOFTGenericReceiverModule} from "tapiocaz/tOFT/modules/TOFTGenericReceiverModule.sol";
+import {TOFTMarketReceiverModule} from "tapiocaz/tOFT/modules/TOFTMarketReceiverModule.sol";
+import {TOFTInitStruct, TOFTModulesInitStruct} from "tap-utils/interfaces/oft/ITOFT.sol";
+import {mTOFTReceiver} from "tapiocaz/tOFT/modules/mTOFTReceiver.sol";
+import {IYieldBox, TokenType} from "yieldbox/YieldBox.sol";
+import {TOFTReceiver} from "tapiocaz/tOFT/modules/TOFTReceiver.sol";
+import {TOFTSender} from "tapiocaz/tOFT/modules/TOFTSender.sol";
+import {TOFTVault} from "tapiocaz/tOFT/TOFTVault.sol";
+import {TOFT} from "tapiocaz/tOFT/TOFT.sol";
+
 import "forge-std/console.sol";
 
 contract TolpBaseTest is UnitBaseTest {
     TapiocaOptionLiquidityProvision public tolp;
+    TOFT public toftSglEthMarket;
+    address public ybStratToftSglEthMarket;
+    uint256 public ybAssetIdToftSglEthMarket;
 
     uint256 public MIN_USDO_PARTICIPATION_BOUNDARY = 1e18;
     uint256 public MAX_USDO_PARTICIPATION_BOUNDARY = 1e27;
@@ -59,6 +74,19 @@ contract TolpBaseTest is UnitBaseTest {
         super.setUp();
 
         tolp = createTolpInstance(address(yieldBox), 7 days, IPearlmit(address(pearlmit)), address(penrose), adminAddr);
+        toftSglEthMarket = createTOFT(
+            "TOFT SGL ETH Market",
+            address(yieldBox),
+            address(cluster),
+            address(singularityEthMarket),
+            address(pearlmit),
+            EID_A,
+            EID_A
+        );
+        ybStratToftSglEthMarket = address(createYieldBoxEmptyStrategy(address(yieldBox), address(toftSglEthMarket)));
+        ybAssetIdToftSglEthMarket = IYieldBox(address(yieldBox)).registerAsset(
+            TokenType.ERC20, address(toftSglEthMarket), ybStratToftSglEthMarket, 0
+        );
     }
 
     /**
@@ -71,7 +99,7 @@ contract TolpBaseTest is UnitBaseTest {
 
     function _registerSingularityPool() internal {
         vm.startPrank(adminAddr);
-        tolp.registerSingularity(IERC20(address(singularityEthMarket)), singularityEthMarketAssetId, 0); // sglAddr, yb assetId, weight
+        tolp.registerSingularity(IERC20(address(toftSglEthMarket)), ybAssetIdToftSglEthMarket, 0); // sglAddr, yb assetId, weight
         tolp.registerSingularity(IERC20(address(0x2)), 2, 0);
         tolp.registerSingularity(IERC20(address(0x3)), 3, 0);
         tolp.registerSingularity(IERC20(address(0x4)), 4, 0);
@@ -85,8 +113,8 @@ contract TolpBaseTest is UnitBaseTest {
     modifier setPoolRescue() {
         vm.startPrank(adminAddr);
         tolp.setRescueCooldown(0);
-        tolp.requestSglPoolRescue(1);
-        tolp.activateSGLPoolRescue(IERC20(address(singularityEthMarket)));
+        tolp.requestSglPoolRescue(ybAssetIdToftSglEthMarket);
+        tolp.activateSGLPoolRescue(IERC20(address(toftSglEthMarket)));
         vm.stopPrank();
         _;
     }
@@ -114,18 +142,18 @@ contract TolpBaseTest is UnitBaseTest {
     function _createLock(address _user, uint256 _weight, uint128 _lockDuration) internal {
         depositCollateral(_user, _weight);
 
-        (, uint256 shares) = yieldBox.depositAsset(singularityEthMarketAssetId, _user, _weight);
+        (, uint256 shares) = yieldBox.depositAsset(ybAssetIdToftSglEthMarket, _user, _weight);
         vm.startPrank(_user);
         yieldBox.setApprovalForAll(address(pearlmit), true);
         pearlmit.approve(
             1155,
             address(yieldBox),
-            singularityEthMarketAssetId,
+            ybAssetIdToftSglEthMarket,
             address(tolp),
             type(uint200).max,
             uint48(block.timestamp + 1)
         );
-        tolp.lock(_user, IERC20(address(singularityEthMarket)), _lockDuration, uint128(shares));
+        tolp.lock(_user, IERC20(address(toftSglEthMarket)), _lockDuration, uint128(shares));
         vm.stopPrank();
     }
 
@@ -146,5 +174,52 @@ contract TolpBaseTest is UnitBaseTest {
         _lockAmount = uint128(bound(_lockAmount, MIN_USDO_PARTICIPATION_BOUNDARY, MAX_USDO_PARTICIPATION_BOUNDARY));
         _lockDuration = uint128(tolp.EPOCH_DURATION() * bound(_lockDuration, 1, 2));
         return (_lockAmount, _lockDuration);
+    }
+
+    // =========
+    //  TapiocaZ
+    // =========
+
+    function createTOFT(
+        string memory name,
+        address yieldBox,
+        address cluster,
+        address erc20,
+        address pearlmit,
+        uint32 endointId,
+        uint32 hostEid
+    ) public returns (TOFT toft) {
+        TOFTVault toftVault = new TOFTVault(address(erc20));
+        TapiocaOmnichainExtExec extExec = new TapiocaOmnichainExtExec();
+
+        TOFTInitStruct memory toftInitStruct = TOFTInitStruct({
+            name: name,
+            symbol: name,
+            endpoint: address(endpoints[endointId]),
+            delegate: address(this), // owner
+            yieldBox: yieldBox,
+            cluster: cluster,
+            erc20: erc20,
+            vault: address(toftVault),
+            hostEid: hostEid,
+            extExec: address(extExec),
+            pearlmit: IPearlmit(pearlmit)
+        });
+
+        {
+            TOFTSender toftSender = new TOFTSender(toftInitStruct);
+            mTOFTReceiver toftReceiver = new mTOFTReceiver(toftInitStruct);
+            TOFTMarketReceiverModule toftMarketReceiverModule = new TOFTMarketReceiverModule(toftInitStruct);
+            TOFTOptionsReceiverModule toftOptionsReceiverModule = new TOFTOptionsReceiverModule(toftInitStruct);
+            TOFTGenericReceiverModule toftGenericReceiverModule = new TOFTGenericReceiverModule(toftInitStruct);
+            TOFTModulesInitStruct memory toftModulesInitStruct = TOFTModulesInitStruct({
+                tOFTSenderModule: address(toftSender),
+                tOFTReceiverModule: address(toftReceiver),
+                marketReceiverModule: address(toftMarketReceiverModule),
+                optionsReceiverModule: address(toftOptionsReceiverModule),
+                genericReceiverModule: address(toftGenericReceiverModule)
+            });
+            toft = new TOFT(toftInitStruct, toftModulesInitStruct);
+        }
     }
 }

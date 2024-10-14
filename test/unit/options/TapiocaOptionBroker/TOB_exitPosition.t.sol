@@ -10,6 +10,13 @@ contract TOB_exitPosition is TobBaseTest, TWAML {
     uint256 public constant TOLP_TOKEN_ID = 1;
     uint256 public constant VIRTUAL_TOTAL_AMOUNT = 50_000 ether; // See @TapiocaOptionBroker
 
+    uint256 public SGL_ASSET_ID;
+
+    function setUp() public virtual override {
+        super.setUp();
+        SGL_ASSET_ID = ybAssetIdToftSglEthMarket;
+    }
+
     function test_RevertWhen_PositionDoesntExist() external {
         // it should revert
         vm.expectRevert(TapiocaOptionBroker.PositionNotValid.selector);
@@ -27,7 +34,7 @@ contract TOB_exitPosition is TobBaseTest, TWAML {
     function test_WhenSglIsInRescueMode(uint128 __tOLPLockAmount) external whenPositionExists whenLockIsNotExpired {
         (__tOLPLockAmount,) = _boundValues(__tOLPLockAmount, 0);
         _setupAndParticipate(aliceAddr, __tOLPLockAmount, TOLP_LOCK_DURATION);
-        _setSglInRescue(IERC20(address(singularityEthMarket)), singularityEthMarketAssetId);
+        _setSglInRescue(IERC20(address(toftSglEthMarket)), SGL_ASSET_ID);
 
         (,,, uint256 cumulativeBefore) = tob.twAML(1);
         // it should continue
@@ -61,13 +68,13 @@ contract TOB_exitPosition is TobBaseTest, TWAML {
 
         uint256 epoch = 1;
         address paymentToken = address(daiMock);
-        (,,, uint256 cumulativeBefore) = tob.twAML(1);
+        (,,, uint256 cumulativeBefore) = tob.twAML(SGL_ASSET_ID);
 
         // it should emit ExitPosition
         vm.expectEmit(true, true, true, false);
         emit TapiocaOptionBroker.ExitPosition(epoch, OTAP_TOKEN_ID, OTAP_TOKEN_ID);
         tob.exitPosition(OTAP_TOKEN_ID);
-        (uint256 totalParticipants,, uint256 totalDeposited, uint256 cumulativeAfter) = tob.twAML(1);
+        (uint256 totalParticipants,, uint256 totalDeposited, uint256 cumulativeAfter) = tob.twAML(SGL_ASSET_ID);
 
         // it should update twAML cumulative
         assertLt(cumulativeAfter, cumulativeBefore, "TOB_exitPosition::test_WhenLockIsExpired: Invalid cumulative");
