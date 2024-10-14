@@ -4,7 +4,6 @@ pragma solidity 0.8.22;
 // External
 import {RebaseLibrary, Rebase} from "@boringcrypto/boring-solidity/contracts/libraries/BoringRebase.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import {BaseBoringBatchable} from "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -54,7 +53,6 @@ contract TapiocaOptionLiquidityProvision is
     ERC721,
     ERC721Permit,
     ERC721Enumerable,
-    BaseBoringBatchable,
     Pausable,
     ReentrancyGuard
 {
@@ -82,9 +80,9 @@ contract TapiocaOptionLiquidityProvision is
     uint256 public emergencySweepCooldown = 2 days;
     uint256 public lastEmergencySweep;
 
-    // User address => amount of USDO locked, used to cap the amount of USDO that can be locked
-    mapping(address user => uint256 lockedUsdo) public userLockedUsdo;
-    uint256 public maxDebtBuffer = 22000; // 220% of the total debt
+    // User sgl => user => amount of USDO locked, used to cap the amount of USDO that can be locked
+    mapping(uint256 sglAssetId => mapping(address user => uint256 lockedUsdo)) public userLockedUsdo;
+    uint256 public maxDebtBuffer = 10000; // 100% of the total debt
     // Debt penalty starts from 10% and goes down to 0.5% linearly
     uint256 public maxDebtPenalty = 1000;
     uint256 public minDebtPenalty = 500;
@@ -241,7 +239,8 @@ contract TapiocaOptionLiquidityProvision is
         totalUserUsdoDebt = totalUserUsdoDebt + (totalUserUsdoDebt * maxDebtBuffer) / 1e4; // total debt + buffer
         if (
             usdoAmountFromTolpShare
-                + _getUsdoAmountFromTolpShare(sglAssetIDToAddress[_sglAssetId], userLockedUsdo[_user]) > totalUserUsdoDebt
+                + _getUsdoAmountFromTolpShare(sglAssetIDToAddress[_sglAssetId], userLockedUsdo[_sglAssetId][_user])
+                > totalUserUsdoDebt
         ) {
             return (false, totalUserUsdoDebt, usdoAmountFromTolpShare);
         }
@@ -258,13 +257,20 @@ contract TapiocaOptionLiquidityProvision is
     /// @param _singularity Singularity market address
     /// @param _lockDuration Duration of the lock
     /// @param _ybShares Amount of YieldBox shares to lock
+    /// @param _for Address to check the debt for
     /// @return tokenId The ID of the minted NFT
-    function lock(address _to, IERC20 _singularity, uint128 _lockDuration, uint128 _ybShares)
+    function lock(address _to, IERC20 _singularity, uint128 _lockDuration, uint128 _ybShares, address _for)
         external
         nonReentrant
         whenNotPaused
         returns (uint256 tokenId)
     {
+        if (_to != _for) {
+            if (!cluster.hasRole(msg.sender, keccak256("MAGNETAR"))) {
+                revert NotAuthorized();
+            }
+        }
+
         if (_lockDuration < EPOCH_DURATION) revert DurationTooShort();
         if (_lockDuration > MAX_LOCK_DURATION) revert DurationTooLong();
         if (_lockDuration % EPOCH_DURATION != 0) revert DurationNotMultiple();
@@ -279,7 +285,7 @@ contract TapiocaOptionLiquidityProvision is
         if (sglAssetID == 0) revert SingularityNotActive();
 
         // Reverts if user debt doesn't cover the lock
-        if (!_canLockWithDebt(_to, _singularity, _ybShares)) {
+        if (!_canLockWithDebt(_for, _singularity, _ybShares)) {
             revert NotEnoughBigBangLiquidity();
         }
 
@@ -306,6 +312,12 @@ contract TapiocaOptionLiquidityProvision is
         // Mint the tOLP NFT position & Keep track of BB debt
         // userLockedUsdo[_to] += _ybShares; This is done in `_beforeTokenTransfer`
         _safeMint(_to, tokenId);
+
+        // If the lock is for another user, update the balances
+        if (_to != _for) {
+            userLockedUsdo[sglAssetID][_to] -= _ybShares;
+            userLockedUsdo[sglAssetID][_for] += _ybShares;
+        }
 
         emit Mint(_to, sglAssetID, address(_singularity), tokenId, _lockDuration, _ybShares);
     }
@@ -605,11 +617,10 @@ contract TapiocaOptionLiquidityProvision is
         uint256 sglERC20Amount = yieldBox.toAmount(sglPool.sglAssetID, _share, false);
 
         // SGL ERC20 amount/Fraction to USDO Yb shares
-        (uint128 elastic, uint128 base) = sgl.totalAsset();
-        uint256 UsdoYbShares = RebaseLibrary.toBase(Rebase(elastic, base), sglERC20Amount, false);
-
-        // Yb shares to USDO amount
-        usdoAmount = yieldBox.toAmount(sgl._assetId(), UsdoYbShares, false);
+        (uint128 assetElastic, uint128 assetBase) = sgl.totalAsset();
+        (uint128 borrowElastic,) = sgl._totalBorrow();
+        uint256 allShare = assetElastic + yieldBox.toShare(sgl._assetId(), borrowElastic, true);
+        return yieldBox.toAmount(sgl._assetId(), (sglERC20Amount * allShare) / assetBase, false);
     }
 
     /**
@@ -624,7 +635,11 @@ contract TapiocaOptionLiquidityProvision is
         uint256 amountToLock = _getUsdoAmountFromTolpShare(_singularity, _userShare);
 
         totalUserUsdoDebt = totalUserUsdoDebt + (totalUserUsdoDebt * maxDebtBuffer) / 1e4; // total debt + buffer
-        if (amountToLock + _getUsdoAmountFromTolpShare(_singularity, userLockedUsdo[_user]) > totalUserUsdoDebt) {
+        uint256 sglAssetId = activeSingularities[_singularity].sglAssetID;
+        if (
+            amountToLock + _getUsdoAmountFromTolpShare(_singularity, userLockedUsdo[sglAssetId][_user])
+                > totalUserUsdoDebt
+        ) {
             return false;
         }
         return true;
@@ -710,16 +725,19 @@ contract TapiocaOptionLiquidityProvision is
         override(ERC721, ERC721Enumerable)
     {
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+        if (to == tapiocaOptionBroker || to == address(this)) {
+            return;
+        }
 
         // Transfer the locked USDO accounting from the sender to the receiver
         for (uint256 i = 0; i < batchSize; i++) {
             LockPosition memory lockPosition = lockPositions[firstTokenId + i];
             if (from != address(0)) {
-                userLockedUsdo[from] -= lockPosition.ybShares;
+                userLockedUsdo[uint256(lockPosition.sglAssetID)][from] -= lockPosition.ybShares;
             }
 
             if (to != address(0)) {
-                userLockedUsdo[to] += lockPosition.ybShares;
+                userLockedUsdo[uint256(lockPosition.sglAssetID)][to] += lockPosition.ybShares;
             }
         }
     }
