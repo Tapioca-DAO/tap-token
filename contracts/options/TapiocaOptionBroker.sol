@@ -457,7 +457,9 @@ contract TapiocaOptionBroker is Pausable, Ownable, PearlmitHandler, IERC721Recei
         bool isSGLInRescueMode = _isSGLInRescueMode(lock);
 
         // Check if debt ratio is below threshold, if so bypass lock expiration
-        if (tOLP.canLockWithDebt(oTAP.ownerOf(_oTAPTokenID), uint256(lock.sglAssetID), uint256(lock.ybShares))) {
+        (bool canLock,,) =
+            tOLP.canLockWithDebt(oTAP.ownerOf(_oTAPTokenID), uint256(lock.sglAssetID), uint256(lock.ybShares));
+        if (canLock) {
             // If SGL is in rescue, bypass the lock expiration
             if (!isSGLInRescueMode) {
                 if (block.timestamp < lock.lockTime + lock.lockDuration) {
